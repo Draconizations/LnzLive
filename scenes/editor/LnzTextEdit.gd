@@ -13,7 +13,19 @@ onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContaine
 func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
+
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
+
+	var pet_view_path = "/root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
+	if has_node(pet_view_path):
+		var pet_view = get_node(pet_view_path)
+		if not pet_view.is_connected("ball_translation_changed", self, "_on_Node_ball_translation_changed"):
+			pet_view.connect("ball_translation_changed", self, "_on_Node_ball_translation_changed")
+		if not pet_view.is_connected("ball_translations_done", self, "_on_Node_ball_translations_done"):
+			pet_view.connect("ball_translations_done", self, "_on_Node_ball_translations_done")
+		print("Connected to PetViewContainer")
+	else:
+		print("Could not find PetViewContainer at:", pet_view_path)
 
 func _on_example_file_selected(filepath):
 	var file = File.new()
@@ -1215,63 +1227,69 @@ func _on_ToolsMenu_move_head(x, y, z):
 	save_file()
 
 func _on_Node_ball_translation_changed(ball_no, new_position):
-	var line_no
-	if ball_no < 67:
-		var done = false
-		var section_find = search('[Move]', 0, 0, 0)
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			var line = get_line(start_of_section + i).lstrip(" ")
-			if line.begins_with(";") or line.empty():
-				i += 1
-				continue
-			elif line.begins_with("["):
-				if !done:
-					print("WARN - did not find move for head rotation for ball " + str(ball_no))
-					cursor_set_line(start_of_section + i)
-					cursor_set_column(0)
-					insert_text_at_cursor(str(ball_no) + " " + str(int(new_position.x)) + " " + str(int(-new_position.y)) + " " + str(int(new_position.z)) + "\n")
-				break
-			# here the first number is color and second is outline col
-			var parsed_line = r.search_all(line)
-			if !(parsed_line[0].get_string().to_int() == ball_no):
-				i += 1
-				continue
-			done = true
-			var n = 0
-			var final_line = ""
-			for r_item in parsed_line:
-				var item = r_item.get_string()
-				if n == 1:
-					final_line += str(int(new_position.x)) + " "
-				elif n == 2:
-					final_line += str(int(-new_position.y)) + " "
-				elif n == 3:
-					final_line += str(int(new_position.z)) + " "
-				else:
-					final_line += item + " "
-				n += 1
-			set_line(start_of_section + i, final_line)
-			i += 1
-	else:
-		line_no = find_line_in_addball_section(ball_no - 67)
-		var line = get_line(line_no)
-		var parsed_line = r.search_all(line)
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item.get_string()
-			if n == 1:
-				final_line += str(int(new_position.x)) + " "
-			elif n == 2:
-				final_line += str(int(-new_position.y)) + " "
-			elif n == 3:
-				final_line += str(int(new_position.z)) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(line_no, final_line)
-	
+	print("LnzTextEdit received move for ball:", ball_no)
+
+	var section_find = search('[Move]', 0, 0, 0)
+	if section_find.empty():
+		print("Move section not found")
+		return
+
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
+	var found = false
+
+	for i in range(start_of_section, end_of_section):
+		var raw_line = get_line(i)
+		var line = raw_line.strip_edges()
+
+		if line.begins_with(";") or line.empty():
+			continue
+
+		var parsed = r.search_all(line)
+		if parsed.size() >= 4 and parsed[0].get_string().to_int() == ball_no:
+			var x = floor(new_position.x)
+			var y = floor(new_position.y)
+			var z = floor(new_position.z)
+			var new_line = "%d %d %d %d" % [ball_no, x, y, z]
+
+			var old_values = line  # <-- Now declared before being used in print
+			print("Old move LNZ line for %d: %s" % [ball_no, old_values])
+			print("New LNZ pos: %s" % str([x, y, z]))
+
+			cursor_set_line(i)
+			cursor_set_column(0)
+			select(i, 0, i + 1, 0)
+			cut()
+			insert_text_at_cursor(new_line + "\n")
+
+			print("Updated move line at", i)
+			found = true
+			break
+
+	if not found:
+		var x = floor(new_position.x)
+		var y = floor(new_position.y)
+		var z = floor(new_position.z)
+		var new_line = "%d %d %d %d" % [ball_no, x, y, z]
+
+		var insert_line = end_of_section - 1
+		while insert_line > start_of_section and get_line(insert_line).strip_edges() == "":
+			insert_line -= 1
+		insert_line += 1
+
+		cursor_set_line(insert_line)
+		cursor_set_column(0)
+		insert_text_at_cursor(new_line + "\n")
+
+		print("Inserted new move line at", insert_line, ":", new_line)
+
+	text = get_text()
+
+
 func _on_Node_ball_translations_done():
 	save_file()
+
+func insert_text_at_cursor_at_line(line: int, new_text: String):
+	cursor_set_line(line)
+	cursor_set_column(0)
+	insert_text_at_cursor(new_text)
