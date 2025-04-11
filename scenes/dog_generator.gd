@@ -36,8 +36,14 @@ signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, is_addball)
 signal addball_deleted(ball_no)
+
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
+
+# func _ready():
+# 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+# 	self.connect("ball_translation_changed", editor, "_on_Node_ball_translation_changed")
+# 	self.connect("ball_translations_done", editor, "_on_Node_ball_translations_done")
 
 func set_animation(anim_index: int):
 	current_animation = anim_index
@@ -957,3 +963,9 @@ func _on_ToolsMenu_print_ball_colors():
 
 func _on_ViewPaletteButton_pressed():
 	$SceneRoot/ToolsMenu/PaletteViewerPopup.popup_centered_minsize()
+
+func emit_ball_translation(ball_no: int, new_position: Vector3):
+	emit_signal("ball_translation_changed", ball_no, new_position)
+
+func emit_ball_translation_done():
+	emit_signal("ball_translations_done")
