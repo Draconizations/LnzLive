@@ -15,7 +15,7 @@ var drag_ball = null
 var drag_offset = Vector3()
 var pixel_world_size = 0.002
 
-const PET_SCALE = 0.01
+const PET_SCALE = 0.002
 
 #func _ready():
 #	flip_camera_view()
@@ -28,10 +28,7 @@ func flip_camera_view():
 func _gui_input(event):
 	if event is InputEventMouseMotion:
 		label.rect_global_position = event.global_position
-		var pet_node = null
-		if get_tree().root.has_node("Root/PetRoot/Node"):
-			pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-
+		var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 
 		var real_center = rect_position + rect_size / 2.0
 		var offset = event.position - real_center
@@ -39,22 +36,15 @@ func _gui_input(event):
 		var screen_pos = Vector2(500, 500) + offset
 
 		if Input.is_key_pressed(KEY_SHIFT) and is_dragging and drag_ball:
-			print("Camera origin: ", camera.transform.origin)
-			print("Camera scale (zoom): ", tex.rect_scale)
-			print("Camera FOV: ", camera.fov)
-			print("Camera near/far: ", camera.near, camera.far)
+			accept_event()  # Prevents key events from reaching other UI like the LNZ editor
 
 			var ray_origin = camera.project_ray_origin(screen_pos)
 			var ray_dir = camera.project_ray_normal(screen_pos)
 
-			var plane_normal: Vector3
-			var plane_point: Vector3
+			var plane_normal = camera.global_transform.basis.z.normalized()
+			var plane_point = drag_ball.global_transform.origin
 
-			plane_normal = camera.global_transform.basis.z.normalized()
-			plane_point = drag_ball.global_transform.origin
-
-			# Override if projection info is available
-			if pet_node and pet_node.lnz.project_ball.size() > 0:
+			if pet_node and pet_node.lnz and pet_node.lnz.project_ball:
 				for proj in pet_node.lnz.project_ball:
 					if proj.ball == drag_ball.ball_no and pet_node.ball_map.has(proj.base):
 						var base_node = pet_node.ball_map[proj.base]
@@ -62,28 +52,27 @@ func _gui_input(event):
 						plane_point = base_node.global_transform.origin
 						break
 
-
 			var intersect = intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
 			if intersect:
-				var new_pos = intersect + drag_offset
-				print("New drag position (world): ", new_pos)
-				drag_ball.global_transform.origin = new_pos
+				var new_pos = intersect
+				var original_pos = drag_ball.global_transform.origin
 
 				# Axis snapping
 				if Input.is_key_pressed(KEY_X):
-					new_pos.y = drag_ball.global_transform.origin.y
-					new_pos.z = drag_ball.global_transform.origin.z
+					new_pos.y = original_pos.y
+					new_pos.z = original_pos.z
 				elif Input.is_key_pressed(KEY_Y):
-					new_pos.x = drag_ball.global_transform.origin.x
-					new_pos.z = drag_ball.global_transform.origin.z
+					new_pos.x = original_pos.x
+					new_pos.z = original_pos.z
 				elif Input.is_key_pressed(KEY_Z):
-					new_pos.x = drag_ball.global_transform.origin.x
-					new_pos.y = drag_ball.global_transform.origin.y
+					new_pos.x = original_pos.x
+					new_pos.y = original_pos.y
 
 				drag_ball.global_transform.origin = new_pos
 				print("Set drag_ball position to: ", new_pos)
+
 		else:
-			# Regular camera motion
+			# Regular camera movement
 			if Input.is_mouse_button_pressed(BUTTON_LEFT):
 				var motion = event.relative
 				camera_holder.rotation.x += motion.y * 0.01
@@ -93,21 +82,26 @@ func _gui_input(event):
 				camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 				camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
-		# Selection logic
-		if selecting_on:
-			var from = camera.project_ray_origin(screen_pos)
-			var to = from + camera.project_ray_normal(screen_pos) * 950
-			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
-			if !result.empty():
-				label.show()
-				deal_with_last_selected()
-				result.collider.get_parent()._on_Area_mouse_entered()
-				last_selected = result.collider.get_parent()
-			else:
-				deal_with_last_selected()
-				last_selected = null
-				label.hide()
+	# Ball selection highlight
+	if selecting_on:
+		var real_center = rect_position + rect_size / 2.0
+		var offset = event.position - real_center
+		offset /= tex.rect_scale
+		var screen_pos = Vector2(500, 500) + offset
+
+		var from = camera.project_ray_origin(screen_pos)
+		var to = from + camera.project_ray_normal(screen_pos) * 950
+		var space_state = camera.get_world().direct_space_state
+		var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
+		if !result.empty():
+			label.show()
+			deal_with_last_selected()
+			result.collider.get_parent()._on_Area_mouse_entered()
+			last_selected = result.collider.get_parent()
+		else:
+			deal_with_last_selected()
+			last_selected = null
+			label.hide()
 
 	elif event is InputEventMouseButton:
 		var real_center = rect_position + rect_size / 2.0
@@ -138,32 +132,64 @@ func _gui_input(event):
 					var intersect = intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
 					if intersect:
 						print("Intersect successful: ", intersect)
-						drag_offset = drag_ball.global_transform.origin - intersect
+						drag_offset = Vector3()  # No offset; we now center drag to plane
+
 			elif is_dragging and drag_ball:
 				var final_pos = drag_ball.global_transform.origin
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
-				# Reverse project ball effect, if applicable
-				if pet_node and "lnz" in pet_node:
+				# Proper reverse projection
+				if pet_node and pet_node.lnz and pet_node.lnz.project_ball:
 					for proj in pet_node.lnz.project_ball:
 						if proj.ball == drag_ball.ball_no and proj.amount != 100 and pet_node.ball_map.has(proj.base):
-							var base_pos = pet_node.ball_map[proj.base].global_transform.origin
-							var vec = final_pos - base_pos
-							final_pos = base_pos + (vec * (100.0 / proj.amount))
-							print("Corrected reverse projection for ball %d with base %d" % [proj.ball, proj.base])
+							var base_node = pet_node.ball_map[proj.base]
+							var projected = drag_ball.global_transform.origin
+							var base_pos = base_node.global_transform.origin
+							var delta = projected - base_pos
+							final_pos = base_pos + (delta * (100.0 / proj.amount))
 							break
+				else:
+					final_pos = drag_ball.global_transform.origin
 
-				# Convert world pos to LNZ-space
-				print("Ball final world position: ", final_pos)
+				# Find base ball again (could be same as above base_node)
+				if drag_ball.has_method("get") and drag_ball.has("base_ball_no") and pet_node.ball_map.has(drag_ball.base_ball_no):
+					var base_node = pet_node.ball_map[drag_ball.base_ball_no]
+					final_pos -= base_node.global_transform.origin
+
+				# Convert to LNZ-space
 				final_pos /= PET_SCALE
 				final_pos.y *= -1
 
+				# var final_pos = drag_ball.global_transform.origin
+				# var base_pos = null
+				# var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+				# # 1. Get base ball position
+				# if drag_ball.has_meta("base_ball_no") and pet_node.ball_map.has(drag_ball.get_meta("base_ball_no")):
+				# 	base_pos = pet_node.ball_map[drag_ball.get_meta("base_ball_no")].global_transform.origin
+
+				# # 2. Convert to relative position (before reversing projection)
+				# if base_pos:
+				# 	final_pos -= base_pos
+
+				# # 3. Reverse projection, using RELATIVE coords
+				# if pet_node.lnz and pet_node.lnz.project_ball:
+				# 	for proj in pet_node.lnz.project_ball:
+				# 		if proj.ball == drag_ball.ball_no and proj.amount != 100 and pet_node.ball_map.has(proj.base):
+				# 			var vec = final_pos
+				# 			final_pos = vec / (proj.amount / 100.0)
+				# 			break
+
+				# # 4. Apply LNZ space scaling
+				# final_pos /= PET_SCALE
+				# final_pos.y *= -1
+
+				print("Final world pos (pre-LNZ conversion): ", drag_ball.global_transform.origin)
 				print("Dragged ball %d to %.2f %.2f %.2f (LNZ-space)" % [
 					drag_ball.ball_no, final_pos.x, final_pos.y, final_pos.z
 				])
 
-				# Emit signal (still via dog_generator.gd)
-				if pet_node and pet_node.has_method("emit_ball_translation"):
+				if pet_node.has_method("emit_ball_translation"):
 					pet_node.emit_ball_translation(drag_ball.ball_no, final_pos)
 					pet_node.emit_ball_translation_done()
 				else:
@@ -171,6 +197,7 @@ func _gui_input(event):
 
 				is_dragging = false
 				drag_ball = null
+
 
 
 func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:

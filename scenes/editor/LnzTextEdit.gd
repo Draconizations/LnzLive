@@ -13,19 +13,7 @@ onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContaine
 func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
-
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
-
-	var pet_view_path = "/root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
-	if has_node(pet_view_path):
-		var pet_view = get_node(pet_view_path)
-		if not pet_view.is_connected("ball_translation_changed", self, "_on_Node_ball_translation_changed"):
-			pet_view.connect("ball_translation_changed", self, "_on_Node_ball_translation_changed")
-		if not pet_view.is_connected("ball_translations_done", self, "_on_Node_ball_translations_done"):
-			pet_view.connect("ball_translations_done", self, "_on_Node_ball_translations_done")
-		print("Connected to PetViewContainer")
-	else:
-		print("Could not find PetViewContainer at:", pet_view_path)
 
 func _on_example_file_selected(filepath):
 	var file = File.new()
@@ -1247,9 +1235,12 @@ func _on_Node_ball_translation_changed(ball_no, new_position):
 
 		var parsed = r.search_all(line)
 		if parsed.size() >= 4 and parsed[0].get_string().to_int() == ball_no:
-			var x = floor(new_position.x)
-			var y = floor(new_position.y)
-			var z = floor(new_position.z)
+			# var x = round(new_position.x)
+			# var y = round(new_position.y)
+			# var z = round(new_position.z)
+			var x = new_position.x
+			var y = new_position.y
+			var z = new_position.z
 			var new_line = "%d %d %d %d" % [ball_no, x, y, z]
 
 			var old_values = line  # <-- Now declared before being used in print
@@ -1267,9 +1258,12 @@ func _on_Node_ball_translation_changed(ball_no, new_position):
 			break
 
 	if not found:
-		var x = floor(new_position.x)
-		var y = floor(new_position.y)
-		var z = floor(new_position.z)
+		# var x = round(new_position.x)
+		# var y = round(new_position.y)
+		# var z = round(new_position.z)
+		var x = new_position.x
+		var y = new_position.y
+		var z = new_position.z
 		var new_line = "%d %d %d %d" % [ball_no, x, y, z]
 
 		var insert_line = end_of_section - 1
