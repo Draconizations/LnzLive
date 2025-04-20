@@ -1215,69 +1215,75 @@ func _on_ToolsMenu_move_head(x, y, z):
 	save_file()
 
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
-	print("[LNZ EDIT] Applying move for ball %d: delta=%s" % [ball_no, new_pos])
-
-	var sec = search("[Move]", 0, 0, 0)
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+	
+	# Locate section
+	var section_tag = "[Move]"
+	if is_addball:
+		section_tag = "[Add Ball]"
+	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
-		print("[LNZ EDIT] No [Move] section found")
-		return
-
+			print("[LNZ EDIT] No %s section found" % section_tag)
+			return
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line   = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-	var did_update = false
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 
+	# Detect delimiter
+	var delim = " "
 	for i in range(start_line, end_line):
-		var raw = get_line(i).strip_edges()
-		if raw.begins_with(";") or raw == "":
-			continue
-
-		var parts = r.search_all(raw)
-		# parts[0] = ball_no, [1]=oldX, [2]=oldY, [3]=oldZ
-		if parts.size() >= 4 and parts[0].get_string().to_int() == ball_no:
-			# Parse [Move] coordinates
-			var old_x = parts[1].get_string().to_int()
-			var old_y = parts[2].get_string().to_int()
-			var old_z = parts[3].get_string().to_int()
-
-			# Parse new [Move] coordinates
-			var dx = new_pos.x
-			var dy = new_pos.y
-			var dz = new_pos.z
-
-			# Add old and new [Move] entries
-			var nx = old_x + dx
-			var ny = old_y + dy
-			var nz = old_z + dz
-
-			var new_line = "%d %d %d %d" % [ball_no, nx, ny, nz]
-			print("[LNZ EDIT] Summing old(%d,%d,%d) + delta(%d,%d,%d) → new(%d,%d,%d)"
-				  % [old_x,old_y,old_z, dx,dy,dz, nx,ny,nz])
-
-			cursor_set_line(i); cursor_set_column(0)
-			select(i,0,i+1,0); cut()
-			insert_text_at_cursor(new_line + "\n")
-
-			did_update = true
+			var test = get_line(i).strip_edges()
+			if test == "" or test.begins_with(";"): continue
+			if test.find(",") != -1:
+					delim = ", "
 			break
 
-	if not did_update:
-		# No existing [Move] entry, just write delta
-		var nx = new_pos.x
-		var ny = new_pos.y
-		var nz = new_pos.z
-		var new_line = "%d %d %d %d" % [ball_no, nx, ny, nz]
-
-		# Find insertion point in LNZ
-		var line = end_line - 1
-		while line > start_line and get_line(line).strip_edges() == "":
-			line -= 1
-		line += 1
-
-		print("[LNZ EDIT] Inserting new move line at %d: %s" % [line, new_line])
-		cursor_set_line(line); cursor_set_column(0)
-		insert_text_at_cursor(new_line + "\n")
-
+	if is_addball:
+			# Update x, y, z entries in [Add Ball] section
+			var idx = ball_no - (max_base_ball_no)
+			var count = 0
+			for i in range(start_line, end_line):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					if count == idx:
+						var parts = []
+						if delim == ", ":
+							parts = raw.split(",", false)
+						else:
+							parts = raw.split(" ", false)
+						# Sum coords
+						parts[1] = str(parts[1].to_int() + new_pos.x)
+						parts[2] = str(parts[2].to_int() + new_pos.y)
+						parts[3] = str(parts[3].to_int() + new_pos.z)
+						var new_line = parts.join(delim)
+						set_line(i, new_line)
+						print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
+						break
+					count += 1
+	else:
+			# Update or insert [Move] line
+			var updated = false
+			for i in range(start_line, end_line):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					var parts = raw.split(delim, false)
+					if parts.size() >= 4 and parts[0].to_int() == ball_no:
+							for axis in [1,2,3]:
+									parts[axis] = str(parts[axis].to_int() + new_pos[axis - 1])
+							var new_line = parts.join(delim)
+							set_line(i, new_line)
+							print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
+							updated = true
+							break
+			if not updated:
+					var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, new_pos.x, delim, new_pos.y, delim, new_pos.z]
+					var insert_at = end_line
+					while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
+							insert_at -= 1
+					insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
+					print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	text = get_text()
+	save_file()
 
 func _on_Node_ball_translations_done():
 	save_file()
