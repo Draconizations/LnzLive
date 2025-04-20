@@ -43,10 +43,8 @@ signal addball_deleted(ball_no)
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
 
-# func _ready():
-# 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
-# 	self.connect("ball_translation_changed", editor, "_on_Node_ball_translation_changed")
-# 	self.connect("ball_translations_done", editor, "_on_Node_ball_translations_done")
+func _ready():
+	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 
 func set_animation(anim_index: int):
 	current_animation = anim_index
