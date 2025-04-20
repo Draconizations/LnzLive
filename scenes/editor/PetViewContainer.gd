@@ -15,8 +15,6 @@ var drag_ball = null
 var drag_offset = Vector3()
 var pixel_world_size = 0.002
 
-const PET_SCALE = 0.002
-
 #func _ready():
 #	flip_camera_view()
 
@@ -36,7 +34,7 @@ func _gui_input(event):
 		var screen_pos = Vector2(500, 500) + offset
 
 		if Input.is_key_pressed(KEY_SHIFT) and is_dragging and drag_ball:
-			accept_event()  # Prevents key events from reaching other UI like the LNZ editor
+			accept_event()
 
 			var ray_origin = camera.project_ray_origin(screen_pos)
 			var ray_dir = camera.project_ray_normal(screen_pos)
@@ -117,88 +115,37 @@ func _gui_input(event):
 			tex.rect_scale *= 2.0
 		elif event.doubleclick and event.button_index == BUTTON_LEFT and last_selected_is_valid():
 			last_selected.selected()
+
 		elif event.button_index == BUTTON_LEFT:
-			if event.pressed and Input.is_key_pressed(KEY_SHIFT):
-				var hovered = get_ball_under_mouse(screen_pos)
-				if hovered:
-					print("Started drag on ball:", hovered.name)
-					drag_ball = hovered
-					is_dragging = true
-
-					var ray_origin = camera.project_ray_origin(screen_pos)
-					var ray_dir = camera.project_ray_normal(screen_pos)
-					var plane_normal = camera.global_transform.basis.z.normalized()
-					var plane_point = drag_ball.global_transform.origin
-					var intersect = intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
-					if intersect:
-						print("Intersect successful: ", intersect)
-						drag_offset = Vector3()  # No offset; we now center drag to plane
-
+			var hovered = get_ball_under_mouse(
+				(event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500,500)
+			)
+			if event.pressed and Input.is_key_pressed(KEY_SHIFT) and hovered:
+				drag_ball = hovered
+				is_dragging = true
+				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
+				var ray_o = camera.project_ray_origin(event.position)
+				var ray_d = camera.project_ray_normal(event.position)
+				var plane_n = camera.global_transform.basis.z.normalized()
+				var plane_p = drag_ball.global_transform.origin
+				var hit = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+				if hit:
+					print("[LNZ EDIT] Intersect successful:", hit)
 			elif is_dragging and drag_ball:
-				var final_pos = drag_ball.global_transform.origin
+				print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+				var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
+				print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" %
+					  [drag_ball.ball_no, lnz_pos])
+				pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
 
-				# Proper reverse projection
-				if pet_node and pet_node.lnz and pet_node.lnz.project_ball:
-					for proj in pet_node.lnz.project_ball:
-						if proj.ball == drag_ball.ball_no and proj.amount != 100 and pet_node.ball_map.has(proj.base):
-							var base_node = pet_node.ball_map[proj.base]
-							var projected = drag_ball.global_transform.origin
-							var base_pos = base_node.global_transform.origin
-							var delta = projected - base_pos
-							final_pos = base_pos + (delta * (100.0 / proj.amount))
-							break
-				else:
-					final_pos = drag_ball.global_transform.origin
+				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
+				print("[LNZ EDIT] Reset origin for ball %d to %s" %
+					  [drag_ball.ball_no, drag_ball.global_transform.origin])
 
-				# Find base ball again (could be same as above base_node)
-				if drag_ball.has_method("get") and drag_ball.has("base_ball_no") and pet_node.ball_map.has(drag_ball.base_ball_no):
-					var base_node = pet_node.ball_map[drag_ball.base_ball_no]
-					final_pos -= base_node.global_transform.origin
-
-				# Convert to LNZ-space
-				final_pos /= PET_SCALE
-				final_pos.y *= -1
-
-				# var final_pos = drag_ball.global_transform.origin
-				# var base_pos = null
-				# var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-
-				# # 1. Get base ball position
-				# if drag_ball.has_meta("base_ball_no") and pet_node.ball_map.has(drag_ball.get_meta("base_ball_no")):
-				# 	base_pos = pet_node.ball_map[drag_ball.get_meta("base_ball_no")].global_transform.origin
-
-				# # 2. Convert to relative position (before reversing projection)
-				# if base_pos:
-				# 	final_pos -= base_pos
-
-				# # 3. Reverse projection, using RELATIVE coords
-				# if pet_node.lnz and pet_node.lnz.project_ball:
-				# 	for proj in pet_node.lnz.project_ball:
-				# 		if proj.ball == drag_ball.ball_no and proj.amount != 100 and pet_node.ball_map.has(proj.base):
-				# 			var vec = final_pos
-				# 			final_pos = vec / (proj.amount / 100.0)
-				# 			break
-
-				# # 4. Apply LNZ space scaling
-				# final_pos /= PET_SCALE
-				# final_pos.y *= -1
-
-				print("Final world pos (pre-LNZ conversion): ", drag_ball.global_transform.origin)
-				print("Dragged ball %d to %.2f %.2f %.2f (LNZ-space)" % [
-					drag_ball.ball_no, final_pos.x, final_pos.y, final_pos.z
-				])
-
-				if pet_node.has_method("emit_ball_translation"):
-					pet_node.emit_ball_translation(drag_ball.ball_no, final_pos)
-					pet_node.emit_ball_translation_done()
-				else:
-					print("Could not find or access PetRoot/Node to emit signal")
-
+				pet_node.emit_ball_translation_done()
 				is_dragging = false
 				drag_ball = null
-
-
 
 func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
 	var denom = plane_normal.dot(ray_dir)
@@ -257,3 +204,32 @@ func get_ball_under_mouse(screen_pos: Vector2):
 		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
 			return parent
 	return null
+
+func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
+	# Read current and original world positions
+	var current_world = drag_ball.global_transform.origin
+	var original_world = pet_node._orig_world_pos.get(drag_ball.ball_no, Vector3.ZERO)
+	print("[LNZ EDIT] Ball %d world positions: current=%s, original=%s"
+		% [drag_ball.ball_no, current_world, original_world])
+	
+	# Record movement in world coordinates
+	var delta_meters = current_world - original_world
+
+	# Undo pixel_world_size scale then LNZ scales
+	var px_scale = pixel_world_size
+	var lnz_scale = pet_node.lnz.scales.x / 255.0
+	var delta_units = delta_meters / (px_scale * lnz_scale)
+
+	# Flip Y axis to match LNZ coordinate system
+	delta_units.y *= -1
+	print("[LNZ EDIT] Raw LNZ‐space offset (float): %s" % delta_units)
+
+	# Round to nearest whole LNZ unit
+	var lnz_offset = Vector3(
+		round(delta_units.x),
+		round(delta_units.y),
+		round(delta_units.z)
+	)
+	print("[LNZ EDIT] Rounded LNZ‐space offset (int): %s" % lnz_offset)
+
+	return lnz_offset
