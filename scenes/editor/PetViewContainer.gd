@@ -24,6 +24,57 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale /= 2.0
+			return
+	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
+			tex.rect_pivot_offset = tex.rect_size / 2.0
+			tex.rect_scale *= 2.0
+			return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
+			if selecting_on and last_selected_is_valid():
+					last_selected.selected()
+			return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500, 500))
+			if hover:
+					drag_ball = hover
+					is_dragging = true
+					print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
+					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+					pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
+			return
+
+	if event is InputEventMouseMotion and is_dragging and drag_ball:
+			var real_center = rect_position + rect_size / 2.0
+			var offset = event.position - real_center
+			offset /= tex.rect_scale
+			var screen_pos = Vector2(500, 500) + offset
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var plane_n = camera.global_transform.basis.z.normalized()
+			var plane_p = drag_ball.global_transform.origin
+			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+			if intersect:
+					drag_ball.global_transform.origin = intersect
+					print("Set drag_ball position to:", intersect)
+			return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
+			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
+			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
+			pet_node.emit_ball_translation_done()
+			is_dragging = false
+			drag_ball = null
+			return
+
+	# NOT YET SEPARATED -- try to fix later:
 	if event is InputEventMouseMotion:
 		label.rect_global_position = event.global_position
 		var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
@@ -34,8 +85,6 @@ func _gui_input(event):
 		var screen_pos = Vector2(500, 500) + offset
 
 		if Input.is_key_pressed(KEY_SHIFT) and is_dragging and drag_ball:
-			accept_event()
-
 			var ray_origin = camera.project_ray_origin(screen_pos)
 			var ray_dir = camera.project_ray_normal(screen_pos)
 
@@ -102,6 +151,8 @@ func _gui_input(event):
 			label.hide()
 
 	elif event is InputEventMouseButton:
+		if selecting_on and event.button_index == BUTTON_LEFT and event.doubleclick:
+			return
 		var real_center = rect_position + rect_size / 2.0
 		var offset = event.position - real_center
 		offset /= tex.rect_scale
@@ -115,7 +166,6 @@ func _gui_input(event):
 			tex.rect_scale *= 2.0
 		elif event.doubleclick and event.button_index == BUTTON_LEFT and last_selected_is_valid():
 			last_selected.selected()
-
 		elif event.button_index == BUTTON_LEFT:
 			var hovered = get_ball_under_mouse(
 				(event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500,500)
