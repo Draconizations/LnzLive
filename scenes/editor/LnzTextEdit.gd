@@ -1214,71 +1214,70 @@ func _on_ToolsMenu_move_head(x, y, z):
 	
 	save_file()
 
-func _on_Node_ball_translation_changed(ball_no, new_position):
-	print("LnzTextEdit received move for ball:", ball_no)
+func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+	print("[LNZ EDIT] Applying move for ball %d: delta=%s" % [ball_no, new_pos])
 
-	var section_find = search('[Move]', 0, 0, 0)
-	if section_find.empty():
-		print("Move section not found")
+	var sec = search("[Move]", 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No [Move] section found")
 		return
 
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
-	var found = false
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line   = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var did_update = false
 
-	for i in range(start_of_section, end_of_section):
-		var raw_line = get_line(i)
-		var line = raw_line.strip_edges()
-
-		if line.begins_with(";") or line.empty():
+	for i in range(start_line, end_line):
+		var raw = get_line(i).strip_edges()
+		if raw.begins_with(";") or raw == "":
 			continue
 
-		var parsed = r.search_all(line)
-		if parsed.size() >= 4 and parsed[0].get_string().to_int() == ball_no:
-			# var x = round(new_position.x)
-			# var y = round(new_position.y)
-			# var z = round(new_position.z)
-			var x = new_position.x
-			var y = new_position.y
-			var z = new_position.z
-			var new_line = "%d %d %d %d" % [ball_no, x, y, z]
+		var parts = r.search_all(raw)
+		# parts[0] = ball_no, [1]=oldX, [2]=oldY, [3]=oldZ
+		if parts.size() >= 4 and parts[0].get_string().to_int() == ball_no:
+			# Parse [Move] coordinates
+			var old_x = parts[1].get_string().to_int()
+			var old_y = parts[2].get_string().to_int()
+			var old_z = parts[3].get_string().to_int()
 
-			var old_values = line  # <-- Now declared before being used in print
-			print("Old move LNZ line for %d: %s" % [ball_no, old_values])
-			print("New LNZ pos: %s" % str([x, y, z]))
+			# Parse new [Move] coordinates
+			var dx = new_pos.x
+			var dy = new_pos.y
+			var dz = new_pos.z
 
-			cursor_set_line(i)
-			cursor_set_column(0)
-			select(i, 0, i + 1, 0)
-			cut()
+			# Add old and new [Move] entries
+			var nx = old_x + dx
+			var ny = old_y + dy
+			var nz = old_z + dz
+
+			var new_line = "%d %d %d %d" % [ball_no, nx, ny, nz]
+			print("[LNZ EDIT] Summing old(%d,%d,%d) + delta(%d,%d,%d) → new(%d,%d,%d)"
+				  % [old_x,old_y,old_z, dx,dy,dz, nx,ny,nz])
+
+			cursor_set_line(i); cursor_set_column(0)
+			select(i,0,i+1,0); cut()
 			insert_text_at_cursor(new_line + "\n")
 
-			print("Updated move line at", i)
-			found = true
+			did_update = true
 			break
 
-	if not found:
-		# var x = round(new_position.x)
-		# var y = round(new_position.y)
-		# var z = round(new_position.z)
-		var x = new_position.x
-		var y = new_position.y
-		var z = new_position.z
-		var new_line = "%d %d %d %d" % [ball_no, x, y, z]
+	if not did_update:
+		# No existing [Move] entry, just write delta
+		var nx = new_pos.x
+		var ny = new_pos.y
+		var nz = new_pos.z
+		var new_line = "%d %d %d %d" % [ball_no, nx, ny, nz]
 
-		var insert_line = end_of_section - 1
-		while insert_line > start_of_section and get_line(insert_line).strip_edges() == "":
-			insert_line -= 1
-		insert_line += 1
+		# Find insertion point in LNZ
+		var line = end_line - 1
+		while line > start_line and get_line(line).strip_edges() == "":
+			line -= 1
+		line += 1
 
-		cursor_set_line(insert_line)
-		cursor_set_column(0)
+		print("[LNZ EDIT] Inserting new move line at %d: %s" % [line, new_line])
+		cursor_set_line(line); cursor_set_column(0)
 		insert_text_at_cursor(new_line + "\n")
 
-		print("Inserted new move line at", insert_line, ":", new_line)
-
 	text = get_text()
-
 
 func _on_Node_ball_translations_done():
 	save_file()
