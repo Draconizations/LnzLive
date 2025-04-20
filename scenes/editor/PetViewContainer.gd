@@ -74,128 +74,45 @@ func _gui_input(event):
 			drag_ball = null
 			return
 
-	# NOT YET SEPARATED -- try to fix later:
-	if event is InputEventMouseMotion:
+	if event is InputEventMouseMotion and not is_dragging:
 		label.rect_global_position = event.global_position
-		var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-
-		var real_center = rect_position + rect_size / 2.0
-		var offset = event.position - real_center
-		offset /= tex.rect_scale
-		var screen_pos = Vector2(500, 500) + offset
-
-		if Input.is_key_pressed(KEY_SHIFT) and is_dragging and drag_ball:
-			var ray_origin = camera.project_ray_origin(screen_pos)
-			var ray_dir = camera.project_ray_normal(screen_pos)
-
-			var plane_normal = camera.global_transform.basis.z.normalized()
-			var plane_point = drag_ball.global_transform.origin
-
-			if pet_node and pet_node.lnz and pet_node.lnz.project_ball:
-				for proj in pet_node.lnz.project_ball:
-					if proj.ball == drag_ball.ball_no and pet_node.ball_map.has(proj.base):
-						var base_node = pet_node.ball_map[proj.base]
-						plane_normal = base_node.global_transform.basis.z.normalized()
-						plane_point = base_node.global_transform.origin
-						break
-
-			var intersect = intersect_ray_with_plane(ray_origin, ray_dir, plane_normal, plane_point)
-			if intersect:
-				var new_pos = intersect
-				var original_pos = drag_ball.global_transform.origin
-
-				# Axis snapping
-				if Input.is_key_pressed(KEY_X):
-					new_pos.y = original_pos.y
-					new_pos.z = original_pos.z
-				elif Input.is_key_pressed(KEY_Y):
-					new_pos.x = original_pos.x
-					new_pos.z = original_pos.z
-				elif Input.is_key_pressed(KEY_Z):
-					new_pos.x = original_pos.x
-					new_pos.y = original_pos.y
-
-				drag_ball.global_transform.origin = new_pos
-				print("Set drag_ball position to: ", new_pos)
-
-		else:
-			# Regular camera movement
-			if Input.is_mouse_button_pressed(BUTTON_LEFT):
+		if Input.is_mouse_button_pressed(BUTTON_LEFT):
 				var motion = event.relative
 				camera_holder.rotation.x += motion.y * 0.01
 				camera_holder.rotation.y += motion.x * -0.01
-			elif Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
+		elif Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
 				var motion = event.relative
 				camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 				camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
-	# Ball selection highlight
+
 	if selecting_on:
 		var real_center = rect_position + rect_size / 2.0
-		var offset = event.position - real_center
-		offset /= tex.rect_scale
+		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
 
 		var from = camera.project_ray_origin(screen_pos)
-		var to = from + camera.project_ray_normal(screen_pos) * 950
-		var space_state = camera.get_world().direct_space_state
-		var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
-		if !result.empty():
-			label.show()
-			deal_with_last_selected()
-			result.collider.get_parent()._on_Area_mouse_entered()
-			last_selected = result.collider.get_parent()
+		var to   = from + camera.project_ray_normal(screen_pos) * 950
+		var result = camera.get_world().direct_space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
+
+		if result:
+				label.show()
+				deal_with_last_selected()
+				result.collider.get_parent()._on_Area_mouse_entered()
+				last_selected = result.collider.get_parent()
 		else:
-			deal_with_last_selected()
-			last_selected = null
-			label.hide()
-
+				deal_with_last_selected()
+				last_selected = null
+				label.hide()
 	elif event is InputEventMouseButton:
-		if selecting_on and event.button_index == BUTTON_LEFT and event.doubleclick:
-			return
-		var real_center = rect_position + rect_size / 2.0
-		var offset = event.position - real_center
-		offset /= tex.rect_scale
-		var screen_pos = Vector2(500, 500) + offset
-
-		if event.button_index == BUTTON_WHEEL_DOWN:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale /= 2.0
-		elif event.button_index == BUTTON_WHEEL_UP:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale *= 2.0
-		elif event.doubleclick and event.button_index == BUTTON_LEFT and last_selected_is_valid():
-			last_selected.selected()
-		elif event.button_index == BUTTON_LEFT:
-			var hovered = get_ball_under_mouse(
-				(event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500,500)
-			)
-			if event.pressed and Input.is_key_pressed(KEY_SHIFT) and hovered:
-				drag_ball = hovered
-				is_dragging = true
-				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
-				var ray_o = camera.project_ray_origin(event.position)
-				var ray_d = camera.project_ray_normal(event.position)
-				var plane_n = camera.global_transform.basis.z.normalized()
-				var plane_p = drag_ball.global_transform.origin
-				var hit = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
-				if hit:
-					print("[LNZ EDIT] Intersect successful:", hit)
-			elif is_dragging and drag_ball:
-				print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
-				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-				var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
-				print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" %
-					  [drag_ball.ball_no, lnz_pos])
-				pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
-
-				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
-				print("[LNZ EDIT] Reset origin for ball %d to %s" %
-					  [drag_ball.ball_no, drag_ball.global_transform.origin])
-
-				pet_node.emit_ball_translation_done()
-				is_dragging = false
-				drag_ball = null
+		if selecting_on and event.button_index == BUTTON_LEFT and event.doubleclick and last_selected_is_valid():
+				last_selected.selected()
+				return
+		if event.button_index == BUTTON_LEFT and event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+				var hover = get_ball_under_mouse((event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500,500))
+				if hover:
+						emit_signal("find_ball", hover.ball_no)
+				return
 
 func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
 	var denom = plane_normal.dot(ray_dir)
