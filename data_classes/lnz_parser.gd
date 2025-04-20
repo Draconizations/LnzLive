@@ -183,11 +183,14 @@ func parse_paintballs(file: File):
 
 func parse_moves(file: File):
 	file.seek(0)
-	while file.get_line() != "[Move]" and !file.eof_reached():
-		pass
+	while !file.eof_reached():
+			var hdr = file.get_line().strip_edges()
+			if hdr == "[Move]":
+					break
 	while true:
-		var line = file.get_line()
-		if line.empty() or line.begins_with("[") or file.eof_reached():
+		var raw = file.get_line()
+		var line = raw.strip_edges()
+		if line == "" or line.empty() or line.begins_with("[") or file.eof_reached():
 			break
 		if line.begins_with(";") or line.begins_with("#"):
 			continue
@@ -204,7 +207,7 @@ func parse_moves(file: File):
 		var move_array = moves.get(base, [])
 		move_array.append({"position": position, "relative_to": relative_to})
 		moves[base] = move_array
-
+		
 func get_project_balls(file: File):
 	get_next_section(file, "Project Ball")
 	var parsed_lines = get_parsed_lines(file, ["base", "projected", "amount"])

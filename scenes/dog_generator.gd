@@ -28,6 +28,9 @@ var current_animation = 0
 var current_frame = 0
 var current_bdt: BdtParser
 
+var _orig_lnz_pos := {}
+var _orig_world_pos := {}
+
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 signal animation_loaded(num_of_frames)
@@ -40,10 +43,8 @@ signal addball_deleted(ball_no)
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
 
-# func _ready():
-# 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
-# 	self.connect("ball_translation_changed", editor, "_on_Node_ball_translation_changed")
-# 	self.connect("ball_translations_done", editor, "_on_Node_ball_translations_done")
+func _ready():
+	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 
 func set_animation(anim_index: int):
 	current_animation = anim_index
@@ -283,6 +284,10 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		var b: BallData = base_ball_dict.get(k)
 		if b == null or v == null:
 			continue
+
+		_orig_lnz_pos[k] = b.position # record LNZ positions
+		#print("Saved raw LNZ position for ball %d: %s" % [k, _orig_lnz_pos[k]])
+
 		b.size += v.size
 		b.outline_color_index = v.outline_color_index
 		b.outline = v.outline
@@ -668,6 +673,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				paintball_map[key] = ar
 
 			count += 1
+
+	for ball_no in ball_map.keys():
+		var node = ball_map[ball_no]
+		if node and node is Spatial:
+			_orig_world_pos[ball_no] = node.global_transform.origin
+			#print("Saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
 
 func get_real_ball_size(ball_size):
 	return ball_size
