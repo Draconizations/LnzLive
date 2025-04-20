@@ -18,26 +18,38 @@ func _ready():
 func _on_example_file_selected(filepath):
 	var file = File.new()
 	file.open(filepath, File.READ)
-	text = file.get_as_text()
+	var contents = file.get_as_text()
+	file.close()
 	self.filepath = filepath
 	is_user_file = false
-	file.close()
+	_set_text_preserve(contents)
 
 func _on_user_file_selected(filepath):
-	if (filepath == null):
+	if filepath == null:
 		return
-	
 	var file = File.new()
 	file.open(filepath, File.READ)
-	text = file.get_as_text()
+	var contents = file.get_as_text()
+	file.close()
 	self.filepath = filepath
 	is_user_file = true
-	file.close()
+	_set_text_preserve(contents)
 
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file()
-		
+
+func _set_text_preserve(new_text:String) -> void:
+	var old_v = get_v_scroll()
+	var old_h = get_h_scroll()
+	var old_l = cursor_get_line()
+	var old_c = cursor_get_column()
+	text = new_text
+	set_v_scroll(old_v)
+	set_h_scroll(old_h)
+	cursor_set_line(old_l)
+	cursor_set_column(old_c)
+
 func save_backup():
 	if is_user_file:
 		var dir = Directory.new()
@@ -75,6 +87,7 @@ func save_file():
 		filepath = possible_file_name
 		is_user_file = true
 	emit_signal("file_saved", filepath)
+	_set_text_preserve(text)
 
 func _on_ApplyChangesButton_pressed():
 	save_file()
@@ -1282,7 +1295,6 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 							insert_at -= 1
 					insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 					print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
-	text = get_text()
 	save_file()
 
 func _on_Node_ball_translations_done():
