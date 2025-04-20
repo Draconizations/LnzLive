@@ -66,28 +66,41 @@ func save_backup():
 		
 func save_file():
 	if is_user_file:
-		var dir = Directory.new()
-		dir.open("user://")
-		dir.make_dir("resources")
-		var file = File.new()
-		file.open(filepath, File.WRITE)
-		file.store_string(text)
-		file.close()
+			var dir = Directory.new()
+			dir.open("user://")
+			dir.make_dir("resources")
+			var file = File.new()
+			file.open(filepath, File.WRITE)
+			file.store_string(text)
+			file.close()
 	else:
-		var dir = Directory.new()
-		dir.open("user://")
-		dir.make_dir("resources")
-		var possible_file_name = filepath.replace("res://", "user://")
-		var file = File.new()
-		if file.file_exists(possible_file_name):
-			possible_file_name = possible_file_name.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
-		var _possible_error = file.open(possible_file_name, File.WRITE)
-		file.store_string(text)
-		file.close()
-		filepath = possible_file_name
-		is_user_file = true
+			var dir = Directory.new()
+			dir.open("user://")
+			dir.make_dir("resources")
+			var possible_file_name = filepath.replace("res://", "user://")
+			var file = File.new()
+			if file.file_exists(possible_file_name):
+					possible_file_name = possible_file_name.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
+			file.open(possible_file_name, File.WRITE)
+			file.store_string(text)
+			file.close()
+			filepath = possible_file_name
+			is_user_file = true
+
 	emit_signal("file_saved", filepath)
-	_set_text_preserve(text)
+
+	var buf = get_text()
+	var old_v = get_v_scroll()
+	var old_h = get_h_scroll()
+	var old_l = cursor_get_line()
+	var old_c = cursor_get_column()
+
+	set_text(buf)
+
+	set_v_scroll(old_v)
+	set_h_scroll(old_h)
+	cursor_set_line(old_l)
+	cursor_set_column(old_c)
 
 func _on_ApplyChangesButton_pressed():
 	save_file()
@@ -1230,71 +1243,82 @@ func _on_ToolsMenu_move_head(x, y, z):
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
-	
-	# Locate section
+
 	var section_tag = "[Move]"
 	if is_addball:
 		section_tag = "[Add Ball]"
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
-			print("[LNZ EDIT] No %s section found" % section_tag)
-			return
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 
-	# Detect delimiter
-	var delim = " "
+	var delim = ","
 	for i in range(start_line, end_line):
-			var test = get_line(i).strip_edges()
-			if test == "" or test.begins_with(";"): continue
-			if test.find(",") != -1:
-					delim = ", "
-			break
+		var test = get_line(i).strip_edges()
+		if test == "" or test.begins_with(";"):
+			continue
+		if test.find(",") == -1:
+			delim = " "
+		break
+
+	var sep = delim
+	if delim == ",":
+		sep = ", "
+	else:
+		sep = " "
 
 	if is_addball:
-			# Update x, y, z entries in [Add Ball] section
-			var idx = ball_no - (max_base_ball_no)
-			var count = 0
-			for i in range(start_line, end_line):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					if count == idx:
-						var parts = []
-						if delim == ", ":
-							parts = raw.split(",", false)
-						else:
-							parts = raw.split(" ", false)
-						# Sum coords
-						parts[1] = str(parts[1].to_int() + new_pos.x)
-						parts[2] = str(parts[2].to_int() + new_pos.y)
-						parts[3] = str(parts[3].to_int() + new_pos.z)
-						var new_line = parts.join(delim)
-						set_line(i, new_line)
-						print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
-						break
-					count += 1
+		var idx = ball_no - (max_base_ball_no + 1)
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			if count == idx:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() >= 4:
+					parts[1] = str(parts[1].to_int() + new_pos.x)
+					parts[2] = str(parts[2].to_int() + new_pos.y)
+					parts[3] = str(parts[3].to_int() + new_pos.z)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
+				break
+			count += 1
 	else:
-			# Update or insert [Move] line
-			var updated = false
-			for i in range(start_line, end_line):
-					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"): continue
-					var parts = raw.split(delim, false)
-					if parts.size() >= 4 and parts[0].to_int() == ball_no:
-							for axis in [1,2,3]:
-									parts[axis] = str(parts[axis].to_int() + new_pos[axis - 1])
-							var new_line = parts.join(delim)
-							set_line(i, new_line)
-							print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
-							updated = true
-							break
-			if not updated:
-					var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, new_pos.x, delim, new_pos.y, delim, new_pos.z]
-					var insert_at = end_line
-					while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
-							insert_at -= 1
-					insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
-					print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
+		var updated = false
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			var parts = raw.split(delim, false)
+			for j in range(parts.size()):
+				parts[j] = parts[j].strip_edges()
+			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				parts[1] = str(parts[1].to_int() + new_pos.x)
+				parts[2] = str(parts[2].to_int() + new_pos.y)
+				parts[3] = str(parts[3].to_int() + new_pos.z)
+				var new_line = parts.join(sep)
+				set_line(i, new_line)
+				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
+				updated = true
+				break
+		if not updated:
+			var line_txt = "%d%s%d%s%d%s%d" % [
+				ball_no, sep,
+				new_pos.x, sep,
+				new_pos.y, sep,
+				new_pos.z
+			]
+			var insert_at = end_line
+			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
+				insert_at -= 1
+			insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
+			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
 
 func _on_Node_ball_translations_done():
