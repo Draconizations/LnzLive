@@ -59,8 +59,19 @@ func _gui_input(event):
 			var plane_p = drag_ball.global_transform.origin
 			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
 			if intersect:
-					drag_ball.global_transform.origin = intersect
-					print("Set drag_ball position to:", intersect)
+					var new_pos = intersect
+					var original_pos = drag_ball.global_transform.origin
+					if Input.is_key_pressed(KEY_X):
+							new_pos.y = original_pos.y
+							new_pos.z = original_pos.z
+					elif Input.is_key_pressed(KEY_Y):
+							new_pos.x = original_pos.x
+							new_pos.z = original_pos.z
+					elif Input.is_key_pressed(KEY_Z):
+							new_pos.x = original_pos.x
+							new_pos.y = original_pos.y
+					drag_ball.global_transform.origin = new_pos
+					print("Set drag_ball position to: ", new_pos)
 			return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
@@ -84,7 +95,6 @@ func _gui_input(event):
 				var motion = event.relative
 				camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 				camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
-
 
 	if selecting_on:
 		var real_center = rect_position + rect_size / 2.0
