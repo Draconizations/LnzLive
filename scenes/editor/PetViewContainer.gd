@@ -118,11 +118,6 @@ func _gui_input(event):
 		if selecting_on and event.button_index == BUTTON_LEFT and event.doubleclick and last_selected_is_valid():
 				last_selected.selected()
 				return
-		if event.button_index == BUTTON_LEFT and event.pressed and not Input.is_key_pressed(KEY_SHIFT):
-				var hover = get_ball_under_mouse((event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500,500))
-				if hover:
-						emit_signal("find_ball", hover.ball_no)
-				return
 
 func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
 	var denom = plane_normal.dot(ray_dir)
