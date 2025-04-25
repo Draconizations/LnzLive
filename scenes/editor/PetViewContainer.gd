@@ -15,6 +15,11 @@ var drag_ball = null
 var drag_offset = Vector3()
 var pixel_world_size = 0.002
 
+var is_resizing = false
+var original_lnz_size = 0
+var original_scale = 1.0
+var drag_start_pos = Vector2()
+
 #func _ready():
 #	flip_camera_view()
 
@@ -25,30 +30,46 @@ func flip_camera_view():
 
 func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale /= 2.0
-			return
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale /= 2.0
+		return
 	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale *= 2.0
-			return
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale *= 2.0
+		return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
-			if selecting_on and last_selected_is_valid():
-					last_selected.selected()
-			return
+		if selecting_on and last_selected_is_valid():
+			last_selected.selected()
+		return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
-			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size/2.0)) / tex.rect_scale + Vector2(500, 500))
-			if hover:
-					drag_ball = hover
-					is_dragging = true
-					print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
-					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-					pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
-			return
+		var alt_key = Input.is_key_pressed(KEY_ALT)
+		var s = Input.is_key_pressed(KEY_S)
+
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			drag_ball = hover
+			is_dragging = true
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+			if alt_key and s:
+				is_resizing = true
+				original_scale = drag_ball.ball_size
+				drag_start_pos = event.position
+				print("[LNZ EDIT] Started scale drag on ball:", drag_ball.name)
+			else:
+				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
+				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
+		return
 
 	if event is InputEventMouseMotion and is_dragging and drag_ball:
+		if is_resizing:
+			var delta = event.position - drag_start_pos
+			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
+			var new_size = clamp(original_scale + change, 1.0, 100.0)
+			drag_ball.set_ball_size(new_size)
+		else:
 			var real_center = rect_position + rect_size / 2.0
 			var offset = event.position - real_center
 			offset /= tex.rect_scale
@@ -59,42 +80,47 @@ func _gui_input(event):
 			var plane_p = drag_ball.global_transform.origin
 			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
 			if intersect:
-					var new_pos = intersect
-					var original_pos = drag_ball.global_transform.origin
-					if Input.is_key_pressed(KEY_X):
-							new_pos.y = original_pos.y
-							new_pos.z = original_pos.z
-					elif Input.is_key_pressed(KEY_Y):
-							new_pos.x = original_pos.x
-							new_pos.z = original_pos.z
-					elif Input.is_key_pressed(KEY_Z):
-							new_pos.x = original_pos.x
-							new_pos.y = original_pos.y
-					drag_ball.global_transform.origin = new_pos
-					print("Set drag_ball position to: ", new_pos)
-			return
+				var new_pos = intersect
+				var original_pos = drag_ball.global_transform.origin
+				if Input.is_key_pressed(KEY_X):
+					new_pos.y = original_pos.y
+					new_pos.z = original_pos.z
+				elif Input.is_key_pressed(KEY_Y):
+					new_pos.x = original_pos.x
+					new_pos.z = original_pos.z
+				elif Input.is_key_pressed(KEY_Z):
+					new_pos.x = original_pos.x
+					new_pos.y = original_pos.y
+				drag_ball.global_transform.origin = new_pos
+				print("Set drag_ball position to: ", new_pos)
+		return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if is_resizing:
+			var size_dif = get_lnz_size_difference(original_scale, drag_ball, pet_node)
+			pet_node.emit_ball_resize(drag_ball.ball_no, size_dif)
+		else:
 			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
 			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
 			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
-			pet_node.emit_ball_translation_done()
-			is_dragging = false
-			drag_ball = null
-			return
+
+		is_dragging = false
+		is_resizing = false
+		drag_ball = null
+		return
 
 	if event is InputEventMouseMotion and not is_dragging:
 		label.rect_global_position = event.global_position
 		if Input.is_mouse_button_pressed(BUTTON_LEFT):
-				var motion = event.relative
-				camera_holder.rotation.x += motion.y * 0.01
-				camera_holder.rotation.y += motion.x * -0.01
+			var motion = event.relative
+			camera_holder.rotation.x += motion.y * 0.01
+			camera_holder.rotation.y += motion.x * -0.01
 		elif Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
-				var motion = event.relative
-				camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
-				camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
+			var motion = event.relative
+			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
+			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
 	if selecting_on:
 		var real_center = rect_position + rect_size / 2.0
@@ -102,22 +128,18 @@ func _gui_input(event):
 		var screen_pos = Vector2(500, 500) + offset
 
 		var from = camera.project_ray_origin(screen_pos)
-		var to   = from + camera.project_ray_normal(screen_pos) * 950
+		var to = from + camera.project_ray_normal(screen_pos) * 950
 		var result = camera.get_world().direct_space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
 
 		if result:
-				label.show()
-				deal_with_last_selected()
-				result.collider.get_parent()._on_Area_mouse_entered()
-				last_selected = result.collider.get_parent()
+			label.show()
+			deal_with_last_selected()
+			result.collider.get_parent()._on_Area_mouse_entered()
+			last_selected = result.collider.get_parent()
 		else:
-				deal_with_last_selected()
-				last_selected = null
-				label.hide()
-	elif event is InputEventMouseButton:
-		if selecting_on and event.button_index == BUTTON_LEFT and event.doubleclick and last_selected_is_valid():
-				last_selected.selected()
-				return
+			deal_with_last_selected()
+			last_selected = null
+			label.hide()
 
 func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
 	var denom = plane_normal.dot(ray_dir)
@@ -205,3 +227,28 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 	print("[LNZ EDIT] Rounded LNZ‐space offset (int): %s" % lnz_offset)
 
 	return lnz_offset
+
+func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
+	var ball_no = drag_ball.ball_no
+	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+
+	var lnz_size = 0
+	if is_addball:
+		if pet_node.lnz.addballs.has(ball_no):
+			lnz_size = pet_node.lnz.addballs[ball_no].size
+	else:
+		if pet_node.lnz.balls.has(ball_no):
+			lnz_size = pet_node.lnz.balls[ball_no].size
+
+	var current_visual_diameter = drag_ball.ball_size
+
+	print("Old visual scale: %s" % original_scale)
+	print("New visual scale: %s" % current_visual_diameter)
+
+	var pct_delta = drag_ball.ball_size / original_scale
+	var size_dif = lnz_size*pct_delta + (current_visual_diameter - original_scale)*pct_delta
+
+	print("[LNZ EDIT] Ball %d original diameter: %d vs adjusted diameter: %d, stored LNZ = %d, updated LNZ = %d"
+		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
+
+	return size_dif

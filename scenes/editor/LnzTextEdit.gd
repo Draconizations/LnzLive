@@ -15,6 +15,10 @@ func _ready():
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
 
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	if not pet_node.is_connected("ball_resized", self, "_on_Node_ball_resized"):
+		pet_node.connect("ball_resized", self, "_on_Node_ball_resized")
+
 func _on_example_file_selected(filepath):
 	var file = File.new()
 	file.open(filepath, File.READ)
@@ -1270,7 +1274,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 		sep = " "
 
 	if is_addball:
-		var idx = ball_no - (max_base_ball_no + 1)
+		var idx = ball_no - max_base_ball_no
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
@@ -1321,8 +1325,91 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
 
-func _on_Node_ball_translations_done():
-	save_file()
+func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+
+	var section_tag = "[Ballz Info]"
+	var size_field_index = 5  # 6th field is size
+	if is_addball:
+		section_tag = "[Add Ball]"
+		size_field_index = 10  # 11th field is size for addballs
+
+	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(start_line, end_line):
+		var test = get_line(i).strip_edges()
+		if test == "" or test.begins_with(";"):
+			continue
+		if test.find(",") != -1:
+			delim = ","
+		break
+
+	var sep = " "
+	if delim == ",":
+		sep = ", "
+
+	if is_addball:
+		var addball_index = ball_no - max_base_ball_no
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			if count == addball_index:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+			count += 1
+		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
+	else:
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
+			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
+			if count == ball_no:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+				else:
+					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
+					return
+			count += 1
+		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
 
 func insert_text_at_cursor_at_line(line: int, new_text: String):
 	cursor_set_line(line)

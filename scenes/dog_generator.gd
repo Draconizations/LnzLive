@@ -43,6 +43,8 @@ signal addball_deleted(ball_no)
 signal ball_translation_changed(ball_no, new_position)
 signal ball_translations_done
 
+signal ball_resized(ball_no, size_dif)
+
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 
@@ -978,5 +980,5 @@ func _on_ViewPaletteButton_pressed():
 func emit_ball_translation(ball_no: int, new_position: Vector3):
 	emit_signal("ball_translation_changed", ball_no, new_position)
 
-func emit_ball_translation_done():
-	emit_signal("ball_translations_done")
+func emit_ball_resize(ball_no: int, size_dif: int):
+	emit_signal("ball_resized", ball_no, size_dif)
