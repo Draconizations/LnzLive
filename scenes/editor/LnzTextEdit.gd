@@ -954,7 +954,21 @@ func _on_LnzTextEdit_gui_input(event):
 			emit_signal("find_ball", int(get_word_under_cursor()))
 
 func _on_Node_addball_created(reference_ball):
-	var real_base_ball = reference_ball.ball_no
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+	if reference_ball == null:
+		print("[LNZ EDIT] No reference ball given")
+		return
+
+	var ball_no = reference_ball.ball_no
+
+	var lnz_size = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		lnz_size = pet_node.lnz.addballs[reference_ball.ball_no].size
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		lnz_size = 25
+
+	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
 		real_base_ball = reference_ball.base_ball_no
 
@@ -963,26 +977,55 @@ func _on_Node_addball_created(reference_ball):
 		print("[LNZ EDIT] No [Add Ball] section found")
 		return
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var insert_line = start_of_section
-	while insert_line < get_line_count():
-		var line = get_line(insert_line).strip_edges()
-		if line.begins_with("["):
-			break
-		insert_line += 1
-	var new_ball_no = KeyBallsData.max_base_ball_num + (insert_line - start_of_section)
+	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
 
-	var new_pos = Vector3(0, -10, 0)
-	if reference_ball.base_ball_no != -1:
-		new_pos = reference_ball.transform.origin * 1000.0
-		new_pos.y -= 10
-	var line_text = "%d %d %d %d %d %d 0 %d 0 %d 30 0 0 0 -1\n" % [
-		real_base_ball,
-		int(new_pos.x), int(new_pos.y), int(new_pos.z),
-		reference_ball.color_index,
-		reference_ball.outline_color_index,
-		reference_ball.fuzz_amount,
-		reference_ball.old_outline
+	var delim = ","
+	for i in range(start_of_section, end_of_section):
+		var test = get_line(i).strip_edges()
+		if test == "" or test.begins_with(";"):
+			continue
+		if test.find(",") == -1:
+			delim = " "
+			break
+	var sep = ", " if delim == "," else " "
+
+	var insert_line = end_of_section
+	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
+		insert_line -= 1
+
+	var new_pos = Vector3(0, 0, -25)
+	if reference_ball.base_ball_no != -1 and pet_node.lnz.addballs.has(ball_no):
+		new_pos = pet_node.lnz.addballs[ball_no].position - Vector3(0, 0, 25)
+
+	var texture_id = -1
+	if pet_node.lnz.addballs.has(ball_no):
+		texture_id = pet_node.lnz.addballs[ball_no].texture_id
+	elif pet_node.lnz.balls.has(ball_no):
+		texture_id = pet_node.lnz.balls[ball_no].texture_id
+
+	var fields = [
+		str(real_base_ball),
+		str(int(new_pos.x)),
+		str(int(new_pos.y)),
+		str(int(new_pos.z)),
+		str(reference_ball.color_index),
+		str(reference_ball.outline_color_index),
+		"0",
+		str(reference_ball.fuzz_amount),
+		"0",
+		str(reference_ball.old_outline),
+		str(lnz_size),
+		"0", "0", "0",
+		str(texture_id)
 	]
+
+	var line_text = ""
+	for i in range(fields.size()):
+		line_text += fields[i]
+		if i < fields.size() - 1:
+			line_text += sep
+	line_text += "\n"
+
 	insert_text_at_cursor_at_line(insert_line, line_text)
 	cursor_set_line(insert_line)
 	cursor_set_column(0)
