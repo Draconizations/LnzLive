@@ -968,6 +968,12 @@ func _on_Node_addball_created(reference_ball):
 	elif pet_node.lnz.balls.has(reference_ball.ball_no):
 		lnz_size = 25
 
+	var fuzz_amount = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.addballs[reference_ball.ball_no].fuzz
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.balls[reference_ball.ball_no].fuzz
+
 	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
 		real_base_ball = reference_ball.base_ball_no
@@ -1003,6 +1009,11 @@ func _on_Node_addball_created(reference_ball):
 	elif pet_node.lnz.balls.has(ball_no):
 		texture_id = pet_node.lnz.balls[ball_no].texture_id
 
+	var bodyarea = 1
+
+	if KeyBallsData.bodyarea_map.has(real_base_ball):
+		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
+
 	var fields = [
 		str(real_base_ball),
 		str(int(new_pos.x)),
@@ -1011,11 +1022,12 @@ func _on_Node_addball_created(reference_ball):
 		str(reference_ball.color_index),
 		str(reference_ball.outline_color_index),
 		"0",
-		str(reference_ball.fuzz_amount),
+		str(fuzz_amount),
 		"0",
 		str(reference_ball.old_outline),
 		str(lnz_size),
-		"0", "0", "0",
+		str(bodyarea),
+		"0",
 		str(texture_id)
 	]
 
