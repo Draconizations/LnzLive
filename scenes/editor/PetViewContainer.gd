@@ -24,6 +24,8 @@ var original_lnz_size = 0
 var original_scale = 1.0
 var drag_start_pos = Vector2()
 
+const ZOOM_STEP := 1.2
+
 func _ready():
 	# flip_camera_view()
 	add_child(right_click_menu)
@@ -55,11 +57,11 @@ func flip_camera_view():
 func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale /= 2.0
+		tex.rect_scale /= ZOOM_STEP
 		return
 	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
-		tex.rect_scale *= 2.0
+		tex.rect_scale *= ZOOM_STEP
 		return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
