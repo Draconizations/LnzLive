@@ -1,5 +1,7 @@
 extends Node
 
+var bodyarea_map = {}
+
 var legs_dog = [
 	[7, 31, 9, 10, 11, 13, 23, 33, 34, 35, 37, 47], # front legs 
 	[40, 16, 0, 12, 20, 21, 22, 24, 36, 44, 45, 46], # back legs
@@ -87,3 +89,52 @@ func _ready():
 		symmetry_mode_hide_balls_dog.append(n)
 	for n in range(24, 48):
 		symmetry_mode_right_balls_dog.append(n)
+	
+	# bodyarea values
+	# 8 = head-related
+	# 1 = body-related (safe fallback and general default)
+
+	for b in head_ext_dog:
+		bodyarea_map[b] = 8
+	for b in face_ext_dog:
+		bodyarea_map[b] = 8
+	for b in tongue_dog:
+		bodyarea_map[b] = 8
+	for b in eyes_dog.keys():
+		bodyarea_map[b] = 8
+	for b in eyes_dog.values():
+		bodyarea_map[b] = 8
+	for b in nose_dog:
+		bodyarea_map[b] = 8
+	for base in ear_ext_dog:
+		bodyarea_map[base] = 8
+		for b in ear_ext_dog[base]:
+			bodyarea_map[b] = 8
+
+	for b in tail_dog:
+		bodyarea_map[b] = 1
+
+	for b in body_ext_dog:
+		bodyarea_map[b] = 1
+
+	for leg_group in legs_dog:
+		for b in leg_group:
+			bodyarea_map[b] = 1
+
+	for group in foot_ext_dog:
+		for b in group:
+			bodyarea_map[b] = 1
+
+	for b in symmetry_mode_right_balls_dog:
+		if not bodyarea_map.has(b):
+			bodyarea_map[b] = 1
+
+	for b in symmetry_mode_hide_balls_dog:
+		if not bodyarea_map.has(b):
+			bodyarea_map[b] = 1
+
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			if not bodyarea_map.has(i):
+				bodyarea_map[i] = 1
+
