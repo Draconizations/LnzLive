@@ -24,6 +24,9 @@ var original_lnz_size = 0
 var original_scale = 1.0
 var drag_start_pos = Vector2()
 
+var linez_mode = false
+var linez_start_ball = null
+
 const ZOOM_STEP := 1.2
 
 func _ready():
@@ -68,14 +71,28 @@ func _gui_input(event):
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			right_click_ball = hover
-			right_click_menu.set_position(event.position)
+			#right_click_menu.set_position(event.position)
+			right_click_menu.set_position(get_viewport().get_mouse_position())
 			right_click_menu.popup()
 			return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
-		if selecting_on and last_selected_is_valid():
+		if selecting_on and not linez_mode and last_selected_is_valid():
 			last_selected.selected()
 		return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and linez_mode:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover and hover != linez_start_ball:
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+			hover.apply_outline_state(hover.OutlineState.NONE)
+
+			linez_mode = false
+			linez_start_ball = null
+			return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
@@ -163,7 +180,15 @@ func _gui_input(event):
 			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
-	if selecting_on:
+		if linez_mode:
+			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+				if b != linez_start_ball:
+					b.apply_outline_state(b.OutlineState.NONE)
+			if hover and hover != linez_start_ball:
+				hover.apply_outline_state(hover.OutlineState.HOVER)
+
+	if selecting_on and not linez_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -190,8 +215,13 @@ func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_norma
 	return ray_origin + ray_dir * d
 
 func _unhandled_key_input(event):
-	if event.pressed and last_selected_is_valid():
-		last_selected._input(event)
+	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
+		linez_mode = true
+		linez_start_ball = last_selected
+		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+	else:
+		if event.pressed and last_selected_is_valid():
+			last_selected._input(event)
 		
 func last_selected_is_valid():
 	return last_selected != null and is_instance_valid(last_selected)
@@ -305,6 +335,8 @@ func _on_RightClickMenu_id_pressed(id):
 		# "Create Addballz"
 		pet_node.emit_signal("addball_created", right_click_ball)
 
-	#elif id == 1:
-	#	# "Connect by Linez"
-	#	start_linez_connect_mode(right_click_ball)
+	elif id == 1:
+		# "Connect by Linez"
+		linez_mode = true
+		linez_start_ball = right_click_ball
+		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
