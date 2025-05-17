@@ -45,6 +45,9 @@ signal ball_translations_done
 
 signal ball_resized(ball_no, size_dif)
 
+signal addball_created(reference_ball)
+signal line_created(start_ball, end_ball)
+
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 

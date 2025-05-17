@@ -18,6 +18,10 @@ func _ready():
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if not pet_node.is_connected("ball_resized", self, "_on_Node_ball_resized"):
 		pet_node.connect("ball_resized", self, "_on_Node_ball_resized")
+	if not pet_node.is_connected("addball_created", self, "_on_Node_addball_created"):
+		pet_node.connect("addball_created", self, "_on_Node_addball_created")
+	if not pet_node.is_connected("line_created", self, "_on_Node_line_created"):
+		pet_node.connect("line_created", self, "_on_Node_line_created")
 
 func _on_example_file_selected(filepath):
 	var file = File.new()
@@ -951,6 +955,149 @@ func _on_LnzTextEdit_gui_input(event):
 		else:
 			emit_signal("find_ball", int(get_word_under_cursor()))
 
+func _on_Node_line_created(start_ball, end_ball):
+	var section_find = search('[Linez]', 0, 0, 0)
+	if section_find.empty():
+		print("[LNZ EDIT] No [Linez] section found")
+		return
+
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_of_section - 1, start_of_section - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+	var insert_line = end_of_section
+	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
+		insert_line -= 1
+
+	var new_line = "%s%s%s%s0%s-1%s-1%s-1%s95%s95%s-1%s0\n" % [
+		str(start_ball), sep,
+		str(end_ball), sep,
+		sep, sep, sep, sep, sep, sep, sep
+	]
+
+	insert_text_at_cursor_at_line(insert_line, new_line)
+	cursor_set_line(insert_line)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
+	save_file()
+
+func _on_Node_addball_created(reference_ball):
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+	if reference_ball == null:
+		print("[LNZ EDIT] No reference ball given")
+		return
+
+	var ball_no = reference_ball.ball_no
+
+	var lnz_size = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		lnz_size = pet_node.lnz.addballs[reference_ball.ball_no].size
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		lnz_size = 25
+
+	var fuzz_amount = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.addballs[reference_ball.ball_no].fuzz
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.balls[reference_ball.ball_no].fuzz
+
+	var real_base_ball = ball_no
+	if reference_ball.base_ball_no != -1:
+		real_base_ball = reference_ball.base_ball_no
+
+	var section_find = search('[Add Ball]', 0, 0, 0)
+	if section_find.empty():
+		print("[LNZ EDIT] No [Add Ball] section found")
+		return
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_of_section - 1, start_of_section - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+	var insert_line = end_of_section
+	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
+		insert_line -= 1
+
+	var new_pos = Vector3(0, 0, -25)
+	if reference_ball.base_ball_no != -1 and pet_node.lnz.addballs.has(ball_no):
+		new_pos = pet_node.lnz.addballs[ball_no].position - Vector3(0, 0, 25)
+
+	var texture_id = -1
+	if pet_node.lnz.addballs.has(ball_no):
+		texture_id = pet_node.lnz.addballs[ball_no].texture_id
+	elif pet_node.lnz.balls.has(ball_no):
+		texture_id = pet_node.lnz.balls[ball_no].texture_id
+
+	var bodyarea = 1
+
+	if KeyBallsData.bodyarea_map.has(real_base_ball):
+		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
+	else:
+		print("Missing bodyarea for ball", real_base_ball)
+
+
+	var fields = [
+		str(real_base_ball),
+		str(int(new_pos.x)),
+		str(int(new_pos.y)),
+		str(int(new_pos.z)),
+		str(reference_ball.color_index),
+		str(reference_ball.outline_color_index),
+		"0",
+		str(fuzz_amount),
+		"0",
+		str(reference_ball.old_outline),
+		str(lnz_size),
+		str(bodyarea),
+		"0",
+		str(texture_id)
+	]
+
+	var line_text = ""
+	for i in range(fields.size()):
+		line_text += fields[i]
+		if i < fields.size() - 1:
+			line_text += sep
+	line_text += "\n"
+
+	insert_text_at_cursor_at_line(insert_line, line_text)
+	cursor_set_line(insert_line)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
+	save_file()
+
 func _on_Node_addball_deleted(ball_no):
 	# remove the addball line
 	var line_no = find_line_in_addball_section(ball_no - 67)
@@ -1258,20 +1405,23 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 
-	var delim = ","
-	for i in range(start_line, end_line):
-		var test = get_line(i).strip_edges()
-		if test == "" or test.begins_with(";"):
+	var delim = " "
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
 			continue
-		if test.find(",") == -1:
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
 			delim = " "
 		break
 
 	var sep = delim
-	if delim == ",":
-		sep = ", "
-	else:
-		sep = " "
+
 
 	if is_addball:
 		var idx = ball_no - max_base_ball_no
@@ -1346,17 +1496,21 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 
 	var delim = " "
-	for i in range(start_line, end_line):
-		var test = get_line(i).strip_edges()
-		if test == "" or test.begins_with(";"):
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
 			continue
-		if test.find(",") != -1:
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
 			delim = ","
+		else:
+			delim = " "
 		break
 
-	var sep = " "
-	if delim == ",":
-		sep = ", "
+	var sep = delim
 
 	if is_addball:
 		var addball_index = ball_no - max_base_ball_no

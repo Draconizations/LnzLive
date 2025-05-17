@@ -18,6 +18,16 @@ export var visible_override = true setget set_visible
 export var omitted = false
 export var pet_center = Vector3(0, 0, 0) setget set_pet_center
 
+enum OutlineState {
+	NONE,
+	ACTIVE_SELECTED,
+	LINEZ_START,
+	LINEZ_TARGET,
+	HOVER
+}
+
+var current_outline_state = OutlineState.NONE setget , get_outline_state
+
 var old_outline
 var old_outline_color
 var is_over = false
@@ -112,17 +122,45 @@ func _on_Area_mouse_entered():
 	is_over = true
 	turn_on_highlight()
 	emit_signal("ball_mouse_enter", {ball_no = ball_no})
-	
+
+func apply_outline_state(state: int):
+	if current_outline_state == OutlineState.NONE:
+		old_outline = outline
+		old_outline_color = outline_color_index
+
+	current_outline_state = state
+
+	match state:
+		OutlineState.HOVER:
+			set_outline(3)
+			set_outline_color_index(0)  # WHITE
+		OutlineState.ACTIVE_SELECTED:
+			set_outline(3)
+			set_outline_color_index(2)  # GREEN
+		OutlineState.LINEZ_START:
+			set_outline(3)
+			set_outline_color_index(1)  # RED
+		OutlineState.LINEZ_TARGET:
+			set_outline(3)
+			set_outline_color_index(4)  # BLUE
+		OutlineState.NONE:
+			set_outline(old_outline)
+			set_outline_color_index(old_outline_color)
+
 func turn_on_highlight():
-	old_outline = outline
-	old_outline_color = outline_color_index
-	set_outline(3)
-	set_outline_color_index(0)
+	apply_outline_state(OutlineState.HOVER)
 	
 func turn_off_highlight():
-	set_outline(old_outline)
-	set_outline_color_index(old_outline_color)
-	
+	var pet_container = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if pet_container and pet_container.has_method("get_visual_state_for_ball"):
+		var new_state = pet_container.get_visual_state_for_ball(self)
+		apply_outline_state(new_state)
+	else:
+		apply_outline_state(OutlineState.NONE)
+
+func get_outline_state():
+	return current_outline_state
+
 func _on_Area_mouse_exited():
 	is_over = false
 	turn_off_highlight()
