@@ -94,6 +94,28 @@ func _ready():
 	# 8 = head-related
 	# 1 = body-related (safe fallback and general default)
 
+	# [0] Z stuff  
+	# [1] Body Balls  
+	# [2] Right Leg Balls  
+	# [3] Left Leg Balls  
+	# [4] Right Hand Balls  
+	# [5] Left Hand Balls  
+	# [6] Right Foot Balls  
+	# [7] Left Foot Balls  
+	# [8] Head Balls  
+	# [9] Right Arm Balls  
+	# [10] Left Arm Balls  
+	# [11] Right Ear Balls  
+	# [12] Left Ear Balls  
+	# [13] Tail Balls  
+	# [14] Whisker Balls  
+	# [15] Jowlz Balls  
+	# [16] Tongue stuff  
+	# [17] Right Brow Balls  
+	# [18] Left Brow Balls  
+	# [19] Extra Balls  
+	# [20] Extra Head Balls  
+
 	for b in head_ext_dog:
 		bodyarea_map[b] = 8
 	for b in face_ext_dog:
