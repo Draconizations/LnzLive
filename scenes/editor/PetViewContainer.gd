@@ -7,8 +7,12 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
 
+var right_click_menu = PopupMenu.new()
+var right_click_ball = null
+
 var last_selected
 var selecting_on = false
+var active_selected_ball = null
 
 var is_dragging = false
 var drag_ball = null
@@ -20,8 +24,28 @@ var original_lnz_size = 0
 var original_scale = 1.0
 var drag_start_pos = Vector2()
 
-#func _ready():
-#	flip_camera_view()
+func _ready():
+	# flip_camera_view()
+	add_child(right_click_menu)
+	right_click_menu.add_item("Create Addballz", 0)
+	right_click_menu.add_item("Connect by Linez", 1)
+	right_click_menu.connect("id_pressed", self, "_on_RightClickMenu_id_pressed")
+
+func set_active_selected_ball(ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball):
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = ball
+	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
+
+func clear_active_selected_ball():
+	if active_selected_ball and is_instance_valid(active_selected_ball):
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = null
+
+func get_visual_state_for_ball(b):
+	if b == active_selected_ball:
+		return b.OutlineState.ACTIVE_SELECTED
+	return b.OutlineState.NONE
 
 func flip_camera_view():
 	var camera_transform = camera.transform
@@ -38,10 +62,25 @@ func _gui_input(event):
 		tex.rect_scale *= 2.0
 		return
 
+	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			right_click_ball = hover
+			right_click_menu.set_position(event.position)
+			right_click_menu.popup()
+			return
+
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
 		if selecting_on and last_selected_is_valid():
 			last_selected.selected()
 		return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			set_active_selected_ball(hover)
+		else:
+			clear_active_selected_ball()
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		var alt_key = Input.is_key_pressed(KEY_ALT)
@@ -168,6 +207,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		if last_selected_is_valid():
 			last_selected._on_Area_mouse_exited()
 		last_selected = null
+		clear_active_selected_ball()
 		label.hide()
 
 func _on_HelpButton_pressed():
@@ -252,3 +292,17 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
 
 	return size_dif
+
+func _on_RightClickMenu_id_pressed(id):
+	if not is_instance_valid(right_click_ball):
+		return
+
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+	if id == 0:
+		# "Create Addballz"
+		pet_node.emit_signal("addball_created", right_click_ball)
+
+	#elif id == 1:
+	#	# "Connect by Linez"
+	#	start_linez_connect_mode(right_click_ball)
