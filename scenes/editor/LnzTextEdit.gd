@@ -18,6 +18,8 @@ func _ready():
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if not pet_node.is_connected("ball_resized", self, "_on_Node_ball_resized"):
 		pet_node.connect("ball_resized", self, "_on_Node_ball_resized")
+	if not pet_node.is_connected("addball_created", self, "_on_Node_addball_created"):
+		pet_node.connect("addball_created", self, "_on_Node_addball_created")
 
 func _on_example_file_selected(filepath):
 	var file = File.new()
@@ -950,6 +952,42 @@ func _on_LnzTextEdit_gui_input(event):
 			emit_signal("find_ball", line_number)
 		else:
 			emit_signal("find_ball", int(get_word_under_cursor()))
+
+func _on_Node_addball_created(reference_ball):
+	var real_base_ball = reference_ball.ball_no
+	if reference_ball.base_ball_no != -1:
+		real_base_ball = reference_ball.base_ball_no
+
+	var section_find = search('[Add Ball]', 0, 0, 0)
+	if section_find.empty():
+		print("[LNZ EDIT] No [Add Ball] section found")
+		return
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var insert_line = start_of_section
+	while insert_line < get_line_count():
+		var line = get_line(insert_line).strip_edges()
+		if line.begins_with("["):
+			break
+		insert_line += 1
+	var new_ball_no = KeyBallsData.max_base_ball_num + (insert_line - start_of_section)
+
+	var new_pos = Vector3(0, -10, 0)
+	if reference_ball.base_ball_no != -1:
+		new_pos = reference_ball.transform.origin * 1000.0
+		new_pos.y -= 10
+	var line_text = "%d %d %d %d %d %d 0 %d 0 %d 30 0 0 0 -1\n" % [
+		real_base_ball,
+		int(new_pos.x), int(new_pos.y), int(new_pos.z),
+		reference_ball.color_index,
+		reference_ball.outline_color_index,
+		reference_ball.fuzz_amount,
+		reference_ball.old_outline
+	]
+	insert_text_at_cursor_at_line(insert_line, line_text)
+	cursor_set_line(insert_line)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
+	save_file()
 
 func _on_Node_addball_deleted(ball_no):
 	# remove the addball line
