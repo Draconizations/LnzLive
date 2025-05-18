@@ -28,8 +28,9 @@ enum OutlineState {
 
 var current_outline_state = OutlineState.NONE setget , get_outline_state
 
-var old_outline
-var old_outline_color
+var old_outline = outline
+var old_outline_color = outline_color_index
+
 var is_over = false
 
 const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
@@ -40,6 +41,8 @@ signal ball_selected(ball_no, section)
 signal ball_deleted(ball_no)
 
 func _ready():
+	old_outline = outline
+	old_outline_color = outline_color_index
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
 
