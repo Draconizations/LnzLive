@@ -9,8 +9,6 @@ extends TextEdit
 # - Handles batch recolor and mirror‐copy operations
 # - Emits signals for file_saved, file_backed_up, and find_ball actions
 
-# try to get animation 544 frame funny
-
 var is_user_file = false
 var filepath: String
 var r = RegEx.new()
@@ -306,8 +304,6 @@ func get_corresponding_left_ball(right_ball_index):
 
 var ball_map = {}
 
-# SECTION TITLE?
-
 func _on_ApplyChangesButton_pressed():
 	save_file()
 	emit_signal("file_saved", filepath)
@@ -345,12 +341,18 @@ func _on_HeadShotButton_pressed():
 		str(tilt)
 	]
 
+	var shot_labels = ["frame number", "rotation", "roll", "tilt"]
+	for i in range(shot_lines.size()):
+		var s = shot_lines[i]
+		while s.length() < 24:
+			s += " "
+		shot_lines[i] = s + shot_labels[i]
+
 	var bounds = _get_section_bounds("[Head Shot]")
 	if bounds.empty():
 		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
 		all_lines.insert(first_section, "[Head Shot]")
-
 		var temp = ""
 		for line in all_lines:
 			temp += line + "\n"
@@ -368,12 +370,34 @@ func _on_HeadShotButton_pressed():
 	for i in range(bounds["start"] + head_block_len, bounds["end"]):
 		tail_lines.append(lines[i])
 
+	for i in range(min(3, tail_lines.size())):
+		tail_lines[i] = "0"
+
+	var tail_labels = [
+		"head rotation",
+		"head tilt",
+		"head cock",
+		"R / L eyelid height",
+		"R / L eyelid tilt",
+		"(X, Y) eye target"
+	]
+
+	for i in range(min(tail_labels.size(), tail_lines.size())):
+		var raw = tail_lines[i]
+		var num = ""
+		for c in raw:
+			if c.is_valid_integer() or c == "," or c == "-" or c == " ":
+				num += c
+			else:
+				break
+		num = num.strip_edges()
+		while num.length() < 24:
+			num += " "
+		tail_lines[i] = num + tail_labels[i]
+
 	var after_lines = []
 	for i in range(bounds["end"], lines.size()):
 		after_lines.append(lines[i])
-
-	for i in range(min(3, tail_lines.size())):
-		tail_lines[i] = "0"
 
 	var new_text = ""
 	for line in before_lines:
@@ -387,8 +411,6 @@ func _on_HeadShotButton_pressed():
 
 	_set_text_preserve(new_text)
 	save_file()
-
-# SECTION TITLE?
 
 func _on_Node_line_created(start_ball, end_ball):
 	var bounds = _get_section_bounds("[Linez]")
