@@ -32,15 +32,30 @@ func _init(file_path):
 	var animation_count = file.get_16()
 	#print("Number of Animations: ", animation_count)
 	
-	for i in range(animation_count):
-		var start = 0
-		if i > 0:
-			start = animation_ranges[i - 1].end
-		var end = file.get_16()
-		var num_of_offsets = end - start
-		animation_ranges.append({num_of_offsets = num_of_offsets, end = end, start = frames_offset + (start * 4), actual_start = start})
-		#print("Animation Range[", i, "]: start=", start, ", end=", end, ", num_of_offsets=", num_of_offsets)
+	# for i in range(animation_count):
+	# 	var start = 0
+	# 	if i > 0:
+	# 		start = animation_ranges[i - 1].end
+	# 	var end = file.get_16()
+	# 	var num_of_offsets = end - start
+	# 	animation_ranges.append({num_of_offsets = num_of_offsets, end = end, start = frames_offset + (start * 4), actual_start = start})
+	# 	#print("Animation Range[", i, "]: start=", start, ", end=", end, ", num_of_offsets=", num_of_offsets)
 	
+	# Global frame count is inclusive so we need to add +1 for [Head Shot] extraction
+	for i in range(animation_count):
+		var prev_end = 0
+		if i > 0:
+			prev_end = animation_ranges[i - 1].end + 1
+		var end = file.get_16()
+		var num_of_offsets = end - prev_end + 1
+		animation_ranges.append({
+			num_of_offsets = num_of_offsets,
+			end            = end,
+			start          = frames_offset + (prev_end * 4),
+			actual_start   = prev_end
+		})
+		#print("Animation Range[", i, "]: start=", start, ", end=", end, ", num_of_offsets=", num_of_offsets)
+
 	file.close()
 
 func get_frame_offsets_for(index: int):
