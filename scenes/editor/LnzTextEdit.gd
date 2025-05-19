@@ -9,6 +9,8 @@ extends TextEdit
 # - Handles batch recolor and mirror‐copy operations
 # - Emits signals for file_saved, file_backed_up, and find_ball actions
 
+# try to get animation 544 frame funny
+
 var is_user_file = false
 var filepath: String
 var r = RegEx.new()
@@ -18,6 +20,14 @@ signal find_ball(ball_no)
 signal file_backed_up()
 
 onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/ApplyChangesButton")
+
+onready var frame_slider = get_tree().root.get_node(
+	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
+) as HSlider
+
+onready var camera_holder = get_tree().root.get_node(
+	"Root/SceneRoot/ViewportContainer/Viewport/CameraHolder"
+) as Spatial
 
 func _ready():
 	wrap_enabled = false
@@ -304,6 +314,79 @@ func _on_ApplyChangesButton_pressed():
 
 func _on_Tree_backup_file():
 	save_backup()
+
+func _wrap_angle_deg(a: int) -> int:
+	var ang = ((a % 360) + 360) % 360
+	if ang > 180:
+		ang -= 360
+	return ang
+
+func _on_HeadShotButton_pressed():
+	var local_frame = int(frame_slider.value)
+	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
+
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var anim_idx = pet_node.current_animation
+	var start_idx = pet_node.bhd.animation_ranges[anim_idx].actual_start
+	var global_frame = start_idx + local_frame
+	
+	var raw_yaw  = -int(cam_e.y)
+	var raw_roll = -int(cam_e.z)
+	var raw_tilt = -int(cam_e.x)
+
+	var yaw  = _wrap_angle_deg(raw_yaw)
+	var roll = _wrap_angle_deg(raw_roll)
+	var tilt = _wrap_angle_deg(raw_tilt)
+
+	var shot_lines = [
+		str(global_frame),
+		str(yaw),
+		str(roll),
+		str(tilt)
+	]
+
+	var bounds = _get_section_bounds("[Head Shot]")
+	if bounds.empty():
+		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section, "[Head Shot]")
+
+		var temp = ""
+		for line in all_lines:
+			temp += line + "\n"
+		_set_text_preserve(temp)
+		bounds = _get_section_bounds("[Head Shot]")
+
+	var lines = get_text().split("\n")
+
+	var before_lines = []
+	for i in range(bounds["start"]):
+		before_lines.append(lines[i])
+
+	var tail_lines = []
+	var head_block_len = shot_lines.size()
+	for i in range(bounds["start"] + head_block_len, bounds["end"]):
+		tail_lines.append(lines[i])
+
+	var after_lines = []
+	for i in range(bounds["end"], lines.size()):
+		after_lines.append(lines[i])
+
+	for i in range(min(3, tail_lines.size())):
+		tail_lines[i] = "0"
+
+	var new_text = ""
+	for line in before_lines:
+		new_text += line + "\n"
+	for line in shot_lines:
+		new_text += line + "\n"
+	for line in tail_lines:
+		new_text += line + "\n"
+	for line in after_lines:
+		new_text += line + "\n"
+
+	_set_text_preserve(new_text)
+	save_file()
 
 # SECTION TITLE?
 
