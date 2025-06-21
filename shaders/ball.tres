@@ -113,22 +113,22 @@ void fragment() {
     // Directly calculate normalized coordinates relative to ball size
     vec2 tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
 
-    // Adjust texture coordinates to ensure the center of the texture aligns correctly
-    if (texture_size_raw.x < texture_size.x || texture_size_raw.y < texture_size.y) {
-        // Calculate exact half-size offset
-        float center_x_offset = (texture_size.x / 2.0 - texture_size_raw.x / 2.0) / texture_size.x;
-        float center_y_offset = (texture_size.y / 2.0 - texture_size_raw.y / 2.0) / texture_size.y;
+    // Flip coordinates for correct orientation
+    tex_coords.x = 1.0 - tex_coords.x;
+    tex_coords.y = 1.0 - tex_coords.y;
 
-        // Apply the center offset precisely
-        tex_coords.x -= center_x_offset;
-        tex_coords.y += center_y_offset;
+    // Check if the texture was resized
+    bool texture_resized = any(notEqual(texture_size, texture_size_raw));
 
-        // Tile from the center point
-        tex_coords = mod(tex_coords, vec2(1.0, 1.0));
+    if (texture_resized) {
+        // Adjust for centering the circular portion when resized
+        vec2 texture_center_offset = vec2(-0.25, -0.25); // Adjust as needed
+        tex_coords += texture_center_offset;
     }
 
-    // Flip y-coordinate for correct orientation
-    tex_coords.y = 1.0 - tex_coords.y;
+    // Ensure texture tiling
+    tex_coords = fract(tex_coords); 
+
 
     // Sample from the texture
     int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);

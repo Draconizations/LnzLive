@@ -7,11 +7,50 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
 
+var right_click_menu = PopupMenu.new()
+var right_click_ball = null
+
 var last_selected
 var selecting_on = false
+var active_selected_ball = null
 
-#func _ready():
-#	flip_camera_view()
+var is_dragging = false
+var drag_ball = null
+var drag_offset = Vector3()
+var pixel_world_size = 0.002
+
+var is_resizing = false
+var original_lnz_size = 0
+var original_scale = 1.0
+var drag_start_pos = Vector2()
+
+var linez_mode = false
+var linez_start_ball = null
+
+const ZOOM_STEP := 1.2
+
+func _ready():
+	# flip_camera_view()
+	add_child(right_click_menu)
+	right_click_menu.add_item("Create Addballz", 0)
+	right_click_menu.add_item("Connect by Linez", 1)
+	right_click_menu.connect("id_pressed", self, "_on_RightClickMenu_id_pressed")
+
+func set_active_selected_ball(ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball):
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = ball
+	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
+
+func clear_active_selected_ball():
+	if active_selected_ball and is_instance_valid(active_selected_ball):
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = null
+
+func get_visual_state_for_ball(b):
+	if b == active_selected_ball:
+		return b.OutlineState.ACTIVE_SELECTED
+	return b.OutlineState.NONE
 
 func flip_camera_view():
 	var camera_transform = camera.transform
@@ -19,65 +58,170 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
-	if event is InputEventMouseMotion:
+	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale /= ZOOM_STEP
+		return
+	elif event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_UP:
+		tex.rect_pivot_offset = tex.rect_size / 2.0
+		tex.rect_scale *= ZOOM_STEP
+		return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			right_click_ball = hover
+			#right_click_menu.set_position(event.position)
+			right_click_menu.set_position(get_viewport().get_mouse_position())
+			right_click_menu.popup()
+			return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
+		if selecting_on and not linez_mode and last_selected_is_valid():
+			last_selected.selected()
+		return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and linez_mode:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover and hover != linez_start_ball:
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+			hover.apply_outline_state(hover.OutlineState.NONE)
+
+			linez_mode = false
+			linez_start_ball = null
+			return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			set_active_selected_ball(hover)
+		else:
+			clear_active_selected_ball()
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
+		var alt_key = Input.is_key_pressed(KEY_ALT)
+		var s = Input.is_key_pressed(KEY_S)
+
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			drag_ball = hover
+			is_dragging = true
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+			if alt_key and s:
+				is_resizing = true
+				original_scale = drag_ball.ball_size
+				drag_start_pos = event.position
+				print("[LNZ EDIT] Started scale drag on ball:", drag_ball.name)
+			else:
+				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
+				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
+		return
+
+	if event is InputEventMouseMotion and is_dragging and drag_ball:
+		if is_resizing:
+			var delta = event.position - drag_start_pos
+			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
+			var new_size = clamp(original_scale + change, 1.0, 100.0)
+			drag_ball.set_ball_size(new_size)
+		else:
+			var real_center = rect_position + rect_size / 2.0
+			var offset = event.position - real_center
+			offset /= tex.rect_scale
+			var screen_pos = Vector2(500, 500) + offset
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			var plane_n = camera.global_transform.basis.z.normalized()
+			var plane_p = drag_ball.global_transform.origin
+			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+			if intersect:
+				var new_pos = intersect
+				var original_pos = drag_ball.global_transform.origin
+				if Input.is_key_pressed(KEY_X):
+					new_pos.y = original_pos.y
+					new_pos.z = original_pos.z
+				elif Input.is_key_pressed(KEY_Y):
+					new_pos.x = original_pos.x
+					new_pos.z = original_pos.z
+				elif Input.is_key_pressed(KEY_Z):
+					new_pos.x = original_pos.x
+					new_pos.y = original_pos.y
+				drag_ball.global_transform.origin = new_pos
+				print("Set drag_ball position to: ", new_pos)
+		return
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if is_resizing:
+			var size_dif = get_lnz_size_difference(original_scale, drag_ball, pet_node)
+			pet_node.emit_ball_resize(drag_ball.ball_no, size_dif)
+		else:
+			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
+			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
+			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
+
+		is_dragging = false
+		is_resizing = false
+		drag_ball = null
+		return
+
+	if event is InputEventMouseMotion and not is_dragging:
+		label.rect_global_position = event.global_position
 		if Input.is_mouse_button_pressed(BUTTON_LEFT):
-			var motion = event.relative as Vector2
+			var motion = event.relative
 			camera_holder.rotation.x += motion.y * 0.01
-			
-			# inverted view:
-			#camera_holder.rotation.y += motion.x * 0.01
-			
-			# uninverted view:
 			camera_holder.rotation.y += motion.x * -0.01
-		if Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
-			var motion = event.relative as Vector2
-			# inverted view:
-			#camera.transform.origin.x -= motion.x * 0.001 / tex.rect_scale.x
-			
-			# uninverted view:
+		elif Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
+			var motion = event.relative
 			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
-			
 			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
-		label.rect_global_position = event.global_position
+		if linez_mode:
+			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+				if b != linez_start_ball:
+					b.apply_outline_state(b.OutlineState.NONE)
+			if hover and hover != linez_start_ball:
+				hover.apply_outline_state(hover.OutlineState.HOVER)
 
-		# try and do a raycast
-		# the center of the actual texture == (500,500)
-		if selecting_on:
-			var real_center = rect_position + rect_size / 2.0
-			var real_mouse_pos = event.position
-			var offset = real_mouse_pos - real_center
-			offset /= tex.rect_scale
-			var final_pos = Vector2(500,500) + offset
+	if selecting_on and not linez_mode:
+		var real_center = rect_position + rect_size / 2.0
+		var offset = (event.position - real_center) / tex.rect_scale
+		var screen_pos = Vector2(500, 500) + offset
 
-			var from = camera.project_ray_origin(final_pos)
-			var to = from + camera.project_ray_normal(final_pos) * 950
-			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
-			if !result.empty():
-				label.show()
-				deal_with_last_selected()
-				result.collider.get_parent()._on_Area_mouse_entered()
-				last_selected = result.collider.get_parent()
-			else:
-				deal_with_last_selected()
-				last_selected = null
-				label.hide()
+		var from = camera.project_ray_origin(screen_pos)
+		var to = from + camera.project_ray_normal(screen_pos) * 950
+		var result = camera.get_world().direct_space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
 
-	elif event is InputEventMouseButton and event.pressed:
-		if event.button_index == BUTTON_WHEEL_DOWN:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale = tex.rect_scale / 2.0
-		elif event.button_index == BUTTON_WHEEL_UP:
-			tex.rect_pivot_offset = tex.rect_size / 2.0
-			tex.rect_scale = tex.rect_scale * 2.0
-		elif event.doubleclick and event.button_index == BUTTON_LEFT and last_selected_is_valid():
-			last_selected.selected()
-	pass
-			
+		if result:
+			label.show()
+			deal_with_last_selected()
+			result.collider.get_parent()._on_Area_mouse_entered()
+			last_selected = result.collider.get_parent()
+		else:
+			deal_with_last_selected()
+			last_selected = null
+			label.hide()
+
+func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
+	var denom = plane_normal.dot(ray_dir)
+	if abs(denom) < 0.0001:
+		return null
+	var d = plane_normal.dot(plane_point - ray_origin) / denom
+	return ray_origin + ray_dir * d
+
 func _unhandled_key_input(event):
-	if event.pressed and last_selected_is_valid():
-		last_selected._input(event)
+	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
+		linez_mode = true
+		linez_start_ball = last_selected
+		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+	else:
+		if event.pressed and last_selected_is_valid():
+			last_selected._input(event)
 		
 func last_selected_is_valid():
 	return last_selected != null and is_instance_valid(last_selected)
@@ -95,6 +239,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		if last_selected_is_valid():
 			last_selected._on_Area_mouse_exited()
 		last_selected = null
+		clear_active_selected_ball()
 		label.hide()
 
 func _on_HelpButton_pressed():
@@ -112,3 +257,86 @@ func _on_PetViewContainer_resized():
 
 func _on_PetViewContainer_sort_children():
 	_on_PetViewContainer_resized()
+
+func get_ball_under_mouse(screen_pos: Vector2):
+	var from = camera.project_ray_origin(screen_pos)
+	var to = from + camera.project_ray_normal(screen_pos) * 10000
+
+	var space_state = camera.get_world().direct_space_state
+	var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
+
+	if result and result.collider:
+		var parent = result.collider.get_parent()
+		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+			return parent
+	return null
+
+func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
+	# Read current and original world positions
+	var current_world = drag_ball.global_transform.origin
+	var original_world = pet_node._orig_world_pos.get(drag_ball.ball_no, Vector3.ZERO)
+	print("[LNZ EDIT] Ball %d world positions: current=%s, original=%s"
+		% [drag_ball.ball_no, current_world, original_world])
+	
+	# Record movement in world coordinates
+	var delta_meters = current_world - original_world
+
+	# Undo pixel_world_size scale then LNZ scales
+	var px_scale = pixel_world_size
+	var lnz_scale = pet_node.lnz.scales.x / 255.0
+	var delta_units = delta_meters / (px_scale * lnz_scale)
+
+	# Flip Y axis to match LNZ coordinate system
+	delta_units.y *= -1
+	print("[LNZ EDIT] Raw LNZ‐space offset (float): %s" % delta_units)
+
+	# Round to nearest whole LNZ unit
+	var lnz_offset = Vector3(
+		round(delta_units.x),
+		round(delta_units.y),
+		round(delta_units.z)
+	)
+	print("[LNZ EDIT] Rounded LNZ‐space offset (int): %s" % lnz_offset)
+
+	return lnz_offset
+
+func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
+	var ball_no = drag_ball.ball_no
+	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+
+	var lnz_size = 0
+	if is_addball:
+		if pet_node.lnz.addballs.has(ball_no):
+			lnz_size = pet_node.lnz.addballs[ball_no].size
+	else:
+		if pet_node.lnz.balls.has(ball_no):
+			lnz_size = pet_node.lnz.balls[ball_no].size
+
+	var current_visual_diameter = drag_ball.ball_size
+
+	print("Old visual scale: %s" % original_scale)
+	print("New visual scale: %s" % current_visual_diameter)
+
+	var pct_delta = drag_ball.ball_size / original_scale
+	var size_dif = lnz_size*pct_delta + (current_visual_diameter - original_scale)*pct_delta
+
+	print("[LNZ EDIT] Ball %d original diameter: %d vs adjusted diameter: %d, stored LNZ = %d, updated LNZ = %d"
+		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
+
+	return size_dif
+
+func _on_RightClickMenu_id_pressed(id):
+	if not is_instance_valid(right_click_ball):
+		return
+
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+	if id == 0:
+		# "Create Addballz"
+		pet_node.emit_signal("addball_created", right_click_ball)
+
+	elif id == 1:
+		# "Connect by Linez"
+		linez_mode = true
+		linez_start_ball = right_click_ball
+		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)

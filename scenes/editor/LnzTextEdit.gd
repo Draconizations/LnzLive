@@ -1,5 +1,14 @@
 extends TextEdit
 
+# LnzTextEdit.gd – syncs the LNZ text file with the 3D pet editor
+# - Loads and saves .lnz files
+# - Creates automatic backups before overwriting
+# - Preserves scroll and cursor positions across edits
+# - Listens for visual editor events
+# - Finds and updates the corresponding LNZ sections
+# - Handles batch recolor and mirror‐copy operations
+# - Emits signals for file_saved, file_backed_up, and find_ball actions
+
 var is_user_file = false
 var filepath: String
 var r = RegEx.new()
@@ -10,48 +19,71 @@ signal file_backed_up()
 
 onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/ApplyChangesButton")
 
+onready var frame_slider = get_tree().root.get_node(
+	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
+) as HSlider
+
+onready var camera_holder = get_tree().root.get_node(
+	"Root/SceneRoot/ViewportContainer/Viewport/CameraHolder"
+) as Spatial
+
 func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
 
-func _on_example_file_selected(filepath):
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var signals = [
+		"ball_resized",
+		"addball_created",
+		"line_created"
+		]
+	for s in signals:
+		if not pet_node.is_connected(s, self, "_on_Node_" + s):
+			pet_node.connect(s, self, "_on_Node_" + s)
+
+func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
 	file.open(filepath, File.READ)
-	text = file.get_as_text()
-	self.filepath = filepath
-	is_user_file = false
+	var contents = file.get_as_text()
 	file.close()
+	self.filepath = filepath
+	is_user_file = user_flag
+	_set_text_preserve(contents)
+
+func _on_example_file_selected(filepath):
+	_load_file(filepath, false)
 
 func _on_user_file_selected(filepath):
-	if (filepath == null):
+	if filepath == null:
 		return
-	
-	var file = File.new()
-	file.open(filepath, File.READ)
-	text = file.get_as_text()
-	self.filepath = filepath
-	is_user_file = true
-	file.close()
+	_load_file(filepath, true)
 
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file()
-		
+
+func _set_text_preserve(new_text: String):
+	var old_v = get_v_scroll()
+	var old_h = get_h_scroll()
+	var old_l = cursor_get_line()
+	var old_c = cursor_get_column()
+	text = new_text
+	set_v_scroll(old_v)
+	set_h_scroll(old_h)
+	cursor_set_line(old_l)
+	cursor_set_column(old_c)
+
 func save_backup():
-	if is_user_file:
-		var dir = Directory.new()
-		dir.open("user://")
-		dir.make_dir("resources")
-		var file = File.new()
-		file.open(filepath.replace( ".lnz", "_backup.lnz"), File.WRITE)
-		file.store_string(text)
-		file.close()
-	else:
-		save_file()
-		save_backup()
+	if not is_user_file:
+		return
+	var file = File.new()
+	var backup_path = filepath.replace(".lnz", "_backup.lnz")
+	file.open(backup_path, File.WRITE)
+	file.store_string(text)
+	file.close()
 	emit_signal("file_backed_up")
-		
+
 func save_file():
 	if is_user_file:
 		var dir = Directory.new()
@@ -69,39 +101,67 @@ func save_file():
 		var file = File.new()
 		if file.file_exists(possible_file_name):
 			possible_file_name = possible_file_name.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
-		var _possible_error = file.open(possible_file_name, File.WRITE)
+		file.open(possible_file_name, File.WRITE)
 		file.store_string(text)
 		file.close()
 		filepath = possible_file_name
 		is_user_file = true
-	emit_signal("file_saved", filepath)
 
-func _on_ApplyChangesButton_pressed():
-	save_file()
 	emit_signal("file_saved", filepath)
+	_set_text_preserve(get_text())
 
-func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
-	# need to find line number for the ball
-	var actual_start_point
-	if section == Section.Section.BALL:
-		if is_addball:
-			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+func _get_section_bounds(section_tag: String) -> Dictionary:
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		return {}
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	return {"start": start_line, "end": end_line}
+
+func _detect_delimiter(start_line: int, end_line: int) -> String:
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			return "\t"
+		elif line.find(", ") != -1:
+			return ", "
+		elif line.find(",") != -1:
+			return ","
 		else:
-			actual_start_point = find_line_in_ball_section(ball_no)
-	elif section == Section.Section.MOVE:
-		if is_addball:
-			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+			return " "
+	return " "
+
+func _split_and_clean(line: String, delim: String) -> Array:
+	var parts = line.split(delim, false)
+	for i in range(parts.size()):
+		parts[i] = parts[i].strip_edges()
+	return parts
+
+func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
+	var new_parts = []
+	for i in range(parts.size()):
+		if updates.has(i):
+			new_parts.append(updates[i])
 		else:
-			actual_start_point = find_line_in_move_section(ball_no)
-	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no)
-	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no)
-	if actual_start_point == -1:
+			new_parts.append(parts[i])
+	return new_parts.join(sep)
+
+func _for_each_line_in_section(tag: String, callback):
+	var bounds = _get_section_bounds(tag)
+	if bounds.empty():
 		return
-	cursor_set_line(actual_start_point)
+	for i in range(bounds["start"], bounds["end"]):
+		var line = get_line(i)
+		if line.strip_edges() == "" or line.begins_with(";"):
+			continue
+		callback.call(i, line)
+
+func _insert_text_at_cursor_at_line(line: int, text: String):
+	cursor_set_line(line)
 	cursor_set_column(0)
-	center_viewport_to_cursor()
+	insert_text_at_cursor(text)
 
 func find_line_in_ball_section(ball_no):
 	var section_find = search('[Ballz Info]', 0, 0, 0)
@@ -214,6 +274,392 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 		i += 1
 	return start_point + i
 
+func get_corresponding_right_ball(left_ball_index):
+	if left_ball_index < 67:
+		if KeyBallsData.species == KeyBallsData.Species.CAT:
+			if left_ball_index in [8, 9]:
+				return left_ball_index + 2
+			elif left_ball_index in [16, 17, 18] or left_ball_index in [49, 50, 51] or left_ball_index in [57, 58, 59]: # finger, toe, whisker
+				return left_ball_index + 3
+			else:
+				return left_ball_index + 1
+		else:
+			return left_ball_index + 24
+	else:
+		return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
+		
+func get_corresponding_left_ball(right_ball_index):
+	if right_ball_index < 67:
+		if KeyBallsData.species == KeyBallsData.Species.CAT:
+			if right_ball_index in [10, 11]:
+				return right_ball_index - 2
+			elif right_ball_index in [19, 20, 21] or right_ball_index in [52, 53, 54] or right_ball_index in [60, 61, 62]: # finger, toe, whisker
+				return right_ball_index - 3
+			else:
+				return right_ball_index - 1
+		else:
+			return right_ball_index - 24
+	else:
+		return ball_map[ball_map[right_ball_index].corresponding_ball].new_ball_no
+
+var ball_map = {}
+
+func _on_ApplyChangesButton_pressed():
+	save_file()
+	emit_signal("file_saved", filepath)
+
+func _on_Tree_backup_file():
+	save_backup()
+
+func _wrap_angle_deg(a: int) -> int:
+	var ang = ((a % 360) + 360) % 360
+	if ang > 180:
+		ang -= 360
+	return ang
+
+func _on_HeadShotButton_pressed():
+	var local_frame = int(frame_slider.value)
+	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
+
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var anim_idx = pet_node.current_animation
+	var start_idx = pet_node.bhd.animation_ranges[anim_idx].actual_start
+	var global_frame = start_idx + local_frame
+	
+	var raw_yaw  = -int(cam_e.y)
+	var raw_roll = -int(cam_e.z)
+	var raw_tilt = -int(cam_e.x)
+
+	var yaw  = _wrap_angle_deg(raw_yaw)
+	var roll = _wrap_angle_deg(raw_roll)
+	var tilt = _wrap_angle_deg(raw_tilt)
+
+	var shot_lines = [
+		str(global_frame),
+		str(yaw),
+		str(roll),
+		str(tilt)
+	]
+
+	var shot_labels = ["frame number", "rotation", "roll", "tilt"]
+	for i in range(shot_lines.size()):
+		var s = shot_lines[i]
+		while s.length() < 24:
+			s += " "
+		shot_lines[i] = s + shot_labels[i]
+
+	var bounds = _get_section_bounds("[Head Shot]")
+	if bounds.empty():
+		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section, "[Head Shot]")
+		var temp = ""
+		for line in all_lines:
+			temp += line + "\n"
+		_set_text_preserve(temp)
+		bounds = _get_section_bounds("[Head Shot]")
+
+	var lines = get_text().split("\n")
+
+	var before_lines = []
+	for i in range(bounds["start"]):
+		before_lines.append(lines[i])
+
+	var tail_lines = []
+	var head_block_len = shot_lines.size()
+	for i in range(bounds["start"] + head_block_len, bounds["end"]):
+		tail_lines.append(lines[i])
+
+	for i in range(min(3, tail_lines.size())):
+		tail_lines[i] = "0"
+
+	var tail_labels = [
+		"head rotation",
+		"head tilt",
+		"head cock",
+		"R / L eyelid height",
+		"R / L eyelid tilt",
+		"(X, Y) eye target"
+	]
+
+	for i in range(min(tail_labels.size(), tail_lines.size())):
+		var raw = tail_lines[i]
+		var num = ""
+		for c in raw:
+			if c.is_valid_integer() or c == "," or c == "-" or c == " ":
+				num += c
+			else:
+				break
+		num = num.strip_edges()
+		while num.length() < 24:
+			num += " "
+		tail_lines[i] = num + tail_labels[i]
+
+	var after_lines = []
+	for i in range(bounds["end"], lines.size()):
+		after_lines.append(lines[i])
+
+	var new_text = ""
+	for line in before_lines:
+		new_text += line + "\n"
+	for line in shot_lines:
+		new_text += line + "\n"
+	for line in tail_lines:
+		new_text += line + "\n"
+	for line in after_lines:
+		new_text += line + "\n"
+
+	_set_text_preserve(new_text)
+	save_file()
+
+func _on_Node_line_created(start_ball, end_ball):
+	var bounds = _get_section_bounds("[Linez]")
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
+
+	if start_line == -1:
+		print("[LNZ EDIT] No [Linez] section found")
+		return
+
+	var delim = _detect_delimiter(start_line, end_line)
+	var sep = delim
+
+	var insert_line = end_line
+	while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
+		insert_line -= 1
+
+	var new_line = "%s%s%s%s0%s-1%s-1%s-1%s95%s95%s-1%s0\n" % [
+		str(start_ball), sep,
+		str(end_ball), sep,
+		sep, sep, sep, sep, sep, sep, sep
+	]
+
+	_insert_text_at_cursor_at_line(insert_line, new_line)
+	cursor_set_line(insert_line)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
+	save_file()
+
+func _on_Node_addball_created(reference_ball):
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+	if reference_ball == null:
+		print("[LNZ EDIT] No reference ball given")
+		return
+
+	var ball_no = reference_ball.ball_no
+
+	var lnz_size = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		lnz_size = pet_node.lnz.addballs[reference_ball.ball_no].size
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		lnz_size = 25
+
+	var fuzz_amount = 0
+	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.addballs[reference_ball.ball_no].fuzz
+	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+		fuzz_amount = pet_node.lnz.balls[reference_ball.ball_no].fuzz
+
+	var real_base_ball = ball_no
+	if reference_ball.base_ball_no != -1:
+		real_base_ball = reference_ball.base_ball_no
+
+	var section_find = search('[Add Ball]', 0, 0, 0)
+	if section_find.empty():
+		print("[LNZ EDIT] No [Add Ball] section found")
+		return
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_of_section - 1, start_of_section - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+	var insert_line = end_of_section
+	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
+		insert_line -= 1
+
+	var new_pos = Vector3(0, 0, -25)
+	if reference_ball.base_ball_no != -1 and pet_node.lnz.addballs.has(ball_no):
+		new_pos = pet_node.lnz.addballs[ball_no].position - Vector3(0, 0, 25)
+
+	var texture_id = -1
+	if pet_node.lnz.addballs.has(ball_no):
+		texture_id = pet_node.lnz.addballs[ball_no].texture_id
+	elif pet_node.lnz.balls.has(ball_no):
+		texture_id = pet_node.lnz.balls[ball_no].texture_id
+
+	var bodyarea = 1
+
+	if KeyBallsData.bodyarea_map.has(real_base_ball):
+		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
+	else:
+		print("Missing bodyarea for ball", real_base_ball)
+
+
+	var fields = [
+		str(real_base_ball),
+		str(int(new_pos.x)),
+		str(int(new_pos.y)),
+		str(int(new_pos.z)),
+		str(reference_ball.color_index),
+		str(reference_ball.outline_color_index),
+		"0",
+		str(fuzz_amount),
+		"0",
+		str(reference_ball.old_outline),
+		str(lnz_size),
+		str(bodyarea),
+		"0",
+		str(texture_id)
+	]
+
+	var line_text = ""
+	for i in range(fields.size()):
+		line_text += fields[i]
+		if i < fields.size() - 1:
+			line_text += sep
+	line_text += "\n"
+
+	_insert_text_at_cursor_at_line(insert_line, line_text)
+	cursor_set_line(insert_line)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
+	save_file()
+
+func _on_Node_addball_deleted(ball_no):
+	# remove the addball line
+	var line_no = find_line_in_addball_section(ball_no - 67)
+	select(line_no, 0, line_no + 1, 0)
+	cut()
+	
+	# all the addballs after this have now been renumbered
+	# so we need to correct the linez, omissions, projections, paintballz
+	# linez
+	var section_find = search('[Linez]', 0, 0, 0)
+	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	while true:
+		var line = get_line(start_of_section + i).lstrip(" ")
+		# ignore comments for now
+		if line.begins_with("[") or line.empty():
+			break
+		var parsed_line = r.search_all(line)
+		var start_ball = int(parsed_line[0].get_string())
+		var end_ball = int(parsed_line[1].get_string())
+		if start_ball == ball_no or end_ball == ball_no:
+			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+			cut()
+			continue
+		if start_ball > ball_no or end_ball > ball_no:
+			var replaced_line = ""
+			if start_ball > ball_no:
+				start_ball -= 1
+			if end_ball > ball_no:
+				end_ball -= 1
+			replaced_line += str(start_ball) + " " + str(end_ball) + " "
+			var start_of_rest = parsed_line[2].get_start()
+			replaced_line += line.substr(start_of_rest)
+			set_line(start_of_section + i, replaced_line)
+		i += 1
+	
+	# omissions
+	section_find = search('[Omissions]', 0, 0, 0)
+	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	i = 0
+	while true:
+		var line = get_line(start_of_section + i).lstrip(" ")
+		# ignore comments for now
+		if line.begins_with("[") or line.empty():
+			break
+		if int(line) == ball_no:
+			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+			cut()
+			continue
+		elif int(line) > ball_no:
+			var replace_line = str(int(line) - 1)
+			set_line(start_of_section + i, replace_line)
+		i += 1
+	
+	# projections
+	section_find = search('[Project Ball]', 0, 0, 0)
+	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	i = 0
+	while true:
+		var line = get_line(start_of_section + i).lstrip(" ")
+		# ignore comments for now
+		if line.begins_with("[") or line.empty():
+			break
+		var parsed_line = r.search_all(line)
+		var move_ball_no = int(parsed_line[1].get_string())
+		if move_ball_no == ball_no:
+			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+			cut()
+			continue
+		elif move_ball_no > ball_no:
+			var replace_line = "%s %s %s" % [parsed_line[0].get_string(), str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
+			set_line(start_of_section + i, replace_line)
+		i += 1
+		
+	# paintballz
+	section_find = search('[Paint Ballz]', 0, 0, 0)
+	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	i = 0
+	while true:
+		var line = get_line(start_of_section + i).lstrip(" ")
+		# ignore comments for now
+		if line.begins_with("[") or line.empty():
+			break
+		
+		var split = line.split(" ", false, 1)
+		var base_ball_no = int(split[0])
+		if base_ball_no == ball_no:
+			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+			cut()
+			continue
+		elif base_ball_no > ball_no:
+			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
+			set_line(start_of_section + i, replace_line)
+		i += 1
+		
+	save_file()
+
+func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
+	# need to find line number for the ball
+	var actual_start_point
+	if section == Section.Section.BALL:
+		if is_addball:
+			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+		else:
+			actual_start_point = find_line_in_ball_section(ball_no)
+	elif section == Section.Section.MOVE:
+		if is_addball:
+			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+		else:
+			actual_start_point = find_line_in_move_section(ball_no)
+	elif section == Section.Section.PROJECT:
+		actual_start_point = find_line_in_project_section(ball_no)
+	elif section == Section.Section.LINE:
+		actual_start_point = find_line_in_linez_section(ball_no)
+	if actual_start_point == -1:
+		return
+	cursor_set_line(actual_start_point)
+	cursor_set_column(0)
+	center_viewport_to_cursor()
 
 func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 	var species = KeyBallsData.species
@@ -375,37 +821,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		set_line(start_of_section + i, final_line)
 		i += 1
 	save_file()
-	
-func get_corresponding_right_ball(left_ball_index):
-	if left_ball_index < 67:
-		if KeyBallsData.species == KeyBallsData.Species.CAT:
-			if left_ball_index in [8, 9]:
-				return left_ball_index + 2
-			elif left_ball_index in [16, 17, 18] or left_ball_index in [49, 50, 51] or left_ball_index in [57, 58, 59]: # finger, toe, whisker
-				return left_ball_index + 3
-			else:
-				return left_ball_index + 1
-		else:
-			return left_ball_index + 24
-	else:
-		return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
-		
-func get_corresponding_left_ball(right_ball_index):
-	if right_ball_index < 67:
-		if KeyBallsData.species == KeyBallsData.Species.CAT:
-			if right_ball_index in [10, 11]:
-				return right_ball_index - 2
-			elif right_ball_index in [19, 20, 21] or right_ball_index in [52, 53, 54] or right_ball_index in [60, 61, 62]: # finger, toe, whisker
-				return right_ball_index - 3
-			else:
-				return right_ball_index - 1
-		else:
-			return right_ball_index - 24
-	else:
-		return ball_map[ball_map[right_ball_index].corresponding_ball].new_ball_no
 
-var ball_map = {}
-	
 func _on_ToolsMenu_copy_l_to_r():
 	save_backup()
 	
@@ -858,9 +1274,6 @@ func _on_ToolsMenu_copy_l_to_r():
 	
 	save_file()
 
-func _on_Tree_backup_file():
-	save_backup()
-
 func _on_ToolsMenu_add_ball(selected_visual_ball):
 	var real_base_ball = selected_visual_ball.ball_no
 	if selected_visual_ball.base_ball_no != -1:
@@ -920,104 +1333,6 @@ func _on_LnzTextEdit_gui_input(event):
 			emit_signal("find_ball", line_number)
 		else:
 			emit_signal("find_ball", int(get_word_under_cursor()))
-
-func _on_Node_addball_deleted(ball_no):
-	# remove the addball line
-	var line_no = find_line_in_addball_section(ball_no - 67)
-	select(line_no, 0, line_no + 1, 0)
-	cut()
-	
-	# all the addballs after this have now been renumbered
-	# so we need to correct the linez, omissions, projections, paintballz
-	# linez
-	var section_find = search('[Linez]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		var parsed_line = r.search_all(line)
-		var start_ball = int(parsed_line[0].get_string())
-		var end_ball = int(parsed_line[1].get_string())
-		if start_ball == ball_no or end_ball == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		if start_ball > ball_no or end_ball > ball_no:
-			var replaced_line = ""
-			if start_ball > ball_no:
-				start_ball -= 1
-			if end_ball > ball_no:
-				end_ball -= 1
-			replaced_line += str(start_ball) + " " + str(end_ball) + " "
-			var start_of_rest = parsed_line[2].get_start()
-			replaced_line += line.substr(start_of_rest)
-			set_line(start_of_section + i, replaced_line)
-		i += 1
-	
-	# omissions
-	section_find = search('[Omissions]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		if int(line) == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		elif int(line) > ball_no:
-			var replace_line = str(int(line) - 1)
-			set_line(start_of_section + i, replace_line)
-		i += 1
-	
-	# projections
-	section_find = search('[Project Ball]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		var parsed_line = r.search_all(line)
-		var move_ball_no = int(parsed_line[1].get_string())
-		if move_ball_no == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		elif move_ball_no > ball_no:
-			var replace_line = "%s %s %s" % [parsed_line[0].get_string(), str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
-			set_line(start_of_section + i, replace_line)
-		i += 1
-		
-	# paintballz
-	section_find = search('[Paint Ballz]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		
-		var split = line.split(" ", false, 1)
-		var base_ball_no = int(split[0])
-		if base_ball_no == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		elif base_ball_no > ball_no:
-			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
-			set_line(start_of_section + i, replace_line)
-		i += 1
-		
-	save_file()
-	
 
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
@@ -1168,7 +1483,6 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			i += 1
 	save_file()
 
-
 func _on_ToolsMenu_move_head(x, y, z):
 	var head_balls: Array
 	if KeyBallsData.species == KeyBallsData.Species.CAT:
@@ -1214,64 +1528,176 @@ func _on_ToolsMenu_move_head(x, y, z):
 	
 	save_file()
 
-func _on_Node_ball_translation_changed(ball_no, new_position):
-	var line_no
-	if ball_no < 67:
-		var done = false
-		var section_find = search('[Move]', 0, 0, 0)
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			var line = get_line(start_of_section + i).lstrip(" ")
-			if line.begins_with(";") or line.empty():
-				i += 1
+func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+
+	var section_tag = "[Move]"
+	if is_addball:
+		section_tag = "[Add Ball]"
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+
+	if is_addball:
+		var idx = ball_no - max_base_ball_no
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
 				continue
-			elif line.begins_with("["):
-				if !done:
-					print("WARN - did not find move for head rotation for ball " + str(ball_no))
-					cursor_set_line(start_of_section + i)
-					cursor_set_column(0)
-					insert_text_at_cursor(str(ball_no) + " " + str(int(new_position.x)) + " " + str(int(-new_position.y)) + " " + str(int(new_position.z)) + "\n")
+			if count == idx:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() >= 4:
+					parts[1] = str(parts[1].to_int() + new_pos.x)
+					parts[2] = str(parts[2].to_int() + new_pos.y)
+					parts[3] = str(parts[3].to_int() + new_pos.z)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
 				break
-			# here the first number is color and second is outline col
-			var parsed_line = r.search_all(line)
-			if !(parsed_line[0].get_string().to_int() == ball_no):
-				i += 1
-				continue
-			done = true
-			var n = 0
-			var final_line = ""
-			for r_item in parsed_line:
-				var item = r_item.get_string()
-				if n == 1:
-					final_line += str(int(new_position.x)) + " "
-				elif n == 2:
-					final_line += str(int(-new_position.y)) + " "
-				elif n == 3:
-					final_line += str(int(new_position.z)) + " "
-				else:
-					final_line += item + " "
-				n += 1
-			set_line(start_of_section + i, final_line)
-			i += 1
+			count += 1
 	else:
-		line_no = find_line_in_addball_section(ball_no - 67)
-		var line = get_line(line_no)
-		var parsed_line = r.search_all(line)
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item.get_string()
-			if n == 1:
-				final_line += str(int(new_position.x)) + " "
-			elif n == 2:
-				final_line += str(int(-new_position.y)) + " "
-			elif n == 3:
-				final_line += str(int(new_position.z)) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(line_no, final_line)
-	
-func _on_Node_ball_translations_done():
+		var updated = false
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			var parts = raw.split(delim, false)
+			for j in range(parts.size()):
+				parts[j] = parts[j].strip_edges()
+			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				parts[1] = str(parts[1].to_int() + new_pos.x)
+				parts[2] = str(parts[2].to_int() + new_pos.y)
+				parts[3] = str(parts[3].to_int() + new_pos.z)
+				var new_line = parts.join(sep)
+				set_line(i, new_line)
+				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
+				updated = true
+				break
+		if not updated:
+			var line_txt = "%d%s%d%s%d%s%d" % [
+				ball_no, sep,
+				new_pos.x, sep,
+				new_pos.y, sep,
+				new_pos.z
+			]
+			var insert_at = end_line
+			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
+				insert_at -= 1
+			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
+			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
+
+func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+
+	var section_tag = "[Ballz Info]"
+	var size_field_index = 5  # 6th field is size
+	if is_addball:
+		section_tag = "[Add Ball]"
+		size_field_index = 10  # 11th field is size for addballs
+
+	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+	if is_addball:
+		var addball_index = ball_no - max_base_ball_no
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			if count == addball_index:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+			count += 1
+		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
+	else:
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
+			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
+			if count == ball_no:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+				else:
+					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
+					return
+			count += 1
+		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
