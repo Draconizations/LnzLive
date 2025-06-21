@@ -57,17 +57,17 @@ While hovering over a ball/addball, you can use the following keys:
 
 Warning: make sure you do not have empty lines or comments in your LNZ before using any Tools.
 
-Press Ctrl+Space in the pet view to open the tools menu.
+Press Ctrl+Space in the pet view to open the tools menu, or right-click on a ball in the pet view.
 
-### Add ball
+### Add Ballz
 
-While a ball/addball is selected, use "Add ball" to create a new addball and line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
+While a ball/addball is hovered or selected, use "Create Addballz" or "Create Addballz + Linez" to create a new addball and/or line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
 
 ### Color
 
 The Color menu can be used to recolor the pet. When you select a part to recolor, two text entry boxes will appear at your cursor. The first is for the ball colour, the second is for outline color. Type a color number (e.g. 25) and hit Enter to apply. Leave a box blank if you don't want to affect the color/outline.
 
-### Color swap
+### Color Swap
 
 The Color Swap tool under the Color menu can be used to quickly create a recolor. Enter the color mappings you want to apply (e.g. 35 -> 15). Use the checkboxes to select what to apply the color swap to.
 
@@ -75,11 +75,11 @@ The Color Swap tool under the Color menu can be used to quickly create a recolor
 
 The Copy L to R tool will apply all changes on the left side of the pet (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the pet head-on, NOT the pet's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
 
-### Move head
+### Move Head
 
 LNZ has no such thing as a 'neck extension', so this is a small util to move all head balls at once. The three text boxes are for x, y, z coordinates to move by. Hit Enter to apply. You can keep hitting Enter to continue moving.
 
-### Copy ball colors to clipboard
+### Copy Ballz Colors to Clipboard
 
 Useful for making Color Info Override sections in breeds. Not supported in all browsers.
 
