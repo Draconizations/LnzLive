@@ -222,7 +222,7 @@ func find_line_in_project_section(ball_no):
 				start_point = start_of_section
 				i = 0
 				continue
-		if parsed_line[1].get_string() == str(ball_no):
+		if parsed_line[1] == str(ball_no):
 			break
 		
 		i += 1
@@ -258,7 +258,7 @@ func find_line_in_linez_section(ball_no):
 				start_point = start_of_section
 				i = 0
 				continue
-		if parsed_line[0].get_string() == str(ball_no) or parsed_line[1].get_string() == str(ball_no):
+		if parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no):
 			break
 		
 		i += 1
@@ -733,8 +733,8 @@ func _on_Node_addball_deleted(ball_no):
 				parsed_line = line.split(delim, false)
 				break
 
-		var start_ball = int(parsed_line[0].get_string())
-		var end_ball = int(parsed_line[1].get_string())
+		var start_ball = int(parsed_line[0])
+		var end_ball = int(parsed_line[1])
 		if start_ball == ball_no or end_ball == ball_no:
 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
 			cut()
@@ -787,13 +787,13 @@ func _on_Node_addball_deleted(ball_no):
 				parsed_line = line.split(delim, false)
 				break
 
-		var move_ball_no = int(parsed_line[1].get_string())
+		var move_ball_no = int(parsed_line[1])
 		if move_ball_no == ball_no:
 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
 			cut()
 			continue
 		elif move_ball_no > ball_no:
-			var replace_line = "%s %s %s" % [parsed_line[0].get_string(), str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
+			var replace_line = "%s %s %s" % [parsed_line[0], str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
 			set_line(start_of_section + i, replace_line)
 		i += 1
 		
@@ -1075,16 +1075,16 @@ func _on_ToolsMenu_copy_l_to_r():
 						break
 				
 				var mirrored_line = ""
-				if parsed_line[4].get_string() in ["0", "-2"]: # outline needs to be mirrored
+				if parsed_line[4] in ["0", "-2"]: # outline needs to be mirrored
 					var p = 0
 					for item in parsed_line:
 						if p == 4: #outline type
-							if item.get_string() == "0":
+							if item == "0":
 								mirrored_line += "-2 "
 							else:
 								mirrored_line += "0 "
 						else:
-							mirrored_line += item.get_string() + " "
+							mirrored_line += item + " "
 						p += 1
 				else:
 					mirrored_line = line
@@ -1136,14 +1136,14 @@ func _on_ToolsMenu_copy_l_to_r():
 					if p == 0:
 						new_right_ball_line += str(corresponding_right_ball) + " "
 					elif p == 1: # reverse x value
-						new_right_ball_line += str(int(item.get_string()) * -1.0) + " "
-					elif p == 9 and item.get_string() in ["0", "-2"]: # outline
-						if item.get_string() == "0":
+						new_right_ball_line += str(int(item) * -1.0) + " "
+					elif p == 9 and item in ["0", "-2"]: # outline
+						if item == "0":
 							new_right_ball_line += "-2 "
 						else:
 							new_right_ball_line += "0 "
 					else:
-						new_right_ball_line += item.get_string() + " "
+						new_right_ball_line += item + " "
 					p+=1
 				balls_to_add_temp.append({line = new_right_ball_line, corresponding_ball = ball_no})
 			elif base_ball in middle_balls_list:
@@ -1155,7 +1155,7 @@ func _on_ToolsMenu_copy_l_to_r():
 						parsed_line = line.split(delim, false)
 						break
 
-				var x_pos = int(parsed_line[1].get_string())
+				var x_pos = int(parsed_line[1])
 				if x_pos > 0.0: #left ball
 					ball_map[ball_no] = {line = line, new_ball_no = new_ball_count}
 					new_ball_count += 1
@@ -1164,14 +1164,14 @@ func _on_ToolsMenu_copy_l_to_r():
 					var new_right_ball_line = ""
 					for item in parsed_line:
 						if p == 1: # reverse x value
-							new_right_ball_line += str(int(item.get_string()) * -1.0) + " "
-						elif p == 9 and item.get_string() in ["0", "-2"]: # outline
-							if item.get_string() == "0":
+							new_right_ball_line += str(int(item) * -1.0) + " "
+						elif p == 9 and item in ["0", "-2"]: # outline
+							if item == "0":
 								new_right_ball_line += "-2 "
 							else:
 								new_right_ball_line += "0 "
 						else:
-							new_right_ball_line += item.get_string() + " "
+							new_right_ball_line += item + " "
 						p+=1
 					balls_to_add_temp.append({line = new_right_ball_line, corresponding_ball = ball_no})
 				elif x_pos < 0.0: # right ball
@@ -1213,8 +1213,8 @@ func _on_ToolsMenu_copy_l_to_r():
 				parsed_line = line.split(delim, false)
 				break
 
-		var start_ball = int(parsed_line[0].get_string())
-		var end_ball = int(parsed_line[1].get_string())
+		var start_ball = int(parsed_line[0])
+		var end_ball = int(parsed_line[1])
 		if start_ball in left_balls_list or end_ball in left_balls_list:
 			var final_line = ""
 			if !ball_map.has(start_ball) or !ball_map.has(end_ball): # the ball got removed
@@ -1240,7 +1240,7 @@ func _on_ToolsMenu_copy_l_to_r():
 						elif p == 1:
 							final_line += str(additional_end_ball) + " "
 						else:
-							final_line += item.get_string() + " "
+							final_line += item + " "
 						p+=1
 					lines_list.append(final_line)
 					final_line = ""
@@ -1251,7 +1251,7 @@ func _on_ToolsMenu_copy_l_to_r():
 					elif p == 1:
 						final_line += str(final_end_ball) + " "
 					else:
-						final_line += item.get_string() + " "
+						final_line += item + " "
 					p+=1
 				lines_list.append(final_line)
 		elif start_ball in middle_balls_list and end_ball in middle_balls_list:
@@ -1268,7 +1268,7 @@ func _on_ToolsMenu_copy_l_to_r():
 					elif p == 1:
 						final_line += str(final_end_ball) + " "
 					else:
-						final_line += item.get_string() + " "
+						final_line += item + " "
 					p+=1
 				lines_list.append(final_line)
 		i += 1
@@ -1294,7 +1294,7 @@ func _on_ToolsMenu_copy_l_to_r():
 				parsed_line = line.split(delim, false)
 				break
 
-		var move_ball_no = int(parsed_line[0].get_string())
+		var move_ball_no = int(parsed_line[0])
 		if move_ball_no in left_balls_list:
 			moves_list.append(line)
 			var final_line = ""
@@ -1303,9 +1303,9 @@ func _on_ToolsMenu_copy_l_to_r():
 				if p == 0:
 					final_line += str(get_corresponding_right_ball(move_ball_no)) + " "
 				elif p == 1:
-					final_line += str(int(item.get_string()) * -1.0) + " "
+					final_line += str(int(item) * -1.0) + " "
 				else:
-					final_line += item.get_string() + " "
+					final_line += item + " "
 				p += 1
 			moves_list.append(final_line)
 		elif move_ball_no in middle_balls_list:
@@ -1333,8 +1333,8 @@ func _on_ToolsMenu_copy_l_to_r():
 				parsed_line = line.split(delim, false)
 				break
 		
-		var base_ball_no = int(parsed_line[0].get_string())
-		var move_ball_no = int(parsed_line[1].get_string())
+		var base_ball_no = int(parsed_line[0])
+		var move_ball_no = int(parsed_line[1])
 		if move_ball_no in left_balls_list:
 			if move_ball_no > 66:
 				var new_ball_no = ball_map[move_ball_no].new_ball_no
@@ -1346,7 +1346,7 @@ func _on_ToolsMenu_copy_l_to_r():
 					elif p == 1:
 						final_line += str(ball_map[move_ball_no].new_ball_no) + " "
 					else:
-						final_line += item.get_string() + " "
+						final_line += item + " "
 					p += 1
 				projections_list.append(final_line)
 			else:
@@ -1367,7 +1367,7 @@ func _on_ToolsMenu_copy_l_to_r():
 					else:
 						final_line += str(ball_map[move_ball_no].new_ball_no) + " "
 				else:
-					final_line += item.get_string() + " "
+					final_line += item + " "
 				p += 1
 			projections_list.append(final_line)
 		elif move_ball_no in middle_balls_list:
@@ -1384,7 +1384,7 @@ func _on_ToolsMenu_copy_l_to_r():
 				elif p == 1:
 					final_line += str(ball_map[move_ball_no].new_ball_no) + " "
 				else:
-					final_line += item.get_string()
+					final_line += item
 				p += 1
 			projections_list.append(final_line)
 		i += 1
@@ -1410,7 +1410,7 @@ func _on_ToolsMenu_copy_l_to_r():
 				parsed_line = line.split(delim, false)
 				break
 
-		var base_ball_no = int(parsed_line[0].get_string())
+		var base_ball_no = int(parsed_line[0])
 		if base_ball_no in left_balls_list:
 			var new_base_ball_no = ball_map[base_ball_no].new_ball_no
 			# add original line
@@ -1420,7 +1420,7 @@ func _on_ToolsMenu_copy_l_to_r():
 				if p == 0:
 					final_line += str(new_base_ball_no) + " "
 				else:
-					final_line += item.get_string() + " "
+					final_line += item + " "
 				p += 1
 			paintballs_list.append(final_line)
 			# add flipped line
@@ -1430,13 +1430,13 @@ func _on_ToolsMenu_copy_l_to_r():
 				if p == 0:
 					final_line += str(get_corresponding_right_ball(base_ball_no)) + " "
 				elif p == 2:
-					final_line += str(float(item.get_string()) * -1.0) +  " "
+					final_line += str(float(item) * -1.0) +  " "
 				else:
-					final_line += item.get_string() + " "
+					final_line += item + " "
 				p += 1
 			paintballs_list.append(final_line)
 		elif base_ball_no in middle_balls_list:
-			var x_pos = float(parsed_line[2].get_string())
+			var x_pos = float(parsed_line[2])
 			if x_pos < 0.0: # right ball do nothing
 				pass
 			else:
@@ -1448,7 +1448,7 @@ func _on_ToolsMenu_copy_l_to_r():
 					if p == 0:
 						final_line += str(new_base_ball_no) + " "
 					else:
-						final_line += item.get_string() + " "
+						final_line += item + " "
 					p += 1
 				paintballs_list.append(final_line)
 				if x_pos > 0.0: # left side
@@ -1460,7 +1460,7 @@ func _on_ToolsMenu_copy_l_to_r():
 						elif p == 2:
 							final_line += str(x_pos * -1.0) + " "
 						else:
-							final_line += item.get_string() + " "
+							final_line += item + " "
 						p += 1
 					paintballs_list.append(final_line)
 		i += 1
@@ -1598,8 +1598,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					parsed_line = line.split(delim, false)
 					break
 
-			var color = parsed_line[0].get_string()
-			var outline_color = parsed_line[1].get_string()
+			var color = parsed_line[0]
+			var outline_color = parsed_line[1]
 			if (recolor_info.has(color) and all_recolor_info.balls_on) or (recolor_info.has(outline_color) and all_recolor_info.ball_outlines_on):
 				var n = 0
 				var final_line = ""
@@ -1641,8 +1641,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 				i += 1
 				continue
-			var color = parsed_line[4].get_string()
-			var outline_color = parsed_line[5].get_string()
+			var color = parsed_line[4]
+			var outline_color = parsed_line[5]
 			if (recolor_info.has(color) and all_recolor_info.balls_on) or (recolor_info.has(outline_color) and all_recolor_info.ball_outlines_on):
 				var n = 0
 				var final_line = ""
@@ -1685,7 +1685,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 				i += 1
 				continue
-			var color = parsed_line[5].get_string()
+			var color = parsed_line[5]
 			if recolor_info.has(color):
 				var n = 0
 				var final_line = ""
@@ -1717,9 +1717,9 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					parsed_line = line.split(delim, false)
 					break
 
-			var mainColor = parsed_line[3].get_string()
-			var lColor = parsed_line[4].get_string()
-			var rColor = parsed_line[5].get_string()
+			var mainColor = parsed_line[3]
+			var lColor = parsed_line[4]
+			var rColor = parsed_line[5]
 			if recolor_info.has(mainColor) or recolor_info.has(lColor) or recolor_info.has(rColor):
 				var n = 0
 				var final_line = ""
@@ -1731,7 +1731,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					elif n == 5 and recolor_info.has(rColor):
 						final_line += recolor_info[rColor] + " "
 					else:
-						final_line += item.get_string() + " "
+						final_line += item + " "
 					n += 1
 				set_line(start_of_section + i, final_line)
 			i += 1
@@ -1762,10 +1762,10 @@ func _on_ToolsMenu_move_head(x, y, z):
 				parsed_line = line.split(delim, false)
 				break
 
-		if !(parsed_line[0].get_string().to_int() in head_balls):
+		if !(parsed_line[0].to_int() in head_balls):
 			i += 1
 			continue
-		head_balls.erase(parsed_line[0].get_string().to_int())
+		head_balls.erase(parsed_line[0].to_int())
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
