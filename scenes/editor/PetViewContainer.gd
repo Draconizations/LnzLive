@@ -7,8 +7,9 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
 
-var right_click_menu = PopupMenu.new()
-var right_click_ball = null
+# DELETE:
+# var right_click_menu = PopupMenu.new()
+# var right_click_ball = null
 
 var last_selected
 var selecting_on = false
@@ -30,11 +31,8 @@ var linez_start_ball = null
 const ZOOM_STEP := 1.2
 
 func _ready():
+	set_process_unhandled_key_input(true)
 	# flip_camera_view()
-	add_child(right_click_menu)
-	right_click_menu.add_item("Create Addballz", 0)
-	right_click_menu.add_item("Connect by Linez", 1)
-	right_click_menu.connect("id_pressed", self, "_on_RightClickMenu_id_pressed")
 
 func set_active_selected_ball(ball):
 	if active_selected_ball and is_instance_valid(active_selected_ball):
@@ -58,6 +56,20 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	# Open Tools Menu via right-click on hovered ball:
+	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
+		get_tree().set_input_as_handled()
+		var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			# right_click_ball = hover
+			tools_menu.selected_visual_ball = hover
+		else:
+			tools_menu.selected_visual_ball = null
+		tools_menu.rect_global_position = get_viewport().get_mouse_position()
+		tools_menu.popup()
+		return
+
 	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale /= ZOOM_STEP
@@ -66,15 +78,6 @@ func _gui_input(event):
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale *= ZOOM_STEP
 		return
-
-	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-		if hover:
-			right_click_ball = hover
-			#right_click_menu.set_position(event.position)
-			right_click_menu.set_position(get_viewport().get_mouse_position())
-			right_click_menu.popup()
-			return
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
 		if selecting_on and not linez_mode and last_selected_is_valid():
@@ -207,14 +210,19 @@ func _gui_input(event):
 			last_selected = null
 			label.hide()
 
-func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
-	var denom = plane_normal.dot(ray_dir)
-	if abs(denom) < 0.0001:
-		return null
-	var d = plane_normal.dot(plane_point - ray_origin) / denom
-	return ray_origin + ray_dir * d
-
 func _unhandled_key_input(event):
+	# Open Tools Menu via CTRL+SPACE for last selected ball:
+	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
+		get_tree().set_input_as_handled()
+		var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
+		if last_selected_is_valid():
+			tools_menu.selected_visual_ball = last_selected
+		else:
+			tools_menu.selected_visual_ball = null
+		tools_menu.rect_global_position = get_viewport().get_mouse_position()
+		tools_menu.popup()
+		return
+
 	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
 		linez_mode = true
 		linez_start_ball = last_selected
@@ -222,7 +230,14 @@ func _unhandled_key_input(event):
 	else:
 		if event.pressed and last_selected_is_valid():
 			last_selected._input(event)
-		
+
+func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
+	var denom = plane_normal.dot(ray_dir)
+	if abs(denom) < 0.0001:
+		return null
+	var d = plane_normal.dot(plane_point - ray_origin) / denom
+	return ray_origin + ray_dir * d
+
 func last_selected_is_valid():
 	return last_selected != null and is_instance_valid(last_selected)
 
@@ -325,18 +340,19 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 
 	return size_dif
 
-func _on_RightClickMenu_id_pressed(id):
-	if not is_instance_valid(right_click_ball):
-		return
+# DELETE:
+# func _on_RightClickMenu_id_pressed(id):
+# 	if not is_instance_valid(right_click_ball):
+# 		return
 
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+# 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
-	if id == 0:
-		# "Create Addballz"
-		pet_node.emit_signal("addball_created", right_click_ball)
+# 	if id == 0:
+# 		# "Create Addballz"
+# 		pet_node.emit_signal("addball_created", right_click_ball)
 
-	elif id == 1:
-		# "Connect by Linez"
-		linez_mode = true
-		linez_start_ball = right_click_ball
-		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+# 	elif id == 1:
+# 		# "Connect by Linez"
+# 		linez_mode = true
+# 		linez_start_ball = right_click_ball
+		# linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
