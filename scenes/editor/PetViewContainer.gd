@@ -7,10 +7,6 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
 
-# DELETE:
-# var right_click_menu = PopupMenu.new()
-# var right_click_ball = null
-
 var last_selected
 var selecting_on = false
 var active_selected_ball = null
@@ -62,7 +58,6 @@ func _gui_input(event):
 		var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
-			# right_click_ball = hover
 			tools_menu.selected_visual_ball = hover
 		else:
 			tools_menu.selected_visual_ball = null
@@ -339,20 +334,3 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
 
 	return size_dif
-
-# DELETE:
-# func _on_RightClickMenu_id_pressed(id):
-# 	if not is_instance_valid(right_click_ball):
-# 		return
-
-# 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-
-# 	if id == 0:
-# 		# "Create Addballz"
-# 		pet_node.emit_signal("addball_created", right_click_ball)
-
-# 	elif id == 1:
-# 		# "Connect by Linez"
-# 		linez_mode = true
-# 		linez_start_ball = right_click_ball
-		# linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
