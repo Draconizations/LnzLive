@@ -2,40 +2,28 @@ extends PopupMenu
 
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
-signal add_ball(selected_ball)
+signal add_ball(selected_ball, connect_line)
 signal copy_l_to_r()
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal print_ball_colors()
 
+var selected_visual_ball = null
+
 var current_action
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
 
-#onready var palette_viewer_popup = get_node("/root/SceneRoot/ToolsMenu/PaletteViewerPopup")
-#onready var pet_root = get_node("/root/PetRoot")
-
 func _ready():
 	add_submenu_item("Color...", "RecolorMenu")
-	add_item("Add ball")
-	add_item("Copy L to R")
-	add_item("Move head")
-	add_item("Copy ball colors to clipboard")
-
-	# Connect palette viewer
-	#$ViewPaletteButton.connect("pressed", self, "_on_ViewPaletteButton_pressed")
-
-#func _on_ViewPaletteButton_pressed():
-#	var current_palette = "PETZ"
-#	var species = pet_root.get("species")
-#
-#	if species == KeyBallsData.Species.BABY:
-#		current_palette = "BABYZ"
-#	else:
-#		current_palette = "PETZ"
-#
-#	palette_viewer_popup.set_current_palette(current_palette)
-#	palette_viewer_popup.popup_centered()
+	add_item("Create Addballz + Linez") # index 1
+	#add_separator()
+	add_item("Create Addballz") # index 2
+	add_item("Delete Addballz") # index 2 now 3
+	add_item("Connect by Linez") # index 3 now 4
+	add_item("Copy L to R") # was index 2 now 4 now 5
+	add_item("Move Head Ballz") # was index 3 now 5 now 6
+	add_item("Copy Ballz Colors to Clipboard") # was index 4 now 6 now 7
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
@@ -101,31 +89,40 @@ func _on_LineEdit_gui_input(event):
 
 func _on_RecolorMenu_id_pressed(id):
 	current_action = id
-	if id == 8: # color swap
+	if id == 11: # color swap
 		get_parent().get_node("RecolorPopup").popup_centered()
 	else:
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()
 		get_parent().get_node("ColorPopup").popup()
 
 func _on_ToolsMenu_index_pressed(index):
-	if index == 2: #copy l to r
+	if index == 5: # Copy L to R
 		emit_signal("copy_l_to_r")
-	elif index == 1: # add ball
-		var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-		if view_container.last_selected_is_valid():
-			emit_signal("add_ball", view_container.last_selected)
-	elif index == 3: # move head
+	elif index == 1: # Addballz + Linez
+		if is_instance_valid(selected_visual_ball):
+			emit_signal("add_ball", selected_visual_ball, true)
+	elif index == 2: # Addballz only
+		if is_instance_valid(selected_visual_ball):
+			emit_signal("add_ball", selected_visual_ball, false)
+	elif index == 3: # Delete Addballz
+		print("Not implemented")
+	elif index == 4: # Connect by Linez
+		if is_instance_valid(selected_visual_ball):
+			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+			pet_view.linez_mode = true
+			pet_view.linez_start_ball = selected_visual_ball
+			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
+	elif index == 6: # Move head
 		var options = get_parent().get_node("HeadMovePopup")
 		options.popup_centered()
-	elif index == 4: # print colors
+	elif index == 7: # Print ball colors
 		emit_signal("print_ball_colors")
 
 func _on_ToolsMenu_about_to_show():
 	var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	set_item_disabled(1, !view_container.last_selected_is_valid())
+	#set_item_disabled(1, !view_container.last_selected_is_valid())
 
 func _on_RecolorPopup_confirmed():
-	# get all the recolor infos
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
 	var lines = popup.get_node("RecolorLines").get_children()
 	var recolor_info = {recolors = {}}
