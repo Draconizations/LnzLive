@@ -98,10 +98,10 @@ func _on_RecolorMenu_id_pressed(id):
 func _on_ToolsMenu_index_pressed(index):
 	if index == 5: # Copy L to R
 		emit_signal("copy_l_to_r")
-	elif index == 1: # Addballz + Linez
+	elif index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, true)
-	elif index == 2: # Addballz only
+	elif index == 2: # Create Addballz
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, false)
 	elif index == 3: # Delete Addballz
@@ -112,10 +112,10 @@ func _on_ToolsMenu_index_pressed(index):
 			pet_view.linez_mode = true
 			pet_view.linez_start_ball = selected_visual_ball
 			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 6: # Move head
+	elif index == 6: # Move Head
 		var options = get_parent().get_node("HeadMovePopup")
 		options.popup_centered()
-	elif index == 7: # Print ball colors
+	elif index == 7: # Print Ballz Colors
 		emit_signal("print_ball_colors")
 
 func _on_ToolsMenu_about_to_show():
