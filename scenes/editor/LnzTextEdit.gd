@@ -242,7 +242,15 @@ func find_line_in_linez_section(ball_no):
 	while true:
 		var looped = start_point + i
 		var line = get_line(looped).lstrip(" ")
-		var parsed_line = r.search_all(line)
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		if line.begins_with("["):
 			if start_point == start_of_section:
 				return start_of_section - 1
@@ -558,7 +566,15 @@ func _on_Node_addball_deleted(ball_no):
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+		
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var start_ball = int(parsed_line[0].get_string())
 		var end_ball = int(parsed_line[1].get_string())
 		if start_ball == ball_no or end_ball == ball_no:
@@ -604,7 +620,15 @@ func _on_Node_addball_deleted(ball_no):
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+		
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var move_ball_no = int(parsed_line[1].get_string())
 		if move_ball_no == ball_no:
 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
@@ -689,11 +713,19 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		elif line.begins_with("["):
 			break
 		# here the first number is color
-		var parsed_line = r.search_all(line)
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
-			var item = r_item.get_string()
+			var item = r_item
 			if n == 0 and !color_index.empty():
 				final_line += str(color_index) + " "
 			elif n == 1 and !outline_color_index.empty():
@@ -718,14 +750,22 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		elif line.begins_with("["):
 			break
 		# here the fifth number is color
-		var parsed_line = r.search_all(line)
-		if int(parsed_line[0].get_string()) in balls_to_exclude:
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
+		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 			i += 1
 			continue
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
-			var item = r_item.get_string()
+			var item = r_item
 			if n == 4 and !color_index.empty():
 				final_line += str(color_index) + " "
 			elif n == 5 and !outline_color_index.empty():
@@ -771,11 +811,19 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			i += 1
 			continue
 		# here the first number is color
-		var parsed_line = r.search_all(line)
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
-			var item = r_item.get_string()
+			var item = r_item
 			if n == 0 and !color_index.empty():
 				final_line += str(color_index) + " "
 			elif n == 1 and !outline_color_index.empty():
@@ -800,17 +848,25 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		elif line.begins_with("["):
 			break
 		# here the fifth number is color
-		var parsed_line = r.search_all(line)
-		if int(parsed_line[0].get_string()) in balls_to_exclude:
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
+		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 			i += 1
 			continue
-		if !(int(parsed_line[0].get_string()) in core_ball_nos):
+		if !(int(parsed_line[0]) in core_ball_nos):
 			i+=1
 			continue
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
-			var item = r_item.get_string()
+			var item = r_item
 			if n == 4 and !color_index.empty():
 				final_line += str(color_index) + " "
 			elif n == 5 and !outline_color_index.empty():
@@ -852,7 +908,14 @@ func _on_ToolsMenu_copy_l_to_r():
 		if i in left_balls_list or i in middle_balls_list:
 			var d = {line = line, new_ball_no = i}
 			if i in left_balls_list:
-				var parsed_line = r.search_all(line)
+				# var parsed_line = r.search_all(line)
+				var delimiters = [", ", ",", "\t", " "]
+				var parsed_line = []
+				for delim in delimiters:
+					if line.split(delim).size() > 2:
+						parsed_line = line.split(delim, false)
+						break
+				
 				var mirrored_line = ""
 				if parsed_line[4].get_string() in ["0", "-2"]: # outline needs to be mirrored
 					var p = 0
@@ -900,7 +963,15 @@ func _on_ToolsMenu_copy_l_to_r():
 				ball_map[ball_no] = {line = line, new_ball_no = new_ball_count}
 				new_ball_count += 1
 				var corresponding_right_ball = get_corresponding_right_ball(base_ball)
-				var parsed_line = r.search_all(line)
+
+				# var parsed_line = r.search_all(line)
+				var delimiters = [", ", ",", "\t", " "]
+				var parsed_line = []
+				for delim in delimiters:
+					if line.split(delim).size() > 2:
+						parsed_line = line.split(delim, false)
+						break
+
 				var p = 0
 				var new_right_ball_line = ""
 				for item in parsed_line:
@@ -918,7 +989,14 @@ func _on_ToolsMenu_copy_l_to_r():
 					p+=1
 				balls_to_add_temp.append({line = new_right_ball_line, corresponding_ball = ball_no})
 			elif base_ball in middle_balls_list:
-				var parsed_line = r.search_all(line)
+				# var parsed_line = r.search_all(line)
+				var delimiters = [", ", ",", "\t", " "]
+				var parsed_line = []
+				for delim in delimiters:
+					if line.split(delim).size() > 2:
+						parsed_line = line.split(delim, false)
+						break
+
 				var x_pos = int(parsed_line[1].get_string())
 				if x_pos > 0.0: #left ball
 					ball_map[ball_no] = {line = line, new_ball_no = new_ball_count}
@@ -968,7 +1046,15 @@ func _on_ToolsMenu_copy_l_to_r():
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var start_ball = int(parsed_line[0].get_string())
 		var end_ball = int(parsed_line[1].get_string())
 		if start_ball in left_balls_list or end_ball in left_balls_list:
@@ -1041,7 +1127,15 @@ func _on_ToolsMenu_copy_l_to_r():
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+			
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var move_ball_no = int(parsed_line[0].get_string())
 		if move_ball_no in left_balls_list:
 			moves_list.append(line)
@@ -1072,7 +1166,15 @@ func _on_ToolsMenu_copy_l_to_r():
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+			
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+		
 		var base_ball_no = int(parsed_line[0].get_string())
 		var move_ball_no = int(parsed_line[1].get_string())
 		if move_ball_no in left_balls_list:
@@ -1141,7 +1243,15 @@ func _on_ToolsMenu_copy_l_to_r():
 		# ignore comments for now
 		if line.begins_with("[") or line.empty():
 			break
-		var parsed_line = r.search_all(line)
+			
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		var base_ball_no = int(parsed_line[0].get_string())
 		if base_ball_no in left_balls_list:
 			var new_base_ball_no = ball_map[base_ball_no].new_ball_no
@@ -1367,14 +1477,22 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				i += 1
 				continue
 			# here the first number is color and second is outline col
-			var parsed_line = r.search_all(line)
+			
+			# var parsed_line = r.search_all(line)
+			var delimiters = [", ", ",", "\t", " "]
+			var parsed_line = []
+			for delim in delimiters:
+				if line.split(delim).size() > 2:
+					parsed_line = line.split(delim, false)
+					break
+
 			var color = parsed_line[0].get_string()
 			var outline_color = parsed_line[1].get_string()
 			if (recolor_info.has(color) and all_recolor_info.balls_on) or (recolor_info.has(outline_color) and all_recolor_info.ball_outlines_on):
 				var n = 0
 				var final_line = ""
 				for r_item in parsed_line:
-					var item = r_item.get_string()
+					var item = r_item
 					if n == 0 and recolor_info.has(item) and all_recolor_info.balls_on:
 						final_line += recolor_info[color] + " "
 					elif n == 1 and recolor_info.has(item) and all_recolor_info.ball_outlines_on:
@@ -1399,8 +1517,16 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				i += 1
 				continue
 			# here the fifth number is color
-			var parsed_line = r.search_all(line)
-			if int(parsed_line[0].get_string()) in balls_to_exclude:
+
+			# var parsed_line = r.search_all(line)
+			var delimiters = [", ", ",", "\t", " "]
+			var parsed_line = []
+			for delim in delimiters:
+				if line.split(delim).size() > 2:
+					parsed_line = line.split(delim, false)
+					break
+
+			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 				i += 1
 				continue
 			var color = parsed_line[4].get_string()
@@ -1409,7 +1535,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var n = 0
 				var final_line = ""
 				for r_item in parsed_line:
-					var item = r_item.get_string()
+					var item = r_item
 					if n == 4 and recolor_info.has(item) and all_recolor_info.balls_on:
 						final_line += recolor_info[color] + " "
 					elif n == 5 and recolor_info.has(item) and all_recolor_info.ball_outlines_on:
@@ -1435,8 +1561,16 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				i += 1
 				continue
 			# here the sixth number is color
-			var parsed_line = r.search_all(line)
-			if int(parsed_line[0].get_string()) in balls_to_exclude:
+
+			# var parsed_line = r.search_all(line)
+			var delimiters = [", ", ",", "\t", " "]
+			var parsed_line = []
+			for delim in delimiters:
+				if line.split(delim).size() > 2:
+					parsed_line = line.split(delim, false)
+					break
+
+			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 				i += 1
 				continue
 			var color = parsed_line[5].get_string()
@@ -1444,7 +1578,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var n = 0
 				var final_line = ""
 				for r_item in parsed_line:
-					var item = r_item.get_string()
+					var item = r_item
 					if n == 5:
 						final_line += recolor_info[color] + " "
 					else:
@@ -1462,7 +1596,15 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			# ignore comments for now
 			if line.begins_with("[") or line.empty() or i > get_line_count():
 				break
-			var parsed_line = r.search_all(line)
+
+			# var parsed_line = r.search_all(line)
+			var delimiters = [", ", ",", "\t", " "]
+			var parsed_line = []
+			for delim in delimiters:
+				if line.split(delim).size() > 2:
+					parsed_line = line.split(delim, false)
+					break
+
 			var mainColor = parsed_line[3].get_string()
 			var lColor = parsed_line[4].get_string()
 			var rColor = parsed_line[5].get_string()
@@ -1499,7 +1641,15 @@ func _on_ToolsMenu_move_head(x, y, z):
 			continue
 		elif line.begins_with("["):
 			break
-		var parsed_line = r.search_all(line)
+			
+		# var parsed_line = r.search_all(line)
+		var delimiters = [", ", ",", "\t", " "]
+		var parsed_line = []
+		for delim in delimiters:
+			if line.split(delim).size() > 2:
+				parsed_line = line.split(delim, false)
+				break
+
 		if !(parsed_line[0].get_string().to_int() in head_balls):
 			i += 1
 			continue
@@ -1507,7 +1657,7 @@ func _on_ToolsMenu_move_head(x, y, z):
 		var n = 0
 		var final_line = ""
 		for r_item in parsed_line:
-			var item = r_item.get_string()
+			var item = r_item
 			if n == 1:
 				final_line += str(item.to_int() + x) + " "
 			elif n == 2:
