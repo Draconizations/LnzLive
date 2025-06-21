@@ -420,6 +420,156 @@ func _on_HeadShotButton_pressed():
 	_set_text_preserve(new_text)
 	save_file()
 
+# v1 Create Addballz + Linez
+# func _on_ToolsMenu_add_ball(selected_visual_ball):
+# 	var real_base_ball = selected_visual_ball.ball_no
+# 	if selected_visual_ball.base_ball_no != -1:
+# 		real_base_ball = selected_visual_ball.base_ball_no
+		
+# 	var section_find = search('[Add Ball]', 0, 0, 0)
+# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	var i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
+# 		i+=1
+# 	var lines_in_addball_section = i
+# 	var new_ball_no = 67 + i
+# 	var new_ball_cursor_position = start_of_section + lines_in_addball_section
+# 	cursor_set_line(start_of_section + lines_in_addball_section)
+# 	cursor_set_column(0)
+# 	var position: Vector3
+# 	if selected_visual_ball.base_ball_no != -1:
+# 		position = selected_visual_ball.transform.origin * 1000.0
+# 	else:
+# 		position = Vector3.ZERO
+# 	var new_addball_text = "%s %d %d %d %s %s 0 %s 0 %s 30 0 0 0 -1\n" % [real_base_ball, position.x, position.y, position.z, selected_visual_ball.color_index, selected_visual_ball.outline_color_index, selected_visual_ball.fuzz_amount, selected_visual_ball.old_outline]
+# 	insert_text_at_cursor(new_addball_text)
+	
+# #	# add line
+# 	section_find = search('[Linez]', 0, 0, 0)
+# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
+# 		i += 1
+# 	cursor_set_line(start_of_section + i)
+# 	cursor_set_column(0)
+# 	var new_line_text = "%s %s 0 -1 -1 -1 95 95 -1 0\n" % [new_ball_no, selected_visual_ball.ball_no]
+# 	insert_text_at_cursor(new_line_text)
+# 	cursor_set_line(new_ball_cursor_position)
+# 	center_viewport_to_cursor()
+	
+# 	save_file()
+
+# v2 Create Addballz
+# func _on_Node_addball_created(reference_ball):
+# 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+# 	if reference_ball == null:
+# 		print("[LNZ EDIT] No reference ball given")
+# 		return
+
+# 	var ball_no = reference_ball.ball_no
+
+# 	var lnz_size = 0
+# 	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+# 		lnz_size = pet_node.lnz.addballs[reference_ball.ball_no].size
+# 	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+# 		lnz_size = 25
+
+# 	var fuzz_amount = 0
+# 	if pet_node.lnz.addballs.has(reference_ball.ball_no):
+# 		fuzz_amount = pet_node.lnz.addballs[reference_ball.ball_no].fuzz
+# 	elif pet_node.lnz.balls.has(reference_ball.ball_no):
+# 		fuzz_amount = pet_node.lnz.balls[reference_ball.ball_no].fuzz
+
+# 	var real_base_ball = ball_no
+# 	if reference_ball.base_ball_no != -1:
+# 		real_base_ball = reference_ball.base_ball_no
+
+# 	var section_find = search('[Add Ball]', 0, 0, 0)
+# 	if section_find.empty():
+# 		print("[LNZ EDIT] No [Add Ball] section found")
+# 		return
+# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
+
+# 	var delim = " "
+# 	for i in range(end_of_section - 1, start_of_section - 1, -1):
+# 		var line = get_line(i).strip_edges()
+# 		if line == "" or line.begins_with(";"):
+# 			continue
+# 		if line.find("\t") != -1:
+# 			delim = "\t"
+# 		elif line.find(", ") != -1:
+# 			delim = ", "
+# 		elif line.find(",") != -1:
+# 			delim = ","
+# 		else:
+# 			delim = " "
+# 		break
+
+# 	var sep = delim
+
+# 	var insert_line = end_of_section
+# 	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
+# 		insert_line -= 1
+
+# 	var new_pos = Vector3(0, 0, -25)
+# 	if reference_ball.base_ball_no != -1 and pet_node.lnz.addballs.has(ball_no):
+# 		new_pos = pet_node.lnz.addballs[ball_no].position - Vector3(0, 0, 25)
+
+# 	var texture_id = -1
+# 	if pet_node.lnz.addballs.has(ball_no):
+# 		texture_id = pet_node.lnz.addballs[ball_no].texture_id
+# 	elif pet_node.lnz.balls.has(ball_no):
+# 		texture_id = pet_node.lnz.balls[ball_no].texture_id
+
+# 	var bodyarea = 1
+
+# 	if KeyBallsData.bodyarea_map.has(real_base_ball):
+# 		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
+# 	else:
+# 		print("Missing bodyarea for ball", real_base_ball)
+
+
+# 	var fields = [
+# 		str(real_base_ball),
+# 		str(int(new_pos.x)),
+# 		str(int(new_pos.y)),
+# 		str(int(new_pos.z)),
+# 		str(reference_ball.color_index),
+# 		str(reference_ball.outline_color_index),
+# 		"0",
+# 		str(fuzz_amount),
+# 		"0",
+# 		str(reference_ball.old_outline),
+# 		str(lnz_size),
+# 		str(bodyarea),
+# 		"0",
+# 		str(texture_id)
+# 	]
+
+# 	var line_text = ""
+# 	for i in range(fields.size()):
+# 		line_text += fields[i]
+# 		if i < fields.size() - 1:
+# 			line_text += sep
+# 	line_text += "\n"
+
+# 	_insert_text_at_cursor_at_line(insert_line, line_text)
+# 	cursor_set_line(insert_line)
+# 	cursor_set_column(0)
+# 	center_viewport_to_cursor()
+# 	save_file()
+
+# v2 Connect by Linez
 func _on_Node_line_created(start_ball, end_ball):
 	var bounds = _get_section_bounds("[Linez]")
 	var start_line = bounds["start"]
@@ -448,76 +598,60 @@ func _on_Node_line_created(start_ball, end_ball):
 	center_viewport_to_cursor()
 	save_file()
 
-func _on_Node_addball_created(reference_ball):
+# v3 Create Addballz (+ Linez)
+func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-
 	if reference_ball == null:
 		print("[LNZ EDIT] No reference ball given")
 		return
 
 	var ball_no = reference_ball.ball_no
+	var lnz = pet_node.lnz
 
-	var lnz_size = 0
-	if pet_node.lnz.addballs.has(reference_ball.ball_no):
-		lnz_size = pet_node.lnz.addballs[reference_ball.ball_no].size
-	elif pet_node.lnz.balls.has(reference_ball.ball_no):
-		lnz_size = 25
+	var lnz_size = 60
+	var source = lnz.addballs.get(reference_ball.ball_no)
+	if source != null and typeof(source) == TYPE_DICTIONARY and source.has("size"):
+		lnz_size = source["size"]
+	else:
+		source = lnz.balls.get(reference_ball.ball_no)
+		if source != null and typeof(source) == TYPE_DICTIONARY and source.has("size"):
+			lnz_size = source["size"]
+
+	var addball_data = lnz.addballs.get(ball_no, null)
+	var ball_data = lnz.balls.get(ball_no, null)
 
 	var fuzz_amount = 0
-	if pet_node.lnz.addballs.has(reference_ball.ball_no):
-		fuzz_amount = pet_node.lnz.addballs[reference_ball.ball_no].fuzz
-	elif pet_node.lnz.balls.has(reference_ball.ball_no):
-		fuzz_amount = pet_node.lnz.balls[reference_ball.ball_no].fuzz
+	if addball_data != null:
+		fuzz_amount = addball_data.fuzz
+	elif ball_data != null:
+		fuzz_amount = ball_data.fuzz
+
+	var texture_id = -1
+	if addball_data != null:
+		texture_id = addball_data.texture_id
+	elif ball_data != null:
+		texture_id = ball_data.texture_id
 
 	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
 		real_base_ball = reference_ball.base_ball_no
 
-	var section_find = search('[Add Ball]', 0, 0, 0)
+	var new_pos = Vector3(0, 0, -60)
+	if reference_ball.base_ball_no != -1 and addball_data != null:
+		new_pos = addball_data.position - Vector3(0, 0, 60)
+
+	var bodyarea = 1
+	if KeyBallsData.bodyarea_map.has(real_base_ball):
+		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
+
+	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
 		print("[LNZ EDIT] No [Add Ball] section found")
 		return
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
-
-	var delim = " "
-	for i in range(end_of_section - 1, start_of_section - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with(";"):
-			continue
-		if line.find("\t") != -1:
-			delim = "\t"
-		elif line.find(", ") != -1:
-			delim = ", "
-		elif line.find(",") != -1:
-			delim = ","
-		else:
-			delim = " "
-		break
-
-	var sep = delim
-
-	var insert_line = end_of_section
-	while insert_line > start_of_section and get_line(insert_line - 1).strip_edges() == "":
-		insert_line -= 1
-
-	var new_pos = Vector3(0, 0, -25)
-	if reference_ball.base_ball_no != -1 and pet_node.lnz.addballs.has(ball_no):
-		new_pos = pet_node.lnz.addballs[ball_no].position - Vector3(0, 0, 25)
-
-	var texture_id = -1
-	if pet_node.lnz.addballs.has(ball_no):
-		texture_id = pet_node.lnz.addballs[ball_no].texture_id
-	elif pet_node.lnz.balls.has(ball_no):
-		texture_id = pet_node.lnz.balls[ball_no].texture_id
-
-	var bodyarea = 1
-
-	if KeyBallsData.bodyarea_map.has(real_base_ball):
-		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
-	else:
-		print("Missing bodyarea for ball", real_base_ball)
-
+	var start_line = section_find[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var delim = _detect_delimiter(start_line, end_line)
+	var insert_line = _find_insertion_line(start_line, end_line)
 
 	var fields = [
 		str(real_base_ball),
@@ -540,14 +674,38 @@ func _on_Node_addball_created(reference_ball):
 	for i in range(fields.size()):
 		line_text += fields[i]
 		if i < fields.size() - 1:
-			line_text += sep
+			line_text += delim
 	line_text += "\n"
 
 	_insert_text_at_cursor_at_line(insert_line, line_text)
 	cursor_set_line(insert_line)
 	cursor_set_column(0)
 	center_viewport_to_cursor()
+
+	if also_connect_line:
+		var addball_no = 67 + _count_section_entries("[Add Ball]") - 1
+		_on_Node_line_created(addball_no, reference_ball.ball_no)
+
 	save_file()
+
+func _count_section_entries(section_name: String) -> int:
+	var section_find = search(section_name, 0, 0, 0)
+	if section_find.empty():
+		return 0
+	var start_line = section_find[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	while true:
+		var line = get_line(start_line + i).strip_edges()
+		if line.begins_with("[") or line == "":
+			break
+		i += 1
+	return i
+
+func _find_insertion_line(start_line: int, end_line: int) -> int:
+	var i = end_line
+	while i > start_line and get_line(i - 1).strip_edges() == "":
+		i -= 1
+	return i
 
 func _on_Node_addball_deleted(ball_no):
 	# remove the addball line
@@ -1381,52 +1539,6 @@ func _on_ToolsMenu_copy_l_to_r():
 	insert_text_at_cursor(final_text)
 	
 	ball_map = {}
-	
-	save_file()
-
-func _on_ToolsMenu_add_ball(selected_visual_ball):
-	var real_base_ball = selected_visual_ball.ball_no
-	if selected_visual_ball.base_ball_no != -1:
-		real_base_ball = selected_visual_ball.base_ball_no
-		
-	var section_find = search('[Add Ball]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		i+=1
-	var lines_in_addball_section = i
-	var new_ball_no = 67 + i
-	var new_ball_cursor_position = start_of_section + lines_in_addball_section
-	cursor_set_line(start_of_section + lines_in_addball_section)
-	cursor_set_column(0)
-	var position: Vector3
-	if selected_visual_ball.base_ball_no != -1:
-		position = selected_visual_ball.transform.origin * 1000.0
-	else:
-		position = Vector3.ZERO
-	var new_addball_text = "%s %d %d %d %s %s 0 %s 0 %s 30 0 0 0 -1\n" % [real_base_ball, position.x, position.y, position.z, selected_visual_ball.color_index, selected_visual_ball.outline_color_index, selected_visual_ball.fuzz_amount, selected_visual_ball.old_outline]
-	insert_text_at_cursor(new_addball_text)
-	
-#	# add line
-	section_find = search('[Linez]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		i += 1
-	cursor_set_line(start_of_section + i)
-	cursor_set_column(0)
-	var new_line_text = "%s %s 0 -1 -1 -1 95 95 -1 0\n" % [new_ball_no, selected_visual_ball.ball_no]
-	insert_text_at_cursor(new_line_text)
-	cursor_set_line(new_ball_cursor_position)
-	center_viewport_to_cursor()
 	
 	save_file()
 
