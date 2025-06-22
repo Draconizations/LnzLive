@@ -767,7 +767,12 @@ func _update_pairwise_section(header: String, ball_no: int):
 			continue
 		if b1 > ball_no: b1 -= 1
 		if b2 > ball_no: b2 -= 1
-		var rest = line.substr(tokens[2].get_start())
+		var rest = ""
+		for j in range(2, tokens.size()):
+			if j > 2:
+				rest += " "
+			rest += tokens[j]
+
 		set_line(start + i, "%s %s %s" % [b1, b2, rest])
 		i += 1
 
