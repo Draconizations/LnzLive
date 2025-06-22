@@ -53,6 +53,14 @@ While hovering over a ball/addball, you can use the following keys:
 - C or P: cycle through Project Ball lines that affect this ball. If none are found, goes to the Project Ball header.
 - V or L: cycle through Linez that include this ball. If none are found, goes to the Linez header.
 
+## Edit functions
+
+Options under the "Edit" menu button...
+
+### Capture Head Shot
+
+Click this button to capture current animation frame and view angle in `[Head Shot]` section.
+
 ## Visual editing
 
 Ballz can be moved and resized directly in the pet view.
