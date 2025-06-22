@@ -3,6 +3,7 @@ extends PopupMenu
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
 signal add_ball(selected_ball, connect_line)
+signal delete_ball(selected_ball)
 signal copy_l_to_r()
 signal recolor(recolor_info)
 signal move_head(x,y,z)
@@ -19,11 +20,11 @@ func _ready():
 	add_item("Create Addballz + Linez") # index 1
 	#add_separator()
 	add_item("Create Addballz") # index 2
-	add_item("Delete Addballz") # index 2 now 3
-	add_item("Connect by Linez") # index 3 now 4
-	add_item("Copy L to R") # was index 2 now 4 now 5
-	add_item("Move Head Ballz") # was index 3 now 5 now 6
-	add_item("Copy Ballz Colors to Clipboard") # was index 4 now 6 now 7
+	add_item("Delete Addballz / Omit Ballz") # index 3
+	add_item("Connect by Linez") # index 4
+	add_item("Copy L to R") # index 5
+	add_item("Move Head Ballz") # index 6
+	add_item("Copy Ballz Colors to Clipboard") # index 7
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
@@ -104,8 +105,9 @@ func _on_ToolsMenu_index_pressed(index):
 	elif index == 2: # Create Addballz
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, false)
-	elif index == 3: # Delete Addballz
-		print("Not implemented")
+	elif index == 3: # Delete Addballz or Omit Base Ball
+		if is_instance_valid(selected_visual_ball):
+			emit_signal("delete_ball", selected_visual_ball.ball_no)
 	elif index == 4: # Connect by Linez
 		if is_instance_valid(selected_visual_ball):
 			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
