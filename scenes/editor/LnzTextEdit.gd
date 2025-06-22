@@ -198,8 +198,7 @@ func find_line_in_move_section(ball_no):
 			break
 		i += 1
 	return start_point + i
-		
-	
+
 func find_line_in_project_section(ball_no):
 	var section_find = search('[Project Ball]', 0, 0, 0)
 	var current_line = cursor_get_line()
@@ -222,7 +221,7 @@ func find_line_in_project_section(ball_no):
 				start_point = start_of_section
 				i = 0
 				continue
-		if parsed_line[1] == str(ball_no):
+		if parsed_line.size() > 1 and parsed_line[1].get_string() == str(ball_no):
 			break
 		
 		i += 1
