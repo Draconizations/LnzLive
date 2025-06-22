@@ -707,118 +707,263 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 		i -= 1
 	return i
 
-func _on_Node_addball_deleted(ball_no):
-	# remove the addball line
-	var line_no = find_line_in_addball_section(ball_no - 67)
-	select(line_no, 0, line_no + 1, 0)
-	cut()
-	
-	# all the addballs after this have now been renumbered
-	# so we need to correct the linez, omissions, projections, paintballz
-	# linez
-	var section_find = search('[Linez]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
-			break
-		
-		# var parsed_line = r.search_all(line)
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
-				break
+#####
 
-		var start_ball = int(parsed_line[0])
-		var end_ball = int(parsed_line[1])
-		if start_ball == ball_no or end_ball == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+# Deletes an addball and references, or marks a base ball for omission
+func _on_ToolsMenu_delete_ball(ball_no: int):
+	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	if is_addball:
+		var line_no = find_line_in_addball_section(ball_no - 67)
+		if line_no != -1:
+			select(line_no, 0, line_no + 1, 0)
 			cut()
-			continue
-		if start_ball > ball_no or end_ball > ball_no:
-			var replaced_line = ""
-			if start_ball > ball_no:
-				start_ball -= 1
-			if end_ball > ball_no:
-				end_ball -= 1
-			replaced_line += str(start_ball) + " " + str(end_ball) + " "
-			var start_of_rest = parsed_line[2].get_start()
-			replaced_line += line.substr(start_of_rest)
-			set_line(start_of_section + i, replaced_line)
-		i += 1
-	
-	# omissions
-	section_find = search('[Omissions]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
+		_update_all_references(ball_no)
+	else:
+		_mark_base_ball_omitted(ball_no)
+
+	save_file()
+
+# Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
+func _update_all_references(ball_no: int):
+	_update_pairwise_section("[Linez]", ball_no)
+	_update_single_number_section("[Omissions]", ball_no)
+	_update_project_ball_section("[Project Ball]", ball_no)
+	_update_paintballz_section("[Paint Ballz]", ball_no)
+
+# Inserts a base ball into [Omissions] if not present
+func _mark_base_ball_omitted(ball_no: int):
+	var section = search("[Omissions]", 0, 0, 0)
+	var start = section[SEARCH_RESULT_LINE] + 1
+
+	# Scan section first to avoid modifying it while iterating
+	var already_omitted = false
+	var end = get_line_count()
+	for i in range(start, end):
+		var line = get_line(i).strip_edges()
+		if line.begins_with("[") or line == "":
 			break
 		if int(line) == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		elif int(line) > ball_no:
-			var replace_line = str(int(line) - 1)
-			set_line(start_of_section + i, replace_line)
-		i += 1
-	
-	# projections
-	section_find = search('[Project Ball]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
+			already_omitted = true
 			break
-		
-		# var parsed_line = r.search_all(line)
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
-				break
 
-		var move_ball_no = int(parsed_line[1])
-		if move_ball_no == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-			cut()
-			continue
-		elif move_ball_no > ball_no:
-			var replace_line = "%s %s %s" % [parsed_line[0], str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
-			set_line(start_of_section + i, replace_line)
-		i += 1
-		
-	# paintballz
-	section_find = search('[Paint Ballz]', 0, 0, 0)
-	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	i = 0
+	if not already_omitted:
+		_insert_text_at_line(start, str(ball_no) + "\n")
+
+# Generic for [Linez] with start/end ball pair
+func _update_pairwise_section(header: String, ball_no: int):
+	var section = search(header, 0, 0, 0)
+	var start = section[SEARCH_RESULT_LINE] + 1
+	var i = 0
 	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		# ignore comments for now
-		if line.begins_with("[") or line.empty():
+		var line = get_line(start + i).strip_edges()
+		if line == "" or line.begins_with("["):
 			break
-		
-		var split = line.split(" ", false, 1)
-		var base_ball_no = int(split[0])
-		if base_ball_no == ball_no:
-			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+		var tokens = _smart_split(line)
+		var b1 = int(tokens[0])
+		var b2 = int(tokens[1])
+		if b1 == ball_no or b2 == ball_no:
+			select(start + i, 0, start + i + 1, 0)
 			cut()
 			continue
-		elif base_ball_no > ball_no:
-			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
-			set_line(start_of_section + i, replace_line)
+		if b1 > ball_no: b1 -= 1
+		if b2 > ball_no: b2 -= 1
+		var rest = line.substr(tokens[2].get_start())
+		set_line(start + i, "%s %s %s" % [b1, b2, rest])
 		i += 1
+
+# Generic for single-number lists like [Omissions]
+func _update_single_number_section(header: String, ball_no: int):
+	var section = search(header, 0, 0, 0)
+	var start = section[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	while true:
+		var line = get_line(start + i).strip_edges()
+		if line == "" or line.begins_with("["):
+			break
+		var val = int(line)
+		if val == ball_no:
+			select(start + i, 0, start + i + 1, 0)
+			cut()
+			continue
+		elif val > ball_no:
+			set_line(start + i, str(val - 1))
+		i += 1
+
+# Specific for [Project Ball] where 2nd token is ball_no
+func _update_project_ball_section(header: String, ball_no: int):
+	var section = search(header, 0, 0, 0)
+	var start = section[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	while true:
+		var line = get_line(start + i).strip_edges()
+		if line == "" or line.begins_with("["):
+			break
+		var tokens = _smart_split(line)
+		var move_ball = int(tokens[1])
+		if move_ball == ball_no:
+			select(start + i, 0, start + i + 1, 0)
+			cut()
+			continue
+		elif move_ball > ball_no:
+			var rest = line.substr(tokens[2].get_start())
+			set_line(start + i, "%s %s %s" % [tokens[0], str(move_ball - 1), rest])
+		i += 1
+
+# Specific for [Paint Ballz] where 1st token is base ball number
+func _update_paintballz_section(header: String, ball_no: int):
+	var section = search(header, 0, 0, 0)
+	var start = section[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	while true:
+		var line = get_line(start + i).strip_edges()
+		if line == "" or line.begins_with("["):
+			break
+		var split = line.split(" ", false, 1)
+		var b = int(split[0])
+		if b == ball_no:
+			select(start + i, 0, start + i + 1, 0)
+			cut()
+			continue
+		elif b > ball_no:
+			set_line(start + i, "%s %s" % [str(b - 1), split[1]])
+		i += 1
+
+# Helper for multi-delimiter line splitting
+func _smart_split(line: String) -> PoolStringArray:
+	var delimiters = [", ", ",", "\t", " "]
+	for delim in delimiters:
+		var split = line.split(delim, false)
+		if split.size() >= 3:
+			return split
+	return PoolStringArray()
+
+# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
+func _insert_text_at_line(line_no: int, text: String):
+	var result = ""
+	var total_lines = get_line_count()
+	for i in range(total_lines):
+		if i == line_no:
+			result += text.strip_edges() + "\n"
+		result += get_line(i) + "\n"
+	if line_no >= total_lines:
+		result += text.strip_edges() + "\n"
+	set_text(result.strip_edges())
+
+#####
+
+# v1 Delete Addballz
+# func _on_Node_addball_deleted(ball_no):
+# 	# remove the addball line
+# 	var line_no = find_line_in_addball_section(ball_no - 67)
+# 	select(line_no, 0, line_no + 1, 0)
+# 	cut()
+	
+# 	# all the addballs after this have now been renumbered
+# 	# so we need to correct the linez, omissions, projections, paintballz
+# 	# linez
+# 	var section_find = search('[Linez]', 0, 0, 0)
+# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	var i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
 		
-	save_file()
+# 		# var parsed_line = r.search_all(line)
+# 		var delimiters = [", ", ",", "\t", " "]
+# 		var parsed_line = []
+# 		for delim in delimiters:
+# 			if line.split(delim).size() > 2:
+# 				parsed_line = line.split(delim, false)
+# 				break
+
+# 		var start_ball = int(parsed_line[0])
+# 		var end_ball = int(parsed_line[1])
+# 		if start_ball == ball_no or end_ball == ball_no:
+# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+# 			cut()
+# 			continue
+# 		if start_ball > ball_no or end_ball > ball_no:
+# 			var replaced_line = ""
+# 			if start_ball > ball_no:
+# 				start_ball -= 1
+# 			if end_ball > ball_no:
+# 				end_ball -= 1
+# 			replaced_line += str(start_ball) + " " + str(end_ball) + " "
+# 			var start_of_rest = parsed_line[2].get_start()
+# 			replaced_line += line.substr(start_of_rest)
+# 			set_line(start_of_section + i, replaced_line)
+# 		i += 1
+	
+# 	# omissions
+# 	section_find = search('[Omissions]', 0, 0, 0)
+# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
+# 		if int(line) == ball_no:
+# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+# 			cut()
+# 			continue
+# 		elif int(line) > ball_no:
+# 			var replace_line = str(int(line) - 1)
+# 			set_line(start_of_section + i, replace_line)
+# 		i += 1
+	
+# 	# projections
+# 	section_find = search('[Project Ball]', 0, 0, 0)
+# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
+		
+# 		# var parsed_line = r.search_all(line)
+# 		var delimiters = [", ", ",", "\t", " "]
+# 		var parsed_line = []
+# 		for delim in delimiters:
+# 			if line.split(delim).size() > 2:
+# 				parsed_line = line.split(delim, false)
+# 				break
+
+# 		var move_ball_no = int(parsed_line[1])
+# 		if move_ball_no == ball_no:
+# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+# 			cut()
+# 			continue
+# 		elif move_ball_no > ball_no:
+# 			var replace_line = "%s %s %s" % [parsed_line[0], str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
+# 			set_line(start_of_section + i, replace_line)
+# 		i += 1
+		
+# 	# paintballz
+# 	section_find = search('[Paint Ballz]', 0, 0, 0)
+# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		# ignore comments for now
+# 		if line.begins_with("[") or line.empty():
+# 			break
+		
+# 		var split = line.split(" ", false, 1)
+# 		var base_ball_no = int(split[0])
+# 		if base_ball_no == ball_no:
+# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
+# 			cut()
+# 			continue
+# 		elif base_ball_no > ball_no:
+# 			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
+# 			set_line(start_of_section + i, replace_line)
+# 		i += 1
+		
+# 	save_file()
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	# need to find line number for the ball
