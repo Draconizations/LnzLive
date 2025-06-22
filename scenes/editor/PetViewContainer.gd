@@ -52,6 +52,12 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	# Guard against entering hotkeys into text area when interacting with view container:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var focus_owner := get_focus_owner()
+		if focus_owner and focus_owner is TextEdit:
+			focus_owner.release_focus()
+
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
 		get_tree().set_input_as_handled()
@@ -65,6 +71,7 @@ func _gui_input(event):
 		tools_menu.popup()
 		return
 
+	# Zoom view using mouse wheel:
 	if event is InputEventMouseButton and event.button_index == BUTTON_WHEEL_DOWN:
 		tex.rect_pivot_offset = tex.rect_size / 2.0
 		tex.rect_scale /= ZOOM_STEP
@@ -74,31 +81,7 @@ func _gui_input(event):
 		tex.rect_scale *= ZOOM_STEP
 		return
 
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
-		if selecting_on and not linez_mode and last_selected_is_valid():
-			last_selected.selected()
-		return
-
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and linez_mode:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-		if hover and hover != linez_start_ball:
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-			pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
-
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-			hover.apply_outline_state(hover.OutlineState.NONE)
-
-			linez_mode = false
-			linez_start_ball = null
-			return
-
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-		if hover:
-			set_active_selected_ball(hover)
-		else:
-			clear_active_selected_ball()
-
+	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+S+left-click-drag:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		var alt_key = Input.is_key_pressed(KEY_ALT)
 		var s = Input.is_key_pressed(KEY_S)
@@ -118,7 +101,8 @@ func _gui_input(event):
 				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
 		return
-
+	
+	# Update ball position or scale during moving or resizing:
 	if event is InputEventMouseMotion and is_dragging and drag_ball:
 		if is_resizing:
 			var delta = event.position - drag_start_pos
@@ -151,6 +135,7 @@ func _gui_input(event):
 				print("Set drag_ball position to: ", new_pos)
 		return
 
+	# Finalize drag or resize operation on mouse release:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if is_resizing:
@@ -167,6 +152,35 @@ func _gui_input(event):
 		drag_ball = null
 		return
 
+	# Select ballz via double-click in Select Mode:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
+		if selecting_on and not linez_mode and last_selected_is_valid():
+			last_selected.selected()
+		return
+	
+	# Connect two ballz in Line Mode:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and linez_mode:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover and hover != linez_start_ball:
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+			hover.apply_outline_state(hover.OutlineState.NONE)
+
+			linez_mode = false
+			linez_start_ball = null
+			return
+
+	# Select ballz via single-click or clear selected ballz:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			set_active_selected_ball(hover)
+		else:
+			clear_active_selected_ball()
+
+	# Rotate or pan camera during general mouse motion:
 	if event is InputEventMouseMotion and not is_dragging:
 		label.rect_global_position = event.global_position
 		if Input.is_mouse_button_pressed(BUTTON_LEFT):
@@ -178,6 +192,7 @@ func _gui_input(event):
 			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 
+		# Highlight hovered ball in line creation mode:
 		if linez_mode:
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
@@ -186,6 +201,8 @@ func _gui_input(event):
 			if hover and hover != linez_start_ball:
 				hover.apply_outline_state(hover.OutlineState.HOVER)
 
+
+	# Update hovered label and trigger highlight for selectable ball:
 	if selecting_on and not linez_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
