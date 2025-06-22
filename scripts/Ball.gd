@@ -154,6 +154,10 @@ func turn_on_highlight():
 	apply_outline_state(OutlineState.HOVER)
 	
 func turn_off_highlight():
+	if get_tree() == null or get_tree().root == null:
+		apply_outline_state(OutlineState.NONE)
+		return
+
 	var pet_container = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 	if pet_container and pet_container.has_method("get_visual_state_for_ball"):
 		var new_state = pet_container.get_visual_state_for_ball(self)
