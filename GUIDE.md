@@ -40,7 +40,7 @@ You can also rename or delete files in local storage.
 
 ## Advanced navigation
 
-Turn on ball selection using the "Select" checkbox at the top of the screen.
+Turn on ball selection using the "Select Mode" checkbox from the Mode menu at the top of the screen.
 
 Hover over balls to show their ball number.
 
@@ -53,15 +53,27 @@ While hovering over a ball/addball, you can use the following keys:
 - C or P: cycle through Project Ball lines that affect this ball. If none are found, goes to the Project Ball header.
 - V or L: cycle through Linez that include this ball. If none are found, goes to the Linez header.
 
+## Visual editing
+
+Ballz can be moved and resized directly in the pet view.
+
+### Move a ball
+SHIFT + Left-click and drag to move a ball in 3D space.
+
+The move will be reflected as a Move entry in the LNZ. If a Move line does not exist, one will be created.
+
+Hold X, Y, or Z while dragging to constrain movement to that axis.
+
+### Resize a ball
+SHIFT + ALT + S + Left-click and drag to resize a ball interactively.
+
+The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
+
 ## Tools menu
 
 Warning: make sure you do not have empty lines or comments in your LNZ before using any Tools.
 
 Press Ctrl+Space in the pet view to open the tools menu, or right-click on a ball in the pet view.
-
-### Add Ballz
-
-While a ball/addball is hovered or selected, use "Create Addballz" or "Create Addballz + Linez" to create a new addball and/or line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
 
 ### Color
 
@@ -70,6 +82,20 @@ The Color menu can be used to recolor the pet. When you select a part to recolor
 ### Color Swap
 
 The Color Swap tool under the Color menu can be used to quickly create a recolor. Enter the color mappings you want to apply (e.g. 35 -> 15). Use the checkboxes to select what to apply the color swap to.
+
+### Create Add Ballz (+ Linez)
+
+While a ball/addball is hovered or selected, use "Create Addballz" or "Create Addballz + Linez" to create a new addball and/or line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
+
+### Delete Addballz / Omit Ballz
+
+While a ball/addball is hovered or selected, use "Delete Addballz / Omit Ballz" to either remove an addballz and its associated linez and paintballz completely, or add base ballz to the `[Omissions]` list.
+
+### Connect with Linez
+
+While a ball is hovered or selected, use "Connect with Linez" line creation mode.
+
+Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy L to R
 
