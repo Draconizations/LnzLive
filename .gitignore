@@ -16,3 +16,4 @@ export/*.zip
 # ignore WIP folders
 */wip
 
+*.exe
