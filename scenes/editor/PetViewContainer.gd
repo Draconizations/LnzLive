@@ -183,14 +183,18 @@ func _gui_input(event):
 	# Rotate or pan camera during general mouse motion:
 	if event is InputEventMouseMotion and not is_dragging:
 		label.rect_global_position = event.global_position
-		if Input.is_mouse_button_pressed(BUTTON_LEFT):
-			var motion = event.relative
-			camera_holder.rotation.x += motion.y * 0.01
-			camera_holder.rotation.y += motion.x * -0.01
-		elif Input.is_mouse_button_pressed(BUTTON_RIGHT) or Input.is_mouse_button_pressed(BUTTON_MIDDLE):
+
+		var space_and_left = Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT)
+		var middle_drag = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
+
+		if space_and_left or middle_drag:
 			var motion = event.relative
 			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
 			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
+		elif Input.is_mouse_button_pressed(BUTTON_LEFT):
+			var motion = event.relative
+			camera_holder.rotation.x += motion.y * 0.01
+			camera_holder.rotation.y += motion.x * -0.01
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode:

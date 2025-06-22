@@ -24,9 +24,9 @@ Raise an issue if you have a bug to point out. There's also a LnzLive channel on
 
 Click and hold the left mouse button in the pet view (centre) to rotate the pet.
 
-Click and hold the right mouse button to pan.
-
 Use the mouse wheel to zoom in and out.
+
+Press down on mouse wheel or hold space and drag to move pet around viewport.
 
 The pet view currently has a maximum size of 1000x1000px. If part of your pet is cut off when zoomed in, don't worry about it.
 
