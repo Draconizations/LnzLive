@@ -134,6 +134,7 @@ func generate_pet(file_path):
 	var lnz_info = LnzParser.new(file_path)
 	lnz = lnz_info
 	KeyBallsData.species = lnz_info.species
+	KeyBallsData.build_bodyarea_map()
 	init_ball_data(lnz_info.species)
 	init_visual_balls(lnz_info, true)
 

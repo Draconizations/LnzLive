@@ -116,6 +116,8 @@ func _ready():
 	# [19] Extra Balls  
 	# [20] Extra Head Balls 
 
+func build_bodyarea_map():
+	bodyarea_map.clear()
 	if species == Species.DOG:
 		_build_bodyarea_map_dog()
 	elif species == Species.CAT:
@@ -126,7 +128,7 @@ func _ready():
 	if typeof(max_base_ball_num) == TYPE_INT:
 		for i in range(0, max_base_ball_num + 1):
 			if not bodyarea_map.has(i):
-				bodyarea_map[i] = 1 
+				bodyarea_map[i] = 1
 
 func _build_bodyarea_map_dog():
 	for b in head_ext_dog + face_ext_dog + tongue_dog:
