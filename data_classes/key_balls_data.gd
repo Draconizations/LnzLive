@@ -114,49 +114,70 @@ func _ready():
 	# [17] Right Brow Balls  
 	# [18] Left Brow Balls  
 	# [19] Extra Balls  
-	# [20] Extra Head Balls  
+	# [20] Extra Head Balls 
 
-	for b in head_ext_dog:
+	if species == Species.DOG:
+		_build_bodyarea_map_dog()
+	elif species == Species.CAT:
+		_build_bodyarea_map_cat()
+	elif species == Species.BABY:
+		_build_bodyarea_map_baby()
+
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			if not bodyarea_map.has(i):
+				bodyarea_map[i] = 1 
+
+func _build_bodyarea_map_dog():
+	for b in head_ext_dog + face_ext_dog + tongue_dog:
 		bodyarea_map[b] = 8
-	for b in face_ext_dog:
-		bodyarea_map[b] = 8
-	for b in tongue_dog:
-		bodyarea_map[b] = 8
-	for b in eyes_dog.keys():
-		bodyarea_map[b] = 8
-	for b in eyes_dog.values():
-		bodyarea_map[b] = 8
-	for b in nose_dog:
+	for b in eyes_dog.keys() + eyes_dog.values() + nose_dog:
 		bodyarea_map[b] = 8
 	for base in ear_ext_dog:
 		bodyarea_map[base] = 8
 		for b in ear_ext_dog[base]:
 			bodyarea_map[b] = 8
-
-	for b in tail_dog:
+	for b in tail_dog + body_ext_dog:
 		bodyarea_map[b] = 1
-
-	for b in body_ext_dog:
-		bodyarea_map[b] = 1
-
-	for leg_group in legs_dog:
-		for b in leg_group:
-			bodyarea_map[b] = 1
-
-	for group in foot_ext_dog:
+	for group in legs_dog + foot_ext_dog:
 		for b in group:
 			bodyarea_map[b] = 1
-
-	for b in symmetry_mode_right_balls_dog:
+	for b in symmetry_mode_right_balls_dog + symmetry_mode_hide_balls_dog:
 		if not bodyarea_map.has(b):
 			bodyarea_map[b] = 1
 
-	for b in symmetry_mode_hide_balls_dog:
+func _build_bodyarea_map_cat():
+	for b in head_ext_cat + face_ext_cat + tongue_cat:
+		bodyarea_map[b] = 8
+	for b in eyes_cat.keys() + eyes_cat.values() + nose_cat:
+		bodyarea_map[b] = 8
+	for base in ear_ext_cat:
+		bodyarea_map[base] = 8
+		for b in ear_ext_cat[base]:
+			bodyarea_map[b] = 8
+	for b in tail_cat + body_ext_cat:
+		bodyarea_map[b] = 1
+	for group in legs_cat + foot_ext_cat:
+		for b in group:
+			bodyarea_map[b] = 1
+	for b in symmetry_mode_right_balls_cat + symmetry_mode_hide_balls_cat:
 		if not bodyarea_map.has(b):
 			bodyarea_map[b] = 1
 
-	if typeof(max_base_ball_num) == TYPE_INT:
-		for i in range(0, max_base_ball_num + 1):
-			if not bodyarea_map.has(i):
-				bodyarea_map[i] = 1
-
+func _build_bodyarea_map_baby():
+	for b in head_ext_bab + face_ext_bab + tongue_bab:
+		bodyarea_map[b] = 8
+	for b in eyes_bab.keys() + eyes_bab.values() + nose_bab:
+		bodyarea_map[b] = 8
+	for base in ear_ext_bab:
+		bodyarea_map[base] = 8
+		for b in ear_ext_bab[base]:
+			bodyarea_map[b] = 8
+	for b in tail_bab + body_ext_bab:
+		bodyarea_map[b] = 1
+	for group in legs_bab + foot_ext_bab:
+		for b in group:
+			bodyarea_map[b] = 1
+	for b in symmetry_mode_right_balls_bab + symmetry_mode_hide_balls_bab:
+		if not bodyarea_map.has(b):
+			bodyarea_map[b] = 1

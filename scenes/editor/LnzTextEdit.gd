@@ -642,7 +642,9 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var bodyarea = 1
 	if KeyBallsData.bodyarea_map.has(real_base_ball):
 		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
-
+	else:
+		print("Missing bodyarea for ball", real_base_ball)
+	
 	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
 		print("[LNZ EDIT] No [Add Ball] section found")
