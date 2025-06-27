@@ -1,7 +1,6 @@
 extends Button
 
 # ExportButtonOBJ.gd – exports currently loaded petz and animation frame as a 3D model Wavefront OBJ file
-# - Opens a “Save File” dialog limited to *.obj
 # - Collects all visible, non-omitted Ball.gd nodes
 # - Writes each ball as a UV-sphere mesh (vertices + faces)
 # - Writes each Line as a tapered cylinder mesh
@@ -26,8 +25,8 @@ func _export_current_model(path: String) -> void:
 		return
 
 	# Set OBJ header
-	f.store_line("# Exported Pet Model")
-	f.store_line("o Pet\n")
+	f.store_line("# Exported Petz Model")
+	f.store_line("o Petz\n")
 
 	# Grab scene data from PetRoot
 	var dog = get_tree().root.get_node("Root/PetRoot/Node")
@@ -117,7 +116,7 @@ func _export_current_model(path: String) -> void:
 			continue
 		
 		# Define radius and scale tapers by line thickness
-		var min_radius = 0.0 # was 0.0005
+		var min_radius = 0.0
 		var d1 = b1.ball_size * (ld.s_thick / 100.0)
 		var d2 = b2.ball_size * (ld.e_thick / 100.0)
 		var r1 = max(d1 * pixel_world_size * 0.5, min_radius)
@@ -142,11 +141,13 @@ func _export_current_model(path: String) -> void:
 		var angle = acos(clamp(up.dot(dir), -1, 1))
 		var basis = Basis(Quat(axis.normalized(), angle))
 
+		# Write vertices
 		var offset = basis.xform(Vector3(0, -cyl.height * 0.5, 0))
 		for v in verts2:
 			var gv = basis.xform(v) + p1
 			f.store_line("v %f %f %f" % [gv.x, gv.y, gv.z])
 
+		# Write faces
 		var segs = cyl.radial_segments
 		var side_idx_limit = segs * 2 * 3
 
@@ -155,18 +156,6 @@ func _export_current_model(path: String) -> void:
 			var b = int(idxs2[i+1]) + vertex_offset
 			var c = int(idxs2[i+2]) + vertex_offset
 			f.store_line("f %d %d %d" % [a, b, c])
-
-		# # Write vertices
-		# for v in verts2:
-		# 	var gv = basis.xform(v) + mid
-		# 	f.store_line("v %f %f %f" % [gv.x, gv.y, gv.z])
-		
-		# # Write faces
-		# for i in range(0, idxs.size(), 3):
-		# 	var a = int(idxs[i    ]) + vertex_offset
-		# 	var b = int(idxs[i + 1]) + vertex_offset
-		# 	var c = int(idxs[i + 2]) + vertex_offset
-		# 	f.store_line("f %d %d %d" % [a, b, c])
 		
 		# Track vertex index
 		vertex_offset += verts2.size()
