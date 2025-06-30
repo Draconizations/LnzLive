@@ -52,7 +52,7 @@ func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 
 func set_animation(anim_index: int):
-	current_animation = anim_index
+	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
 	bhd.get_frame_offsets_for(anim_index)
 	var species = "CAT"
 	if lnz.species == KeyBallsData.Species.DOG:
@@ -884,6 +884,12 @@ func _on_AnimPicker_text_entered(new_text):
 	var i = int(new_text)
 	if i < bhd.animation_ranges.size():
 		set_animation(int(new_text))
+
+func _on_PrevAnim_pressed():
+	set_animation(current_animation - 1)
+
+func _on_NextAnim_pressed():
+	set_animation(current_animation + 1)
 
 func _on_ToggleSpecialBalls_toggled(button_pressed):
 	get_tree().call_group("special_balls", "set_visible", button_pressed)

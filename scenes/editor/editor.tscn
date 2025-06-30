@@ -435,10 +435,10 @@ margin_right = 8.0
 margin_bottom = 8.0
 
 [node name="ExportButtonOBJ" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
-margin_left = -409.0
-margin_top = 748.0
-margin_right = -211.0
-margin_bottom = 768.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 149.0
+margin_bottom = 24.0
 text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
 
@@ -451,18 +451,30 @@ mouse_filter = 0
 [node name="RichTextLabel" type="RichTextLabel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_bottom = 24.0
 
-[node name="AnimPicker" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
+[node name="PrevAnim" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 4.0
-margin_right = 62.0
+margin_right = 24.0
+margin_bottom = 24.0
+text = "<"
+
+[node name="AnimPicker" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
+margin_left = 28.0
+margin_right = 86.0
 margin_bottom = 24.0
 mouse_filter = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="NextAnim" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
+margin_left = 90.0
+margin_right = 110.0
+margin_bottom = 24.0
+text = ">"
+
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 66.0
-margin_right = 336.0
+margin_left = 114.0
+margin_right = 339.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -472,8 +484,8 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 340.0
-margin_right = 378.0
+margin_left = 343.0
+margin_right = 381.0
 margin_bottom = 20.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -486,7 +498,7 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 382.0
+margin_left = 385.0
 margin_top = 5.0
 margin_right = 401.0
 margin_bottom = 19.0
@@ -935,6 +947,8 @@ items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", nu
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls" to="PetRoot/Node" method="_on_ToggleSpecialBalls_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox" to="PetRoot/Node" method="_on_TransparencyCheckBox_toggled"]
 [connection signal="text_entered" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker" to="PetRoot/Node" method="_on_AnimPicker_text_entered"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/PrevAnim" to="PetRoot/Node" method="_on_PrevAnim_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/NextAnim" to="PetRoot/Node" method="_on_NextAnim_pressed"]
 [connection signal="value_changed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" to="PetRoot/Node" method="set_frame"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" method="_on_Button_toggled"]
 [connection signal="timeout" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button/Timer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_Timer_timeout"]
