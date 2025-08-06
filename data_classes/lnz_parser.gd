@@ -21,6 +21,7 @@ var paintballs = {}
 var omissions = {}
 var project_ball = []
 var texture_list = []
+var no_texture_rotate = []
 var palette = null
 
 var file_path
@@ -42,6 +43,7 @@ func _init(file_path):
 	
 	# Load base data
 	get_texture_list(file)
+	get_no_texture_rotate(file)
 	get_palette(file)
 	get_species(file)
 	get_default_scales(file)
@@ -141,6 +143,13 @@ func get_texture_list(file: File):
 				texture_size = Vector2(width, height)
 
 		texture_list.append({filename = filename, transparent_color = line.transparent_color, texture_size = texture_size})
+
+func get_no_texture_rotate(file: File):
+	get_next_section(file, "No Texture Rotate")
+	var parsed_lines = get_parsed_lines(file, ["ball_no"])
+	no_texture_rotate = []
+	for line in parsed_lines:
+		no_texture_rotate.append(line.ball_no)
 
 func get_palette(file: File):
 	get_next_section(file, "Palette")
