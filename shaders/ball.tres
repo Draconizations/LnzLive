@@ -123,15 +123,63 @@ void fragment() {
         tex_coords = fract(tex_coords);
         tex_coords *= texture_size.xy / vec2(128.0);
     } else {
-        tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+        // Offset from center in screen-space pixels
+        vec2 offset = FRAGCOORD.xy - center_fragcoord;
+
+        // Center using declared texture size
+        vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
+
+        // Correct offset to account for image being smaller than declared
+        offset -= base_center_offset;
+
+        // Normalize by raw texture size to get UV coordinates
+        tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+
+        // Flip X to match
         tex_coords.x = 1.0 - tex_coords.x;
 
-        bool texture_resized = any(notEqual(texture_size, texture_size_raw));
-        if (texture_resized) {
-            tex_coords += vec2(-0.25, -0.25);
-        }
+        // Flip Y to mirror
+        tex_coords.y = 1.0 - tex_coords.y;
     }
-    
+
+    // // Switch between global texture and no texture rotate modes
+    // vec2 tex_coords;
+    // if (tile_texture) {
+    //     tex_coords = ((st - c)) / tiling_unit;
+    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+    //     tex_coords = fract(tex_coords);
+    //     tex_coords *= texture_size.xy / vec2(128.0);
+    // } else {
+    //     // PERFECTLY CENTERED!
+    //     tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+    //     tex_coords.x = 1.0 - tex_coords.x;
+
+    //     bool texture_resized = any(notEqual(texture_size, texture_size_raw));
+    //     if (texture_resized) {
+    //         tex_coords += vec2(-0.25, -0.25);
+    //     }
+    // }
+
+    // // Switch between global texture and no texture rotate modes
+    // vec2 tex_coords;
+    // if (tile_texture) {
+    //     tex_coords = ((st - c)) / tiling_unit;
+    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+    //     tex_coords = fract(tex_coords);
+    //     tex_coords *= texture_size.xy / vec2(128.0);
+    // } else {
+    //     // PIXEL PERFECT SCALING!
+    //     // Offset from center in screen-space pixels
+    //     vec2 offset = FRAGCOORD.xy - center_fragcoord;
+
+    //     // Normalize by raw image size to get UV coordinates (0.0 to 1.0)
+    //     tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+
+    //     // Flip X to match expected behavior
+    //     tex_coords.x = 1.0 - tex_coords.x;
+    // }
+
+
     // Sample from the texture
     int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
