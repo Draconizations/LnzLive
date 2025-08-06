@@ -68,7 +68,7 @@ _global_script_class_icons={
 
 [application]
 
-config/name="PetzRendering"
+config/name="LnzLive"
 run/main_scene="res://scenes/editor/editor.tscn"
 config/icon="res://icon.png"
 
