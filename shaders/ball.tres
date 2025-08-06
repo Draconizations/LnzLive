@@ -5,37 +5,44 @@ code = "shader_type spatial;
 
 render_mode unshaded, skip_vertex_transform;
 
-uniform int fuzz_amount = 0;
-uniform int ball_size = 1;
-uniform int outline = -1;
-uniform int color_index = 0;
-uniform int outline_color_index = 0;
-uniform float z_add = .0;
-uniform bool has_texture = false;
-uniform sampler2D ball_texture: hint_white;
-uniform vec2 texture_size;
-uniform vec2 texture_size_raw;
-uniform int transparent_index = 0;
-uniform bool transparency_on = true;
-uniform sampler2D palette: hint_white;
-uniform vec3 z_center_pet_world = vec3(0.0);
+uniform int fuzz_amount = 0;                      // fuzz jitter
+uniform int ball_size = 1;                        // diameter in pixels
+uniform int outline = -1;                         // outline drawing (-3, draw as nose; -2, shift half R; -1, none; 0, shift half L; 1, shift R + L; 2+, full thickness)
+uniform int color_index = 0;                      // fill color from palette index
+uniform int outline_color_index = 0;              // outline color from palette index
+uniform float z_add = .0;                         // z-offset for z-shading
+uniform bool has_texture = false;                 // texture mask flag
+uniform sampler2D ball_texture: hint_white;       // texture lookup
+uniform vec2 texture_size;                        // declared texture mask size from LNZ
+uniform vec2 texture_size_raw;                    // actual texture image size from BMP
+uniform int transparent_index = 0;                // mask transparency threshold
+uniform bool transparency_on = true;              // boolean flag to render palette index 253 alpha = 0
+uniform sampler2D palette: hint_white;            // 256-color palette lookup
+uniform vec3 z_center_pet_world = vec3(0.0);      // pet origin for depth-based z-shading
 
-varying flat vec2 center_fragcoord;
-varying flat vec4 center_view;
-varying flat float z_center_ball;
-varying flat float z_center_pet;
+uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
+uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
+uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
+
+varying flat vec2 center_fragcoord;               // coordinate of ball center
+varying flat vec4 center_view;                    // view angle for billboarding textures
+varying flat float z_center_ball;                 // depth at ball center for z-shading
+varying flat float z_center_pet;                  // depth at pet origin for z-shading
+
+
+// Pseudorandom jitter values for rendering fuzz
 float random (float x) {
     return fract(sin(dot(vec2(x),
                          vec2(12.9898,78.233)))*
         43758.5453123);
 }
 
+// Apply z-based palette shifts (z-shading)
 vec3 get_shifted_color(int palette_index) {
 	int modded_color = color_index - int(mod(float(color_index), 10.0));
 	int amount_to_shift_index = int(mod(float(palette_index), 10.0));
 	
-	// shift according to z
 	if(z_center_ball < z_center_pet) {
 		amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
 	}
@@ -108,55 +115,116 @@ void fragment() {
     if (outline != -1)
         pct2 -= pct;
 
+    // TEXTURING
     vec3 texture_color;
 
-    // Directly calculate normalized coordinates relative to ball size
-    vec2 tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+    // Switch behavior for tiling texture vs no rotate texture
+    vec2 tex_coords;
+    if (tile_texture) {
+        // Ofset from ball center in tiles
+        tex_coords = ((st - c)) / tiling_unit;
 
-    // Flip coordinates for correct orientation
+        // Invert UVs so texture has correct orientation
+        tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+
+        // Wrap coordinates into [0,1] to avoid repeating (check this, is it needed?)
+        tex_coords = fract(tex_coords);
+
+        // Scale UVs by declared texture size relative to tiling unit 
+        tex_coords *= texture_size.xy / vec2(tiling_unit);
+
+    } else {
+        // Offset from ball center in pixels
+        vec2 offset = FRAGCOORD.xy - center_fragcoord;
+
+        // Center using declared texture size
+        vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
+
+        // Correct offset to account for actual BMP being smaller than declared in LNZ
+        offset -= base_center_offset;
+
+        // Normalize by actual BMP size to get UV coordinates and shift for centering
+        tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+
+    }
+
+    // Flip X and Y to match orientation in game
     tex_coords.x = 1.0 - tex_coords.x;
     tex_coords.y = 1.0 - tex_coords.y;
 
-    // Check if the texture was resized
-    bool texture_resized = any(notEqual(texture_size, texture_size_raw));
+    // OLD CODE:
 
-    if (texture_resized) {
-        // Adjust for centering the circular portion when resized
-        vec2 texture_center_offset = vec2(-0.25, -0.25); // Adjust as needed
-        tex_coords += texture_center_offset;
-    }
+    // // Switch between global texture and no texture rotate modes
+    // vec2 tex_coords;
+    // if (tile_texture) {
+    //     tex_coords = ((st - c)) / tiling_unit;
+    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+    //     tex_coords = fract(tex_coords);
+    //     tex_coords *= texture_size.xy / vec2(tiling_unit);
+    // } else {
+    //     // PERFECTLY CENTERED! but not right scale
+    //     tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+    //     tex_coords.x = 1.0 - tex_coords.x;
 
-    // Ensure texture tiling
-    tex_coords = fract(tex_coords); 
+    //     bool texture_resized = any(notEqual(texture_size, texture_size_raw));
+    //     if (texture_resized) {
+    //         tex_coords += vec2(-0.25, -0.25);
+    //     }
+    // }
 
+    // // Switch between global texture and no texture rotate modes
+    // vec2 tex_coords;
+    // if (tile_texture) {
+    //     tex_coords = ((st - c)) / tiling_unit;
+    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+    //     tex_coords = fract(tex_coords);
+    //     tex_coords *= texture_size.xy / vec2(tiling_unit);
+    // } else {
+    //     // PIXEL PERFECT SCALING! bit not centered
+    //     // Offset from center in screen-space pixels
+    //     vec2 offset = FRAGCOORD.xy - center_fragcoord;
 
-    // Sample from the texture
+    //     // Normalize by raw image size to get UV coordinates (0.0 to 1.0)
+    //     tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+
+    //     // Flip X to match expected behavior
+    //     tex_coords.x = 1.0 - tex_coords.x;
+    // }
+
+    // Sample color index from texture
     int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
-    // Determine transparency
+    // Determine whether to render pixel as transparent (color index 253)
     bool is_transparent = (palette_index == 253);
 
-
     if (outline == -3) 
+        // Draw as nose
         ALBEDO = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
     else {
         if (transparent_index > 0 && color_index < 150 && has_texture) {
             if(transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
+                // Render texture using textureable LNZ color ramp over all pixels
                 texture_color = get_shifted_color(palette_index);
             } else {
+                // Render texture using textureable LNZ color ramp over only specified color index
                 texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
             }
         }
         else if (transparent_index == 0 && color_index < 150 && has_texture) {
+            // Render texture using paletted BMP colors
             texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
         }
         else {
+            // No texture, solid color
             texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
         }
+
+        // Fetch outline color from palette
         vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
         ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
+    // Set alpha = 0 for transparent pixels, if transparency is turned on
     float alpha_value = 1.0 - step(pct + pct2, 0.0);
     if (is_transparent && transparency_on) {
         alpha_value = 0.0;
@@ -166,22 +234,23 @@ void fragment() {
 }
 
 void vertex() {
-	// Billboard
+	// Billboarding textures aligned to camera view
 	MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
 	
+    // Compute depths for z-shading
 	z_center_ball = (MODELVIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).z;
 	z_center_pet = (INV_CAMERA_MATRIX * vec4(z_center_pet_world, 1.0)).z;
 	
 	// Find the original position of the vertex
 	vec3 vert_in_clip_space = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	
 	vec4 center_clip_space = MODELVIEW_MATRIX * vec4(vec3(0.0), 1.0);
+
 	// Calculate center fragcoord. Do in vertex shader to avoid calculating per frag.
 	center_view = PROJECTION_MATRIX * center_clip_space;
 	vec2 center_ndc = (center_view.xy + 1.0) / 2.0;
-
 	center_fragcoord = floor(center_ndc * VIEWPORT_SIZE) + 0.5;
 	
+    // Push vertices outwards by half ball size and fuzz amount
 	vert_in_clip_space.z = center_clip_space.z;
 	vert_in_clip_space.z += z_add * 0.001;
 	float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
