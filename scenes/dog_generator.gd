@@ -406,7 +406,7 @@ func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
 		return load_texture(texture_filename, preloader)
 	return null
 
-func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool):
+func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
 	var paintball_data = all_ball_data.paintballs
@@ -528,6 +528,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				balls_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
+
+				var skip_texture_rotation = no_texture_rotate.has(ball.ball_no)
+				visual_ball.set_tile_texture(!skip_texture_rotation)
+
 			else:
 				visual_ball = ball_map[key]
 
@@ -583,6 +587,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			add_visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 			add_visual_ball.connect("ball_selected", self, "signal_ball_selected")
 			add_visual_ball.connect("ball_deleted", self, "signal_ball_deleted")
+
+			var skip_texture_rotation = no_texture_rotate.has(add_ball.ball_no)
+			add_visual_ball.set_tile_texture(!skip_texture_rotation)
 
 		var add_pos = add_ball.position
 		add_pos.y *= -1.0
