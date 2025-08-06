@@ -20,10 +20,15 @@ uniform bool transparency_on = true;
 uniform sampler2D palette: hint_white;
 uniform vec3 z_center_pet_world = vec3(0.0);
 
+uniform vec3 rotation = vec3(0.0);
+uniform float tiling_unit = 128.0;
+
 varying flat vec2 center_fragcoord;
 varying flat vec4 center_view;
 varying flat float z_center_ball;
 varying flat float z_center_pet;
+
+uniform bool tile_texture = true;
 
 float random (float x) {
     return fract(sin(dot(vec2(x),
@@ -110,26 +115,23 @@ void fragment() {
 
     vec3 texture_color;
 
-    // Directly calculate normalized coordinates relative to ball size
-    vec2 tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+    // Switch between global texture and no texture rotate modes
+    vec2 tex_coords;
+    if (tile_texture) {
+        tex_coords = ((st - c)) / tiling_unit;
+        tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+        tex_coords = fract(tex_coords);
+        tex_coords *= texture_size.xy / vec2(128.0);
+    } else {
+        tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
+        tex_coords.x = 1.0 - tex_coords.x;
 
-    // Flip coordinates for correct orientation
-    tex_coords.x = 1.0 - tex_coords.x;
-    tex_coords.y = 1.0 - tex_coords.y;
-
-    // Check if the texture was resized
-    bool texture_resized = any(notEqual(texture_size, texture_size_raw));
-
-    if (texture_resized) {
-        // Adjust for centering the circular portion when resized
-        vec2 texture_center_offset = vec2(-0.25, -0.25); // Adjust as needed
-        tex_coords += texture_center_offset;
+        bool texture_resized = any(notEqual(texture_size, texture_size_raw));
+        if (texture_resized) {
+            tex_coords += vec2(-0.25, -0.25);
+        }
     }
-
-    // Ensure texture tiling
-    tex_coords = fract(tex_coords); 
-
-
+    
     // Sample from the texture
     int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
