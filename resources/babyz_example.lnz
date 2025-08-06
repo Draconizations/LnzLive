@@ -8,8 +8,14 @@
 \art\autobuild\cottonwhite.bmp 0 256 256
 \art\autobuild\B_DarkBrown3.bmp	1 256 256
 \art\autobuild\B_DarkBrown3.bmp	1 256 256
-\resource\textures\ballsize100.bmp 0 256 256 ; old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
-\resource\textures\256base.bmp 0 256 256 ; new style of no rotate BMP, which performs as expected
+\resource\textures\test_no_tex_rot_size_100x100.bmp 0 256 256 ; old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
+\resource\textures\test_no_tex_rot_size_256x256.bmp 0 256 256 ; new style of no rotate BMP, which performs as expected
+\resource\textures\test_iris_texture.bmp 0 256 256 ; textured iris
+
+[No Texture Rotate]
+162
+163
+68 ;irisL is textured!
 
 [Num Ballz]
 120
@@ -170,8 +176,8 @@ abx.lnz
 156,	75,	-20,	0,	26,	0,	0,	0,	0,	-1,	20,	1,	0,	3
 156,	60,	-40,	-20,	26,	0,	0,	0,	0,	-1,	20,	1,	0,	3
 ; no rotate BMP example (ball 162 and 163)
-63,	85,	-30,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	5 ;138 
-63,	-85,	-30,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	6 ;139
+63,	120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	5 ;162
+63,	-120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	6 ;163
 
 [Thin/Fat]
 0 -8 10
@@ -541,7 +547,7 @@ abx.lnz
 45,	18,	-1,	-1,	-1,	0,	8,	-1	//65	heelR        
 15,	244,	-1,	-1,	-1,	0,	8,	-1	//66	hipL         
 15,	244,	-1,	-1,	-1,	0,	8,	-1	//67	hipR         
-244,	134,	-1,	-1,	3, 	15,	8,	-1	//68	irisL        
+55,	134,	-1,	-1,	-1, 	15,	8,	7	//68	irisL        
 244,	134,	-1,	-1,	3,	 15,	8,	-1	//69	irisR        
 15,	244,	-1,	-1,	-1,	0,	8,	-1	//70	jock         
 45,	18,	-1,	-1,	-2,	0,	8,	-1	//71	kneeL        
