@@ -733,6 +733,16 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			_orig_world_pos[ball_no] = node.global_transform.origin
 			#print("Saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
 
+	for base_no in eyelid_dir_map.keys():
+		var eye_node = ball_map.get(base_no)
+		if eye_node:
+			if eyelid_mode == 0:
+				eye_node.set_eyelid_color(-1)
+			else:
+				eye_node.set_eyelid_color(lnz.eyelid_color)
+			var tilt_rad = deg2rad(EYELID_TILTS[eyelid_mode])
+			eye_node.set_eyelid_rotation(eyelid_dir_map[base_no] * tilt_rad)
+
 func get_real_ball_size(ball_size):
 	return ball_size
 
@@ -1032,16 +1042,16 @@ func _on_ToolsMenu_print_ball_colors():
 	OS.set_clipboard(ball_map_string)
 
 func update_eyelids(tilt_deg: float):
-    var tilt = deg2rad(tilt_deg)
-    for base_no in eyelid_dir_map.keys():
-        var node = ball_map.get(base_no)
-        if node:
-            if eyelid_mode == 1:
-                node.set_eyelid_color(-1)
-            else:
-                node.set_eyelid_color(lnz.eyelid_color)
-            var angle = eyelid_dir_map[base_no] * tilt
-            node.set_eyelid_rotation(angle)
+	var tilt = deg2rad(tilt_deg)
+	for base_no in eyelid_dir_map.keys():
+		var node = ball_map.get(base_no)
+		if node:
+			if eyelid_mode == 1:
+				node.set_eyelid_color(-1)
+			else:
+				node.set_eyelid_color(lnz.eyelid_color)
+			var angle = eyelid_dir_map[base_no] * tilt
+			node.set_eyelid_rotation(angle)
 
 func _on_EyeLidButton_pressed():
 	eyelid_mode = (eyelid_mode + 1) % EYELID_LABELS.size()
