@@ -1,40 +1,45 @@
 extends Spatial
 
-export var ball_size = 10 setget set_ball_size
-export var fuzz_amount = 0 setget set_fuzz_amount
-export var outline = -1 setget set_outline
-export var color_index = 0 setget set_color_index
-export var outline_color_index = 0 setget set_outline_color_index
-export var z_add = 0.0 setget set_z_add
-export var ball_no = 0
-export var base_ball_no = -1
-export var texture: Texture setget set_texture
-export var texture_size = Vector2(256, 256) setget set_texture_size
-export var texture_size_raw: Vector2 = Vector2.ZERO
-export var tile_texture := true setget set_tile_texture
-export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
-export var transparent_color = 0 setget set_transparent_color
-export var transparency_on = true setget set_transparency
-export var visible_override = true setget set_visible
-export var omitted = false
-export var pet_center = Vector3(0, 0, 0) setget set_pet_center
+export var ball_no                = 0
+export var base_ball_no           = -1
+
+export var ball_size              = 10                 setget set_ball_size
+export var fuzz_amount            = 0                  setget set_fuzz_amount
+export var outline                = -1                 setget set_outline
+export var color_index            = 0                  setget set_color_index
+export var outline_color_index    = 0                  setget set_outline_color_index
+export var z_add                  = 0.0                setget set_z_add
+export var pet_center             = Vector3(0, 0, 0)   setget set_pet_center
+
+export var visible_override       = true               setget set_visible
+export var omitted                = false
+
+export var tile_texture           = true               setget set_tile_texture
+export var texture                : Texture            setget set_texture
+export var texture_size           = Vector2(256, 256)  setget set_texture_size
+export var texture_size_raw       = Vector2.ZERO
+
+export var transparent_color      = 0                  setget set_transparent_color
+export var transparency_on        = true               setget set_transparency
+
+export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
 
 enum OutlineState {
-	NONE,
-	ACTIVE_SELECTED,
-	LINEZ_START,
-	LINEZ_TARGET,
-	HOVER
+    NONE,
+    ACTIVE_SELECTED,
+    LINEZ_START,
+    LINEZ_TARGET,
+    HOVER
 }
 
-var current_outline_state = OutlineState.NONE setget , get_outline_state
+var current_outline_state         = OutlineState.NONE  setget , get_outline_state
 
-var old_outline = outline
-var old_outline_color = outline_color_index
+var old_outline                   = outline
+var old_outline_color             = outline_color_index
 
-var is_over = false
+var is_over                       = false
 
-const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
+const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
 
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
