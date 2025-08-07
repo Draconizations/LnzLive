@@ -22,14 +22,17 @@ export var texture_size_raw       = Vector2.ZERO
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
 
+export var eyelid_rotation        = 0.0                setget set_eyelid_rotation
+export(int) var eyelid_color      = -1                 setget set_eyelid_color
+
 export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
 
 enum OutlineState {
-    NONE,
-    ACTIVE_SELECTED,
-    LINEZ_START,
-    LINEZ_TARGET,
-    HOVER
+	NONE,
+	ACTIVE_SELECTED,
+	LINEZ_START,
+	LINEZ_TARGET,
+	HOVER
 }
 
 var current_outline_state         = OutlineState.NONE  setget , get_outline_state
@@ -60,6 +63,9 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("texture_size", texture_size)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
 
+	$MeshInstance.material_override.set_shader_param("eyelid_rotation", eyelid_rotation)
+	$MeshInstance.material_override.set_shader_param("eyelid_color",    eyelid_color)
+
 func set_visible(new_value):
 	visible_override = new_value
 	if !omitted:
@@ -81,7 +87,15 @@ func set_ball_size(new_value):
 	var a = ball_size * 0.05
 	$Area/CollisionShape.shape.radius = a * 0.02
 	$Area/CollisionShape.shape.margin = 0.0001
-	
+
+func set_eyelid_rotation(rad: float) -> void:
+	eyelid_rotation = rad
+	$MeshInstance.material_override.set_shader_param("eyelid_rotation", rad)
+
+func set_eyelid_color(col: int) -> void:
+	eyelid_color = col
+	$MeshInstance.material_override.set_shader_param("eyelid_color", col)
+
 func set_fuzz_amount(new_value):
 	fuzz_amount = new_value
 	$MeshInstance.material_override.set_shader_param("fuzz_amount", new_value)

@@ -31,6 +31,23 @@ var current_bdt: BdtParser
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
+var eyelid_dir_map := {}
+var eyelid_mode := 0
+
+onready var eyelid_button := get_tree().get_root().get_node(
+	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
+	+ "/VBoxContainer/DropDownMenu/EyeLidButton"
+) as Button
+
+const EYELID_LABELS = ["neutral", "neutral", "angry", "scared"]
+const EYELID_TILTS  = [  0.0,      0.0,     -30.0,      30.0 ]
+const EYELID_ICONS  = [
+	preload("res://resources/icons/ico_eyelid_neutral.png"),
+	preload("res://resources/icons/ico_eyelid_nolid.png"),
+	preload("res://resources/icons/ico_eyelid_angry.png"),
+	preload("res://resources/icons/ico_eyelid_scared.png")
+]
+
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 signal animation_loaded(num_of_frames)
@@ -50,6 +67,8 @@ signal line_created(start_ball, end_ball)
 
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
+	eyelid_button.connect("pressed", self, "_on_EyeLidButton_pressed")
 
 func set_animation(anim_index: int):
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
@@ -519,6 +538,24 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					visual_ball.set_tile_texture(false)
 
 			visual_ball.rotation_degrees = ball.rotation
+
+			# Initialize eyelid properties
+			var base_key = eyes[key]
+			var base_def = ball_data[base_key]
+			var base_no  = base_def.ball_no
+
+			var base_node = ball_map.get(base_no)
+			if base_node:
+				# Mirror sign by world X: left eye x<0 = -1, right = +1
+				var eye_dir = 1.0
+				if base_node.global_transform.origin.x < 0:
+					eye_dir = -1.0
+				eyelid_dir_map[base_no] = eye_dir
+
+				# Initialize eyelid: flat top (π/2), color from LNZ parser
+				base_node.set_eyelid_color(lnz.eyelid_color)
+				base_node.set_eyelid_rotation(0.0)
+
 			ball_map[ball.ball_no] = visual_ball
 
 		else:
@@ -993,6 +1030,23 @@ func _on_ToolsMenu_print_ball_colors():
 			ball_map_string += this_ball_string
 			#print(this_ball_string)
 	OS.set_clipboard(ball_map_string)
+
+func update_eyelids(tilt_deg: float):
+    var tilt = deg2rad(tilt_deg)
+    for base_no in eyelid_dir_map.keys():
+        var node = ball_map.get(base_no)
+        if node:
+            if eyelid_mode == 1:
+                node.set_eyelid_color(-1)
+            else:
+                node.set_eyelid_color(lnz.eyelid_color)
+            var angle = eyelid_dir_map[base_no] * tilt
+            node.set_eyelid_rotation(angle)
+
+func _on_EyeLidButton_pressed():
+	eyelid_mode = (eyelid_mode + 1) % EYELID_LABELS.size()
+	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
+	update_eyelids(EYELID_TILTS[eyelid_mode])
 
 func _on_ViewPaletteButton_pressed():
 	$SceneRoot/ToolsMenu/PaletteViewerPopup.popup_centered_minsize()

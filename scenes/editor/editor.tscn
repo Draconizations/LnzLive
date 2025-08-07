@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=2]
+[gd_scene load_steps=21 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -14,6 +14,7 @@
 [ext_resource path="res://scenes/editor/OptionButton.gd" type="Script" id=12]
 [ext_resource path="res://scenes/editor/MenuButton.gd" type="Script" id=13]
 [ext_resource path="res://scenes/editor/UserSettings.gd" type="Script" id=14]
+[ext_resource path="res://resources/icons/ico_eyelid_neutral.png" type="Texture" id=15]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -205,11 +206,11 @@ mouse_filter = 2
 
 [node name="DropDownMenu" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_right = 401.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 
 [node name="FileOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_right = 35.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "File"
 script = ExtResource( 12 )
 
@@ -218,8 +219,10 @@ margin_right = 8.0
 margin_bottom = 8.0
 
 [node name="FileOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel"]
-margin_right = 40.0
-margin_bottom = 40.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 172.0
+margin_bottom = 96.0
 
 [node name="FileResourceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
 margin_left = 4.0
@@ -252,7 +255,7 @@ text = "User Settings"
 [node name="EditOption" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 39.0
 margin_right = 75.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Edit"
 script = ExtResource( 12 )
 
@@ -264,8 +267,10 @@ __meta__ = {
 }
 
 [node name="EditOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EditOption/PopupPanel"]
-margin_right = 40.0
-margin_bottom = 40.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 134.0
+margin_bottom = 24.0
 
 [node name="HeadShotButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EditOption/PopupPanel/EditOptionContainer"]
 margin_left = 4.0
@@ -277,7 +282,7 @@ text = "Capture Head Shot"
 [node name="ToolOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 79.0
 margin_right = 118.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Tool"
 script = ExtResource( 12 )
 
@@ -325,7 +330,7 @@ __meta__ = {
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 122.0
 margin_right = 170.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Mode"
 script = ExtResource( 12 )
 
@@ -349,7 +354,7 @@ __meta__ = {
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 174.0
 margin_right = 231.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Render"
 script = ExtResource( 12 )
 
@@ -444,7 +449,7 @@ text = "Transparency (253)"
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 235.0
 margin_right = 287.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Export"
 script = ExtResource( 12 )
 
@@ -463,7 +468,7 @@ script = ExtResource( 9 )
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 291.0
 margin_right = 333.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Help"
 script = ExtResource( 12 )
 
@@ -510,16 +515,23 @@ script = ExtResource( 13 )
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 337.0
 margin_right = 368.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 text = "BG"
 color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
 
+[node name="EyeLidButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
+margin_left = 372.0
+margin_right = 400.0
+margin_bottom = 22.0
+icon = ExtResource( 15 )
+flat = true
+
 [node name="AnimationContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 24.0
+margin_top = 26.0
 margin_right = 401.0
-margin_bottom = 48.0
+margin_bottom = 50.0
 mouse_filter = 0
 
 [node name="RichTextLabel" type="RichTextLabel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
@@ -581,9 +593,9 @@ size_flags_horizontal = 3
 script = ExtResource( 7 )
 
 [node name="ApplyChangesButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 52.0
+margin_top = 54.0
 margin_right = 401.0
-margin_bottom = 72.0
+margin_bottom = 74.0
 text = "Apply Changes"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -993,12 +1005,6 @@ margin_right = 550.0
 margin_bottom = 178.0
 items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Color Swap", null, 0, false, false, 8, 0, null, "", false ]
 
-[connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
-[connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]
-[connection signal="ball_mouse_enter" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_Node_ball_mouse_enter"]
-[connection signal="ball_selected" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_selected"]
-[connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
-[connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Tree_backup_file"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
@@ -1051,3 +1057,4 @@ items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", nu
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EyeLidButton" to="PetRoot/Node" method="_on_EyeLidButton_pressed"]
