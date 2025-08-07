@@ -515,6 +515,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
 				visual_ball.palette = pal_texture
 
+				if no_texture_rotate.has(int(key)):
+					visual_ball.set_tile_texture(false)
+
 			visual_ball.rotation_degrees = ball.rotation
 			ball_map[ball.ball_no] = visual_ball
 
