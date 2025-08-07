@@ -32,7 +32,7 @@ var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
 var eyelid_dir_map := {}
-var eyelid_mode := 1
+var eyelid_mode := 0
 
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
