@@ -16,10 +16,16 @@ uniform int transparent_index = 0;
 uniform bool transparency_on = true;
 uniform float z_add = 0.0;
 uniform sampler2D palette: hint_white;
-uniform vec2 texture_size;
+uniform vec2 texture_size = vec2(256,256);                        // declared texture mask size from LNZ
+uniform vec2 texture_size_raw;                    // actual texture image size from BMP
 uniform bool has_texture = false;
 uniform sampler2D ball_texture: hint_white;
 uniform vec3 z_center_pet_world = vec3(0.0);
+
+uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
+uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
+
+uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
 
 varying flat vec2 center_fragcoord;
 varying flat vec2 base_center_fragcoord;
@@ -125,8 +131,42 @@ void fragment() {
     pct2 *= base_pct;
 
     vec3 texture_color;
-    vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
-    int palette_index = int(texture(ball_texture, (SCREEN_UV - center_uv) * (1000.0 / texture_size)).r * 255.0);
+
+    vec2 tex_coords;
+
+    if (tile_texture) {
+        // Global texture tiling (standard behavior)
+        vec2 center_uv = (center_fragcoord / VIEWPORT_SIZE) - (1.0);
+        tex_coords = (SCREEN_UV - center_uv) * (1000.0 / texture_size);
+    } else {
+        // Offset from ball center in pixels
+        vec2 offset = FRAGCOORD.xy - center_fragcoord;
+
+        // Center using declared texture size
+        vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
+
+        // Correct offset to account for actual BMP being smaller than declared in LNZ
+        offset -= base_center_offset;
+
+        // Normalize by actual BMP size to get UV coordinates and shift for centering
+        tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+
+        // Pixel-accurate, centered texture (e.g., iris/hair)
+        //vec2 offset = FRAGCOORD.xy - center_fragcoord;
+
+        // Calculate screen-space pixel correction if texture is smaller than declared size
+        //vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
+        //offset -= base_center_offset;
+
+        // Normalize by actual texture size and center
+        //tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
+    }
+
+        // Flip to match game orientation
+        tex_coords.x = 1.0 - tex_coords.x;
+        tex_coords.y = 1.0 - tex_coords.y;
+
+    int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
     // Initialize is_transparent to false
     bool is_transparent = false;

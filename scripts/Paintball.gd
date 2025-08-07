@@ -1,55 +1,96 @@
 extends Spatial
 
-export var base_ball_position = Vector3.ZERO setget set_base_ball_position
-export var base_ball_size = 10 setget set_base_ball_size
-export var ball_size = 10 setget set_ball_size
-export var fuzz_amount = 0 setget set_fuzz_amount
-export var outline = -1 setget set_outline
-export var color_index = -1 setget set_color_index
-export var outline_color_index = 0 setget set_outline_color_index
-export var z_add = 0.0 setget set_z_add
-export var base_ball_no = 0
-export var visible_override = true setget set_visible
-export var override_ball_no = -1
-export var texture: Texture setget set_texture
-export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
-export var transparent_color = 0 setget set_transparent_color
-export var transparency_on = true setget set_transparency
+export var base_ball_no           = 0
+export var base_ball_position     = Vector3.ZERO       setget set_base_ball_position
+export var base_ball_size         = 10                 setget set_base_ball_size
 
-const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
+export var ball_size              = 10                 setget set_ball_size
+export var fuzz_amount            = 0                  setget set_fuzz_amount
+export var outline                = -1                 setget set_outline
+export var color_index            = -1                 setget set_color_index
+export var outline_color_index    = 0                  setget set_outline_color_index
+export var z_add                  = 0.0                setget set_z_add
 
+export var override_ball_no       = -1
+export var visible_override       = true               setget set_visible
+
+export var tile_texture           = true               setget set_tile_texture
+export var texture                : Texture            setget set_texture
+
+export var texture_size           = Vector2(256, 256)  setget set_texture_size
+export var texture_size_raw       = Vector2(256, 256)
+
+export var transparent_color      = 0                  setget set_transparent_color
+export var transparency_on        = true               setget set_transparency
+
+export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
+
+const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
+
+var is_over = false
 var old_outline
 var old_outline_color
-var is_over
 
 signal paintball_mouse_enter(paintball_info)
 signal paintball_mouse_exit()
-# only used if its an iris
+
+# only used if iris:
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
 
 func _ready():
-	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
+    $MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+    $MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
+    $MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
 	
 func set_visible(new_value):
-	visible_override = new_value
-	$Area/CollisionShape.disabled = !new_value
-	$Area/CollisionShape.visible = new_value
-	$MeshInstance.visible = new_value
+    visible_override = new_value
+    $Area/CollisionShape.disabled = !new_value
+    $Area/CollisionShape.visible  = new_value
+    $MeshInstance.visible         = new_value
 
 func set_z_add(new_value):
-	z_add = new_value
-	$MeshInstance.material_override.set_shader_param("z_add", new_value)
+    z_add = new_value
+    $MeshInstance.material_override.set_shader_param("z_add", new_value)
+
+func set_tile_texture(enabled):
+    tile_texture = enabled
+    $MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+    $MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+
+# func set_texture(new_value):
+#     texture = new_value
+#     $MeshInstance.material_override.set_shader_param("ball_texture", new_value)
 	
+#     if new_value:
+#         var size = new_value.get_size()
+#         $MeshInstance.material_override.set_shader_param("texture_size", size)
+#         $MeshInstance.material_override.set_shader_param("has_texture", true)
+#     else:
+#         $MeshInstance.material_override.set_shader_param("has_texture", false)
+
+func set_texture_size(new_value):
+	texture_size = new_value
+
 func set_texture(new_value):
 	texture = new_value
 	$MeshInstance.material_override.set_shader_param("ball_texture", new_value)
+	
 	if new_value != null:
-		$MeshInstance.material_override.set_shader_param("texture_size", new_value.get_size())
+		var raw_texture_size = new_value.get_size()
+		var eff_texture_size = texture_size if (!tile_texture and texture_size != Vector2.ZERO) else raw_texture_size
+
+		print("Declared size from [Texture List]:", texture_size)
+		print("Actual image size:", raw_texture_size)
+		print("Effective texture_size passed to shader:", eff_texture_size)
+		print("Texture resized? ", eff_texture_size != raw_texture_size)
+
+		$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
+		$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 		$MeshInstance.material_override.set_shader_param("has_texture", true)
 	else:
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
