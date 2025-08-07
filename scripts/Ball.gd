@@ -128,6 +128,7 @@ func set_texture(new_value):
 		var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
 
 		# print("\nBall", ball_no, " — Texture Path:", new_value.resource_path)
+		# print("Tile?", tile_texture)
 		# print("Declared size from [Texture List]:", texture_size)
 		# print("Actual image size:", raw_texture_size)
 		# print("Effective texture_size passed to shader:", eff_texture_size)
