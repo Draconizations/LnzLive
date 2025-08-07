@@ -21,7 +21,7 @@ func _on_mouse_entered():
 	if not popup.visible:
 		var button_pos = rect_global_position
 		var button_size = rect_size
-		popup.set_position(Vector2(button_pos.x, button_pos.y + button_size.y))
+		popup.set_position(Vector2(button_pos.x, button_pos.y + button_size.y + 5))
 		popup.popup()
 
 func _on_mouse_exited():

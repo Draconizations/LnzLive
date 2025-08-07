@@ -31,6 +31,9 @@ func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
+	
+	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406),false)
+	add_color_region(";","",Color(0.168627, 0.45098, 0.45098),false)
 
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var signals = [

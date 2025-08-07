@@ -24,11 +24,77 @@ var drag_start_pos = Vector2()
 var linez_mode = false
 var linez_start_ball = null
 
+var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
+var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
+var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x.png")
+var hand_stretch = load("res://resources/icons/ico_hand_stretch_2x.png")
+var eyedropper = load("res://resources/icons/tool_eyedropper_2x.png")
+var smallbrush = load("res://resources/icons/tool_paintbrush_2x.png")
+var bigbrush = load("res://resources/icons/tool_brush_2x.png")
+var paintbucket = load("res://resources/icons/tool_bucket_2x.png")
+
+var helper_label: Label
+
 const ZOOM_STEP := 1.2
 
 func _ready():
 	set_process_unhandled_key_input(true)
+	set_process(true)
+
+	Input.set_custom_mouse_cursor(hand_neutral)
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_CROSS)
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_POINTING_HAND)
+
 	# flip_camera_view()
+
+	helper_label = Label.new()
+	helper_label.name = "HelperLabel"
+	helper_label.text = ""
+	helper_label.align = Label.ALIGN_CENTER
+	helper_label.rect_min_size = Vector2(0, 24)
+
+	helper_label.anchor_left   = 0
+	helper_label.anchor_right  = 1
+	helper_label.anchor_top    = 1
+	helper_label.anchor_bottom = 1
+
+	helper_label.margin_top    = -2222
+	helper_label.margin_bottom = 0
+	helper_label.margin_left   = 0
+	helper_label.margin_right  = 0
+	add_child(helper_label)
+
+	move_child(helper_label, get_child_count() - 1)
+
+func _process(_delta):
+	var text = ""
+
+	if linez_mode:
+		text = "Line Mode: click a second ball to connect"
+	else:
+		if selecting_on:
+			text = "Select Mode: click a ball to select"
+
+		if Input.is_key_pressed(KEY_CONTROL) and Input.is_key_pressed(KEY_SPACE):
+			if text != "":
+				text += " | "
+			text += "Open Tools Menu (CTRL + SPACE)"
+
+		if Input.is_key_pressed(KEY_SHIFT) and Input.is_key_pressed(KEY_ALT) and Input.is_key_pressed(KEY_S):
+			if text != "":
+				text += " | "
+			text += "Rescaling ball (SHIFT + ALT + S + drag)"
+		elif Input.is_key_pressed(KEY_SHIFT):
+			if text != "":
+				text += " | "
+			text += "Moving ball (SHIFT + drag)"
+		elif Input.is_key_pressed(KEY_SPACE):
+			if text != "":
+				text += " | "
+			text += "Pan view (SPACE + drag)"
+
+	helper_label.text = text
 
 func set_active_selected_ball(ball):
 	if active_selected_ball and is_instance_valid(active_selected_ball):
@@ -94,11 +160,14 @@ func _gui_input(event):
 
 			if alt_key and s:
 				is_resizing = true
+				Input.set_custom_mouse_cursor(hand_pinch)
 				original_scale = drag_ball.ball_size
 				drag_start_pos = event.position
 				print("[LNZ EDIT] Started scale drag on ball:", drag_ball.name)
 			else:
 				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
+				# is_dragging = true
+				Input.set_custom_mouse_cursor(hand_move)
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
 		return
 	
@@ -107,9 +176,14 @@ func _gui_input(event):
 		if is_resizing:
 			var delta = event.position - drag_start_pos
 			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
+			if change < 0:
+				Input.set_custom_mouse_cursor(hand_pinch)
+			else:
+				Input.set_custom_mouse_cursor(hand_stretch)
 			var new_size = clamp(original_scale + change, 1.0, 100.0)
 			drag_ball.set_ball_size(new_size)
 		else:
+			Input.set_custom_mouse_cursor(hand_move)
 			var real_center = rect_position + rect_size / 2.0
 			var offset = event.position - real_center
 			offset /= tex.rect_scale
@@ -149,6 +223,7 @@ func _gui_input(event):
 
 		is_dragging = false
 		is_resizing = false
+		Input.set_custom_mouse_cursor(hand_neutral)
 		drag_ball = null
 		return
 
