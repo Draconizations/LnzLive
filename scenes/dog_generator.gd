@@ -477,6 +477,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 		ball_map.clear()
 		paintball_map.clear()
+		eyelid_dir_map.clear()
 
 	# Identify eyes so we can handle them like paintballs if needed
 	var eyes = {}
