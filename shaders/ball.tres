@@ -125,18 +125,17 @@ void fragment() {
     // Switch behavior for tiling texture vs no rotate texture
     vec2 tex_coords;
     if (tile_texture) {
-        // Ofset from ball center in tiles
-        tex_coords = ((st - c)) / tiling_unit;
+        // Offset in screen pixels from the ball center
+        vec2 offset = FRAGCOORD.xy - center_fragcoord;
+        
+        // Convert to UVs by dividing by the raw BMP size
+        vec2 uv = offset / texture_size_raw;
 
-        // Invert UVs so texture has correct orientation
-        tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
+        // Wrap into [0,1] to tile
+        uv = fract(uv);
 
-        // Wrap coordinates into [0,1] to avoid repeating (check this, is it needed?)
-        tex_coords = fract(tex_coords);
-
-        // Scale UVs by declared texture size relative to tiling unit 
-        tex_coords *= texture_size.xy / vec2(tiling_unit);
-
+        // Flip to match orientation
+        tex_coords = vec2(1.0 - uv.x, 1.0 - uv.y);
     } else {
         // Offset from ball center in pixels
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
