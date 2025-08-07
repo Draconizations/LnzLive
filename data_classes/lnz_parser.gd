@@ -6,6 +6,7 @@ var str_r = RegEx.new()
 
 var species = 0
 var scales = Vector2(255, 255)
+var eyelid_color = 244
 var leg_extensions = Vector2(0, 0)
 var body_extension = 0
 var face_extension = 0
@@ -46,6 +47,7 @@ func _init(file_path):
 	get_no_texture_rotate(file)
 	get_palette(file)
 	get_species(file)
+	get_eyelid_color(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
 	get_body_extension(file)
@@ -222,6 +224,15 @@ func get_project_balls(file: File):
 	var parsed_lines = get_parsed_lines(file, ["base", "projected", "amount"])
 	for line in parsed_lines:
 		project_ball.append({ball = line.projected, base = line.base, amount = line.amount})
+
+func get_eyelid_color(file: File):
+	get_next_section(file, "256 Eyelid Color")
+	var parsed_lines = get_parsed_lines(file, ["color", "group"])
+	if parsed_lines.size() > 0:
+		eyelid_color = parsed_lines[0]["color"]
+	else:
+		eyelid_color = 244
+	print("Parsed eyelid_color =", eyelid_color)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
