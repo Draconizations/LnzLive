@@ -10,7 +10,7 @@
 \art\autobuild\B_DarkBrown3.bmp	1 256 256
 \resource\textures\test_no_tex_rot_size_100x100.bmp 0 256 256 ; old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
 \resource\textures\test_no_tex_rot_size_256x256.bmp 0 256 256 ; new style of no rotate BMP, which performs as expected
-\resource\textures\test_iris_texture.bmp 0 256 256 ; textured iris
+\resource\textures\test_iris_texture.bmp 0 64 64 ; textured iris
 
 [No Texture Rotate]
 162
