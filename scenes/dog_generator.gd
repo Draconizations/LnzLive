@@ -32,14 +32,14 @@ var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
 var eyelid_dir_map := {}
-var eyelid_mode := 0
+var eyelid_mode := 1
 
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
 	+ "/VBoxContainer/DropDownMenu/EyeLidButton"
 ) as Button
 
-const EYELID_LABELS = ["neutral", "neutral", "angry", "scared"]
+const EYELID_LABELS = ["neutral", "none", "angry", "scared"]
 const EYELID_TILTS  = [  0.0,      0.0,     -30.0,      30.0 ]
 const EYELID_ICONS  = [
 	preload("res://resources/icons/ico_eyelid_neutral.png"),
@@ -552,9 +552,15 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					eye_dir = -1.0
 				eyelid_dir_map[base_no] = eye_dir
 
-				# Initialize eyelid: flat top (π/2), color from LNZ parser
-				base_node.set_eyelid_color(lnz.eyelid_color)
-				base_node.set_eyelid_rotation(0.0)
+				# Initialize eyelids
+				if eyelid_mode == 1:
+					# “none”, turn off the lid
+					base_node.set_eyelid_color(-1)
+				else:
+					# color + tilt by eye_dir * EYELID_TILTS
+					base_node.set_eyelid_color(lnz.eyelid_color)
+					var tilt_rad = deg2rad(EYELID_TILTS[eyelid_mode])
+					base_node.set_eyelid_rotation(eye_dir * tilt_rad)
 
 			ball_map[ball.ball_no] = visual_ball
 
@@ -732,16 +738,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if node and node is Spatial:
 			_orig_world_pos[ball_no] = node.global_transform.origin
 			#print("Saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
-
-	for base_no in eyelid_dir_map.keys():
-		var eye_node = ball_map.get(base_no)
-		if eye_node:
-			if eyelid_mode == 0:
-				eye_node.set_eyelid_color(-1)
-			else:
-				eye_node.set_eyelid_color(lnz.eyelid_color)
-			var tilt_rad = deg2rad(EYELID_TILTS[eyelid_mode])
-			eye_node.set_eyelid_rotation(eyelid_dir_map[base_no] * tilt_rad)
 
 func get_real_ball_size(ball_size):
 	return ball_size
