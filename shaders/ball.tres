@@ -33,6 +33,8 @@ varying flat vec4 center_view;                    // view angle for billboarding
 varying flat float z_center_ball;                 // depth at ball center for z-shading
 varying flat float z_center_pet;                  // depth at pet origin for z-shading
 
+varying vec2 mesh_pos;                            // pet‐local XY
+
 // Pseudorandom jitter values for rendering fuzz
 float random (float x) {
     return fract(sin(dot(vec2(x),
@@ -234,9 +236,10 @@ void fragment() {
 
     // Handle eyelids
     if (eyelid_color != -1) {
-        vec2 vc    = FRAGCOORD.xy - center_fragcoord;
+        //vec2 vc    = FRAGCOORD.xy - center_fragcoord;
+        vec2 vc    = mesh_pos * (float(ball_size) * 0.5);
         float half = float(ball_size) * 0.5;
-        float dist = length(vc) * 0.4;
+        float dist = length(vc) * 0.5;
 
         if (dist < half) {
             // Rotate vc by –eyelid_rotation:
@@ -249,7 +252,7 @@ void fragment() {
             );
 
             // Fill top half of rotated coords:
-            if (vcr.y > 0.0) {
+            if (vcr.y > 0.5) {
                 vec3 lid_col = texture(
                     palette,
                     vec2(float(eyelid_color)/255.0, 0.0)
@@ -264,6 +267,9 @@ void fragment() {
 }
 
 void vertex() {
+    // Store pet-local XY for eyelids:
+    mesh_pos = VERTEX.xy;
+
 	// Billboarding textures aligned to camera view
 	MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
 	
@@ -286,10 +292,27 @@ void vertex() {
 	float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
 	vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
 	vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
-	
+
 	VERTEX = vert_in_clip_space;
 }"
 
 [resource]
 resource_local_to_scene = true
 shader = SubResource( 1 )
+shader_param/eyelid_rotation = 0.0
+shader_param/eyelid_color = -1
+shader_param/fuzz_amount = 0
+shader_param/ball_size = 1
+shader_param/outline = -1
+shader_param/color_index = 0
+shader_param/outline_color_index = 0
+shader_param/z_add = 0.0
+shader_param/has_texture = false
+shader_param/texture_size = null
+shader_param/texture_size_raw = null
+shader_param/transparent_index = 0
+shader_param/transparency_on = true
+shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
+shader_param/rotation = Vector3( 0, 0, 0 )
+shader_param/tiling_unit = 128.0
+shader_param/tile_texture = true
