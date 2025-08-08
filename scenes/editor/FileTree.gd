@@ -27,7 +27,7 @@ func _ready():
 	examples.set_text(0, "Examples")
 	
 	add_file_button.connect("pressed", self, "_on_AddFileButton_pressed")
-	file_dialog.connect("file_selected", self, "_on_FileDialog_file_selected")
+	file_dialog.connect("files_selected", self, "_on_FileDialog_files_selected")
 	
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.lnz ; LNZ Files")
@@ -57,6 +57,10 @@ func _on_AddFileButton_pressed():
 		file_dialog.popup_centered()
 	else:
 		web_file_dialog()
+
+func _on_FileDialog_files_selected(paths: Array):
+	for p in paths:
+		_on_FileDialog_file_selected(p)
 
 func _on_FileDialog_file_selected(selected_path):
 	var file_extension = selected_path.get_extension().to_lower()
@@ -223,6 +227,16 @@ func scan_local_textures():
 			tex.flags = 0 # turn OFF anti-aliasing! but not after flagging repeat:
 			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
 			preloader.add_resource(filename.to_lower(), tex)
+
+			# Make icon in file tree:
+			var base_tex := preloader.get_resource(filename.to_lower()) as ImageTexture
+			if base_tex:
+				var icon_img := base_tex.get_data()
+				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+				var icon_tex := ImageTexture.new()
+				icon_tex.flags = 0
+				icon_tex.create_from_image(icon_img, 0)
+				new_item.set_icon(0, icon_tex)
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 	
@@ -251,6 +265,7 @@ func _on_Tree_item_rmb_selected(position):
 	$ItemPopupMenu.set_item_disabled(0, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(1, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(2, item.get_parent() != local_storage)
+	$ItemPopupMenu.set_item_disabled(3, false)
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id):
@@ -265,8 +280,13 @@ func _on_ItemPopupMenu_id_pressed(id):
 		var filepath = item.get_metadata(0) as String
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
-	elif id == 2: #back up
+	elif id == 2: # backup
 		emit_signal("backup_file")
+	elif id == 3: # copy file name
+		var item = get_selected() as TreeItem
+		var filepath = item.get_metadata(0)
+		var filename = filepath.get_file()
+		OS.set_clipboard(filename)
 
 func _on_RenameDialog_confirmed():
 	var item = get_selected() as TreeItem
