@@ -66,14 +66,14 @@ Click this button to capture current animation frame and view angle in `[Head Sh
 Ballz can be moved and resized directly in the pet view.
 
 ### Move a ball
-SHIFT + Left-click and drag to move a ball in 3D space.
+SHIFT + left-click and drag to move a ball in 3D space.
 
 The move will be reflected as a Move entry in the LNZ. If a Move line does not exist, one will be created.
 
 Hold X, Y, or Z while dragging to constrain movement to that axis.
 
-### Resize a ball
-SHIFT + ALT + S + Left-click and drag to resize a ball interactively.
+### Scale a ball
+SHIFT + ALT + left-click and drag to resize a ball interactively.
 
 The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
 
