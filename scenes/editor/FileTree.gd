@@ -34,7 +34,7 @@ func _ready():
 	file_dialog.add_filter("*.bmp ; BMP Textures")
 	file_dialog.add_filter("*.png ; PNG Palettes")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.mode = FileDialog.MODE_OPEN_FILES
 	
 	var dir = Directory.new()
 	dir.open(example_file_location)
