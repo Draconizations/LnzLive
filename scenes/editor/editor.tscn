@@ -25,10 +25,7 @@
 
 [sub_resource type="CubeMesh" id=1]
 
-[sub_resource type="DynamicFont" id=2]
-font_data = ExtResource( 22 )
-
-[sub_resource type="StyleBoxFlat" id=3]
+[sub_resource type="StyleBoxFlat" id=2]
 bg_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
 border_width_left = 1
 border_width_top = 1
@@ -40,7 +37,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=3]
 size = 26
 outline_size = 3
 outline_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
@@ -48,19 +45,19 @@ use_mipmaps = true
 extra_spacing_char = 1
 font_data = ExtResource( 16 )
 
-[sub_resource type="StyleBoxEmpty" id=5]
+[sub_resource type="StyleBoxEmpty" id=4]
 
-[sub_resource type="DynamicFont" id=6]
+[sub_resource type="DynamicFont" id=5]
 size = 30
 font_data = ExtResource( 16 )
 
-[sub_resource type="StyleBoxEmpty" id=7]
+[sub_resource type="StyleBoxEmpty" id=6]
 
-[sub_resource type="DynamicFont" id=8]
+[sub_resource type="DynamicFont" id=7]
 size = 24
 font_data = ExtResource( 16 )
 
-[sub_resource type="StyleBoxFlat" id=9]
+[sub_resource type="StyleBoxFlat" id=8]
 bg_color = Color( 0.6, 0.6, 0.6, 0 )
 border_width_left = 1
 border_width_top = 1
@@ -72,8 +69,11 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="DynamicFont" id=10]
+[sub_resource type="DynamicFont" id=9]
 font_data = ExtResource( 17 )
+
+[sub_resource type="DynamicFont" id=10]
+font_data = ExtResource( 22 )
 
 [sub_resource type="DynamicFont" id=11]
 size = 20
@@ -97,7 +97,7 @@ outline_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
 font_data = ExtResource( 18 )
 
 [sub_resource type="DynamicFontData" id=15]
-font_path = "res://resources/DroidSans.ttf"
+font_path = "res://resources/fonts/DroidSans.ttf"
 
 [sub_resource type="DynamicFont" id=16]
 font_data = SubResource( 15 )
@@ -140,15 +140,6 @@ script = ExtResource( 14 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[node name="AxisOverlayLayer" type="CanvasLayer" parent="SceneRoot"]
-
-[node name="AxisOverlay" type="Node2D" parent="SceneRoot/AxisOverlayLayer"]
-script = ExtResource( 21 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-font = SubResource( 2 )
 
 [node name="Viewport" type="Viewport" parent="SceneRoot"]
 size = Vector2( 1000, 1000 )
@@ -227,7 +218,7 @@ margin_right = 198.0
 margin_bottom = 740.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/bg = SubResource( 3 )
+custom_styles/bg = SubResource( 2 )
 allow_rmb_select = true
 hide_root = true
 script = ExtResource( 2 )
@@ -239,7 +230,7 @@ __meta__ = {
 margin_top = 674.0
 margin_right = 132.0
 margin_bottom = 744.0
-items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Back up", null, 0, false, true, 2, 0, null, "", false ]
+items = [ "Delete", null, 0, false, false, 0, 0, null, "", false, "Rename", null, 0, false, false, 1, 0, null, "", false, "Backup File", null, 0, false, true, 2, 0, null, "", false, "Copy Filename", null, 0, false, true, 3, 0, null, "", false ]
 
 [node name="FileDialog" type="FileDialog" parent="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu"]
 visible = true
@@ -258,7 +249,7 @@ __meta__ = {
 margin_top = 744.0
 margin_right = 198.0
 margin_bottom = 768.0
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color_hover = Color( 0.607843, 0.678431, 0.717647, 1 )
 custom_colors/font_color_pressed = Color( 0.384314, 0.654902, 0.654902, 1 )
 text = "Import LNZ / BMP / PNG"
@@ -274,32 +265,32 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="PetViewContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_right = 475.0
+margin_right = 579.0
 margin_bottom = 768.0
 rect_clip_content = true
 mouse_default_cursor_shape = 3
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/panel = SubResource( 5 )
+custom_styles/panel = SubResource( 4 )
 script = ExtResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"]
-margin_right = 475.0
+margin_right = 579.0
 margin_bottom = 768.0
 mouse_filter = 2
 
 [node name="DropDownMenu" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_right = 475.0
+margin_right = 579.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 alignment = 1
 
 [node name="FileOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 7.0
-margin_right = 57.0
+margin_left = 59.0
+margin_right = 109.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 50, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -307,14 +298,14 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "File"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton"]
 margin_right = 8.0
 margin_bottom = 8.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -335,7 +326,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Import LNZ / BMP / PNG"
 
 [node name="FilePetfileButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
@@ -348,7 +339,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Import Pet File"
 
 [node name="FileBreedfileButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
@@ -361,7 +352,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Import Breed File"
 
 [node name="UserSettingsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
@@ -374,12 +365,12 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "User Settings"
 
 [node name="EditOption" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 61.0
-margin_right = 111.0
+margin_left = 113.0
+margin_right = 163.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 50, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -387,14 +378,14 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Edit"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EditOption"]
 margin_right = 20.0
 margin_bottom = 20.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -412,12 +403,12 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Capture Head Shot"
 
 [node name="ToolOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 115.0
-margin_right = 165.0
+margin_left = 167.0
+margin_right = 217.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 50, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -425,14 +416,14 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Tool"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton"]
 margin_right = 8.0
 margin_bottom = 8.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 
 [node name="ToolOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel"]
 margin_right = 101.0
@@ -450,7 +441,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Choose Palette"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -467,7 +458,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "View Palette"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -484,15 +475,15 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Recolor Menu"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 169.0
-margin_right = 219.0
+margin_left = 221.0
+margin_right = 271.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 50, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -500,14 +491,14 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Mode"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton"]
 margin_right = 20.0
 margin_bottom = 20.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -521,15 +512,15 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Select Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 223.0
-margin_right = 293.0
+margin_left = 275.0
+margin_right = 345.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -537,7 +528,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Render"
 script = ExtResource( 12 )
 
@@ -545,7 +536,7 @@ script = ExtResource( 12 )
 margin_top = 30.0
 margin_right = 286.0
 margin_bottom = 172.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -575,7 +566,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Draw polygons"
 
@@ -590,7 +581,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Draw lines"
 
@@ -605,7 +596,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Draw paintballs"
 
@@ -620,7 +611,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Draw addballs"
 
@@ -635,7 +626,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Draw balls"
 __meta__ = {
@@ -660,7 +651,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Show special balls"
 
@@ -674,27 +665,27 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 pressed = true
 text = "Transparency (253)"
 
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 297.0
-margin_right = 352.0
+margin_left = 349.0
+margin_right = 404.0
 margin_bottom = 25.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Export"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton"]
 margin_right = 8.0
 margin_bottom = 8.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 
 [node name="ExportButtonOBJ" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
 margin_right = 129.0
@@ -705,13 +696,13 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
 
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 356.0
-margin_right = 406.0
+margin_left = 408.0
+margin_right = 458.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 50, 0 )
 custom_styles/hover = ExtResource( 19 )
@@ -719,14 +710,14 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "Help"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton"]
 margin_right = 8.0
 margin_bottom = 8.0
-custom_styles/panel = SubResource( 7 )
+custom_styles/panel = SubResource( 6 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel"]
 margin_right = 99.0
@@ -740,7 +731,7 @@ custom_styles/pressed = ExtResource( 20 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Basic Controls"
 script = ExtResource( 13 )
 
@@ -754,7 +745,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Color Selector"
 
 [node name="GuideLinkButton" type="LinkButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
@@ -763,7 +754,7 @@ margin_top = 4.0
 margin_right = 396.0
 margin_bottom = 24.0
 custom_styles/focus = ExtResource( 20 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "User Guide"
 script = ExtResource( 13 )
 
@@ -774,36 +765,36 @@ margin_right = 396.0
 margin_bottom = 24.0
 focus_mode = 2
 custom_styles/focus = ExtResource( 20 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 7 )
 text = "Carolyn's Bible"
 script = ExtResource( 13 )
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 410.0
-margin_right = 435.0
+margin_left = 462.0
+margin_right = 487.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Change viewer background color"
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/focus = SubResource( 9 )
-custom_styles/disabled = SubResource( 9 )
-custom_styles/normal = SubResource( 9 )
+custom_styles/hover = SubResource( 8 )
+custom_styles/pressed = SubResource( 8 )
+custom_styles/focus = SubResource( 8 )
+custom_styles/disabled = SubResource( 8 )
+custom_styles/normal = SubResource( 8 )
 custom_colors/font_color = Color( 0, 0, 0, 1 )
 text = "BG"
 color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
 
 [node name="EyeLidButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 439.0
-margin_right = 467.0
+margin_left = 491.0
+margin_right = 519.0
 margin_bottom = 25.0
 icon = ExtResource( 15 )
 flat = true
 
 [node name="AnimationContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 29.0
-margin_right = 475.0
+margin_right = 579.0
 margin_bottom = 52.0
 mouse_filter = 0
 
@@ -814,22 +805,25 @@ margin_bottom = 23.0
 margin_left = 4.0
 margin_right = 29.0
 margin_bottom = 23.0
-rect_min_size = Vector2( 25, 0 )
+rect_min_size = Vector2( 25, 20 )
+size_flags_vertical = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = "<"
 
 [node name="AnimPicker" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 33.0
 margin_right = 83.0
-margin_bottom = 23.0
+margin_bottom = 20.0
+rect_min_size = Vector2( 0, 20 )
 mouse_filter = 1
+size_flags_vertical = 0
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 10 )
+custom_fonts/font = SubResource( 9 )
 align = 1
 placeholder_text = "anim #"
 __meta__ = {
@@ -840,18 +834,19 @@ __meta__ = {
 margin_left = 87.0
 margin_right = 112.0
 margin_bottom = 23.0
-rect_min_size = Vector2( 25, 0 )
+rect_min_size = Vector2( 25, 20 )
+size_flags_vertical = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 116.0
-margin_right = 398.0
+margin_right = 495.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -861,10 +856,10 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 402.0
-margin_right = 452.0
+margin_left = 499.0
+margin_right = 549.0
 margin_bottom = 23.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
 size_flags_horizontal = 3
 size_flags_vertical = 0
@@ -873,7 +868,7 @@ custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 6 )
+custom_fonts/font = SubResource( 5 )
 toggle_mode = true
 text = "Play"
 script = ExtResource( 6 )
@@ -882,18 +877,47 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 456.0
+margin_left = 553.0
 margin_top = 4.0
-margin_right = 475.0
+margin_right = 579.0
 margin_bottom = 18.0
 mouse_filter = 1
 size_flags_horizontal = 3
 script = ExtResource( 7 )
 
-[node name="ApplyChangesButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
+[node name="HelperContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 56.0
+margin_right = 579.0
+margin_bottom = 156.0
+rect_min_size = Vector2( 0, 100 )
+size_flags_vertical = 0
+
+[node name="AxisContainer" type="CenterContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
+margin_right = 100.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 100, 100 )
+size_flags_horizontal = 0
+size_flags_vertical = 0
+
+[node name="AxisOverlay" type="Node2D" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/AxisContainer"]
+script = ExtResource( 21 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+axis_length = 25
+margin = Vector2( 50, 50 )
+font = SubResource( 10 )
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
+margin_left = 104.0
+margin_right = 579.0
+margin_bottom = 90.0
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="ApplyChangesButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
 margin_right = 475.0
-margin_bottom = 82.0
+margin_bottom = 26.0
 custom_fonts/font = SubResource( 11 )
 custom_colors/font_color_hover = Color( 0.607843, 0.678431, 0.717647, 1 )
 custom_colors/font_color_pressed = Color( 0.384314, 0.654902, 0.654902, 1 )
@@ -903,10 +927,10 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 86.0
+[node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
+margin_top = 30.0
 margin_right = 475.0
-margin_bottom = 146.0
+margin_bottom = 90.0
 rect_min_size = Vector2( 475, 60 )
 custom_fonts/font = SubResource( 12 )
 text = "Welcome to LnzLive!
@@ -920,19 +944,19 @@ __meta__ = {
 }
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_left = 487.0
+margin_left = 591.0
 margin_right = 814.0
 margin_bottom = 768.0
 grow_horizontal = 0
 rect_min_size = Vector2( 200, 0 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/panel = SubResource( 3 )
+custom_styles/panel = SubResource( 2 )
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer"]
 margin_left = 1.0
 margin_top = 1.0
-margin_right = 326.0
+margin_right = 222.0
 margin_bottom = 767.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
