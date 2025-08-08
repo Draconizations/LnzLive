@@ -60,7 +60,7 @@ func _process(_delta):
 
 		if Input.is_key_pressed(KEY_CONTROL):
 			#if text != "": text += " | "
-			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)"
+			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
 
 		if Input.is_key_pressed(KEY_SHIFT):
 			#if text != "": text += " | "
