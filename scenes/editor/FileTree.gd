@@ -212,34 +212,47 @@ func scan_local_storage(selected_filepath):
 	dir2.list_dir_end()
 
 func scan_local_textures():
-	var dir2 = Directory.new()
-	dir2.open(user_file_location + "/textures")
-	dir2.list_dir_begin()
-	filename = dir2.get_next()
-	while(!filename.empty()):
-		if filename.ends_with(".bmp"):
+	var dir = Directory.new()
+	var textures_dir = user_file_location + "/textures"
+	if dir.open(textures_dir) != OK:
+		return
+	dir.list_dir_begin()
+	var filename = dir.get_next()
+	while filename != "":
+		if filename.to_lower().ends_with(".bmp"):
+			var full_path = textures_dir.plus_file(filename)
+
 			var new_item = create_item(local_storage_textures)
 			new_item.set_text(0, filename)
-			new_item.set_metadata(0, user_file_location + filename)
-			var img = Image.new()
-			img.load(user_file_location + "/textures/" + filename, true, true)
-			var tex = ImageTexture.new()
-			tex.flags = 0 # turn OFF anti-aliasing! but not after flagging repeat:
-			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
-			preloader.add_resource(filename.to_lower(), tex)
+			new_item.set_metadata(0, full_path)
 
-			# Make icon in file tree:
-			var base_tex := preloader.get_resource(filename.to_lower()) as ImageTexture
-			if base_tex:
-				var icon_img := base_tex.get_data()
+			# Load image for texture
+			var img_indexed = Image.new()
+			img_indexed.load(full_path, true, true)
+			var full_tex = ImageTexture.new()
+			full_tex.create_from_image(
+				img_indexed,
+				ImageTexture.FLAG_FILTER | ImageTexture.FLAG_REPEAT
+			)
+			preloader.add_resource(filename.to_lower(), full_tex)
+
+			# Load image for preview
+			var file = File.new()
+			if file.open(full_path, File.READ) == OK:
+				var buf = file.get_buffer(file.get_len())
+				file.close()
+
+				var icon_img = Image.new()
+				icon_img.load_bmp_from_buffer(buf)
+				icon_img.convert(Image.FORMAT_RGBA8)
 				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
-				var icon_tex := ImageTexture.new()
-				icon_tex.flags = 0
-				icon_tex.create_from_image(icon_img, 0)
+
+				var icon_tex = ImageTexture.new()
+				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 				new_item.set_icon(0, icon_tex)
-		filename = dir2.get_next()
-	dir2.list_dir_end()
-	
+		filename = dir.get_next()
+	dir.list_dir_end()
+
 func scan_local_palettes():
 	var dir2 = Directory.new()
 	dir2.open(user_file_location + "/palettes")
