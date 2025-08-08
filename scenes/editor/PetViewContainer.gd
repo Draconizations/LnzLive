@@ -56,7 +56,7 @@ func _process(_delta):
 		text = "Line Mode: click a second ball to connect"
 	else:
 		if selecting_on:
-			text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Addball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+			text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 
 		if Input.is_key_pressed(KEY_CONTROL):
 			#if text != "": text += " | "
