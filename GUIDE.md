@@ -2,56 +2,106 @@
 
 ## Quickstart
 
-Load a Petz or Babyz LNZ file by double-clicking one of the Examples.
+### Load LNZ into the editor
 
-Edit the LNZ in the right-hand window.
+You can either start from a preset LNZ file under `Examples` in the file tree (left-hand panel) by double-clicking to load, or paste LNZ copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
 
-Hit Ctrl+S to save and refresh the pet view. Your file will be saved in local storage.
+To load your own LNZ file, open in LNZPro, paste the contents into the editor, and hit `Apply Changes` or save (`CRTL+S`) to refresh the pet view. These will appear under `Local Storage` in the file tree, and can be right-clicked to rename or make backups, which is recommended.
 
-Once a Petz or Babyz LNZ is loaded, you can paste in external LNZ. If using in a browser, your browser must have permission to access the clipboard.
+Helpful tips will appear at the top of the screen about visual and text editing tools.
 
-## Help! It crashes when I do this!
+Don't forget to hit save or apply changes to see the results!
 
-LnzLive is definitely a work in progress!  
+GIF HERE
 
-If you're using the web version, it should be fairly resilient. If you make a mistake in your LNZ (e.g. missing a space between two numbers) and the pet view goes all weird, you should be able to correct it and continue.
+> *Loading and saving LNZ data of game files directly is a **planned feature**.*
 
-If you're using the Windows exe, run the debug version rather than the release version.
+## Help! It crashes when I do X!
 
-Raise an issue if you have a bug to point out. There's also a LnzLive channel on the Discord server "Hexers HQ". Check in there if you want to ask, chat or complain :)
+LnzLive is definitely a work in progress! Please make regular backups of your LNZ files.
 
-## Basic navigation
+Raise an issue in the GitHub repository if you have a bug or suggestion to report, so that can be tracked and resolved.
 
-Click and hold the left mouse button in the pet view (centre) to rotate the pet.
+GIF HERE OF HORSE
 
-Use the mouse wheel to zoom in and out.
+## File Tree
+You can either start from a preset LNZ file under `Examples` in the file tree (left-hand panel) by double-clicking to load, or paste LNZ copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
 
-Press down on mouse wheel or hold space and drag to move pet around viewport.
+To load your own LNZ file, open in LNZPro, paste the contents into the editor, and hit `Apply Changes` or save (`CRTL+S`) to refresh the pet view. These will appear under `Local Storage` in the file tree, and can be right-clicked to rename or make backups, which is recommended.
 
-The pet view currently has a maximum size of 1000x1000px. If part of your pet is cut off when zoomed in, don't worry about it.
+Once you have a LNZ file saved under `Local Storage`, you can right-click the file to see some options. While a file is loaded, you can hit `Back Up` to save a copy of the file named `{filename}_backup.lnz`. Note, this will overwrite any existing file of that name. You can also rename or delete files.
 
-## File tools
+GIF HERE
 
-Once you have a file saved in Local Storage (i.e. you have loaded an Example pet and hit Ctrl+S at least once), you can right click it to see some options.
+## Menu Options
 
-While a file is loaded, you can hit Back Up to save a copy of the file named "yourfilename_backup.lnz". Note: this will overwrite any existing file of that name.
+### File
 
-You can also rename or delete files in local storage.
+*No enabled options (yet)*
 
-## Advanced navigation
+### Edit
 
-Turn on ball selection using the "Select Mode" checkbox from the Mode menu at the top of the screen.
 
-Hover over balls to show their ball number.
 
-Double-click a ball/addball to go directly to the LNZ line defining the ball/addball.
+### Tool
 
-While hovering over a ball/addball, you can use the following keys:
 
-- Z or B: go directly to the LNZ line defining the ball/addball
-- X or M: cycle through Move lines that affect this ball. If none are found, goes to the Move header.
-- C or P: cycle through Project Ball lines that affect this ball. If none are found, goes to the Project Ball header.
-- V or L: cycle through Linez that include this ball. If none are found, goes to the Linez header.
+
+### Mode
+
+In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections in the LNZ text editor.
+
+- **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
+- **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
+- **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
+- **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
+
+### Render
+
+Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+
+### Export
+
+
+
+### Help
+
+This option offers links to several handy resources, including [Carolyn Horn's hexing information](https://github.com/melissamcewen/carolyns-bible) and this [User Guide](https://github.com/tabbzi/LnzLive/blob/master/GUIDE.md)!
+
+**Unimplemented:**
+
+- Basic Controls
+- Color Selector
+
+### Background Color Selector
+
+Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
+
+GIF HERE
+
+### Eyelid Toggle
+
+Clicking on the eyeball will cycle through eyelid rendering options: neutral, none, angry, and scared.
+
+GIF HERE
+
+### Animation Controller
+
+Use these controls to preview and navigate animations:
+
+- Jump through animations with the arrows or by entering an animation index in the box.
+- Click `Play` button or press `SPACE` to start or stop a playback.
+- Slide through animation frames by dragging the handle.
+
+GIF HERE
+
+## Basic Navigation
+
+- Click and hold the left mouse button in the pet view (center panel) to rotate the pet.
+- Use the mouse wheel to zoom in and out.
+- Press down on mouse wheel or hold space and drag to move pet around viewport.
+
+GIF HERE
 
 ## Edit functions
 
@@ -119,25 +169,28 @@ Useful for making Color Info Override sections in breeds. Not supported in all b
 
 ## Backups
 
-Color Swap and Copy L to R can be destructive! LnzLive takes a backup of your file before applying them, and saves it as "yourfilename_backup.lnz". The backup will overwrite any existing backup file.
+Some tools like `Color Swap` and `Copy L to R` can be destructive! The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
 
-## Custom textures
+> *Improved save states or file versioning is a **planned feature**.*
 
-Custom BMP files can be loaded from local storage by clicking "Add File". You can also add BMP files directly for LnzLive to access from your file system. Go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/textures (you may have to create this folder). Copy your textures directly into this folder, without subfolders. Relaunch LnzLive. If your textures have been loaded correctly, you will see them if you expand the Local Textures part of the filetree in the left panel.
+## Textures and Palettes
 
-Apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
+Custom BMP files can be loaded from local storage by clicking "Import LNZ / BMP / PNG" button. These should now appear under `Local Textures` in the file tree. You can now apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
 
-## Palette swapping
+Similar to textures, custom palettes can be loaded from local storage, but need to be in a color ramp PNG format. **You will need to convert your BMP palette image to a PNG in the format that LnzLive expects**. You can generate this using either of these web tools:
 
-Similar to textures, custom palettes can be loaded from local storage. There is no way to add these via the local interface, so you have to use the Windows exe.
+- [Petz Palette Converter](https://draconizations.github.io/petz-palette-converter/)
+- [Petz Paletteiare](https://tabbzi.github.io/petz-paletteiare/)
 
-**You will need to convert your .bmp palette image to a .png in the format lnzlive expects**, use the following tool:
+To load your palette image, use the "Import LNZ / BMP / PNG" button. These should now appear under `Local Palettes` in the file tree. You can now apply the paletes as normal in the LNZ data, make sure to omit the `.png` at the end.
 
-**[Convert your palette files here](https://draconizations.github.io/petz-palette-converter/)**!
+You can also add files directly for LnzLive to access from your file system:
 
-To load your palette image, use the "Add File" button in the lower left. Or, go to %APPDATA%/Godot/app_userdata/PetzRendering/resources/palettes (you may have to create this folder). Copy the converted .png files** directly into the folder. Relaunch LnzLive. If your palettes have been loaded correctly, you will see them if you expand the Local Palettes part of the filetree.
+Go to `%APPDATA%/Godot/app_userdata/PetzRendering/resources/textures` (you may have to create this folder).
 
-You can now apply the paletes as normal in the LNZ data, make sure to omit the .png at the end.
+After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree.
+
+> *Loading palettes from palette BMP files directly is a **planned feature**.*
 
 ## Other features
 
