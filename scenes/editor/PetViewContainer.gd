@@ -3,7 +3,7 @@ extends Control
 onready var camera_holder = get_tree().root.get_node("Root/SceneRoot/ViewportContainer/Viewport/CameraHolder") as Spatial
 onready var camera = camera_holder.get_node("Camera") as Camera
 onready var ball_label = get_tree().root.get_node("Root/SceneRoot/BallLabel")
-onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperLabel")
+onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/HelperLabel")
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
@@ -75,7 +75,7 @@ func _process(_delta):
 		if Input.is_key_pressed(KEY_Y): locks.append("Y")
 		if Input.is_key_pressed(KEY_Z): locks.append("Z")
 		if locks.size() > 0:
-			text += " | Axis Lock: " + locks
+			text += " | Axis Lock: " + str(locks)
 
 	helper_label.text = text
 
@@ -321,7 +321,7 @@ func deal_with_last_selected():
 				
 func _on_Node_ball_mouse_enter(ball_info):
 	ball_label.text = str(ball_info.ball_no)
-	ball_label.rect_global_position = get_viewport().get_mouse_position()
+	ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
 	ball_label.show()
 
 func _on_SelectCheckBox_toggled(button_pressed):
