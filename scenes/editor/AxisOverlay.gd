@@ -66,3 +66,37 @@ func _draw():
 		if font:
 			var lbl_pos = tip + d2.normalized() * axis_dir_offset
 			draw_string(font, lbl_pos, AXIS_LABELS[axis], AXIS_COLORS[axis])
+
+		if font:
+			# +X = "R"
+			var d3p = dirs["X"]
+			var d2p = Vector2(d3p.x, -d3p.y).normalized() * axis_length
+			var tip_p = origin + d2p
+			var tip_p_clamped = Vector2(
+				clamp(tip_p.x, 0, ps.x - self.position.x),
+				clamp(tip_p.y, 0, ps.y - self.position.y)
+			)
+			# offset perpendicular so it floats beside the arrow
+			var perp = Vector2(d2p.y, -d2p.x).normalized()
+			draw_string(font, tip_p_clamped + perp * 22, "R", Color(1,1,1))
+
+			# -X = "L"
+			var d3n = -d3p
+			var d2n = Vector2(d3n.x, -d3n.y).normalized() * axis_length
+			var tip_n = origin + d2n
+			var tip_n_clamped = Vector2(
+				clamp(tip_n.x, 0, ps.x - self.position.x),
+				clamp(tip_n.y, 0, ps.y - self.position.y)
+			)
+			draw_string(font, tip_n_clamped + perp * 22, "L", Color(1,1,1))
+
+			# -Y connector under the green +Y
+			var d3y = dirs["Y"]
+			var d2y = Vector2(d3y.x, -d3y.y).normalized() * axis_length
+			var tip_y = origin - d2y
+			var tip_y_clamped = Vector2(
+				clamp(tip_y.x, 0, ps.x - self.position.x),
+				clamp(tip_y.y, 0, ps.y - self.position.y)
+			)
+			var conn_end = tip_y_clamped - d2y.normalized() * axis_dir_offset
+			#draw_line(tip_y_clamped, conn_end, Color(1,1,1), line_thickness)

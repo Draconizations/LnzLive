@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=2]
+[gd_scene load_steps=38 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -7,7 +7,6 @@
 [ext_resource path="res://scenes/editor/FrameSlider.gd" type="Script" id=5]
 [ext_resource path="res://scenes/editor/PlayButton.gd" type="Script" id=6]
 [ext_resource path="res://scenes/editor/FPSLabel.gd" type="Script" id=7]
-[ext_resource path="res://resources/fonts/Corset 8.ttf" type="DynamicFontData" id=8]
 [ext_resource path="res://scenes/editor/ExportButtonOBJ.gd" type="Script" id=9]
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
 [ext_resource path="res://data_classes/RecolorLine.tscn" type="PackedScene" id=11]
@@ -38,7 +37,7 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [sub_resource type="DynamicFont" id=3]
-size = 26
+size = 28
 outline_size = 3
 outline_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
 use_mipmaps = true
@@ -76,34 +75,27 @@ font_data = ExtResource( 17 )
 font_data = ExtResource( 22 )
 
 [sub_resource type="DynamicFont" id=11]
-size = 20
-outline_size = 3
-outline_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
-extra_spacing_char = 2
-font_data = ExtResource( 8 )
-
-[sub_resource type="DynamicFont" id=12]
 size = 14
 extra_spacing_top = -8
 font_data = ExtResource( 18 )
 
-[sub_resource type="DynamicFont" id=13]
+[sub_resource type="DynamicFont" id=12]
 font_data = ExtResource( 18 )
 
-[sub_resource type="DynamicFont" id=14]
+[sub_resource type="DynamicFont" id=13]
 size = 28
 outline_size = 3
 outline_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
 font_data = ExtResource( 18 )
 
-[sub_resource type="DynamicFontData" id=15]
+[sub_resource type="DynamicFontData" id=14]
 font_path = "res://resources/fonts/DroidSans.ttf"
 
-[sub_resource type="DynamicFont" id=16]
-font_data = SubResource( 15 )
+[sub_resource type="DynamicFont" id=15]
+font_data = SubResource( 14 )
 
-[sub_resource type="DynamicFont" id=17]
-font_data = SubResource( 15 )
+[sub_resource type="DynamicFont" id=16]
+font_data = SubResource( 14 )
 
 [node name="Root" type="Node"]
 
@@ -202,8 +194,8 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer"]
-margin_right = 198.0
-margin_bottom = 768.0
+margin_right = 378.0
+margin_bottom = 1080.0
 grow_horizontal = 0
 mouse_filter = 0
 size_flags_horizontal = 3
@@ -214,8 +206,8 @@ __meta__ = {
 }
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer"]
-margin_right = 198.0
-margin_bottom = 740.0
+margin_right = 378.0
+margin_bottom = 1050.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/bg = SubResource( 2 )
@@ -246,9 +238,9 @@ __meta__ = {
 }
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer"]
-margin_top = 744.0
-margin_right = 198.0
-margin_bottom = 768.0
+margin_top = 1054.0
+margin_right = 378.0
+margin_bottom = 1080.0
 custom_fonts/font = SubResource( 3 )
 custom_colors/font_color_hover = Color( 0.607843, 0.678431, 0.717647, 1 )
 custom_colors/font_color_pressed = Color( 0.384314, 0.654902, 0.654902, 1 )
@@ -256,17 +248,17 @@ text = "Import LNZ / BMP / PNG"
 flat = true
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
-margin_left = 210.0
-margin_right = 1024.0
-margin_bottom = 768.0
+margin_left = 390.0
+margin_right = 1920.0
+margin_bottom = 1080.0
 rect_clip_content = true
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="PetViewContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_right = 579.0
-margin_bottom = 768.0
+margin_right = 759.0
+margin_bottom = 1080.0
 rect_clip_content = true
 mouse_default_cursor_shape = 3
 size_flags_horizontal = 3
@@ -278,21 +270,22 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"]
-margin_right = 579.0
-margin_bottom = 768.0
+margin_right = 759.0
+margin_bottom = 1080.0
 mouse_filter = 2
 
 [node name="DropDownMenu" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_right = 579.0
+margin_right = 759.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 alignment = 1
 
 [node name="FileOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 59.0
-margin_right = 109.0
+margin_left = 117.0
+margin_right = 177.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 60, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -369,10 +362,11 @@ custom_fonts/font = SubResource( 7 )
 text = "User Settings"
 
 [node name="EditOption" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 113.0
-margin_right = 163.0
+margin_left = 181.0
+margin_right = 241.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 60, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -407,10 +401,11 @@ custom_fonts/font = SubResource( 7 )
 text = "Capture Head Shot"
 
 [node name="ToolOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 167.0
-margin_right = 217.0
+margin_left = 245.0
+margin_right = 305.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 60, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -482,10 +477,11 @@ __meta__ = {
 }
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 221.0
-margin_right = 271.0
+margin_left = 309.0
+margin_right = 369.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 60, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -519,10 +515,11 @@ __meta__ = {
 }
 
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 275.0
-margin_right = 345.0
+margin_left = 373.0
+margin_right = 443.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -670,9 +667,11 @@ pressed = true
 text = "Transparency (253)"
 
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 349.0
-margin_right = 404.0
+margin_left = 447.0
+margin_right = 517.0
 margin_bottom = 25.0
+rect_min_size = Vector2( 70, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -701,10 +700,11 @@ text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
 
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 408.0
-margin_right = 458.0
+margin_left = 521.0
+margin_right = 581.0
 margin_bottom = 25.0
-rect_min_size = Vector2( 50, 0 )
+rect_min_size = Vector2( 60, 0 )
+size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -770,8 +770,8 @@ text = "Carolyn's Bible"
 script = ExtResource( 13 )
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 462.0
-margin_right = 487.0
+margin_left = 585.0
+margin_right = 610.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Change viewer background color"
@@ -786,15 +786,15 @@ color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
 
 [node name="EyeLidButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 491.0
-margin_right = 519.0
+margin_left = 614.0
+margin_right = 642.0
 margin_bottom = 25.0
 icon = ExtResource( 15 )
 flat = true
 
 [node name="AnimationContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 29.0
-margin_right = 579.0
+margin_right = 759.0
 margin_bottom = 52.0
 mouse_filter = 0
 
@@ -846,7 +846,7 @@ text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 116.0
-margin_right = 495.0
+margin_right = 664.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -856,8 +856,8 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 499.0
-margin_right = 549.0
+margin_left = 668.0
+margin_right = 718.0
 margin_bottom = 23.0
 rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
@@ -877,9 +877,9 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 553.0
+margin_left = 722.0
 margin_top = 4.0
-margin_right = 579.0
+margin_right = 759.0
 margin_bottom = 18.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -887,7 +887,7 @@ script = ExtResource( 7 )
 
 [node name="HelperContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 56.0
-margin_right = 579.0
+margin_right = 759.0
 margin_bottom = 156.0
 rect_min_size = Vector2( 0, 100 )
 size_flags_vertical = 0
@@ -910,15 +910,15 @@ font = SubResource( 10 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
 margin_left = 104.0
-margin_right = 579.0
+margin_right = 759.0
 margin_bottom = 90.0
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
 [node name="ApplyChangesButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
-margin_right = 475.0
+margin_right = 655.0
 margin_bottom = 26.0
-custom_fonts/font = SubResource( 11 )
+custom_fonts/font = SubResource( 3 )
 custom_colors/font_color_hover = Color( 0.607843, 0.678431, 0.717647, 1 )
 custom_colors/font_color_pressed = Color( 0.384314, 0.654902, 0.654902, 1 )
 text = "Apply Changes"
@@ -929,10 +929,10 @@ __meta__ = {
 
 [node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
 margin_top = 30.0
-margin_right = 475.0
+margin_right = 655.0
 margin_bottom = 90.0
 rect_min_size = Vector2( 475, 60 )
-custom_fonts/font = SubResource( 12 )
+custom_fonts/font = SubResource( 11 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."
 align = 1
@@ -944,9 +944,9 @@ __meta__ = {
 }
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
-margin_left = 591.0
-margin_right = 814.0
-margin_bottom = 768.0
+margin_left = 771.0
+margin_right = 1530.0
+margin_bottom = 1080.0
 grow_horizontal = 0
 rect_min_size = Vector2( 200, 0 )
 size_flags_horizontal = 3
@@ -956,11 +956,11 @@ custom_styles/panel = SubResource( 2 )
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer"]
 margin_left = 1.0
 margin_top = 1.0
-margin_right = 222.0
-margin_bottom = 767.0
+margin_right = 758.0
+margin_bottom = 1079.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 12 )
 highlight_current_line = true
 syntax_highlighting = true
 show_line_numbers = true
@@ -981,7 +981,7 @@ margin_top = 481.0
 margin_right = 558.0
 margin_bottom = 519.0
 size_flags_horizontal = 4
-custom_fonts/font = SubResource( 14 )
+custom_fonts/font = SubResource( 13 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1030,8 +1030,8 @@ margin_left = 10.0
 margin_top = 10.0
 margin_right = -10.0
 margin_bottom = -10.0
-custom_fonts/bold_font = SubResource( 16 )
-custom_fonts/normal_font = SubResource( 17 )
+custom_fonts/bold_font = SubResource( 15 )
+custom_fonts/normal_font = SubResource( 16 )
 bbcode_enabled = true
 bbcode_text = "[b]Basic Controls[/b]
 
