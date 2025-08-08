@@ -2,7 +2,8 @@ extends Control
 
 onready var camera_holder = get_tree().root.get_node("Root/SceneRoot/ViewportContainer/Viewport/CameraHolder") as Spatial
 onready var camera = camera_holder.get_node("Camera") as Camera
-onready var label = get_tree().root.get_node("Root/SceneRoot/Label")
+onready var ball_label = get_tree().root.get_node("Root/SceneRoot/BallLabel")
+onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperLabel")
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
@@ -33,8 +34,6 @@ var smallbrush = load("res://resources/icons/tool_paintbrush_2x.png")
 var bigbrush = load("res://resources/icons/tool_brush_2x.png")
 var paintbucket = load("res://resources/icons/tool_bucket_2x.png")
 
-var helper_label: Label
-
 const ZOOM_STEP := 1.2
 
 func _ready():
@@ -48,53 +47,38 @@ func _ready():
 
 	# flip_camera_view()
 
-	helper_label = Label.new()
-	helper_label.name = "HelperLabel"
-	helper_label.text = ""
-	helper_label.align = Label.ALIGN_CENTER
-	helper_label.rect_min_size = Vector2(0, 24)
-
-	helper_label.anchor_left   = 0
-	helper_label.anchor_right  = 1
-	helper_label.anchor_top    = 1
-	helper_label.anchor_bottom = 1
-
-	helper_label.margin_top    = -2222
-	helper_label.margin_bottom = 0
-	helper_label.margin_left   = 0
-	helper_label.margin_right  = 0
-	add_child(helper_label)
-
-	move_child(helper_label, get_child_count() - 1)
+	helper_label.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 
 func _process(_delta):
-	var text = ""
+	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
 	if linez_mode:
 		text = "Line Mode: click a second ball to connect"
 	else:
 		if selecting_on:
-			text = "Select Mode: click a ball to select"
+			text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Addball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 
-		if Input.is_key_pressed(KEY_CONTROL) and Input.is_key_pressed(KEY_SPACE):
-			if text != "":
-				text += " | "
-			text += "Open Tools Menu (CTRL + SPACE)"
+		if Input.is_key_pressed(KEY_CONTROL):
+			#if text != "": text += " | "
+			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)"
 
-		if Input.is_key_pressed(KEY_SHIFT) and Input.is_key_pressed(KEY_ALT) and Input.is_key_pressed(KEY_S):
-			if text != "":
-				text += " | "
-			text += "Rescaling ball (SHIFT + ALT + S + drag)"
-		elif Input.is_key_pressed(KEY_SHIFT):
-			if text != "":
-				text += " | "
-			text += "Moving ball (SHIFT + drag)"
-		elif Input.is_key_pressed(KEY_SPACE):
-			if text != "":
-				text += " | "
-			text += "Pan view (SPACE + drag)"
+		if Input.is_key_pressed(KEY_SHIFT):
+			#if text != "": text += " | "
+			text = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
+
+		if Input.is_key_pressed(KEY_SPACE):
+			#if text != "": text += " | "
+			text = "Pan View (SPACE + left-click drag)"
+
+		var locks = []
+		if Input.is_key_pressed(KEY_X): locks.append("X")
+		if Input.is_key_pressed(KEY_Y): locks.append("Y")
+		if Input.is_key_pressed(KEY_Z): locks.append("Z")
+		if locks.size() > 0:
+			text += " | Axis Lock: " + locks
 
 	helper_label.text = text
+
 
 func set_active_selected_ball(ball):
 	if active_selected_ball and is_instance_valid(active_selected_ball):
@@ -147,10 +131,9 @@ func _gui_input(event):
 		tex.rect_scale *= ZOOM_STEP
 		return
 
-	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+S+left-click-drag:
+	# Begin moving ballz using SHIFT+left-click-drag or resizing ballz using SHIFT+ALT+left-click-drag:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		var alt_key = Input.is_key_pressed(KEY_ALT)
-		var s = Input.is_key_pressed(KEY_S)
 
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
@@ -158,7 +141,7 @@ func _gui_input(event):
 			is_dragging = true
 			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
-			if alt_key and s:
+			if alt_key:
 				is_resizing = true
 				Input.set_custom_mouse_cursor(hand_pinch)
 				original_scale = drag_ball.ball_size
@@ -257,7 +240,7 @@ func _gui_input(event):
 
 	# Rotate or pan camera during general mouse motion:
 	if event is InputEventMouseMotion and not is_dragging:
-		label.rect_global_position = event.global_position
+		#label.rect_global_position = event.global_position
 
 		var space_and_left = Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT)
 		var middle_drag = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
@@ -281,7 +264,7 @@ func _gui_input(event):
 				hover.apply_outline_state(hover.OutlineState.HOVER)
 
 
-	# Update hovered label and trigger highlight for selectable ball:
+	# Update hovered ball_label and trigger highlight for selectable ball:
 	if selecting_on and not linez_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
@@ -292,14 +275,14 @@ func _gui_input(event):
 		var result = camera.get_world().direct_space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
 
 		if result:
-			label.show()
+			ball_label.show()
 			deal_with_last_selected()
 			result.collider.get_parent()._on_Area_mouse_entered()
 			last_selected = result.collider.get_parent()
 		else:
 			deal_with_last_selected()
 			last_selected = null
-			label.hide()
+			ball_label.hide()
 
 func _unhandled_key_input(event):
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
@@ -337,7 +320,9 @@ func deal_with_last_selected():
 		last_selected._on_Area_mouse_exited()
 				
 func _on_Node_ball_mouse_enter(ball_info):
-	label.text = str(ball_info.ball_no)
+	ball_label.text = str(ball_info.ball_no)
+	ball_label.rect_global_position = get_viewport().get_mouse_position()
+	ball_label.show()
 
 func _on_SelectCheckBox_toggled(button_pressed):
 	selecting_on = button_pressed
@@ -346,7 +331,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 			last_selected._on_Area_mouse_exited()
 		last_selected = null
 		clear_active_selected_ball()
-		label.hide()
+		ball_label.hide()
 
 func _on_HelpButton_pressed():
 	popup.popup_centered()
@@ -355,7 +340,7 @@ func _on_LnzTextEdit_mouse_entered():
 	if last_selected_is_valid():
 		last_selected._on_Area_mouse_exited()
 	last_selected = null
-	label.hide()
+	ball_label.hide()
 
 func _on_PetViewContainer_resized():
 	var size_diff = tex.rect_size / 2.0 - self.rect_size / 2.0
