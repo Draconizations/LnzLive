@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/view_pan.png-6fc67d5fbaad253a96594dc475abbc61.stex"
+path="res://.import/ico_tool_eyedropper.png-812e282a831b699dee7db9832a8a5ddf.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/view_pan.png"
-dest_files=[ "res://.import/view_pan.png-6fc67d5fbaad253a96594dc475abbc61.stex" ]
+source_file="res://resources/icons/ico_tool_eyedropper.png"
+dest_files=[ "res://.import/ico_tool_eyedropper.png-812e282a831b699dee7db9832a8a5ddf.stex" ]
 
 [params]
 

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/view_crosshair_2x.png-df5ad8b29a082d662033e327567449ed.stex"
+path="res://.import/ico_tool_paintbrush.png-bb6a794c8b212b0584d7d52e4ce64f01.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/view_crosshair_2x.png"
-dest_files=[ "res://.import/view_crosshair_2x.png-df5ad8b29a082d662033e327567449ed.stex" ]
+source_file="res://resources/icons/ico_tool_paintbrush.png"
+dest_files=[ "res://.import/ico_tool_paintbrush.png-bb6a794c8b212b0584d7d52e4ce64f01.stex" ]
 
 [params]
 

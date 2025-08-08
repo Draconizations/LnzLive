@@ -29,10 +29,10 @@ var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
 var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x.png")
 var hand_stretch = load("res://resources/icons/ico_hand_stretch_2x.png")
-var eyedropper = load("res://resources/icons/tool_eyedropper_2x.png")
-var smallbrush = load("res://resources/icons/tool_paintbrush_2x.png")
-var bigbrush = load("res://resources/icons/tool_brush_2x.png")
-var paintbucket = load("res://resources/icons/tool_bucket_2x.png")
+var eyedropper = load("res://resources/icons/ico_tool_eyedropper_2x.png")
+var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x.png")
+var bigbrush = load("res://resources/icons/ico_tool_brush_2x.png")
+var paintbucket = load("res://resources/icons/ico_tool_bucket_2x.png")
 
 const ZOOM_STEP := 1.2
 

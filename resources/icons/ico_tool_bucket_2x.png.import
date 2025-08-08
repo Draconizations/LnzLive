@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tool_paintbrush.png-3f6044e388e4df376286367cd219c76b.stex"
+path="res://.import/ico_tool_bucket_2x.png-b54b1ade2fbb5a51b8470f9a33e6ab51.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/tool_paintbrush.png"
-dest_files=[ "res://.import/tool_paintbrush.png-3f6044e388e4df376286367cd219c76b.stex" ]
+source_file="res://resources/icons/ico_tool_bucket_2x.png"
+dest_files=[ "res://.import/ico_tool_bucket_2x.png-b54b1ade2fbb5a51b8470f9a33e6ab51.stex" ]
 
 [params]
 

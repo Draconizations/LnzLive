@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tool_eyedropper_2x.png-4a40e8ce73aff73da0cb1b26e0fc8e76.stex"
+path="res://.import/ico_tool_paintbrush_2x.png-6113103d5d2fc5afc4739e3a3795a6d6.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/tool_eyedropper_2x.png"
-dest_files=[ "res://.import/tool_eyedropper_2x.png-4a40e8ce73aff73da0cb1b26e0fc8e76.stex" ]
+source_file="res://resources/icons/ico_tool_paintbrush_2x.png"
+dest_files=[ "res://.import/ico_tool_paintbrush_2x.png-6113103d5d2fc5afc4739e3a3795a6d6.stex" ]
 
 [params]
 

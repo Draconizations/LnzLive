@@ -232,7 +232,6 @@ func get_eyelid_color(file: File):
 		eyelid_color = parsed_lines[0]["color"]
 	else:
 		eyelid_color = 244
-	print("Parsed eyelid_color =", eyelid_color)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tool_eyedropper.png-7b3d2867d990afd466bcade3919c716d.stex"
+path="res://.import/ico_view_crosshair_2x.png-78145d4ed3c6f7ce26116c95108750a6.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/tool_eyedropper.png"
-dest_files=[ "res://.import/tool_eyedropper.png-7b3d2867d990afd466bcade3919c716d.stex" ]
+source_file="res://resources/icons/ico_view_crosshair_2x.png"
+dest_files=[ "res://.import/ico_view_crosshair_2x.png-78145d4ed3c6f7ce26116c95108750a6.stex" ]
 
 [params]
 
