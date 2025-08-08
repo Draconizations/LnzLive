@@ -62,7 +62,7 @@ var tail_dog = [57, 58, 59, 60, 61, 62 ]
 var tail_cat = [43, 44, 45, 46, 47, 48 ]
 var tail_bab = []
 
-var tongue_dog = [ 77, 63, 64 ]
+var tongue_dog = [63, 64]
 var tongue_cat = [55, 56]
 var tongue_bab = [108]
 

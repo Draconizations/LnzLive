@@ -27,14 +27,14 @@ func _ready():
 	examples.set_text(0, "Examples")
 	
 	add_file_button.connect("pressed", self, "_on_AddFileButton_pressed")
-	file_dialog.connect("file_selected", self, "_on_FileDialog_file_selected")
+	file_dialog.connect("files_selected", self, "_on_FileDialog_files_selected")
 	
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.lnz ; LNZ Files")
 	file_dialog.add_filter("*.bmp ; BMP Textures")
 	file_dialog.add_filter("*.png ; PNG Palettes")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.mode = FileDialog.MODE_OPEN_FILES
 	
 	var dir = Directory.new()
 	dir.open(example_file_location)
@@ -57,6 +57,10 @@ func _on_AddFileButton_pressed():
 		file_dialog.popup_centered()
 	else:
 		web_file_dialog()
+
+func _on_FileDialog_files_selected(paths: Array):
+	for p in paths:
+		_on_FileDialog_file_selected(p)
 
 func _on_FileDialog_file_selected(selected_path):
 	var file_extension = selected_path.get_extension().to_lower()
@@ -208,24 +212,47 @@ func scan_local_storage(selected_filepath):
 	dir2.list_dir_end()
 
 func scan_local_textures():
-	var dir2 = Directory.new()
-	dir2.open(user_file_location + "/textures")
-	dir2.list_dir_begin()
-	filename = dir2.get_next()
-	while(!filename.empty()):
-		if filename.ends_with(".bmp"):
+	var dir = Directory.new()
+	var textures_dir = user_file_location + "/textures"
+	if dir.open(textures_dir) != OK:
+		return
+	dir.list_dir_begin()
+	var filename = dir.get_next()
+	while filename != "":
+		if filename.to_lower().ends_with(".bmp"):
+			var full_path = textures_dir.plus_file(filename)
+
 			var new_item = create_item(local_storage_textures)
 			new_item.set_text(0, filename)
-			new_item.set_metadata(0, user_file_location + filename)
-			var img = Image.new()
-			img.load(user_file_location + "/textures/" + filename, true, true)
-			var tex = ImageTexture.new()
-			tex.flags = 0 # turn OFF anti-aliasing! but not after flagging repeat:
-			tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
-			preloader.add_resource(filename.to_lower(), tex)
-		filename = dir2.get_next()
-	dir2.list_dir_end()
-	
+			new_item.set_metadata(0, full_path)
+
+			# Load image for texture
+			var img_indexed = Image.new()
+			img_indexed.load(full_path, true, true)
+			var full_tex = ImageTexture.new()
+			full_tex.create_from_image(
+				img_indexed,
+				ImageTexture.FLAG_FILTER | ImageTexture.FLAG_REPEAT
+			)
+			preloader.add_resource(filename.to_lower(), full_tex)
+
+			# Load image for preview
+			var file = File.new()
+			if file.open(full_path, File.READ) == OK:
+				var buf = file.get_buffer(file.get_len())
+				file.close()
+
+				var icon_img = Image.new()
+				icon_img.load_bmp_from_buffer(buf)
+				icon_img.convert(Image.FORMAT_RGBA8)
+				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+
+				var icon_tex = ImageTexture.new()
+				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
+				new_item.set_icon(0, icon_tex)
+		filename = dir.get_next()
+	dir.list_dir_end()
+
 func scan_local_palettes():
 	var dir2 = Directory.new()
 	dir2.open(user_file_location + "/palettes")
@@ -251,6 +278,7 @@ func _on_Tree_item_rmb_selected(position):
 	$ItemPopupMenu.set_item_disabled(0, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(1, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(2, item.get_parent() != local_storage)
+	$ItemPopupMenu.set_item_disabled(3, false)
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id):
@@ -265,8 +293,13 @@ func _on_ItemPopupMenu_id_pressed(id):
 		var filepath = item.get_metadata(0) as String
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
-	elif id == 2: #back up
+	elif id == 2: # backup
 		emit_signal("backup_file")
+	elif id == 3: # copy file name
+		var item = get_selected() as TreeItem
+		var filepath = item.get_metadata(0)
+		var filename = filepath.get_file()
+		OS.set_clipboard(filename)
 
 func _on_RenameDialog_confirmed():
 	var item = get_selected() as TreeItem

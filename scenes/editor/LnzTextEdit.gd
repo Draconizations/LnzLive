@@ -17,7 +17,7 @@ signal file_saved(filepath)
 signal find_ball(ball_no)
 signal file_backed_up()
 
-onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/ApplyChangesButton")
+onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 
 onready var frame_slider = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
@@ -31,6 +31,9 @@ func _ready():
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
+	
+	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406),false)
+	add_color_region(";","",Color(0.168627, 0.45098, 0.45098),false)
 
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var signals = [
@@ -1942,6 +1945,7 @@ func _on_ToolsMenu_move_head(x, y, z):
 	save_file()
 
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -2026,6 +2030,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	save_file()
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 

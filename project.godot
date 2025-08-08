@@ -70,7 +70,6 @@ _global_script_class_icons={
 
 config/name="LnzLive"
 run/main_scene="res://scenes/editor/editor.tscn"
-config/icon="res://icon.png"
 
 [autoload]
 
@@ -82,7 +81,8 @@ gdscript/warnings/shadowed_variable=false
 
 [display]
 
-window/size/height=768
+window/size/width=1920
+window/size/height=1080
 window/stretch/aspect="expand"
 
 [global]

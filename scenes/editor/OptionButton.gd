@@ -21,11 +21,18 @@ func _on_mouse_entered():
 	if not popup.visible:
 		var button_pos = rect_global_position
 		var button_size = rect_size
-		popup.set_position(Vector2(button_pos.x, button_pos.y + button_size.y))
+		popup.set_position(Vector2(button_pos.x, button_pos.y + button_size.y + 5))
 		popup.popup()
 
 func _on_mouse_exited():
 	close_timer.start()
 
 func _on_close_timer_timeout():
-	popup.hide()
+	var mouse_pos = get_viewport().get_mouse_position()
+	var btn_rect   = Rect2(rect_global_position, rect_size)
+	var popup_rect = Rect2(popup.rect_global_position, popup.rect_size)
+	if not (btn_rect.has_point(mouse_pos) or popup_rect.has_point(mouse_pos)):
+		popup.hide()
+	else:
+		close_timer.start()
+

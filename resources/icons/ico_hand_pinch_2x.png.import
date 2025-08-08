@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tool_bucket.png-dbfeed94652f17e292de1a5ace0e234b.stex"
+path="res://.import/ico_hand_pinch_2x.png-76a93632bed75915904c6f523716a384.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/tool_bucket.png"
-dest_files=[ "res://.import/tool_bucket.png-dbfeed94652f17e292de1a5ace0e234b.stex" ]
+source_file="res://resources/icons/ico_hand_pinch_2x.png"
+dest_files=[ "res://.import/ico_hand_pinch_2x.png-76a93632bed75915904c6f523716a384.stex" ]
 
 [params]
 
