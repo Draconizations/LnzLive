@@ -17,7 +17,7 @@ signal file_saved(filepath)
 signal find_ball(ball_no)
 signal file_backed_up()
 
-onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/ApplyChangesButton")
+onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 
 onready var frame_slider = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
