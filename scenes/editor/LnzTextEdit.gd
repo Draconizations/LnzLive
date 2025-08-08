@@ -1945,6 +1945,7 @@ func _on_ToolsMenu_move_head(x, y, z):
 	save_file()
 
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -2029,6 +2030,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	save_file()
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
