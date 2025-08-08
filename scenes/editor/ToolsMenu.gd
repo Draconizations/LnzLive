@@ -90,7 +90,7 @@ func _on_LineEdit_gui_input(event):
 
 func _on_RecolorMenu_id_pressed(id):
 	current_action = id
-	if id == 11: # color swap
+	if id == 8: # color swap
 		get_parent().get_node("RecolorPopup").popup_centered()
 	else:
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()
