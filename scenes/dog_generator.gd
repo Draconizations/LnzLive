@@ -111,7 +111,7 @@ func cleanup_balls():
 func init_ball_data(species):
 	cleanup_balls()
 
-	print("Species:", species)
+	# print("Species:", species)
 
 	if species == KeyBallsData.Species.DOG:
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")

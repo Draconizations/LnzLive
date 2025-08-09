@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=2]
+[gd_scene load_steps=39 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -96,6 +96,10 @@ font_data = SubResource( 14 )
 
 [sub_resource type="DynamicFont" id=16]
 font_data = SubResource( 14 )
+
+[sub_resource type="DynamicFont" id=17]
+size = 14
+font_data = ExtResource( 18 )
 
 [node name="Root" type="Node"]
 
@@ -733,7 +737,6 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 7 )
 text = "Basic Controls"
-script = ExtResource( 13 )
 
 [node name="ColorSelectorButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
 margin_left = 295.0
@@ -1135,9 +1138,15 @@ margin_top = 172.014
 margin_right = 737.263
 margin_bottom = 672.014
 rect_min_size = Vector2( 400, 500 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="SceneRoot/PaletteViewerPopup"]
 rect_min_size = Vector2( 380, 480 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="SceneRoot/PaletteViewerPopup/PaletteViewerScrollContainer"]
 margin_right = 380.0
@@ -1159,15 +1168,21 @@ margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="LineEdit" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
-margin_right = 58.0
-margin_bottom = 24.0
+margin_right = 118.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 0, 25 )
 size_flags_horizontal = 3
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 
 [node name="LineEdit2" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
-margin_top = 28.0
-margin_right = 58.0
-margin_bottom = 52.0
+margin_top = 29.0
+margin_right = 118.0
+margin_bottom = 54.0
+rect_min_size = Vector2( 0, 25 )
 size_flags_horizontal = 3
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 
 [node name="RecolorPopup" type="ConfirmationDialog" parent="SceneRoot"]
 anchor_left = 0.5
@@ -1302,6 +1317,7 @@ __meta__ = {
 }
 
 [node name="HeadMovePopup" type="Popup" parent="SceneRoot"]
+visible = true
 margin_left = 450.228
 margin_top = 104.77
 margin_right = 490.228
@@ -1318,24 +1334,33 @@ __meta__ = {
 }
 
 [node name="HeadMoveLineEditX" type="LineEdit" parent="SceneRoot/HeadMovePopup/VBoxContainer"]
-margin_right = 58.0
-margin_bottom = 24.0
+margin_right = 110.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HeadMoveLineEditY" type="LineEdit" parent="SceneRoot/HeadMovePopup/VBoxContainer"]
-margin_top = 28.0
-margin_right = 58.0
-margin_bottom = 52.0
+margin_top = 29.0
+margin_right = 110.0
+margin_bottom = 54.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HeadMoveLineEditZ" type="LineEdit" parent="SceneRoot/HeadMovePopup/VBoxContainer"]
-margin_top = 56.0
-margin_right = 58.0
-margin_bottom = 80.0
+margin_top = 58.0
+margin_right = 110.0
+margin_bottom = 83.0
+rect_min_size = Vector2( 0, 25 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1345,6 +1370,9 @@ margin_left = 250.0
 margin_top = 750.0
 margin_right = 800.0
 margin_bottom = 770.0
+custom_styles/hover = ExtResource( 20 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 allow_search = true
 script = ExtResource( 10 )
 __meta__ = {
@@ -1354,7 +1382,13 @@ __meta__ = {
 [node name="RecolorMenu" type="PopupMenu" parent="SceneRoot/ToolsMenu"]
 margin_right = 550.0
 margin_bottom = 178.0
+custom_styles/hover = ExtResource( 20 )
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/font = SubResource( 17 )
 items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Color Swap", null, 0, false, false, 8, 0, null, "", false ]
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]

@@ -112,6 +112,7 @@ func save_file():
 
 	emit_signal("file_saved", filepath)
 	_set_text_preserve(get_text())
+	print("Saved LNZ and Applied Changes!")
 
 func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)

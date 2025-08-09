@@ -129,7 +129,7 @@ func get_species(file: File):
 		species = 2
 	else:
 		species = parsed_lines[0].species
-	print("Species detected: " + str(species))
+	# print("Species detected: " + str(species))
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")

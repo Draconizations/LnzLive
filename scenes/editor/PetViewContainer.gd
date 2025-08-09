@@ -6,7 +6,7 @@ onready var ball_label = get_tree().root.get_node("Root/SceneRoot/BallLabel")
 onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/HelperLabel")
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
-onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
+onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 
 var last_selected
 var selecting_on = false
@@ -192,7 +192,7 @@ func _gui_input(event):
 					new_pos.x = original_pos.x
 					new_pos.y = original_pos.y
 				drag_ball.global_transform.origin = new_pos
-				print("Set drag_ball position to: ", new_pos)
+				#print("Set drag_ball position to: ", new_pos)
 		return
 
 	# Finalize drag or resize operation on mouse release:
@@ -305,7 +305,6 @@ func _gui_input(event):
 			drag_ball = null
 			return
 
-
 func _unhandled_key_input(event):
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
@@ -356,7 +355,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		ball_label.hide()
 
 func _on_HelpButton_pressed():
-	popup.popup_centered()
+	help_popup.popup_centered()
 
 func _on_LnzTextEdit_mouse_entered():
 	if last_selected_is_valid():
