@@ -230,9 +230,10 @@ func scan_local_textures():
 			var img_indexed = Image.new()
 			img_indexed.load(full_path, true, true)
 			var full_tex = ImageTexture.new()
+			full_tex.flags = 0
 			full_tex.create_from_image(
 				img_indexed,
-				ImageTexture.FLAG_FILTER | ImageTexture.FLAG_REPEAT
+				ImageTexture.FLAG_REPEAT
 			)
 			preloader.add_resource(filename.to_lower(), full_tex)
 
