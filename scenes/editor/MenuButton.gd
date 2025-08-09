@@ -9,6 +9,3 @@ func _on_GuideLinkButton_pressed():
 	
 func _on_CarolynHornLinkButton_pressed():
 	OS.shell_open("https://github.com/melissamcewen/carolyns-bible")
-
-func _on_HelpPopupButton_pressed():
-	print("blash")

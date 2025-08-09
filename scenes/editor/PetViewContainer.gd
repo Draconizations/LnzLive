@@ -6,7 +6,7 @@ onready var ball_label = get_tree().root.get_node("Root/SceneRoot/BallLabel")
 onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/HelperLabel")
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
-onready var popup = get_tree().root.get_node("Root/SceneRoot/PopupDialog") as WindowDialog
+onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 
 var last_selected
 var selecting_on = false
@@ -16,6 +16,9 @@ var is_dragging = false
 var drag_ball = null
 var drag_offset = Vector3()
 var pixel_world_size = 0.002
+
+var drag_started_via_code := false
+var pending_autodrag_addball_no := -1
 
 var is_resizing = false
 var original_lnz_size = 0
@@ -189,7 +192,7 @@ func _gui_input(event):
 					new_pos.x = original_pos.x
 					new_pos.y = original_pos.y
 				drag_ball.global_transform.origin = new_pos
-				print("Set drag_ball position to: ", new_pos)
+				#print("Set drag_ball position to: ", new_pos)
 		return
 
 	# Finalize drag or resize operation on mouse release:
@@ -284,6 +287,24 @@ func _gui_input(event):
 			last_selected = null
 			ball_label.hide()
 
+	# Commit move for auto‑started drags on press, or for manual SHIFT‑drags on release
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and is_dragging and drag_ball:
+		var commit_now: bool = (drag_started_via_code and event.pressed) or (not drag_started_via_code and not event.pressed)
+		if commit_now:
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
+			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
+			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
+			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
+
+			is_dragging = false
+			is_resizing = false
+			drag_started_via_code = false
+			Input.set_custom_mouse_cursor(hand_neutral)
+			drag_ball = null
+			return
+
 func _unhandled_key_input(event):
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
@@ -334,7 +355,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		ball_label.hide()
 
 func _on_HelpButton_pressed():
-	popup.popup_centered()
+	help_popup.popup_centered()
 
 func _on_LnzTextEdit_mouse_entered():
 	if last_selected_is_valid():
@@ -415,3 +436,35 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
 
 	return size_dif
+
+func begin_auto_move_for_ball(ball: Spatial) -> void:
+	if not ball: return
+	drag_ball = ball
+	is_dragging = true
+	is_resizing = false
+	drag_started_via_code = true
+	Input.set_custom_mouse_cursor(hand_move)
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
+
+func schedule_autodrag_for_addball(ball_no: int) -> void:
+	pending_autodrag_addball_no = ball_no
+	_wait_for_addball_then_autodrag()
+
+func _wait_for_addball_then_autodrag() -> void:
+	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
+	while tries > 0 and pending_autodrag_addball_no != -1:
+		yield(get_tree(), "idle_frame")
+		var visual := _find_visual_addball_by_no(pending_autodrag_addball_no)
+		if visual:
+			begin_auto_move_for_ball(visual)
+			pending_autodrag_addball_no = -1
+			return
+		tries -= 1
+
+func _find_visual_addball_by_no(no: int) -> Spatial:
+	for b in get_tree().get_nodes_in_group("addballs"):
+		if b.has_method("get"): # safety if some nodes aren't the ball script
+			if b.ball_no == no:
+				return b
+	return null

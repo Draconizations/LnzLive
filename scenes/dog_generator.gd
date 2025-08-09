@@ -68,7 +68,6 @@ signal line_created(start_ball, end_ball)
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
-	eyelid_button.connect("pressed", self, "_on_EyeLidButton_pressed")
 
 func set_animation(anim_index: int):
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
@@ -112,7 +111,7 @@ func cleanup_balls():
 func init_ball_data(species):
 	cleanup_balls()
 
-	print("Species:", species)
+	# print("Species:", species)
 
 	if species == KeyBallsData.Species.DOG:
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
