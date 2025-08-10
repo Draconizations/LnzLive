@@ -45,6 +45,10 @@ func _ready():
 		if not pet_node.is_connected(s, self, "_on_Node_" + s):
 			pet_node.connect(s, self, "_on_Node_" + s)
 
+	var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+	if file_tree and not file_tree.is_connected("palette_selected", self, "_on_palette_selected"):
+		file_tree.connect("palette_selected", self, "_on_palette_selected")
+
 func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
 	file.open(filepath, File.READ)
@@ -327,6 +331,34 @@ func _wrap_angle_deg(a: int) -> int:
 	if ang > 180:
 		ang -= 360
 	return ang
+
+func _on_palette_selected(filename_without_extension):
+	var bounds = _get_section_bounds("[Palette]")
+	var new_line = filename_without_extension
+
+	if bounds.empty():
+		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section, "[Palette]")
+		all_lines.insert(first_section + 1, new_line)
+		text = all_lines.join("\n")
+		_set_text_preserve(text)
+	else:
+		var start_line = bounds["start"]
+		var end_line = bounds["end"]
+		var found_palette_line = false
+		for i in range(start_line, end_line):
+			var line = get_line(i).strip_edges()
+			if line.begins_with(""):
+				set_line(i, new_line)
+				found_palette_line = true
+				break
+		
+		if not found_palette_line:
+			var insert_line = _find_insertion_line(start_line, end_line)
+			_insert_text_at_cursor_at_line(insert_line, new_line)
+	
+	save_file()
 
 func _on_HeadShotButton_pressed():
 	var local_frame = int(frame_slider.value)
