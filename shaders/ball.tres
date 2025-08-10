@@ -5,6 +5,11 @@ code = "shader_type spatial;
 
 render_mode unshaded, skip_vertex_transform;
 
+uniform bool should_quantize = false;
+uniform int palette_size = 256;
+const vec4 TRANSPARENT_COLOR_MAGENTA = vec4(1.0, 0.0, 1.0, 1.0);
+const int TRANSPARENT_COLOR_INDEX = 253;
+
 uniform float eyelid_rotation = 0.0;              // radians: 0 = up, +π/2 = right, –π/2 = left, π = down
 uniform int   eyelid_color    = -1;               // palette index
 
@@ -115,15 +120,13 @@ void fragment() {
     // DRAWING
     vec2 vector_from_center = st - c;
     float pct = step(length(vector_from_center), (float(ball_size) / 2.0 - float(modified_outline)));
-
-    if (outline != -1)
+    if (outline != -1) {
         pct2 -= pct;
+    }
 
-    // TEXTURING
-    vec3 texture_color;
-
-    // Switch behavior for tiling texture vs no rotate texture
+    // TEXTURING & QUANTIZING
     vec2 tex_coords;
+
     if (tile_texture) {
         // Offset in screen pixels from the ball center
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
@@ -134,13 +137,14 @@ void fragment() {
         // Normalize to raw texture size
         uv *= float(ball_size) / texture_size_raw;
 
-        // Wrap into [0,1] to tile
+         // Wrap into [0,1] to tile
         uv = fract(uv);
-        
+
         // Flip to match orientation
         tex_coords = vec2(1.0 - uv.x, 1.0 - uv.y);
+
     } else {
-        // Offset from ball center in pixels
+         // Offset from ball center in pixels
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
 
         // Center using declared texture size
@@ -151,109 +155,84 @@ void fragment() {
 
         // Normalize by actual BMP size to get UV coordinates and shift for centering
         tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
-
+        
     }
 
-    // Flip X and Y to match orientation in game
     tex_coords.x = 1.0 - tex_coords.x;
     tex_coords.y = 1.0 - tex_coords.y;
 
-    // OLD CODE:
+    vec3 texture_color;
+    bool is_transparent = false;
+    
+    if (should_quantize) {
+        vec4 original_color = texture(ball_texture, tex_coords);
+        
+        if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+            texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
+            is_transparent = true;
+        } else {
+            vec4 best_color = vec4(0.0);
+            float best_distance_sq = 1e20;
+            
+            for (int i = 0; i < palette_size; i++) {
+                if (i == TRANSPARENT_COLOR_INDEX) {
+                    continue;
+                }
+                
+                vec4 palette_color = texture(palette, vec2(float(i) / 255.0, 0.5));
+                float distance_sq = dot(original_color.rgb - palette_color.rgb, original_color.rgb - palette_color.rgb);
+                
+                if (distance_sq < best_distance_sq) {
+                    best_distance_sq = distance_sq;
+                    best_color = palette_color;
+                }
+            }
+            texture_color = best_color.rgb;
+        }
+    } else {
+        int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
+        is_transparent = (palette_index == 253);
 
-    // // Switch between global texture and no texture rotate modes
-    // vec2 tex_coords;
-    // if (tile_texture) {
-    //     tex_coords = ((st - c)) / tiling_unit;
-    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
-    //     tex_coords = fract(tex_coords);
-    //     tex_coords *= texture_size.xy / vec2(tiling_unit);
-    // } else {
-    //     // PERFECTLY CENTERED! but not right scale
-    //     tex_coords = (st - c) / float(ball_size) + vec2(0.5, 0.5);
-    //     tex_coords.x = 1.0 - tex_coords.x;
-
-    //     bool texture_resized = any(notEqual(texture_size, texture_size_raw));
-    //     if (texture_resized) {
-    //         tex_coords += vec2(-0.25, -0.25);
-    //     }
-    // }
-
-    // // Switch between global texture and no texture rotate modes
-    // vec2 tex_coords;
-    // if (tile_texture) {
-    //     tex_coords = ((st - c)) / tiling_unit;
-    //     tex_coords = vec2(1.0 - tex_coords.x, 1.0 - tex_coords.y);
-    //     tex_coords = fract(tex_coords);
-    //     tex_coords *= texture_size.xy / vec2(tiling_unit);
-    // } else {
-    //     // PIXEL PERFECT SCALING! bit not centered
-    //     // Offset from center in screen-space pixels
-    //     vec2 offset = FRAGCOORD.xy - center_fragcoord;
-
-    //     // Normalize by raw image size to get UV coordinates (0.0 to 1.0)
-    //     tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
-
-    //     // Flip X to match expected behavior
-    //     tex_coords.x = 1.0 - tex_coords.x;
-    // }
-
-    // Sample color index from texture
-    int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
-
-    // Determine whether to render pixel as transparent (color index 253)
-    bool is_transparent = (palette_index == 253);
-
-    if (outline == -3) 
-        // Draw as nose
-        ALBEDO = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
-    else {
         if (transparent_index > 0 && color_index < 150 && has_texture) {
             if(transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
-                // Render texture using textureable LNZ color ramp over all pixels
                 texture_color = get_shifted_color(palette_index);
             } else {
-                // Render texture using textureable LNZ color ramp over only specified color index
                 texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
             }
-        }
-        else if (transparent_index == 0 && color_index < 150 && has_texture) {
-            // Render texture using paletted BMP colors
+        } else if (transparent_index == 0 && color_index < 150 && has_texture) {
             texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-        }
-        else {
-            // No texture, solid color
+        } else {
             texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
         }
-
-        // Fetch outline color from palette
+    }
+    
+    // DRAW NOSE
+    if (outline == -3) {
+        ALBEDO = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
+    } else {
         vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
         ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
-    // Set alpha = 0 for transparent pixels, if transparency is turned on
+    // TRANSPARENCY
     float alpha_value = 1.0 - step(pct + pct2, 0.0);
     if (is_transparent && transparency_on) {
         alpha_value = 0.0;
     }
-
-    // Handle eyelids
+    
+    // EYELIDS
     if (eyelid_color != -1) {
-        //vec2 vc    = FRAGCOORD.xy - center_fragcoord;
         vec2 vc    = mesh_pos * (float(ball_size) * 0.5);
         float half = float(ball_size) * 0.5;
         float dist = length(vc) * 0.5;
 
         if (dist < half) {
-            // Rotate vc by –eyelid_rotation:
             float rot_c = cos(-eyelid_rotation);
             float rot_s = sin(-eyelid_rotation);
-
             vec2 vcr = vec2(
                 vc.x * rot_c - vc.y * rot_s,
                 vc.x * rot_s + vc.y * rot_c
             );
-
-            // Fill top half of rotated coords:
             if (vcr.y > 0.5) {
                 vec3 lid_col = texture(
                     palette,
