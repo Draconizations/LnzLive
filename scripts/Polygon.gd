@@ -11,6 +11,8 @@ export var ball_world_pos3        = Vector3.ZERO       setget set_ball_world_pos
 export var ball_world_pos4        = Vector3.ZERO       setget set_ball_world_pos4
 
 export var texture: Texture                            setget set_texture
+export var texture_size           = Vector2(256, 256)  setget set_texture_size
+export var texture_size_raw       = Vector2.ZERO
 export var transparent_color      = 0                  setget set_transparent_color
 
 export var species                = 0                  setget set_species
@@ -65,15 +67,29 @@ func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)
 
+func set_texture_size(new_value):
+	texture_size = new_value
+
 func set_texture(new_value):
 	texture = new_value
-	$MeshInstance.material_override.set_shader_param("polygon_texture", new_value)
-	$MeshInstance.material_override.set_shader_param("has_texture", true)
-	if new_value != null:
-		$MeshInstance.material_override.set_shader_param("texture_size", new_value.get_size())
-	else:
-		$MeshInstance.material_override.set_shader_param("has_texture", false)
-		
+	
+	if $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("polygon_texture", new_value)
+		if new_value != null:
+			var raw_texture_size = new_value.get_size()
+			var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
+
+			# print("Declared size from [Texture List]:", texture_size)
+			# print("Actual image size:", raw_texture_size)
+			# print("Effective texture_size passed to shader:", eff_texture_size)
+			# print("Texture resized? ", eff_texture_size != raw_texture_size)
+			
+			$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
+			$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
+			$MeshInstance.material_override.set_shader_param("has_texture", true)
+		else:
+			$MeshInstance.material_override.set_shader_param("has_texture", false)
+
 func set_palette(new_value):
 	if new_value != null:
 		palette = new_value

@@ -186,7 +186,7 @@ void fragment() {
         // Look up RGB color using the Petz palette
         vec4 original_color = texture(petz_palette, vec2(float(palette_index)/255.0, 0.5));
         
-        // Quantize original color to the Babyz palette
+        // Quantize color to the Babyz paletteQuantize color to the Babyz palette
         if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
             texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
             is_transparent = true;

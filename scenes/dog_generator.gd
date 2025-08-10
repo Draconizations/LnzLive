@@ -796,8 +796,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		if new_create:
 			# Use the first point's texture
 			visual_polygon.texture = point1.texture  
-			# ADD SPECIES
-			# visual_polygon.species = species
+			visual_polygon.species = species
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
 
@@ -899,8 +898,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.scale.y = distance
 		if new_create:
 			visual_line.texture = start.texture
-			# ADD SPECIES
-			# visual_line.species = species
+			visual_line.species = species
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = pal_texture
 			if line.color_index == -1:
