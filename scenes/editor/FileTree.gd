@@ -161,18 +161,18 @@ func get_dest_dir(file_extension: String):
 		return null
 
 func _on_Tree_item_activated():
-    var selected = get_selected() as TreeItem
-    var filepath = selected.get_metadata(0)
-    var parent = selected.get_parent() as TreeItem
-    if parent == examples:
-        emit_signal("example_file_selected", filepath)
-    elif parent == local_storage:
-        emit_signal("user_file_selected", filepath)
-    elif parent == local_storage_palettes:
-        var filename = selected.get_text(0)
-        var filename_no_ext = filename.get_basename()
-        emit_signal("palette_selected", filename_no_ext)
-    release_focus()
+	var selected = get_selected() as TreeItem
+	var filepath = selected.get_metadata(0)
+	var parent = selected.get_parent() as TreeItem
+	if parent == examples:
+		emit_signal("example_file_selected", filepath)
+	elif parent == local_storage:
+		emit_signal("user_file_selected", filepath)
+	elif parent == local_storage_palettes:
+		var filename = selected.get_text(0)
+		var filename_no_ext = filename.get_basename()
+		emit_signal("palette_selected", filename_no_ext)
+	release_focus()
 
 func rescan(selected_filepath):
 	if local_storage != null:
