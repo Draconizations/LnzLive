@@ -180,7 +180,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data.omissions = lnz_info.omissions
 	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create, lnz_info.no_texture_rotate)
 	apply_projections()
-	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create)
+	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
 	generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
 
 func collate_base_ball_data():
@@ -749,7 +749,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 func get_real_ball_size(ball_size):
 	return ball_size
 
-func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool):
+func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	#print("Generating polygons")
 	#print("Polygon data size:", polygon_data.size())
 	var root = get_root()
@@ -794,8 +794,12 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		visual_polygon.ball_world_pos4 = point4.global_transform.origin
 
 		if new_create:
-			# Use the first point's texture
-			visual_polygon.texture = point1.texture  
+			# Check for texture
+			if "texture_id" in polygon and polygon.texture_id != null and not str(polygon.texture_id).empty():
+				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list)
+			else:
+				# If no texture is defined, default to first ball
+				visual_polygon.texture = point1.texture
 			visual_polygon.species = species
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")

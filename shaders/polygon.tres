@@ -57,9 +57,11 @@ void fragment() {
     float fuzz_factor = random(uv.x + uv.y) * float(fuzz_amount) / 100.0;
 
     // TEXTURING & QUANTIZING
-    vec2 tex_coords = uv * texture_size_raw;
+    //vec2 tex_coords = uv * texture_size_raw;
 
-    vec3 texture_color = get_shifted_color(color_index);
+    vec2 tex_coords = uv * (1000.0 / texture_size_raw);
+
+    vec3 texture_color;
     bool is_transparent = false;
     int palette_index;
 
