@@ -33,6 +33,8 @@ export var palette                = preload("res://resources/textures/petzpalett
 const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
 const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_palette.png")
 
+export var petz_palette           = DEFAULT_PALETTE
+
 enum OutlineState {
 	NONE,
 	ACTIVE_SELECTED,
@@ -76,6 +78,8 @@ func _ready():
 	# Pass the original texture to the shader
 	set_texture(texture)
 
+	# Pass the default Petz palette to the shader
+	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_visible(new_value):
 	visible_override = new_value

@@ -5,6 +5,8 @@ code = "shader_type spatial;
 
 render_mode unshaded, skip_vertex_transform;
 
+uniform bool debug_mode = true;                  // New debug uniform
+
 uniform bool should_quantize = false;
 uniform int palette_size = 256;
 const vec4 TRANSPARENT_COLOR_MAGENTA = vec4(1.0, 0.0, 1.0, 1.0);
@@ -26,6 +28,7 @@ uniform vec2 texture_size_raw;                    // actual texture image size f
 uniform int transparent_index = 0;                // mask transparency threshold
 uniform bool transparency_on = true;              // boolean flag to render palette index 253 alpha = 0
 uniform sampler2D palette: hint_white;            // 256-color palette lookup
+uniform sampler2D petz_palette: hint_white;       // 256-color palette lookup (base Petz palette)
 uniform vec3 z_center_pet_world = vec3(0.0);      // pet origin for depth-based z-shading
 
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
@@ -165,8 +168,16 @@ void fragment() {
     bool is_transparent = false;
     
     if (should_quantize) {
-        vec4 original_color = texture(ball_texture, tex_coords);
+        // Get palette index from texture
+        int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
+
+        // Normalized palette index for texture sampling
+        float petz_normalized_index = float(palette_index) / float(palette_size);
+
+        // Look up RGB color using the Petz palette
+        vec4 original_color = texture(petz_palette, vec2(float(palette_index)/255.0, 0.5));
         
+        // Quantize original color to the Babyz palette
         if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
             texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
             is_transparent = true;
@@ -178,17 +189,42 @@ void fragment() {
                 if (i == TRANSPARENT_COLOR_INDEX) {
                     continue;
                 }
-                
-                vec4 palette_color = texture(palette, vec2(float(i) / 255.0, 0.5));
-                float distance_sq = dot(original_color.rgb - palette_color.rgb, original_color.rgb - palette_color.rgb);
+                // Normalized palette index for Babyz palette sampling
+                float babyz_normalized_index = float(i) / float(palette_size);
+                vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
+                float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
                 
                 if (distance_sq < best_distance_sq) {
                     best_distance_sq = distance_sq;
-                    best_color = palette_color;
+                    best_color = babyz_color;
                 }
             }
             texture_color = best_color.rgb;
         }
+        // vec4 original_color = texture(ball_texture, tex_coords);
+        
+        // if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+        //     texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
+        //     is_transparent = true;
+        // } else {
+        //     vec4 best_color = vec4(0.0);
+        //     float best_distance_sq = 1e20;
+            
+        //     for (int i = 0; i < palette_size; i++) {
+        //         if (i == TRANSPARENT_COLOR_INDEX) {
+        //             continue;
+        //         }
+                
+        //         vec4 palette_color = texture(palette, vec2(float(i) / 255.0, 0.5));
+        //         float distance_sq = dot(original_color.rgb - palette_color.rgb, original_color.rgb - palette_color.rgb);
+                
+        //         if (distance_sq < best_distance_sq) {
+        //             best_distance_sq = distance_sq;
+        //             best_color = palette_color;
+        //         }
+        //     }
+        //     texture_color = best_color.rgb;
+        // }
     } else {
         int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
         is_transparent = (palette_index == 253);
