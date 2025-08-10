@@ -5,7 +5,7 @@ code = "shader_type spatial;
 
 render_mode unshaded, skip_vertex_transform;
 
-uniform bool debug_mode = true;                  // New debug uniform
+uniform bool debug_mode = true;
 
 uniform bool should_quantize = false;
 uniform int palette_size = 256;
@@ -201,30 +201,6 @@ void fragment() {
             }
             texture_color = best_color.rgb;
         }
-        // vec4 original_color = texture(ball_texture, tex_coords);
-        
-        // if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-        //     texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
-        //     is_transparent = true;
-        // } else {
-        //     vec4 best_color = vec4(0.0);
-        //     float best_distance_sq = 1e20;
-            
-        //     for (int i = 0; i < palette_size; i++) {
-        //         if (i == TRANSPARENT_COLOR_INDEX) {
-        //             continue;
-        //         }
-                
-        //         vec4 palette_color = texture(palette, vec2(float(i) / 255.0, 0.5));
-        //         float distance_sq = dot(original_color.rgb - palette_color.rgb, original_color.rgb - palette_color.rgb);
-                
-        //         if (distance_sq < best_distance_sq) {
-        //             best_distance_sq = distance_sq;
-        //             best_color = palette_color;
-        //         }
-        //     }
-        //     texture_color = best_color.rgb;
-        // }
     } else {
         int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
         is_transparent = (palette_index == 253);
