@@ -292,6 +292,9 @@ void vertex() {
 [resource]
 resource_local_to_scene = true
 shader = SubResource( 1 )
+shader_param/debug_mode = true
+shader_param/should_quantize = false
+shader_param/palette_size = 256
 shader_param/eyelid_rotation = 0.0
 shader_param/eyelid_color = -1
 shader_param/fuzz_amount = 0
