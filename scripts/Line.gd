@@ -1,17 +1,21 @@
 extends Spatial
 
-export var line_widths = Vector2(10, 10) setget set_line_width
-export var fuzz_amount = 0 setget set_fuzz_amount
-export var color_index = 0 setget set_color_index
-export var l_color_index = 0 setget set_l_color_index
-export var r_color_index = 0 setget set_r_color_index
-export var ball_world_pos1 = Vector3.ZERO setget set_ball_world_pos1
-export var ball_world_pos2 = Vector3.ZERO setget set_ball_world_pos2
-export var texture: Texture setget set_texture
-export var transparent_color = 0 setget set_transparent_color
-export var transparency_on = true setget set_transparency
-export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
+# Line.gd
 
+export var line_widths            = Vector2(10, 10)    setget set_line_width
+export var fuzz_amount            = 0                  setget set_fuzz_amount
+export var color_index            = 0                  setget set_color_index
+export var l_color_index          = 0                  setget set_l_color_index
+export var r_color_index          = 0                  setget set_r_color_index
+export var ball_world_pos1        = Vector3.ZERO       setget set_ball_world_pos1
+export var ball_world_pos2        = Vector3.ZERO       setget set_ball_world_pos2
+export var texture: Texture                            setget set_texture
+export var transparent_color      = 0                  setget set_transparent_color
+export var transparency_on        = true               setget set_transparency
+
+#export var species                = 0                  setget set_species
+
+export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
 const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
 
 func _ready():

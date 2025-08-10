@@ -1,5 +1,7 @@
 extends Spatial
 
+# Paintball.gd
+
 export var base_ball_no           = 0
 export var base_ball_position     = Vector3.ZERO       setget set_base_ball_position
 export var base_ball_size         = 10                 setget set_base_ball_size
@@ -23,8 +25,9 @@ export var texture_size_raw       = Vector2(256, 256)
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
 
-export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
+#export var species                = 0                  setget set_species
 
+export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
 const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
 
 var is_over = false

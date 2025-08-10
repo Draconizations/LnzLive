@@ -1,17 +1,21 @@
 extends Spatial
 
-export var fuzz_amount = 0 setget set_fuzz_amount
-export var color_index = 0 setget set_color_index
-export var l_edge_color = 0 setget set_l_edge_color
-export var r_edge_color = 0 setget set_r_edge_color
-export var ball_world_pos1 = Vector3.ZERO setget set_ball_world_pos1
-export var ball_world_pos2 = Vector3.ZERO setget set_ball_world_pos2
-export var ball_world_pos3 = Vector3.ZERO setget set_ball_world_pos3
-export var ball_world_pos4 = Vector3.ZERO setget set_ball_world_pos4
-export var texture: Texture setget set_texture
-export var transparent_color = 0 setget set_transparent_color
-export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
+# Polygon.gd
+export var fuzz_amount            = 0                  setget set_fuzz_amount
+export var color_index            = 0                  setget set_color_index
+export var l_edge_color           = 0                  setget set_l_edge_color
+export var r_edge_color           = 0                  setget set_r_edge_color
+export var ball_world_pos1        = Vector3.ZERO       setget set_ball_world_pos1
+export var ball_world_pos2        = Vector3.ZERO       setget set_ball_world_pos2
+export var ball_world_pos3        = Vector3.ZERO       setget set_ball_world_pos3
+export var ball_world_pos4        = Vector3.ZERO       setget set_ball_world_pos4
 
+export var texture: Texture                            setget set_texture
+export var transparent_color      = 0                  setget set_transparent_color
+
+#export var species                = 0                  setget set_species
+
+export var palette = preload("res://resources/textures/petzpalette.png") setget set_palette
 const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
 
 func update_palette_after_added(new_palette):
