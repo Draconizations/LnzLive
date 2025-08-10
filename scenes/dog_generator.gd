@@ -502,6 +502,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
+				# ADD SPECIES
+				#visual_ball.species = species
 
 				paintballs_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
@@ -578,6 +580,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var skip_texture_rotation = no_texture_rotate.has(int(key))
 				visual_ball.set_tile_texture(!skip_texture_rotation)
 
+				visual_ball.species = species
+
 			else:
 				visual_ball = ball_map[key]
 
@@ -636,6 +640,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			var skip_texture_rotation = no_texture_rotate.has(int(key))
 			add_visual_ball.set_tile_texture(!skip_texture_rotation)
+
+			add_visual_ball.species = species
 
 		var add_pos = add_ball.position
 		add_pos.y *= -1.0
@@ -704,6 +710,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_visual_ball.add_to_group("paintballs")
 				pb_visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
 				pb_visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
+
+				# ADD SPECIES
+				# pb_visual_ball.species = species
 
 				if paintball.texture_id > -1:
 					var tex_pb = load_texture_from_list(paintball.texture_id, texture_list)
@@ -789,6 +798,8 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		if new_create:
 			# Use the first point's texture
 			visual_polygon.texture = point1.texture  
+			# ADD SPECIES
+			# visual_polygon.species = species
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
 
@@ -890,6 +901,8 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.scale.y = distance
 		if new_create:
 			visual_line.texture = start.texture
+			# ADD SPECIES
+			# visual_line.species = species
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = pal_texture
 			if line.color_index == -1:
