@@ -68,7 +68,7 @@ func _draw():
 			draw_string(font, lbl_pos, AXIS_LABELS[axis], AXIS_COLORS[axis])
 
 		if font:
-			# +X = "R"
+			# +X = "L"
 			var d3p = dirs["X"]
 			var d2p = Vector2(d3p.x, -d3p.y).normalized() * axis_length
 			var tip_p = origin + d2p
@@ -78,9 +78,9 @@ func _draw():
 			)
 			# offset perpendicular so it floats beside the arrow
 			var perp = Vector2(d2p.y, -d2p.x).normalized()
-			draw_string(font, tip_p_clamped + perp * 22, "R", Color(1,1,1))
+			draw_string(font, tip_p_clamped + perp * 22, "L", Color(1,1,1))
 
-			# -X = "L"
+			# -X = "RL"
 			var d3n = -d3p
 			var d2n = Vector2(d3n.x, -d3n.y).normalized() * axis_length
 			var tip_n = origin + d2n
@@ -88,7 +88,7 @@ func _draw():
 				clamp(tip_n.x, 0, ps.x - self.position.x),
 				clamp(tip_n.y, 0, ps.y - self.position.y)
 			)
-			draw_string(font, tip_n_clamped + perp * 22, "L", Color(1,1,1))
+			draw_string(font, tip_n_clamped + perp * 22, "R", Color(1,1,1))
 
 			# -Y connector under the green +Y
 			var d3y = dirs["Y"]
