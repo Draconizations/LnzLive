@@ -5,12 +5,20 @@ code = "shader_type spatial;
 
 render_mode unshaded, skip_vertex_transform;
 
+uniform bool debug_mode = true;
+
+uniform bool should_quantize = false;
+uniform int palette_size = 256;
+const vec4 TRANSPARENT_COLOR_MAGENTA = vec4(1.0, 0.0, 1.0, 1.0);
+const int TRANSPARENT_COLOR_INDEX = 253;
+
 uniform int color_index = 0;
 uniform int l_edge_color = 0;
 uniform int r_edge_color = 0;
 uniform int fuzz_amount = 0;
 uniform int transparent_index = 0;
-uniform sampler2D palette: hint_white;
+uniform sampler2D palette: hint_white;            // 256-color palette lookup
+uniform sampler2D petz_palette: hint_white;       // 256-color palette lookup (base Petz palette)
 uniform sampler2D polygon_texture: hint_white;
 uniform bool has_texture = false;
 uniform vec2 texture_size = vec2(1.0, 1.0);
