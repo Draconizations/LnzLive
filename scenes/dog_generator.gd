@@ -502,8 +502,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
-				# ADD SPECIES
-				#visual_ball.species = species
+				visual_ball.species = species
 
 				paintballs_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
@@ -711,8 +710,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
 				pb_visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
 
-				# ADD SPECIES
-				# pb_visual_ball.species = species
+				pb_visual_ball.species = species
 
 				if paintball.texture_id > -1:
 					var tex_pb = load_texture_from_list(paintball.texture_id, texture_list)
