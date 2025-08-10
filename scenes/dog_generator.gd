@@ -410,7 +410,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			break
 
 	if texture == null:
-		texture = preloader.get_resource(texture_filename)
+		texture = preloader.get_resource(texture_filename.to_lower())
 
 	return texture
 
