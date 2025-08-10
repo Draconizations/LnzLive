@@ -88,7 +88,7 @@ void fragment() {
         texture_color = texture(palette, vec2(float(l_color_index) / float(palette_size), 0.5)).rgb;
     }
     else {
-        if (should_quantize) {
+        if (should_quantize && has_texture) {
             // Get palette index from texture
             palette_index = int(texture(line_texture, tex_coords).r * 255.0);
 

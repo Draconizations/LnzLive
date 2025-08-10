@@ -63,7 +63,7 @@ void fragment() {
     bool is_transparent = false;
     int palette_index;
 
-    if (should_quantize) {
+    if (should_quantize && has_texture) {
         // Get palette index from texture
         palette_index = int(texture( polygon_texture, tex_coords).r * 255.0);
 

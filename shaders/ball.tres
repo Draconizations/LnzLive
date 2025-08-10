@@ -167,7 +167,7 @@ void fragment() {
     vec3 texture_color;
     bool is_transparent = false;
     
-    if (should_quantize) {
+    if (should_quantize && has_texture) {
         // Get palette index from texture
         int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
