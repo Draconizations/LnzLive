@@ -1168,21 +1168,23 @@ margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="LineEdit" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
-margin_right = 118.0
+margin_right = 110.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 size_flags_horizontal = 3
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
+placeholder_text = "color #"
 
 [node name="LineEdit2" type="LineEdit" parent="SceneRoot/ColorPopup/VBoxContainer"]
 margin_top = 29.0
-margin_right = 118.0
+margin_right = 110.0
 margin_bottom = 54.0
 rect_min_size = Vector2( 0, 25 )
 size_flags_horizontal = 3
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
+placeholder_text = "outcol #"
 
 [node name="RecolorPopup" type="ConfirmationDialog" parent="SceneRoot"]
 anchor_left = 0.5
@@ -1317,7 +1319,6 @@ __meta__ = {
 }
 
 [node name="HeadMovePopup" type="Popup" parent="SceneRoot"]
-visible = true
 margin_left = 450.228
 margin_top = 104.77
 margin_right = 490.228
@@ -1339,6 +1340,7 @@ margin_bottom = 25.0
 rect_min_size = Vector2( 0, 25 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
+placeholder_text = "move in x"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1350,6 +1352,7 @@ margin_bottom = 54.0
 rect_min_size = Vector2( 0, 25 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
+placeholder_text = "move in y"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1361,15 +1364,18 @@ margin_bottom = 83.0
 rect_min_size = Vector2( 0, 25 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
+placeholder_text = "move in z"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ToolsMenu" type="PopupMenu" parent="SceneRoot"]
+visible = true
 margin_left = 250.0
 margin_top = 750.0
-margin_right = 800.0
+margin_right = 450.0
 margin_bottom = 770.0
+rect_min_size = Vector2( 200, 0 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/panel = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
@@ -1380,8 +1386,10 @@ __meta__ = {
 }
 
 [node name="RecolorMenu" type="PopupMenu" parent="SceneRoot/ToolsMenu"]
-margin_right = 550.0
-margin_bottom = 178.0
+visible = true
+margin_right = 150.0
+margin_bottom = 214.0
+rect_min_size = Vector2( 150, 0 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/panel = ExtResource( 19 )
 custom_fonts/font = SubResource( 17 )
