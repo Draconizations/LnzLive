@@ -1,5 +1,7 @@
 extends Spatial
 
+# Paintball.gd
+
 export var base_ball_no           = 0
 export var base_ball_position     = Vector3.ZERO       setget set_base_ball_position
 export var base_ball_size         = 10                 setget set_base_ball_size
@@ -23,9 +25,13 @@ export var texture_size_raw       = Vector2(256, 256)
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
 
-export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
+export var species                = 0                  setget set_species
 
+export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
 const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
+const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_palette.png")
+
+export var petz_palette           = DEFAULT_PALETTE
 
 var is_over = false
 var old_outline
@@ -43,6 +49,12 @@ func _ready():
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+
+	# Pass the original texture to the shader
+	set_texture(texture)
+
+	# Pass the default Petz palette to the shader
+	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
@@ -91,6 +103,20 @@ func set_palette(new_value):
 	else:
 		palette = DEFAULT_PALETTE
 		$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
+
+func set_species(new_value: int) -> void:
+	species = new_value
+	if $MeshInstance.material_override != null:
+		if species == 3:
+			# For Babyz species, use the Babyz palette and enable quantization
+			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
+			$MeshInstance.material_override.set_shader_param("should_quantize", true)
+			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+		else:
+			# For other species, use the default palette and disable quantization
+			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
+			$MeshInstance.material_override.set_shader_param("should_quantize", false)
+			$MeshInstance.material_override.set_shader_param("palette_size", 256)
 
 func set_transparent_color(new_value):
 	transparent_color = new_value

@@ -180,7 +180,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data.omissions = lnz_info.omissions
 	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create, lnz_info.no_texture_rotate)
 	apply_projections()
-	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create)
+	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
 	generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
 
 func collate_base_ball_data():
@@ -502,6 +502,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
+				visual_ball.species = species
 
 				paintballs_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
@@ -578,6 +579,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var skip_texture_rotation = no_texture_rotate.has(int(key))
 				visual_ball.set_tile_texture(!skip_texture_rotation)
 
+				visual_ball.species = species
+
 			else:
 				visual_ball = ball_map[key]
 
@@ -636,6 +639,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			var skip_texture_rotation = no_texture_rotate.has(int(key))
 			add_visual_ball.set_tile_texture(!skip_texture_rotation)
+
+			add_visual_ball.species = species
 
 		var add_pos = add_ball.position
 		add_pos.y *= -1.0
@@ -705,6 +710,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
 				pb_visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
 
+				pb_visual_ball.species = species
+
 				if paintball.texture_id > -1:
 					var tex_pb = load_texture_from_list(paintball.texture_id, texture_list)
 					if tex_pb:
@@ -742,7 +749,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 func get_real_ball_size(ball_size):
 	return ball_size
 
-func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool):
+func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	#print("Generating polygons")
 	#print("Polygon data size:", polygon_data.size())
 	var root = get_root()
@@ -787,8 +794,13 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		visual_polygon.ball_world_pos4 = point4.global_transform.origin
 
 		if new_create:
-			# Use the first point's texture
-			visual_polygon.texture = point1.texture  
+			# Check for texture
+			if "texture_id" in polygon and polygon.texture_id != null and not str(polygon.texture_id).empty():
+				visual_polygon.texture = load_texture_from_list(polygon.texture_id, texture_list)
+			else:
+				# If no texture is defined, default to first ball
+				visual_polygon.texture = point1.texture
+			visual_polygon.species = species
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
 
@@ -890,6 +902,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.scale.y = distance
 		if new_create:
 			visual_line.texture = start.texture
+			visual_line.species = species
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = pal_texture
 			if line.color_index == -1:
