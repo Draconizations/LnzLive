@@ -18,6 +18,7 @@ onready var upload_popup = get_tree().root.get_node("Root/SceneRoot/WebFileUploa
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
 onready var add_file_button = get_node("../Button")
+onready var option_add_file_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/FileResourceButton")
 onready var file_dialog = get_node("./ItemPopupMenu/FileDialog")
 
 signal backup_file
@@ -28,6 +29,7 @@ func _ready():
 	examples.set_text(0, "Examples")
 	
 	add_file_button.connect("pressed", self, "_on_AddFileButton_pressed")
+	option_add_file_button.connect("pressed", self, "_on_FileResourceButton_pressed")
 	file_dialog.connect("files_selected", self, "_on_FileDialog_files_selected")
 	
 	file_dialog.clear_filters()
@@ -54,6 +56,12 @@ func _ready():
 	rescan_palettes()
 
 func _on_AddFileButton_pressed():
+	if (!OS.has_feature("HTML5")):
+		file_dialog.popup_centered()
+	else:
+		web_file_dialog()
+
+func _on_FileResourceButton_pressed():
 	if (!OS.has_feature("HTML5")):
 		file_dialog.popup_centered()
 	else:

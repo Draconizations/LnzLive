@@ -13,6 +13,8 @@ var selected_visual_ball = null
 
 var current_action
 
+onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
+
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
 
 func _ready():
@@ -25,6 +27,8 @@ func _ready():
 	add_item("Copy L to R") # index 5
 	add_item("Move Head Ballz") # index 6
 	add_item("Copy Ballz Colors to Clipboard") # index 7
+
+	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
@@ -95,6 +99,9 @@ func _on_RecolorMenu_id_pressed(id):
 	else:
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()
 		get_parent().get_node("ColorPopup").popup()
+
+func _on_RecolorMenuButton_pressed():
+	get_parent().get_node("RecolorPopup").popup_centered()
 
 func _on_ToolsMenu_index_pressed(index):
 	if index == 5: # Copy L to R
