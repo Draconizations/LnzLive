@@ -1628,12 +1628,16 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_cat)
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
-	else:
+	elif:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
-	
+	else:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
 		var section_find = search('[Ballz Info]', 0, 0, 0)
 		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
