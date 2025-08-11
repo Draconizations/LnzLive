@@ -300,6 +300,7 @@ text = "File"
 script = ExtResource( 12 )
 
 [node name="PopupPanel" type="PopupPanel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton"]
+visible = true
 margin_right = 8.0
 margin_bottom = 8.0
 custom_styles/panel = SubResource( 6 )
@@ -308,6 +309,7 @@ __meta__ = {
 }
 
 [node name="FileOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel"]
+visible = false
 margin_right = 150.0
 margin_bottom = 132.0
 __meta__ = {
@@ -327,6 +329,7 @@ custom_fonts/font = SubResource( 7 )
 text = "Import LNZ / BMP / PNG"
 
 [node name="FilePetfileButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
+visible = false
 margin_top = 34.0
 margin_right = 150.0
 margin_bottom = 64.0
@@ -340,9 +343,10 @@ custom_fonts/font = SubResource( 7 )
 text = "Import Pet File"
 
 [node name="FileBreedfileButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
-margin_top = 68.0
+visible = false
+margin_top = 34.0
 margin_right = 150.0
-margin_bottom = 98.0
+margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -353,9 +357,10 @@ custom_fonts/font = SubResource( 7 )
 text = "Import Breed File"
 
 [node name="UserSettingsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
-margin_top = 102.0
+visible = false
+margin_top = 34.0
 margin_right = 150.0
-margin_bottom = 132.0
+margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -393,8 +398,8 @@ margin_right = 126.0
 margin_bottom = 30.0
 
 [node name="HeadShotButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EditOption/PopupPanel/EditOptionContainer"]
-margin_right = 130.0
-margin_bottom = 20.0
+margin_right = 126.0
+margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -430,26 +435,11 @@ margin_bottom = 98.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="ChoosePaletteButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
-margin_right = 108.0
-margin_bottom = 20.0
-rect_min_size = Vector2( 0, 30 )
-size_flags_horizontal = 0
-custom_styles/hover = ExtResource( 20 )
-custom_styles/pressed = ExtResource( 19 )
-custom_styles/focus = ExtResource( 19 )
-custom_styles/disabled = ExtResource( 19 )
-custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = SubResource( 7 )
-text = "Choose Palette"
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
 [node name="ViewPaletteButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
-margin_top = 24.0
-margin_right = 91.0
-margin_bottom = 44.0
+visible = false
+margin_top = 34.0
+margin_right = 84.0
+margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 20 )
@@ -464,9 +454,9 @@ __meta__ = {
 }
 
 [node name="RecolorMenuButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
-margin_top = 48.0
-margin_right = 100.0
-margin_bottom = 68.0
+margin_top = 68.0
+margin_right = 91.0
+margin_bottom = 98.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 20 )
