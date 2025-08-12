@@ -1628,7 +1628,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_cat)
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
-	elif:
+	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
