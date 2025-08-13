@@ -32,6 +32,7 @@ var paintball_mode = false
 var paintball_target_ball = null
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
@@ -52,6 +53,7 @@ func _ready():
 
 	var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
+	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
@@ -73,7 +75,10 @@ func _process(_delta):
 	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
 	if linez_mode:
-		text = "Line Mode: click a second ball to connect"
+		if is_instance_valid(linez_start_ball):
+			text = "Line Mode: Left-click a 2nd ball to end a line.\n"
+		else:
+			text = "Line Mode: Left-click a 1st ball to start a line.\n"
 	elif paintball_mode:
 		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed
 		if delete_mode:
@@ -309,22 +314,12 @@ func _gui_input(event):
 
 	# Select ballz via double-click in Select Mode:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
-		if selecting_on and not linez_mode and last_selected_is_valid():
+		if selecting_on and last_selected_is_valid():
 			last_selected.selected()
 		return
 	
-	# Connect two ballz in Line Mode:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and linez_mode:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-		if hover and hover != linez_start_ball:
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-			pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
-
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-			hover.apply_outline_state(hover.OutlineState.NONE)
-
-			linez_mode = false
-			linez_start_ball = null
+	if linez_mode:
+		if _handle_line_mode_input(event):
 			return
 
 	# Select ballz via single-click or clear selected ballz:
@@ -352,7 +347,7 @@ func _gui_input(event):
 			camera_holder.rotation.y += motion.x * -0.01
 
 		# Highlight hovered ball in line creation mode:
-		if linez_mode:
+		if linez_mode and not selecting_on:
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 				if b != linez_start_ball:
@@ -362,7 +357,7 @@ func _gui_input(event):
 
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not linez_mode and not paintball_mode:
+	if selecting_on and not paintball_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -603,4 +598,39 @@ func _on_paintball_mode_toggled(is_on):
 	paintball_mode = is_on
 	if not is_on:
 		paintball_target_ball = null
+	else:
+		if linez_mode:
+			linez_mode = false
+			line_mode_check_box.pressed = false
+			_on_line_mode_toggled(false)
 	_update_paintball_mode_ui()
+
+func _on_line_mode_toggled(is_on):
+	linez_mode = is_on
+	if is_on:
+		Input.set_custom_mouse_cursor(rope)
+		if paintball_mode:
+			paintball_mode = false
+			paintball_check_box.pressed = false
+			_on_paintball_mode_toggled(false)
+	else:
+		if is_instance_valid(linez_start_ball):
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+		linez_start_ball = null
+		Input.set_custom_mouse_cursor(hand_neutral)
+
+func _handle_line_mode_input(event) -> bool:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			if !is_instance_valid(linez_start_ball):
+				linez_start_ball = hover
+				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+			else:
+				if hover != linez_start_ball:
+					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+					linez_start_ball = null
+			return true
+	return false

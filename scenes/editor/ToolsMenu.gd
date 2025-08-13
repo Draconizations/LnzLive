@@ -120,7 +120,7 @@ func _on_ToolsMenu_index_pressed(index):
 	elif index == 4: # Connect by Linez
 		if is_instance_valid(selected_visual_ball):
 			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-			pet_view.linez_mode = true
+			pet_view.line_mode_check_box.pressed = true
 			pet_view.linez_start_ball = selected_visual_ball
 			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
 	elif index == 6: # Paintball Mode

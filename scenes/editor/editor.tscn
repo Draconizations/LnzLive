@@ -464,6 +464,22 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="LineModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
+margin_top = 56.0
+margin_right = 120.0
+margin_bottom = 80.0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Line Mode"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 373.0
 margin_right = 443.0
