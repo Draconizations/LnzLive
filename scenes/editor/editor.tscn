@@ -493,9 +493,13 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
-margin_right = 100.0
-margin_bottom = 20.0
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
+margin_right = 120.0
+margin_bottom = 44.0
+
+[node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
+margin_right = 120.0
+margin_bottom = 24.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -504,6 +508,22 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = SubResource( 7 )
 text = "Select Mode"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PaintballModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
+margin_top = 28.0
+margin_right = 120.0
+margin_bottom = 52.0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = SubResource( 7 )
+text = "Paintball Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }

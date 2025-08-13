@@ -28,6 +28,12 @@ var drag_start_pos = Vector2()
 var linez_mode = false
 var linez_start_ball = null
 
+var paintball_mode = false
+var paintball_target_ball = null
+onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
+onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
 var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x.png")
@@ -42,6 +48,16 @@ const ZOOM_STEP := 1.2
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
+
+	var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
+
+	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
+	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
+	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
+	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -105,6 +121,70 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+		var diameter_spinbox = paintball_settings_instance.find_node("Diameter")
+		if event.button_index == BUTTON_WHEEL_UP:
+			diameter_spinbox.value -= 1
+		else:
+			diameter_spinbox.value += 1
+		return
+
+	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed
+		if delete_mode:
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			pet_node.remove_last_pending_paintball()
+			return
+
+		var target_ball
+
+		if paintball_target_ball and is_instance_valid(paintball_target_ball):
+			target_ball = paintball_target_ball
+		else:
+			var target_mode = paintball_settings_instance.find_node("Target").selected
+			if target_mode == 0: # Hovered Ball
+				target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+			else: # Selected Ball
+				if active_selected_ball and is_instance_valid(active_selected_ball):
+					target_ball = active_selected_ball
+
+		if target_ball:
+			var screen_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+			var from = camera.project_ray_origin(screen_pos)
+			var to = from + camera.project_ray_normal(screen_pos) * 10000
+			var space_state = camera.get_world().direct_space_state
+			var result = space_state.intersect_ray(from, to, [self], 0x7FFFFFFF, true, true)
+
+			if result and result.collider.get_parent() == target_ball:
+				var intersection_point = result.position
+
+				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+				var props = paintball_settings_instance.get_properties()
+
+				var local_relative_pos = target_ball.to_local(intersection_point)
+				var world_relative_pos = intersection_point - target_ball.global_transform.origin
+				var px_scale = pet_node.pixel_world_size
+				var lnz_scale = pet_node.lnz.scales.x / 255.0
+				var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
+				relative_pos_lnz.y *= -1
+
+				var paintball_info = {
+					"base_ball_no": target_ball.ball_no,
+					"relative_pos_local": local_relative_pos,
+					"relative_pos_lnz": relative_pos_lnz,
+					"diameter": props.diameter,
+					"color": props.color,
+					"outline_color": props.outline_color,
+					"outline_type": props.outline_type,
+					"fuzz": props.fuzz,
+					"texture": props.texture,
+					"group": props.group,
+					"anchored": props.anchored,
+				}
+
+				pet_node.add_pending_paintball(paintball_info)
+		return
+
 	# Guard against entering hotkeys into text area when interacting with view container:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var focus_owner := get_focus_owner()
@@ -468,3 +548,42 @@ func _find_visual_addball_by_no(no: int) -> Spatial:
 			if b.ball_no == no:
 				return b
 	return null
+
+func _update_paintball_mode_ui():
+	if paintball_mode:
+		paintball_settings_instance.show()
+		Input.set_custom_mouse_cursor(smallbrush)
+		if paintball_target_ball and is_instance_valid(paintball_target_ball):
+			paintball_settings_instance.find_node("Target").disabled = true
+		else:
+			paintball_settings_instance.find_node("Target").disabled = false
+		mouse_default_cursor_shape = CURSOR_ARROW
+	else:
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if pet_node:
+			pet_node.clear_pending_paintballs()
+
+		paintball_settings_instance.hide()
+		Input.set_custom_mouse_cursor(hand_neutral)
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+
+func _on_delete_mode_toggled(is_on):
+	if is_on:
+		Input.set_custom_mouse_cursor(bigbrush)
+	else:
+		Input.set_custom_mouse_cursor(smallbrush)
+
+func _on_paintball_mode_for_ball_toggled(ball):
+	paintball_target_ball = ball
+	set_active_selected_ball(ball)
+	paintball_settings_instance.find_node("Target").selected = 1
+	if not paintball_check_box.pressed:
+		paintball_check_box.pressed = true
+	else:
+		_update_paintball_mode_ui()
+
+func _on_paintball_mode_toggled(is_on):
+	paintball_mode = is_on
+	if not is_on:
+		paintball_target_ball = null
+	_update_paintball_mode_ui()

@@ -323,6 +323,51 @@ func _on_ApplyChangesButton_pressed():
 	save_file()
 	emit_signal("file_saved", filepath)
 
+func _on_apply_paintballz():
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var pending_paintballs = pet_node._pending_paintballs_data
+
+	if pending_paintballs.size() > 0:
+		var bounds = _get_section_bounds("[Paint Ballz]")
+		var insert_line_num
+
+		if bounds.empty():
+			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+			var all_lines = get_text().split("\n")
+			all_lines.insert(first_section, "[Paint Ballz]")
+			all_lines.insert(first_section + 1, "")
+			text = all_lines.join("\n")
+			_set_text_preserve(text)
+			bounds = _get_section_bounds("[Paint Ballz]")
+
+		insert_line_num = bounds["start"]
+
+		var delim = _detect_delimiter(bounds["start"], bounds["end"])
+		var new_paintball_lines = ""
+		for i in range(pending_paintballs.size() - 1, -1, -1):
+			var paintball_info = pending_paintballs[i]
+			var relative_pos_lnz = paintball_info.relative_pos_lnz
+
+			var paintball_line = str(paintball_info.base_ball_no) + delim
+			paintball_line += str(paintball_info.diameter) + delim
+			paintball_line += str(round(relative_pos_lnz.x)) + delim
+			paintball_line += str(round(relative_pos_lnz.y)) + delim
+			paintball_line += str(round(relative_pos_lnz.z)) + delim
+			paintball_line += str(paintball_info.color) + delim
+			paintball_line += str(paintball_info.outline_color) + delim
+			paintball_line += str(paintball_info.fuzz) + delim
+			paintball_line += str(paintball_info.outline_type) + delim
+			paintball_line += str(paintball_info.group) + delim
+			paintball_line += str(paintball_info.texture) + delim
+			paintball_line += str(int(paintball_info.anchored))
+
+			new_paintball_lines += paintball_line + "\n"
+
+		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
+		pet_node.clear_pending_paintballs()
+
+	save_file()
+
 func _on_Tree_backup_file():
 	save_backup()
 
