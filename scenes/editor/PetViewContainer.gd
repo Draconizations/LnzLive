@@ -73,28 +73,41 @@ func _process(_delta):
 
 	if linez_mode:
 		text = "Line Mode: click a second ball to connect"
-	else:
-		if selecting_on:
-			text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
-
-		if Input.is_key_pressed(KEY_CONTROL):
-			#if text != "": text += " | "
-			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
-
+	elif paintball_mode:
+		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed
+		if delete_mode:
+			text = "Paintball Mode: Left-click to delete last paintball"
+		else:
+			text = "Paintball Mode: Left-click to add next paintball"
+		
+		# Check for mode-specific hotkeys and append
 		if Input.is_key_pressed(KEY_SHIFT):
-			#if text != "": text += " | "
+			text += "\nSHIFT+Wheel to change paintball diameter"
+		if Input.is_key_pressed(KEY_CONTROL):
+			text += "\nCTRL+left-click to delete last paintball"
+		
+		if paintball_target_ball and is_instance_valid(paintball_target_ball):
+			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+	elif selecting_on:
+		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+	else:
+		# Default hotkeys when no special mode is active
+		if Input.is_key_pressed(KEY_CONTROL):
+			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
+		elif Input.is_key_pressed(KEY_SHIFT):
 			text = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
-
-		if Input.is_key_pressed(KEY_SPACE):
-			#if text != "": text += " | "
+		elif Input.is_key_pressed(KEY_SPACE):
 			text = "Pan View (SPACE + left-click drag)"
-
-		var locks = []
-		if Input.is_key_pressed(KEY_X): locks.append("X")
-		if Input.is_key_pressed(KEY_Y): locks.append("Y")
-		if Input.is_key_pressed(KEY_Z): locks.append("Z")
-		if locks.size() > 0:
-			text += " | Axis Lock: " + str(locks)
+	
+	# Append axis lock info if any is pressed, regardless of mode
+	var locks = []
+	if Input.is_key_pressed(KEY_X): locks.append("X")
+	if Input.is_key_pressed(KEY_Y): locks.append("Y")
+	if Input.is_key_pressed(KEY_Z): locks.append("Z")
+	if locks.size() > 0:
+		if text != "Welcome to LnzLive!\nHelpful hints will appear here...":
+			text += " | "
+		text += "Axis Lock: " + str(locks)
 
 	helper_label.text = text
 
@@ -348,7 +361,7 @@ func _gui_input(event):
 
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not linez_mode:
+	if selecting_on and not linez_mode and not paintball_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -433,6 +446,9 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		last_selected = null
 		clear_active_selected_ball()
 		ball_label.hide()
+		for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+			if b and b.has_method("apply_outline_state"):
+				b.apply_outline_state(b.OutlineState.NONE)
 
 func _on_HelpButton_pressed():
 	help_popup.popup_centered()
