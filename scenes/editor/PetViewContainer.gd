@@ -42,6 +42,7 @@ var eyedropper = load("res://resources/icons/ico_tool_eyedropper_2x.png")
 var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x.png")
 var bigbrush = load("res://resources/icons/ico_tool_brush_2x.png")
 var paintbucket = load("res://resources/icons/ico_tool_bucket_2x.png")
+var rope = load("res://resources/icons/icon_line_mode.png")
 
 const ZOOM_STEP := 1.2
 
