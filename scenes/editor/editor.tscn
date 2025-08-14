@@ -34,6 +34,7 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_droid_sans_default.tres" type="DynamicFont" id=34]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
+[ext_resource path="res://scenes/editor/ColorSelector.gd" type="Script" id=36]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -372,7 +373,7 @@ grow_horizontal = 0
 grow_vertical = 0
 
 [node name="ViewPaletteButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
-visible = false
+visible = true
 margin_top = 34.0
 margin_right = 84.0
 margin_bottom = 64.0
@@ -1116,6 +1117,7 @@ margin_top = 172.014
 margin_right = 737.263
 margin_bottom = 672.014
 rect_min_size = Vector2( 400, 500 )
+script = ExtResource( 36 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1130,6 +1132,13 @@ __meta__ = {
 margin_right = 380.0
 margin_bottom = 480.0
 rect_min_size = Vector2( 380, 480 )
+
+[node name="CloseButton" type="Button" parent="SceneRoot/PaletteViewerPopup"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_top = -35.0
+text = "Close"
 
 [node name="ColorPopup" type="Popup" parent="SceneRoot"]
 margin_left = 355.842
