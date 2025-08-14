@@ -29,11 +29,15 @@ var linez_mode = false
 var linez_start_ball = null
 
 var paintball_mode = false
+var project_mode = false
 var paintball_target_ball = null
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
+onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
+onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
+
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
@@ -62,6 +66,10 @@ func _ready():
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 
+	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
+	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
+	project_mode_check_box.connect("toggled", self, "_on_project_mode_toggled")
+
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
@@ -70,6 +78,11 @@ func _ready():
 	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
+	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
+	project_settings_instance.connect("randomize_projections", self, "_on_randomize_projections")
+	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -99,6 +112,8 @@ func _process(_delta):
 			text = "Paintball Mode: Left-click to delete last paintball"
 		else:
 			text = "Paintball Mode: Left-click to add next paintball"
+	elif project_mode:
+		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 		
 		# Check for mode-specific hotkeys and append
 		if Input.is_key_pressed(KEY_SHIFT):
@@ -696,6 +711,133 @@ func _on_line_mode_toggled(is_on):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
 		Input.set_custom_mouse_cursor(hand_neutral)
+
+func _on_project_mode_toggled(is_on):
+	project_mode = is_on
+	if is_on:
+		project_settings_instance.show()
+		if paintball_mode:
+			paintball_mode = false
+			paintball_check_box.pressed = false
+			_on_paintball_mode_toggled(false)
+		if linez_mode:
+			linez_mode = false
+			line_mode_check_box.pressed = false
+			_on_line_mode_toggled(false)
+	else:
+		project_settings_instance.hide()
+
+func _flatten_symmetry_dict(dict: Dictionary) -> Array:
+	var flat_list = []
+	for main_part in dict:
+		for sub_part in dict[main_part]:
+			var part_info = dict[main_part][sub_part]
+			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
+				flat_list.append(part_info)
+	return flat_list
+
+func _on_randomize_projections():
+	var species = KeyBallsData.species
+	var symmetry_dict = null
+
+	if species == KeyBallsData.Species.DOG:
+		symmetry_dict = KeyBallsData.dog_body_part_symmetry
+	elif species == KeyBallsData.Species.CAT:
+		symmetry_dict = KeyBallsData.cat_body_part_symmetry
+	elif species == KeyBallsData.Species.BABY:
+		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+
+	if symmetry_dict == null:
+		print("Symmetry data not available for this species.")
+		return
+
+	var available_parts = _flatten_symmetry_dict(symmetry_dict)
+	if available_parts.empty():
+		print("No valid symmetrical parts to randomize.")
+		return
+
+	var new_projections = []
+	randomize()
+
+	for _i in range(10): # Create 10 pairs of projections for more variety
+		var part_a_info = available_parts[randi() % available_parts.size()]
+		var part_b_info = available_parts[randi() % available_parts.size()]
+
+		# Ensure left and right arrays are of the same size for 1-to-1 mapping
+		if part_a_info.left.size() != part_a_info.right.size() or part_b_info.left.size() != part_b_info.right.size():
+			continue
+
+		var idx_a = randi() % part_a_info.left.size()
+		var ball_a_left = part_a_info.left[idx_a]
+		var ball_a_right = part_a_info.right[idx_a]
+
+		var idx_b = randi() % part_b_info.left.size()
+		var ball_b_left = part_b_info.left[idx_b]
+		var ball_b_right = part_b_info.right[idx_b]
+
+		var amount = randi() % 201 - 100 # Random amount between -100 and 100
+
+		new_projections.append({"stationary": ball_a_left, "projected": ball_b_left, "amount": amount})
+		new_projections.append({"stationary": ball_a_right, "projected": ball_b_right, "amount": amount})
+
+	project_settings_instance.set_held_projections(new_projections)
+
+func _on_randomize_body_proportions(settings: Dictionary):
+	randomize()
+
+	# Two-value sections
+	var leg_ext1_min = int(settings.leg_ext_1.min)
+	var leg_ext1_max = int(settings.leg_ext_1.max)
+	var leg_ext1 = randi() % (leg_ext1_max - leg_ext1_min + 1) + leg_ext1_min
+	var leg_ext2_min = int(settings.leg_ext_2.min)
+	var leg_ext2_max = int(settings.leg_ext_2.max)
+	var leg_ext2 = randi() % (leg_ext2_max - leg_ext2_min + 1) + leg_ext2_min
+	lnz_text_edit.update_lnz_section_two_values("[Leg Extension]", leg_ext1, leg_ext2)
+
+	var head_enl1_min = int(settings.head_enl_1.min)
+	var head_enl1_max = int(settings.head_enl_1.max)
+	var head_enl1 = randi() % (head_enl1_max - head_enl1_min + 1) + head_enl1_min
+	var head_enl2_min = int(settings.head_enl_2.min)
+	var head_enl2_max = int(settings.head_enl_2.max)
+	var head_enl2 = randi() % (head_enl2_max - head_enl2_min + 1) + head_enl2_min
+	lnz_text_edit.update_lnz_section_two_values("[Head Enlargement]", head_enl1, head_enl2)
+
+	var feet_enl1_min = int(settings.feet_enl_1.min)
+	var feet_enl1_max = int(settings.feet_enl_1.max)
+	var feet_enl1 = randi() % (feet_enl1_max - feet_enl1_min + 1) + feet_enl1_min
+	var feet_enl2_min = int(settings.feet_enl_2.min)
+	var feet_enl2_max = int(settings.feet_enl_2.max)
+	var feet_enl2 = randi() % (feet_enl2_max - feet_enl2_min + 1) + feet_enl2_min
+	lnz_text_edit.update_lnz_section_two_values("[Feet Enlargement]", feet_enl1, feet_enl2)
+
+	var scales1_min = int(settings.scales_1.min)
+	var scales1_max = int(settings.scales_1.max)
+	var scales1 = randi() % (scales1_max - scales1_min + 1) + scales1_min
+	var scales2_min = int(settings.scales_2.min)
+	var scales2_max = int(settings.scales_2.max)
+	var scales2 = randi() % (scales2_max - scales2_min + 1) + scales2_min
+	lnz_text_edit.update_lnz_section_two_values("[Default Scales]", scales1, scales2)
+
+	# One-value sections
+	var body_ext_min = int(settings.body_ext.min)
+	var body_ext_max = int(settings.body_ext.max)
+	var body_ext = randi() % (body_ext_max - body_ext_min + 1) + body_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Body Extension]", body_ext)
+
+	var face_ext_min = int(settings.face_ext.min)
+	var face_ext_max = int(settings.face_ext.max)
+	var face_ext = randi() % (face_ext_max - face_ext_min + 1) + face_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Face Extension]", face_ext)
+
+	var ear_ext_min = int(settings.ear_ext.min)
+	var ear_ext_max = int(settings.ear_ext.max)
+	var ear_ext = randi() % (ear_ext_max - ear_ext_min + 1) + ear_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Ear Extension]", ear_ext)
+
+	# A short delay to allow the text edit to process, then save.
+	yield(get_tree().create_timer(0.1), "timeout")
+	lnz_text_edit.save_file()
+	print("Randomized Body Proportions and applied to LNZ.")
 
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
