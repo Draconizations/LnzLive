@@ -28,6 +28,9 @@ var current_animation = 0
 var current_frame = 0
 var current_bdt: BdtParser
 
+var _pending_paintballs_data = []
+var _pending_paintball_nodes = []
+
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
@@ -1075,3 +1078,56 @@ func emit_ball_translation(ball_no: int, new_position: Vector3):
 
 func emit_ball_resize(ball_no: int, size_dif: int):
 	emit_signal("ball_resized", ball_no, size_dif)
+
+func remove_last_pending_paintball():
+	if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
+		var last_visual_node = _pending_paintball_nodes.pop_back()
+		
+		if is_instance_valid(last_visual_node):
+			last_visual_node.queue_free()
+			
+		_pending_paintballs_data.pop_back()
+
+func clear_pending_paintballs():
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+
+func add_pending_paintball(paintball_info):
+	_pending_paintballs_data.append(paintball_info)
+	var base_ball_no = paintball_info.base_ball_no
+	if !ball_map.has(base_ball_no):
+		return
+
+	var base_ball_node = ball_map[base_ball_no]
+	var pb_visual_ball = paintball_scene.instance()
+
+	base_ball_node.add_child(pb_visual_ball)
+	pb_visual_ball.set_owner(get_root())
+	pb_visual_ball.add_to_group("paintballs")
+
+	var final_size = base_ball_node.ball_size * (float(paintball_info.diameter) / 100.0)
+	final_size -= 1 - fmod(final_size, 2)
+	pb_visual_ball.ball_size = final_size
+
+	pb_visual_ball.species = lnz.species
+	pb_visual_ball.base_ball_no = base_ball_no
+	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
+	pb_visual_ball.base_ball_size = base_ball_node.ball_size
+	pb_visual_ball.transform.origin = paintball_info.relative_pos_local
+	pb_visual_ball.color_index = paintball_info.color
+	pb_visual_ball.outline_color_index = paintball_info.outline_color
+	pb_visual_ball.outline = paintball_info.outline_type
+	pb_visual_ball.fuzz_amount = clamp(paintball_info.fuzz / 2, 0, 5)
+
+	if paintball_info.texture > -1:
+		var tex_pb = load_texture_from_list(paintball_info.texture, lnz.texture_list)
+		if tex_pb:
+			pb_visual_ball.texture = tex_pb
+			if paintball_info.texture < lnz.texture_list.size():
+				pb_visual_ball.transparent_color = lnz.texture_list[paintball_info.texture].transparent_color
+
+	pb_visual_ball.palette = base_ball_node.palette
+	pb_visual_ball.z_add = float(_pending_paintballs_data.size())
+
+	_pending_paintball_nodes.append(pb_visual_ball)

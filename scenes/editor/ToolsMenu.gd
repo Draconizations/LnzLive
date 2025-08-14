@@ -8,10 +8,13 @@ signal copy_l_to_r()
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal print_ball_colors()
+signal paintball_mode_for_ball_toggled(ball)
 
 var selected_visual_ball = null
 
 var current_action
+
+onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
 
@@ -23,8 +26,11 @@ func _ready():
 	add_item("Delete Addballz / Omit Ballz") # index 3
 	add_item("Connect by Linez") # index 4
 	add_item("Copy L to R") # index 5
-	add_item("Move Head Ballz") # index 6
-	add_item("Copy Ballz Colors to Clipboard") # index 7
+	add_item("Paintball Mode") # index 6
+	add_item("Move Head Ballz") # index 7
+	add_item("Copy Ballz Colors to Clipboard") # index 8
+
+	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
@@ -96,6 +102,9 @@ func _on_RecolorMenu_id_pressed(id):
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()
 		get_parent().get_node("ColorPopup").popup()
 
+func _on_RecolorMenuButton_pressed():
+	get_parent().get_node("RecolorPopup").popup_centered()
+
 func _on_ToolsMenu_index_pressed(index):
 	if index == 5: # Copy L to R
 		emit_signal("copy_l_to_r")
@@ -111,13 +120,16 @@ func _on_ToolsMenu_index_pressed(index):
 	elif index == 4: # Connect by Linez
 		if is_instance_valid(selected_visual_ball):
 			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-			pet_view.linez_mode = true
+			pet_view.line_mode_check_box.pressed = true
 			pet_view.linez_start_ball = selected_visual_ball
 			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 6: # Move Head
+	elif index == 6: # Paintball Mode
+		if is_instance_valid(selected_visual_ball):
+			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
+	elif index == 7: # Move Head
 		var options = get_parent().get_node("HeadMovePopup")
 		options.popup_centered()
-	elif index == 7: # Print Ballz Colors
+	elif index == 8: # Print Ballz Colors
 		emit_signal("print_ball_colors")
 
 func _on_ToolsMenu_about_to_show():
