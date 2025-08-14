@@ -321,7 +321,6 @@ var ball_map = {}
 
 func _on_ApplyChangesButton_pressed():
 	save_file()
-	emit_signal("file_saved", filepath)
 
 func _on_apply_paintballz():
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
@@ -1646,6 +1645,136 @@ func _on_ToolsMenu_copy_l_to_r():
 	ball_map = {}
 	
 	save_file()
+
+func apply_preset_to_ball(ball_no, properties, do_save = true):
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+
+	var section_tag = "[Ballz Info]"
+	if is_addball:
+		section_tag = "[Add Ball]"
+
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var line_index = -1
+	if is_addball:
+		line_index = find_line_in_addball_section(ball_no - max_base_ball_no)
+	else:
+		line_index = find_line_in_ball_section(ball_no)
+
+	if line_index != -1:
+		var delim = _detect_delimiter(start_line, end_line)
+		var line = get_line(line_index)
+		var parts = _split_and_clean(line, delim)
+
+		if is_addball:
+			if properties.has("color_index"): parts[4] = str(properties.color_index)
+			if properties.has("outline_color_index"): parts[5] = str(properties.outline_color_index)
+			if properties.has("fuzz"): parts[7] = str(properties.fuzz)
+			if properties.has("outline"): parts[9] = str(properties.outline)
+			if properties.has("size"): parts[10] = str(properties.size)
+			if properties.has("group"): parts[8] = str(properties.group)
+			if properties.has("texture_id"): parts[13] = str(properties.texture_id)
+		else:
+			if properties.has("color_index"): parts[0] = str(properties.color_index)
+			if properties.has("outline_color_index"): parts[1] = str(properties.outline_color_index)
+			if properties.has("fuzz"): parts[3] = str(properties.fuzz)
+			if properties.has("outline"): parts[4] = str(properties.outline)
+			if properties.has("size"): parts[5] = str(properties.size)
+			if properties.has("group"): parts[6] = str(properties.group)
+			if properties.has("texture_id"): parts[7] = str(properties.texture_id)
+
+		var new_line = parts.join(delim)
+		set_line(line_index, new_line)
+		if do_save:
+			save_file()
+
+
+#func _add_or_update_override(section_name, ball_no, values, value_indices):
+#	var section_find = search(section_name, 0, 0, 0)
+#	var start_line
+#	var end_line
+#
+#	if section_find.empty():
+#		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+#		var all_lines = get_text().split("\n")
+#		all_lines.insert(first_section, section_name)
+#		all_lines.insert(first_section + 1, "")
+#		text = all_lines.join("\n")
+#		_set_text_preserve(text)
+#		section_find = search(section_name, 0, 0, 0)
+#
+#	start_line = section_find[SEARCH_RESULT_LINE] + 1
+#	end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+#	if end_line == -1:
+#		end_line = get_line_count()
+#
+#	var delim = _detect_delimiter(start_line, end_line)
+#	var line_updated = false
+#	for i in range(start_line, end_line):
+#		var line = get_line(i).strip_edges()
+#		if line.begins_with(str(ball_no) + delim):
+#			var parts = _split_and_clean(line, delim)
+#			var max_index = value_indices.max()
+#			while parts.size() <= max_index:
+#				parts.append("0")
+#
+#			var value_idx = 0
+#			for target_idx in value_indices:
+#				parts[target_idx] = str(values[value_idx])
+#				value_idx += 1
+#
+#			set_line(i, parts.join(delim))
+#			line_updated = true
+#			break
+#
+#	if not line_updated:
+#		var max_index = 0
+#		if value_indices.size() > 0:
+#			max_index = value_indices.max()
+#
+#		var new_parts = []
+#		new_parts.resize(max_index + 1)
+#		for i in range(new_parts.size()):
+#			new_parts[i] = "0"
+#		new_parts[0] = str(ball_no)
+#
+#		var value_idx = 0
+#		for target_idx in value_indices:
+#			if value_idx < values.size():
+#				new_parts[target_idx] = str(values[value_idx])
+#				value_idx += 1
+#
+#		var new_line = new_parts.join(delim)
+#		var insert_line = _find_insertion_line(start_line, end_line)
+#		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
+
+func write_preset_to_ball(ball_no, properties, _write_target, should_override):
+	#if should_override:
+	#	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	#	if ball_no > max_base_ball_no:
+	#		print("Override is only supported for base balls.")
+	#		return
+	#
+	#	_add_or_update_override("[Ball Size Override]", ball_no, [properties.size], [1])
+	#	_add_or_update_override("[Color Info Override]", ball_no, [properties.color_index, properties.group, properties.texture_id], [1, 2, 3])
+	#	_add_or_update_override("[Outline Color Override]", ball_no, [properties.outline_color_index], [1])
+	#	_add_or_update_override("[Fuzz Override]", ball_no, [properties.fuzz], [1])
+	#
+	#	var non_override_props = {
+	#		"outline": properties.outline
+	#	}
+	#	apply_preset_to_ball(ball_no, non_override_props)
+	#
+	#else:
+	apply_preset_to_ball(ball_no, properties)
+
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_Q:
