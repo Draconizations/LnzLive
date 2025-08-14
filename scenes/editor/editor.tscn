@@ -373,10 +373,8 @@ grow_horizontal = 0
 grow_vertical = 0
 
 [node name="ViewPaletteButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
-visible = true
-margin_top = 34.0
 margin_right = 84.0
-margin_bottom = 64.0
+margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 20 )
@@ -1131,15 +1129,16 @@ __meta__ = {
 [node name="PaletteViewerPopup" type="Popup" parent="SceneRoot"]
 margin_left = 187.263
 margin_top = 172.014
-margin_right = 737.263
+margin_right = 687.263
 margin_bottom = 672.014
-rect_min_size = Vector2( 400, 500 )
+rect_min_size = Vector2( 500, 500 )
+script = ExtResource( 36 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="SceneRoot/PaletteViewerPopup"]
-rect_min_size = Vector2( 380, 480 )
+rect_min_size = Vector2( 450, 500 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
