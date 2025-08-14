@@ -12,8 +12,6 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 
 Don't forget to hit save or apply changes to see the results!
 
-GIF HERE
-
 > *Loading and saving LNZ data of game files directly is a **planned feature**.*
 
 ## Help! It crashes when I do X!
@@ -22,8 +20,6 @@ LnzLive is definitely a work in progress! Please make regular backups of your LN
 
 Raise an issue in the GitHub repository if you have a bug or suggestion to report, so that can be tracked and resolved.
 
-GIF HERE OF HORSE
-
 ## File Tree
 You can either start from a preset LNZ file under `Examples` in the file tree (left-hand panel) by double-clicking to load, or paste LNZ copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
 
@@ -31,21 +27,20 @@ To load your own LNZ file, open in LNZPro, paste the contents into the editor, a
 
 Once you have a LNZ file saved under `Local Storage`, you can right-click the file to see some options. While a file is loaded, you can hit `Back Up` to save a copy of the file named `{filename}_backup.lnz`. Note, this will overwrite any existing file of that name. You can also rename or delete files.
 
-GIF HERE
-
 ## Menu Options
 
 ### File
 
-*No enabled options (yet)*
+- Import LNZ / BMP / PNG
 
 ### Edit
 
-
+- Capture Head Shot
 
 ### Tool
 
-
+- View Palette
+- Recolor Menu
 
 ### Mode
 
@@ -56,22 +51,26 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
 
+In `Paintball Mode`, TBD
+
+In `Project Mode`, TBD
+
+In `Preset Mode`, TBD
+
+In `Line Mode`, TBD
+
 ### Render
 
 Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
 
 ### Export
 
-
+- Export OBJ 3D Model
 
 ### Help
 
 This option offers links to several handy resources, including [Carolyn Horn's hexing information](https://github.com/melissamcewen/carolyns-bible) and this [User Guide](https://github.com/tabbzi/LnzLive/blob/master/GUIDE.md)!
 
-**Unimplemented:**
-
-- Basic Controls
-- Color Selector
 
 ### Background Color Selector
 
@@ -93,15 +92,11 @@ Use these controls to preview and navigate animations:
 - Click `Play` button or press `SPACE` to start or stop a playback.
 - Slide through animation frames by dragging the handle.
 
-GIF HERE
-
 ## Basic Navigation
 
 - Click and hold the left mouse button in the pet view (center panel) to rotate the pet.
 - Use the mouse wheel to zoom in and out.
 - Press down on mouse wheel or hold space and drag to move pet around viewport.
-
-GIF HERE
 
 ## Edit functions
 
