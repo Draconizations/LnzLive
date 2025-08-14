@@ -65,9 +65,6 @@ func _ready():
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
-
-	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
-	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	project_mode_check_box.connect("toggled", self, "_on_project_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
