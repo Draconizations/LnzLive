@@ -49,6 +49,7 @@ var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x.png")
 var bigbrush = load("res://resources/icons/ico_tool_brush_2x.png")
 var paintbucket = load("res://resources/icons/ico_tool_bucket_2x.png")
 var rope = load("res://resources/icons/icon_line_mode.png")
+var eraser = load("res://resources/icons/ico_eraser_2x.png")
 
 const ZOOM_STEP := 1.2
 
@@ -101,9 +102,10 @@ func _process(_delta):
 		
 		# Check for mode-specific hotkeys and append
 		if Input.is_key_pressed(KEY_SHIFT):
-			text += "\nSHIFT+Wheel to change paintball diameter"
+			text += "\nSHIFT+wheel to change paintball diameter"
 		if Input.is_key_pressed(KEY_CONTROL):
 			text += "\nCTRL+left-click to delete last paintball"
+			Input.set_custom_mouse_cursor(eraser)
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
@@ -210,7 +212,7 @@ func _gui_input(event):
 		return
 
 	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed
+		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
 			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 			pet_node.remove_last_pending_paintball()
@@ -649,7 +651,7 @@ func _update_paintball_mode_ui():
 
 func _on_delete_mode_toggled(is_on):
 	if is_on:
-		Input.set_custom_mouse_cursor(bigbrush)
+		Input.set_custom_mouse_cursor(eraser)
 	else:
 		Input.set_custom_mouse_cursor(smallbrush)
 
