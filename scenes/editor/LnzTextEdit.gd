@@ -2113,6 +2113,113 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
 
+func write_project_ball_section(projections: Array, _overwrite: bool): # _overwrite is ignored now
+	save_backup()
+	var section_tag = "[Project Ball]"
+	var bounds = _get_section_bounds(section_tag)
+
+	# If section doesn't exist, create it.
+	if bounds.empty():
+		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var insert_pos = 0
+		if first_section_line != -1:
+			insert_pos = first_section_line
+
+		var text_to_insert = section_tag + "\n\n"
+		if first_section_line == -1: # Empty file
+			text_to_insert = section_tag + "\n"
+
+		_insert_text_at_line(insert_pos, text_to_insert)
+		bounds = _get_section_bounds(section_tag)
+
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
+	if end_line == -1: # Section is at the end of the file
+		end_line = get_line_count()
+
+	var delim = _detect_delimiter(start_line, end_line)
+	if delim == " " or delim == "":
+		delim = "\t" # Default to tabs for clarity
+
+	var unmatched_projections = projections.duplicate()
+
+	# Update existing lines
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";") or line.begins_with("["):
+			continue
+
+		var parts = _smart_split(line)
+		if parts.size() < 2:
+			continue
+
+		var stationary_ball = int(parts[0])
+		var projected_ball = int(parts[1])
+
+		for j in range(unmatched_projections.size() - 1, -1, -1):
+			var proj = unmatched_projections[j]
+			if proj.stationary == stationary_ball and proj.projected == projected_ball:
+				var new_line = str(proj.stationary) + delim + str(proj.projected) + delim + str(proj.amount)
+				set_line(i, new_line)
+				unmatched_projections.remove(j)
+				break # Move to next line in file
+
+	# Add new lines for projections that didn't have a match
+	if not unmatched_projections.empty():
+		var insert_pos = _find_insertion_line(start_line, end_line)
+		var new_lines_text = ""
+		for proj in unmatched_projections:
+			new_lines_text += str(proj.stationary) + delim + str(proj.projected) + delim + str(proj.amount) + "\n"
+
+		_insert_text_at_cursor_at_line(insert_pos, new_lines_text)
+
+	save_file()
+
+func update_lnz_section_one_value(section_tag: String, value):
+	_update_lnz_section(section_tag, [value])
+
+func update_lnz_section_two_values(section_tag: String, value1, value2):
+	_update_lnz_section(section_tag, [value1, value2])
+
+func _update_lnz_section(section_tag: String, values: Array):
+	var bounds = _get_section_bounds(section_tag)
+
+	# If section doesn't exist, create it.
+	if bounds.empty():
+		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var insert_pos = 0
+		if first_section_line != -1:
+			insert_pos = first_section_line
+
+		var text_to_insert = section_tag + "\n\n"
+		if first_section_line == -1: # Empty file
+			text_to_insert = section_tag + "\n"
+
+		_insert_text_at_line(insert_pos, text_to_insert)
+		bounds = _get_section_bounds(section_tag)
+
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
+	if end_line == -1:
+		end_line = get_line_count()
+
+	var lines_to_update = []
+	for i in range(start_line, end_line):
+		var line_text = get_line(i).strip_edges()
+		if not line_text.empty() and not line_text.begins_with(";"):
+			lines_to_update.append(i)
+
+	for i in range(values.size()):
+		var value_str = str(values[i])
+		if i < lines_to_update.size():
+			# Update existing line
+			var line_idx = lines_to_update[i]
+			set_line(line_idx, value_str)
+		else:
+			# Insert new line
+			var insert_pos = _find_insertion_line(start_line, end_line + i)
+			_insert_text_at_cursor_at_line(insert_pos, value_str + "\n")
+
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
