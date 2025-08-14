@@ -22,6 +22,7 @@ varying flat vec2 center_of_line;
 varying flat vec2 center_of_line_screen_uv;
 varying float line_width_in_pixels;
 varying flat vec2 uv_to_flat;
+varying flat vec2 normal_v;
 uniform vec3 ball_world_pos1 = vec3(0.0);
 uniform vec3 ball_world_pos2 = vec3(0.0);
 uniform sampler2D line_texture: hint_white;
@@ -66,11 +67,11 @@ void fragment() {
     // FUZZING
     float r = random(st.y - absolute_center.y);
     r = (r * 2.0) - 1.0;
-    r *= float(fuzz_amount) / 100.0;
+    r *= float(fuzz_amount) / 20.0;
 
     // Rescale the UV between 0 and 1
     float scaled_uv_x = uv_mod.x / max_x.x;
-    vec2 move_vec = uv_to_flat * r;
+    vec2 move_vec = normal_v * r;
     vec2 modified_uv = vec2(scaled_uv_x, UV.y) - move_vec;
     float one_pixel = 0.5 / (floor(line_width_in_pixels) + 0.5);
 
@@ -175,6 +176,7 @@ void vertex() {
 	vec2 line_direction_onscreen = normalize(next_point_ndc_space - vert_in_ndc_space);
 	vec2 normal = vec2(-line_direction_onscreen.y, line_direction_onscreen.x);
 	uv_to_flat = normalize(normal - vec2(1.0, 0.0));
+	normal_v = normal;
 	
 	// Depending on which side of the mesh this vertex is on,
 	// We want to shove the vertex either left or right
