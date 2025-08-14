@@ -31,9 +31,14 @@ var linez_start_ball = null
 var paintball_mode = false
 var paintball_target_ball = null
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
+onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
+
+var preset_mode = false
 
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
@@ -53,14 +58,17 @@ func _ready():
 
 	var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
+	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
+	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -70,6 +78,11 @@ func _ready():
 	# flip_camera_view()
 
 	helper_label.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+
+	_select_check_box.connect("pressed", self, "_on_SelectCheckBox_pressed")
+
+	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
+	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
 func _process(_delta):
 	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
@@ -94,6 +107,14 @@ func _process(_delta):
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+	elif preset_mode:
+		if Input.is_key_pressed(KEY_ALT):
+			text = "Eyedropper Mode: Left-click a ball to sample its properties."
+			Input.set_custom_mouse_cursor(eyedropper)
+		else:
+			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
+			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
+				Input.set_custom_mouse_cursor(smallbrush)
 	elif selecting_on:
 		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 	else:
@@ -140,6 +161,46 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if target_ball:
+			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
+			if is_eyedropper_active:
+				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+				var ball_no = target_ball.ball_no
+				var ball_data = null
+				if pet_node.lnz.balls.has(ball_no):
+					ball_data = pet_node.lnz.balls[ball_no]
+				elif pet_node.lnz.addballs.has(ball_no):
+					ball_data = pet_node.lnz.addballs[ball_no]
+
+				if ball_data:
+					var properties = {
+						"size": ball_data.size,
+						"fuzz": ball_data.fuzz,
+						"outline": ball_data.outline,
+						"color_index": ball_data.color_index,
+						"outline_color_index": ball_data.outline_color_index,
+						"texture_id": ball_data.texture_id,
+						"group": ball_data.group
+					}
+					preset_settings_instance.set_properties(properties)
+			else: # Brush mode
+				var properties = preset_settings_instance.get_properties()
+
+				if properties.get("size_is_additive", false):
+					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+					var ball_no = target_ball.ball_no
+					var original_size = 0
+					if pet_node.lnz.balls.has(ball_no):
+						original_size = pet_node.lnz.balls[ball_no].size
+					elif pet_node.lnz.addballs.has(ball_no):
+						original_size = pet_node.lnz.addballs[ball_no].size
+					properties["size"] = original_size + properties.size
+
+				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
+		return
+
 	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		var diameter_spinbox = paintball_settings_instance.find_node("Diameter")
 		if event.button_index == BUTTON_WHEEL_UP:
@@ -435,7 +496,13 @@ func _on_Node_ball_mouse_enter(ball_info):
 	ball_label.show()
 
 func _on_SelectCheckBox_toggled(button_pressed):
-	selecting_on = button_pressed
+	pass
+
+func _on_ModePopup_about_to_show():
+	_select_check_box.pressed = selecting_on
+
+func _on_SelectCheckBox_pressed():
+	selecting_on = _select_check_box.pressed
 	if !selecting_on:
 		if last_selected_is_valid():
 			last_selected._on_Area_mouse_exited()
@@ -445,6 +512,7 @@ func _on_SelectCheckBox_toggled(button_pressed):
 		for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
+		tex.update()
 
 func _on_HelpButton_pressed():
 	help_popup.popup_centered()
@@ -603,6 +671,10 @@ func _on_paintball_mode_toggled(is_on):
 			linez_mode = false
 			line_mode_check_box.pressed = false
 			_on_line_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
 	_update_paintball_mode_ui()
 
 func _on_line_mode_toggled(is_on):
@@ -613,6 +685,10 @@ func _on_line_mode_toggled(is_on):
 			paintball_mode = false
 			paintball_check_box.pressed = false
 			_on_paintball_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
 	else:
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
@@ -634,3 +710,26 @@ func _handle_line_mode_input(event) -> bool:
 					linez_start_ball = null
 			return true
 	return false
+
+func _on_preset_mode_toggled(is_on):
+	preset_mode = is_on
+	if is_on:
+		preset_settings_instance.show()
+		Input.set_custom_mouse_cursor(smallbrush)
+		if paintball_mode:
+			paintball_mode = false
+			paintball_check_box.pressed = false
+		if linez_mode:
+			linez_mode = false
+			line_mode_check_box.pressed = false
+		mouse_default_cursor_shape = CURSOR_ARROW
+	else:
+		preset_settings_instance.hide()
+		Input.set_custom_mouse_cursor(hand_neutral)
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+
+func _on_eyedropper_toggled(is_on):
+	if is_on:
+		Input.set_custom_mouse_cursor(eyedropper)
+	else:
+		Input.set_custom_mouse_cursor(smallbrush)
