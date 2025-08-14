@@ -84,9 +84,25 @@ func _set_text_preserve(new_text: String):
 func save_backup():
 	if not is_user_file:
 		return
+
+	var dir = Directory.new()
+	var base_path = filepath.trim_suffix(".lnz")
+	var backup_path1 = base_path + "_backup_1.lnz"
+	var backup_path2 = base_path + "_backup_2.lnz"
+	var backup_path3 = base_path + "_backup_3.lnz"
+
+	# Rotate backups: 2 -> 3, 1 -> 2
+	if dir.file_exists(backup_path2):
+		if dir.file_exists(backup_path3):
+			dir.remove(backup_path3)
+		dir.rename(backup_path2, backup_path3)
+
+	if dir.file_exists(backup_path1):
+		dir.rename(backup_path1, backup_path2)
+
+	# Create new backup
 	var file = File.new()
-	var backup_path = filepath.replace(".lnz", "_backup.lnz")
-	file.open(backup_path, File.WRITE)
+	file.open(backup_path1, File.WRITE)
 	file.store_string(text)
 	file.close()
 	emit_signal("file_backed_up")
@@ -320,9 +336,11 @@ func get_corresponding_left_ball(right_ball_index):
 var ball_map = {}
 
 func _on_ApplyChangesButton_pressed():
+	save_backup()
 	save_file()
 
 func _on_apply_paintballz():
+	save_backup()
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var pending_paintballs = pet_node._pending_paintballs_data
 
@@ -340,6 +358,13 @@ func _on_apply_paintballz():
 			bounds = _get_section_bounds("[Paint Ballz]")
 
 		insert_line_num = bounds["start"]
+		var j = 0
+		while true:
+			var line = get_line(insert_line_num + j).strip_edges()
+			if line != "" and not line.begins_with(";"):
+				break
+			j += 1
+		insert_line_num += j
 
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
 		var new_paintball_lines = ""
@@ -377,6 +402,7 @@ func _wrap_angle_deg(a: int) -> int:
 	return ang
 
 func _on_palette_selected(filename_without_extension):
+	save_backup()
 	var bounds = _get_section_bounds("[Palette]")
 	var new_line = filename_without_extension
 
@@ -405,6 +431,7 @@ func _on_palette_selected(filename_without_extension):
 	save_file()
 
 func _on_HeadShotButton_pressed():
+	save_backup()
 	var local_frame = int(frame_slider.value)
 	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
 
@@ -501,35 +528,87 @@ func _on_HeadShotButton_pressed():
 
 # Connect by Linez
 func _on_Node_line_created(start_ball, end_ball):
+	save_backup()
 	var bounds = _get_section_bounds("[Linez]")
 	var start_line = bounds["start"]
 	var end_line = bounds["end"]
 
 	if start_line == -1:
 		print("[LNZ EDIT] No [Linez] section found")
+		# You might want to create the section if it doesn't exist.
+		# For now, just returning.
 		return
 
 	var delim = _detect_delimiter(start_line, end_line)
 	var sep = delim
 
-	var insert_line = end_line
-	while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
-		insert_line -= 1
+	var line_mode_settings = get_tree().root.get_node("Root/SceneRoot/LineModeSettings")
+	var props = line_mode_settings.get_properties()
 
-	var new_line = "%s%s%s%s0%s-1%s-1%s-1%s95%s95%s-1%s0\n" % [
-		str(start_ball), sep,
-		str(end_ball), sep,
-		sep, sep, sep, sep, sep, sep, sep
-	]
+	# Search for an existing line
+	var line_updated = false
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
 
-	_insert_text_at_cursor_at_line(insert_line, new_line)
-	cursor_set_line(insert_line)
-	cursor_set_column(0)
-	center_viewport_to_cursor()
+		var parts = _split_and_clean(line, delim)
+		if parts.size() < 2:
+			continue
+
+		var b1 = int(parts[0])
+		var b2 = int(parts[1])
+
+		if (b1 == start_ball and b2 == end_ball) or (b1 == end_ball and b2 == start_ball):
+			if parts.size() < 10:
+				parts.resize(10)
+			parts[2] = str(props.fuzz)
+			parts[3] = str(props.color)
+			parts[4] = str(props.left_outline_color)
+			parts[5] = str(props.right_outline_color)
+			parts[6] = str(props.start_thickness)
+			parts[7] = str(props.end_thickness)
+			parts[8] = str(props.outline_type)
+			parts[9] = str(props.draw_order)
+
+			set_line(i, parts.join(sep))
+			line_updated = true
+			break
+
+	if not line_updated:
+		var insert_line = end_line
+		while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
+			insert_line -= 1
+
+		var new_line_parts = [
+			str(start_ball),
+			str(end_ball),
+			str(props.fuzz),
+			str(props.color),
+			str(props.left_outline_color),
+			str(props.right_outline_color),
+			str(props.start_thickness),
+			str(props.end_thickness),
+			str(props.outline_type),
+			str(props.draw_order)
+		]
+		var new_line = ""
+		for i in range(new_line_parts.size()):
+			new_line += new_line_parts[i]
+			if i < new_line_parts.size() - 1:
+				new_line += sep
+		new_line += "\n"
+
+		_insert_text_at_cursor_at_line(insert_line, new_line)
+		cursor_set_line(insert_line)
+		cursor_set_column(0)
+		center_viewport_to_cursor()
+
 	save_file()
 
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
+	save_backup()
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if reference_ball == null:
 		print("[LNZ EDIT] No reference ball given")
@@ -665,6 +744,7 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 
 # Deletes an addball and references, or marks a base ball for omission
 func _on_ToolsMenu_delete_ball(ball_no: int):
+	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 	if is_addball:
 		var line_no = find_line_in_addball_section(ball_no - 67)
@@ -948,6 +1028,7 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	center_viewport_to_cursor()
 
 func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
+	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
 	if species == KeyBallsData.Species.CAT:
@@ -1041,6 +1122,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 
 
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
+	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
 	if species == KeyBallsData.Species.CAT:
@@ -1647,6 +1729,8 @@ func _on_ToolsMenu_copy_l_to_r():
 	save_file()
 
 func apply_preset_to_ball(ball_no, properties, do_save = true):
+	if do_save:
+		save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -1976,6 +2060,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_file()
 
 func _on_ToolsMenu_move_head(x, y, z):
+	save_backup()
 	var head_balls: Array
 	if KeyBallsData.species == KeyBallsData.Species.CAT:
 		head_balls = KeyBallsData.head_ext_cat.duplicate()
