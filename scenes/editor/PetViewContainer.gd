@@ -31,6 +31,7 @@ var linez_start_ball = null
 var paintball_mode = false
 var project_mode = false
 var paintball_target_ball = null
+var ray_intersect_paintball = null
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
@@ -39,6 +40,7 @@ onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSpli
 onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
 
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
+onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
 
@@ -80,6 +82,8 @@ func _ready():
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
 	project_settings_instance.connect("randomize_projections", self, "_on_randomize_projections")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -247,7 +251,8 @@ func _gui_input(event):
 			var from = camera.project_ray_origin(screen_pos)
 			var to = from + camera.project_ray_normal(screen_pos) * 10000
 			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(from, to, [self], 0x7FFFFFFF, true, true)
+			var exclude = [self] + get_tree().get_nodes_in_group("paintballs")
+			var result = space_state.intersect_ray(from, to, exclude, 0x7FFFFFFF, true, true)
 
 			if result and result.collider.get_parent() == target_ball:
 				var intersection_point = result.position
@@ -423,12 +428,15 @@ func _gui_input(event):
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
+			Input.set_custom_mouse_cursor(rope)
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 				if b != linez_start_ball:
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball:
 				hover.apply_outline_state(hover.OutlineState.HOVER)
+		elif not preset_mode and not paintball_mode and not project_mode:
+			Input.set_custom_mouse_cursor(hand_neutral)
 
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
@@ -689,11 +697,16 @@ func _on_paintball_mode_toggled(is_on):
 			preset_mode = false
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
+			_on_project_mode_toggled(false)
 	_update_paintball_mode_ui()
 
 func _on_line_mode_toggled(is_on):
 	linez_mode = is_on
 	if is_on:
+		line_mode_settings_instance.show()
 		Input.set_custom_mouse_cursor(rope)
 		if paintball_mode:
 			paintball_mode = false
@@ -704,6 +717,7 @@ func _on_line_mode_toggled(is_on):
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
 	else:
+		line_mode_settings_instance.hide()
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
@@ -721,6 +735,10 @@ func _on_project_mode_toggled(is_on):
 			linez_mode = false
 			line_mode_check_box.pressed = false
 			_on_line_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
 	else:
 		project_settings_instance.hide()
 
@@ -781,6 +799,7 @@ func _on_randomize_projections():
 
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()
+	lnz_text_edit.save_backup()
 
 	# Two-value sections
 	var leg_ext1_min = int(settings.leg_ext_1.min)
@@ -863,6 +882,9 @@ func _on_preset_mode_toggled(is_on):
 		if linez_mode:
 			linez_mode = false
 			line_mode_check_box.pressed = false
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
 		preset_settings_instance.hide()
