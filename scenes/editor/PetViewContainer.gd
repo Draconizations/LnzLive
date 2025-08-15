@@ -80,7 +80,6 @@ func _ready():
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
-	project_settings_instance.connect("randomize_projections", self, "_on_randomize_projections")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
@@ -113,18 +112,18 @@ func _process(_delta):
 			text = "Paintball Mode: Left-click to delete last paintball"
 		else:
 			text = "Paintball Mode: Left-click to add next paintball"
-	elif project_mode:
-		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 		
-		# Check for mode-specific hotkeys and append
 		if Input.is_key_pressed(KEY_SHIFT):
 			text += "\nSHIFT+wheel to change paintball diameter"
-		if Input.is_key_pressed(KEY_CONTROL):
-			text += "\nCTRL+left-click to delete last paintball"
-			Input.set_custom_mouse_cursor(eraser)
+		
+		#if Input.is_key_pressed(KEY_CONTROL):
+		#	text += "\nCTRL+left-click to delete last paintball"
+		#	Input.set_custom_mouse_cursor(eraser)
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+	elif project_mode:
+		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 	elif preset_mode:
 		if Input.is_key_pressed(KEY_ALT):
 			text = "Eyedropper Mode: Left-click a ball to sample its properties."
@@ -750,52 +749,6 @@ func _flatten_symmetry_dict(dict: Dictionary) -> Array:
 			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
 				flat_list.append(part_info)
 	return flat_list
-
-func _on_randomize_projections():
-	var species = KeyBallsData.species
-	var symmetry_dict = null
-
-	if species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
-
-	if symmetry_dict == null:
-		print("Symmetry data not available for this species.")
-		return
-
-	var available_parts = _flatten_symmetry_dict(symmetry_dict)
-	if available_parts.empty():
-		print("No valid symmetrical parts to randomize.")
-		return
-
-	var new_projections = []
-	randomize()
-
-	for _i in range(10): # Create 10 pairs of projections for more variety
-		var part_a_info = available_parts[randi() % available_parts.size()]
-		var part_b_info = available_parts[randi() % available_parts.size()]
-
-		# Ensure left and right arrays are of the same size for 1-to-1 mapping
-		if part_a_info.left.size() != part_a_info.right.size() or part_b_info.left.size() != part_b_info.right.size():
-			continue
-
-		var idx_a = randi() % part_a_info.left.size()
-		var ball_a_left = part_a_info.left[idx_a]
-		var ball_a_right = part_a_info.right[idx_a]
-
-		var idx_b = randi() % part_b_info.left.size()
-		var ball_b_left = part_b_info.left[idx_b]
-		var ball_b_right = part_b_info.right[idx_b]
-
-		var amount = randi() % 201 - 100 # Random amount between -100 and 100
-
-		new_projections.append({"stationary": ball_a_left, "projected": ball_b_left, "amount": amount})
-		new_projections.append({"stationary": ball_a_right, "projected": ball_b_right, "amount": amount})
-
-	project_settings_instance.set_held_projections(new_projections)
 
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()

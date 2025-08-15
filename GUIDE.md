@@ -44,6 +44,8 @@ Once you have a LNZ file saved under `Local Storage`, you can right-click the fi
 
 ### Mode
 
+#### Select Mode
+
 In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections in the LNZ text editor.
 
 - **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
@@ -51,11 +53,19 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
 
+#### Paintball Mode
+
 In `Paintball Mode`, TBD
 
-In `Project Mode`, TBD
+#### Project Mode
+
+In `Project Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
+
+#### Preset Mode
 
 In `Preset Mode`, TBD
+
+#### Line Mode
 
 In `Line Mode`, TBD
 

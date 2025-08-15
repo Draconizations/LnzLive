@@ -221,9 +221,16 @@ func parse_moves(file: File):
 		
 func get_project_balls(file: File):
 	get_next_section(file, "Project Ball")
-	var parsed_lines = get_parsed_lines(file, ["base", "projected", "amount"])
+	var parsed_lines = get_parsed_lines(file, ["fixed_ball", "project_ball", "amount"])
 	for line in parsed_lines:
-		project_ball.append({ball = line.projected, base = line.base, amount = line.amount})
+		var amount = line.amount
+		project_ball.append({
+			"fixed_ball": line.fixed_ball,
+			"project_ball": line.project_ball,
+			"min_projection": amount - 50,
+			"max_projection": amount + 50,
+			"comment": ""
+		})
 
 func get_eyelid_color(file: File):
 	get_next_section(file, "256 Eyelid Color")

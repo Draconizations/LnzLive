@@ -1,100 +1,203 @@
 extends CanvasLayer
 
-signal apply_projections(projections, overwrite)
-signal randomize_projections()
+signal apply_projections(projections)
 signal randomize_body_proportions(settings)
 
-var held_projections = []
-var body_part_groups = {}
-
-onready var stationary_options = find_node("StationaryOptionButton")
-onready var projected_options = find_node("ProjectedOptionButton")
-onready var amount_spinbox = find_node("AmountSpinBox")
 onready var projections_tree = find_node("ProjectionsTree")
 onready var panel = $Panel
 
 func _ready():
 	# Connect signals
 	find_node("AddButton").connect("pressed", self, "_on_AddButton_pressed")
+	find_node("RemoveButton").connect("pressed", self, "_on_RemoveButton_pressed")
+	find_node("ClearAllButton").connect("pressed", self, "_on_ClearAllButton_pressed")
+	find_node("RestoreDefaultsButton").connect("pressed", self, "_on_RestoreDefaultsButton_pressed")
+	find_node("CopyFromLNZButton").connect("pressed", self, "_on_CopyFromLNZButton_pressed")
 	find_node("RandomizeProjectionsButton").connect("pressed", self, "_on_RandomizeProjectionsButton_pressed")
 	find_node("RandomizeBodyButton").connect("pressed", self, "_on_RandomizeBodyButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
+	find_node("MoveUpButton").connect("pressed", self, "_on_MoveUpButton_pressed")
+	find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
+	projections_tree.connect("item_edited", self, "_on_ProjectionsTree_item_edited")
+	projections_tree.connect("button_pressed", self, "_on_ProjectionsTree_button_pressed")
 
 	# Setup Tree
 	projections_tree.set_column_titles_visible(true)
-	projections_tree.set_column_title(0, "Stationary")
-	projections_tree.set_column_title(1, "Projected")
-	projections_tree.set_column_title(2, "Amount")
-
-	# Initial population of dropdowns
-	_populate_body_part_options()
+	projections_tree.set_column_title(0, "Fixed")
+	projections_tree.set_column_title(1, "Project")
+	projections_tree.set_column_title(2, "Min")
+	projections_tree.set_column_title(3, "Max")
+	projections_tree.set_column_title(4, "Value")
+	projections_tree.set_column_title(5, "Lock")
+	projections_tree.set_column_title(6, "Mirror")
+	projections_tree.set_column_title(7, "Label")
+	projections_tree.set_column_title(8, "")
 
 	# Hide by default
 	hide()
 
-func _populate_body_part_options():
-	stationary_options.clear()
-	projected_options.clear()
-	body_part_groups.clear()
+func _populate_projections_tree():
+	projections_tree.clear()
+	var root = projections_tree.create_item()
 
-	# This is a simplified representation. A more robust solution would handle species changes.
-	# For now, we assume one species throughout the session.
+	var species_key = ""
 	var species = KeyBallsData.species
-
 	if species == KeyBallsData.Species.DOG:
-		body_part_groups["Front Legs"] = KeyBallsData.legs_dog[0]
-		body_part_groups["Back Legs"] = KeyBallsData.legs_dog[1]
-		body_part_groups["Head"] = KeyBallsData.head_ext_dog
-		body_part_groups["Body"] = KeyBallsData.body_ext_dog
-		body_part_groups["Tail"] = KeyBallsData.tail_dog
-		body_part_groups["Face"] = KeyBallsData.face_ext_dog
+		species_key = "dog"
 	elif species == KeyBallsData.Species.CAT:
-		body_part_groups["Front Legs"] = KeyBallsData.legs_cat[0]
-		body_part_groups["Back Legs"] = KeyBallsData.legs_cat[1]
-		body_part_groups["Head"] = KeyBallsData.head_ext_cat
-		body_part_groups["Body"] = KeyBallsData.body_ext_cat
-		body_part_groups["Tail"] = KeyBallsData.tail_cat
-		body_part_groups["Face"] = KeyBallsData.face_ext_cat
-	# Add BABY species when data is available
+		species_key = "cat"
+	elif species == KeyBallsData.Species.BABY:
+		species_key = "bab"
 
-	for part_name in body_part_groups:
-		stationary_options.add_item(part_name)
-		projected_options.add_item(part_name)
+	if KeyBallsData.projection_standards.has(species_key):
+		var standards = KeyBallsData.projection_standards[species_key]
+		for proj_data in standards:
+			var item = projections_tree.create_item(root)
+			item.set_editable(0, true)
+			item.set_editable(1, true)
+			item.set_editable(2, true)
+			item.set_editable(3, true)
+			item.set_editable(4, true)
+			item.set_cell_mode(5, TreeItem.CELL_MODE_CHECK)
+			item.set_editable(5, true)
+			item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
+			item.set_editable(6, true)
+			item.set_editable(7, true)
+			# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
+
+			item.set_text(0, str(proj_data.fixed_ball))
+			item.set_text(1, str(proj_data.project_ball))
+			item.set_text(2, str(proj_data.min_projection))
+			item.set_text(3, str(proj_data.max_projection))
+			item.set_text(4, "0")
+			item.set_checked(5, false)
+			item.set_checked(6, false)
+			item.set_text(7, proj_data.comment)
 
 func _on_AddButton_pressed():
-	var stationary_idx = stationary_options.selected
-	var projected_idx = projected_options.selected
+	var root = projections_tree.get_root()
+	if not root:
+		root = projections_tree.create_item()
+	var item = projections_tree.create_item(root)
+	item.set_editable(0, true)
+	item.set_editable(1, true)
+	item.set_editable(2, true)
+	item.set_editable(3, true)
+	item.set_editable(4, true)
+	item.set_cell_mode(5, TreeItem.CELL_MODE_CHECK)
+	item.set_editable(5, true)
+	item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
+	item.set_editable(6, true)
+	item.set_editable(7, true)
+	# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
 
-	if stationary_idx == -1 or projected_idx == -1:
-		print("Please select both a stationary and a projected group.")
-		return
+	item.set_text(0, "0")
+	item.set_text(1, "0")
+	item.set_text(2, "0")
+	item.set_text(3, "100")
+	item.set_text(4, "0")
+	item.set_checked(5, false)
+	item.set_checked(6, false)
+	item.set_text(7, "comment")
 
-	var stationary_group_name = stationary_options.get_item_text(stationary_idx)
-	var projected_group_name = projected_options.get_item_text(projected_idx)
+func _on_RemoveButton_pressed():
+	var selected = projections_tree.get_selected()
+	if selected:
+		selected.free()
 
-	var stationary_balls = body_part_groups[stationary_group_name]
-	var projected_balls = body_part_groups[projected_group_name]
+func _swap_tree_items(item1, item2):
+	for i in range(projections_tree.columns):
+		var text1 = item1.get_text(i)
+		var text2 = item2.get_text(i)
+		item1.set_text(i, text2)
+		item2.set_text(i, text1)
 
-	if stationary_balls.empty() or projected_balls.empty():
-		print("One of the selected groups is empty.")
-		return
+		if item1.get_cell_mode(i) == TreeItem.CELL_MODE_CHECK:
+			var checked1 = item1.is_checked(i)
+			var checked2 = item2.is_checked(i)
+			item1.set_checked(i, checked2)
+			item2.set_checked(i, checked1)
 
-	randomize()
-	var stationary_ball = stationary_balls[randi() % stationary_balls.size()]
-	var projected_ball = projected_balls[randi() % projected_balls.size()]
-	var amount = amount_spinbox.value
+func _on_MoveUpButton_pressed():
+	var selected = projections_tree.get_selected()
+	if selected and selected.get_prev():
+		_swap_tree_items(selected, selected.get_prev())
+		projections_tree.select(selected.get_prev(), 0)
 
-	var new_projection = {
-		"stationary": stationary_ball,
-		"projected": projected_ball,
-		"amount": amount
-	}
+func _on_MoveDownButton_pressed():
+	var selected = projections_tree.get_selected()
+	if selected and selected.get_next():
+		_swap_tree_items(selected, selected.get_next())
+		projections_tree.select(selected.get_next(), 0)
 
-	held_projections.append(new_projection)
-	_update_tree()
+func _on_ClearAllButton_pressed():
+	projections_tree.clear()
+	projections_tree.create_item() # Create root
+
+func _on_RestoreDefaultsButton_pressed():
+	_populate_projections_tree()
+
+func _on_CopyFromLNZButton_pressed():
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var projections = lnz_text_edit.get_project_ball_section()
+
+	projections_tree.clear()
+	var root = projections_tree.create_item()
+
+	for proj_data in projections:
+		var item = projections_tree.create_item(root)
+		item.set_editable(0, true)
+		item.set_editable(1, true)
+		item.set_editable(2, true)
+		item.set_editable(3, true)
+		item.set_editable(4, true)
+		item.set_cell_mode(5, TreeItem.CELL_MODE_CHECK)
+		item.set_editable(5, true)
+		item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
+		item.set_editable(6, true)
+		item.set_editable(7, true)
+		# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
+
+		item.set_text(0, str(proj_data.fixed_ball))
+		item.set_text(1, str(proj_data.project_ball))
+		item.set_text(2, str(proj_data.min_projection))
+		item.set_text(3, str(proj_data.max_projection))
+		item.set_text(4, str( (proj_data.min_projection + proj_data.max_projection) / 2) )
+		item.set_checked(5, false)
+		item.set_checked(6, false)
+		item.set_text(7, proj_data.comment)
+
+
+func _on_ProjectionsTree_button_pressed(item, column, id):
+	if column == 8: # Delete button
+		item.free()
+
+func _on_ProjectionsTree_item_edited():
+	# This is mainly to handle the checkbox
+	var item = projections_tree.get_edited()
+	var column = projections_tree.get_edited_column()
+	if column == 5 or column == 6: # Lock or Mirrored checkbox
+		# The checked state is automatically updated by the tree
+		pass
 
 func _on_RandomizeProjectionsButton_pressed():
-	emit_signal("randomize_projections")
+	randomize()
+	var root = projections_tree.get_root()
+	if not root:
+		return
+
+	var item = root.get_children()
+	while item:
+		if not item.is_checked(5): # if not locked
+			var min_proj = item.get_text(2).to_int()
+			var max_proj = item.get_text(3).to_int()
+			var random_val = 0
+			if min_proj < max_proj:
+				random_val = randi() % (max_proj - min_proj + 1) + min_proj
+			else:
+				random_val = min_proj
+			item.set_text(4, str(random_val))
+		item = item.get_next()
 
 func _on_RandomizeBodyButton_pressed():
 	var settings = {
@@ -113,27 +216,66 @@ func _on_RandomizeBodyButton_pressed():
 	emit_signal("randomize_body_proportions", settings)
 
 func _on_ApplyButton_pressed():
-	# Always overwrite the section, as per user feedback to simplify the UI.
-	emit_signal("apply_projections", held_projections, true)
-	held_projections.clear()
-	_update_tree()
+	var lnz_projections = []
+	var root = projections_tree.get_root()
+	if not root:
+		return
 
-func _update_tree():
-	projections_tree.clear()
-	var root = projections_tree.create_item()
-	for proj in held_projections:
-		var item = projections_tree.create_item(root)
-		item.set_text(0, str(proj.stationary))
-		item.set_text(1, str(proj.projected))
-		item.set_text(2, str(proj.amount))
+	var species = KeyBallsData.species
+	var symmetry_dict = null
+	if species == KeyBallsData.Species.DOG:
+		symmetry_dict = KeyBallsData.dog_body_part_symmetry
+	elif species == KeyBallsData.Species.CAT:
+		symmetry_dict = KeyBallsData.cat_body_part_symmetry
+	elif species == KeyBallsData.Species.BABY:
+		symmetry_dict = KeyBallsData.baby_body_part_symmetry
 
-func set_held_projections(projections_array):
-	held_projections = projections_array
-	_update_tree()
+	var item = root.get_children()
+	while item:
+		var proj = {
+			"fixed_ball": item.get_text(0).to_int(),
+			"project_ball": item.get_text(1).to_int(),
+			"value": item.get_text(4).to_int(),
+			"comment": item.get_text(7)
+		}
+		lnz_projections.append(proj)
+
+		if item.is_checked(6) and symmetry_dict: # if mirrored
+			var mirrored_fixed = KeyBallsData.get_mirrored_ball(proj.fixed_ball, symmetry_dict)
+			var mirrored_projected = KeyBallsData.get_mirrored_ball(proj.project_ball, symmetry_dict)
+
+			if mirrored_fixed != -1 or mirrored_projected != -1:
+				var new_fixed = mirrored_fixed
+				if new_fixed == -1:
+					new_fixed = proj.fixed_ball
+
+				var new_projected = mirrored_projected
+				if new_projected == -1:
+					new_projected = proj.project_ball
+
+				var mirrored_proj = {
+					"fixed_ball": new_fixed,
+					"project_ball": new_projected,
+					"value": proj.value,
+					"comment": proj.comment
+				}
+
+				if not (mirrored_proj.fixed_ball == proj.fixed_ball and mirrored_proj.project_ball == proj.project_ball):
+					var is_duplicate = false
+					for p in lnz_projections:
+						if p.fixed_ball == mirrored_proj.fixed_ball and p.project_ball == mirrored_proj.project_ball:
+							is_duplicate = true
+							break
+					if not is_duplicate:
+						lnz_projections.append(mirrored_proj)
+		item = item.get_next()
+
+	emit_signal("apply_projections", lnz_projections)
+
 
 func show():
 	# Re-populate options in case species has changed since _ready()
-	_populate_body_part_options()
+	_populate_projections_tree()
 	panel.show()
 
 func hide():

@@ -347,11 +347,12 @@ func apply_projections():
 	var outputs = {}
 	
 	for project_ball_data in lnz.project_ball:
-		var visual_ball = ball_map[project_ball_data.ball] as Spatial
-		var static_ball = ball_map[project_ball_data.base] as Spatial
+		var visual_ball = ball_map[project_ball_data.project_ball] as Spatial
+		var static_ball = ball_map[project_ball_data.fixed_ball] as Spatial
 		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
 		var base_pos = static_ball.global_transform.origin
-		visual_ball.global_transform.origin = base_pos + (vec * project_ball_data.amount / 100.0)
+		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
+		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
 
 func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 	for k in all_ball_dict.balls:
