@@ -159,11 +159,35 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 			return " "
 	return " "
 
-func _split_and_clean(line: String, delim: String) -> Array:
-	var parts = line.split(delim, false)
-	for i in range(parts.size()):
-		parts[i] = parts[i].strip_edges()
-	return parts
+func _split_and_clean(line: String) -> Array:
+	# First, handle the common case of lines with comments
+	var line_parts = line.split(";")
+	var data_part = line_parts[0].strip_edges()
+
+	# Now, try different delimiters on the data part
+	var delimiters = [", ", ",", "\t", " "]
+	for delim in delimiters:
+		var parts = data_part.split(delim, false)
+		
+		# Check if the split was successful (at least 2 parts for our case)
+		# The minimum size for a valid line is 2 (fixed_ball, project_ball),
+		# and later the code checks for 3 or 4.
+		if parts.size() >= 2:
+			var cleaned_parts = []
+			var valid_split = true
+			for part in parts:
+				var cleaned_part = part.strip_edges()
+				if cleaned_part.empty() and not (part.empty() and delim == " "):
+					# If a part becomes empty after stripping, but the original wasn't,
+					# it suggests the delimiter wasn't right (e.g., "1,,2" with a space delim)
+					valid_split = false
+					break
+				cleaned_parts.append(cleaned_part)
+			
+			if valid_split:
+				return cleaned_parts
+				
+	return []
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
@@ -554,7 +578,7 @@ func _on_Node_line_created(start_ball, end_ball):
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = _split_and_clean(line, delim)
+		var parts = _split_and_clean(line)
 		if parts.size() < 2:
 			continue
 
@@ -1756,7 +1780,7 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 	if line_index != -1:
 		var delim = _detect_delimiter(start_line, end_line)
 		var line = get_line(line_index)
-		var parts = _split_and_clean(line, delim)
+		var parts = _split_and_clean(line)
 
 		if is_addball:
 			if properties.has("color_index"): parts[4] = str(properties.color_index)
@@ -1775,7 +1799,12 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 			if properties.has("group"): parts[6] = str(properties.group)
 			if properties.has("texture_id"): parts[7] = str(properties.texture_id)
 
-		var new_line = parts.join(delim)
+		var new_line = ""
+		for i in range(parts.size()):
+			new_line += parts[i]
+			if i < parts.size() - 1:
+				new_line += delim
+
 		set_line(line_index, new_line)
 		if do_save:
 			save_file()
@@ -2122,7 +2151,6 @@ func get_project_ball_section() -> Array:
 
 	var start_line = bounds["start"]
 	var end_line = bounds["end"]
-	var delim = _detect_delimiter(start_line, end_line)
 
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -2134,7 +2162,29 @@ func get_project_ball_section() -> Array:
 			comment = line.substr(line.find(";") + 1).strip_edges()
 			line = line.substr(0, line.find(";")).strip_edges()
 
-		var parts = _split_and_clean(line, delim)
+		# Now, we try to split the line using multiple possible delimiters
+		var parts = []
+		
+		# Option 1: Try splitting by comma
+		var comma_parts = line.split(",", false)
+		if comma_parts.size() >= 3:
+			parts = comma_parts
+		else:
+			# Option 2: Try splitting by tab
+			var tab_parts = line.split("\t", false)
+			if tab_parts.size() >= 3:
+				parts = tab_parts
+			else:
+				# Option 3: Try splitting by space
+				var space_parts = line.split(" ", false)
+				if space_parts.size() >= 3:
+					parts = space_parts
+		
+		# Clean up the parts by stripping whitespace
+		for j in range(parts.size()):
+			parts[j] = parts[j].strip_edges()
+			
+		# Proceed only if we successfully got a valid number of parts
 		if parts.size() == 3:
 			var amount = int(parts[2])
 			projections.append({
@@ -2188,7 +2238,23 @@ func write_project_ball_section(projections: Array):
 
 			var line_parts = line_strip.split(";")
 			var data_part = line_parts[0].strip_edges()
-			var parts = _split_and_clean(data_part, " ")
+			var parts = _split_and_clean(data_part)
+
+			# var parts = []
+			# var delim = " " # Default to space
+			
+			# if data_part.find(",") != -1:
+			# 	parts = data_part.split(",", false)
+			# 	delim = ","
+			# elif data_part.find("\t") != -1:
+			# 	parts = data_part.split("\t", false)
+			# 	delim = "\t"
+			# else:
+			# 	parts = data_part.split(" ", false)
+			# 	delim = " "
+
+			# for j in range(parts.size()):
+			# 	parts[j] = parts[j].strip_edges()
 
 			if parts.size() >= 2 and parts[0] == str(proj.fixed_ball) and parts[1] == str(proj.project_ball):
 				var line_text = str(proj.fixed_ball) + " " + str(proj.project_ball) + " " + str(proj.value)
