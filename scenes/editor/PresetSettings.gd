@@ -61,13 +61,13 @@ func _ready():
 	paintballz_tree.set_column_title(10, "Anchored")
 
 func _on_EyedropperToggle_toggled(is_on):
-    emit_signal("eyedropper_toggled", is_on)
+	emit_signal("eyedropper_toggled", is_on)
 
 func show():
-    $Panel.show()
+	$Panel.show()
 
 func hide():
-    $Panel.hide()
+	$Panel.hide()
 
 func _on_SetPaintballzButton_pressed():
 	var text = paintballz_text_edit.text
