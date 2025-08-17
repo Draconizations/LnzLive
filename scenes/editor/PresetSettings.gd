@@ -8,33 +8,35 @@ onready var paintballz_tree = find_node("PaintballzTree")
 onready var roll_spinbox = find_node("RollSpinBox")
 onready var pitch_spinbox = find_node("PitchSpinBox")
 onready var yaw_spinbox = find_node("YawSpinBox")
-onready var button_reset_timer = find_node("ButtonResetTimer")
 
 const PaintBallData = preload("res://data_classes/paintball_data.gd")
 var r = RegEx.new()
-var original_button_texts = {}
 
 func _ready():
 	r.compile("[-.\\d]+")
 	find_node("EyedropperToggle").connect("toggled", self, "_on_EyedropperToggle_toggled")
 	set_paintballz_button.connect("pressed", self, "_on_SetPaintballzButton_pressed")
-	find_node("RotateTopButton").connect("pressed", self, "_on_RotateTopButton_pressed")
-	find_node("RotateBottomButton").connect("pressed", self, "_on_RotateBottomButton_pressed")
-	find_node("RotateFrontButton").connect("pressed", self, "_on_RotateFrontButton_pressed")
-	find_node("RotateBackButton").connect("pressed", self, "_on_RotateBackButton_pressed")
-	find_node("RotateLeftButton").connect("pressed", self, "_on_RotateLeftButton_pressed")
-	find_node("RotateRightButton").connect("pressed", self, "_on_RotateRightButton_pressed")
-	find_node("CustomRotateButton").connect("pressed", self, "_on_CustomRotateButton_pressed")
-	button_reset_timer.connect("timeout", self, "_on_ButtonResetTimer_timeout")
 
-	original_button_texts = {
-		"top": find_node("RotateTopButton").text,
-		"bottom": find_node("RotateBottomButton").text,
-		"front": find_node("RotateFrontButton").text,
-		"back": find_node("RotateBackButton").text,
-		"left": find_node("RotateLeftButton").text,
-		"right": find_node("RotateRightButton").text
-	}
+	# Mirror buttons
+	find_node("MirrorXButton").connect("pressed", self, "_on_MirrorXButton_pressed")
+	find_node("MirrorYButton").connect("pressed", self, "_on_MirrorYButton_pressed")
+	find_node("MirrorZButton").connect("pressed", self, "_on_MirrorZButton_pressed")
+
+	# Preset rotation buttons
+	var axes = ["Roll", "Pitch", "Yaw"]
+	var angles = [-180, -120, -60, -30, 30, 60, 120, 180]
+	for axis in axes:
+		for angle in angles:
+			var angle_sign
+			if angle > 0:
+				angle_sign = "P"
+			else:
+				angle_sign = "M"
+			var button_name = "Button" + axis + angle_sign + str(abs(angle))
+			var button = find_node(button_name)
+			button.connect("pressed", self, "_on_preset_rotation_pressed", [axis.to_lower(), angle])
+
+	find_node("CustomRotateButton").connect("pressed", self, "_on_CustomRotateButton_pressed")
 
 	var viewport_size = get_viewport().size
 	var panel = $Panel
@@ -174,68 +176,54 @@ func set_properties(properties):
 			item.set_text(9, str(p_data.texture_id))
 			item.set_text(10, str(p_data.anchored))
 
-func _on_RotateTopButton_pressed():
-	_rotate_paintballz("top")
+func _on_MirrorXButton_pressed():
+	_mirror_paintballz("x")
 
-func _on_RotateBottomButton_pressed():
-	_rotate_paintballz("bottom")
+func _on_MirrorYButton_pressed():
+	_mirror_paintballz("y")
 
-func _on_RotateFrontButton_pressed():
-	_rotate_paintballz("front")
+func _on_MirrorZButton_pressed():
+	_mirror_paintballz("z")
 
-func _on_RotateBackButton_pressed():
-	_rotate_paintballz("back")
+func _mirror_paintballz(axis):
+	var root = paintballz_tree.get_root()
+	if not root:
+		return
 
-func _on_RotateLeftButton_pressed():
-	_rotate_paintballz("left")
+	var item = root.get_children()
+	while item:
+		var pos = Vector3(item.get_text(2).to_float(), item.get_text(3).to_float(), item.get_text(4).to_float())
+		if axis == "x":
+			pos.x = -pos.x
+		elif axis == "y":
+			pos.y = -pos.y
+		elif axis == "z":
+			pos.z = -pos.z
 
-func _on_RotateRightButton_pressed():
-	_rotate_paintballz("right")
+		item.set_text(2, str(pos.x))
+		item.set_text(3, str(pos.y))
+		item.set_text(4, str(pos.z))
+		item = item.get_next()
+
+func _on_preset_rotation_pressed(axis, angle_degrees):
+	var roll = 0.0
+	var pitch = 0.0
+	var yaw = 0.0
+	var angle_rad = deg2rad(angle_degrees)
+
+	if axis == "roll":
+		roll = angle_rad
+	elif axis == "pitch":
+		pitch = angle_rad
+	elif axis == "yaw":
+		yaw = angle_rad
+
+	_perform_rotation(roll, pitch, yaw)
 
 func _on_CustomRotateButton_pressed():
 	var roll = deg2rad(roll_spinbox.value)
 	var pitch = deg2rad(pitch_spinbox.value)
 	var yaw = deg2rad(yaw_spinbox.value)
-	_perform_rotation(roll, pitch, yaw)
-
-func _rotate_paintballz(view_name):
-	var yaw = 0.0
-	var pitch = 0.0
-	var roll = 0.0
-	var button = null
-	var text = ""
-
-	match view_name:
-		"front":
-			pitch = PI
-			button = find_node("RotateFrontButton")
-			text = "P+180"
-		"back":
-			button = find_node("RotateBackButton")
-			text = "No change"
-		"top":
-			roll = -PI / 2
-			pitch = PI
-			button = find_node("RotateTopButton")
-			text = "R-90, P+180"
-		"bottom":
-			roll = PI / 2
-			pitch = PI
-			button = find_node("RotateBottomButton")
-			text = "R+90, P+180"
-		"left":
-			pitch = PI / 2
-			button = find_node("RotateLeftButton")
-			text = "P+90"
-		"right":
-			pitch = -PI / 2
-			button = find_node("RotateRightButton")
-			text = "P-90"
-
-	if button:
-		button.text = text
-		button_reset_timer.start()
-
 	_perform_rotation(roll, pitch, yaw)
 
 func _perform_rotation(roll, pitch, yaw):
@@ -257,8 +245,3 @@ func _perform_rotation(roll, pitch, yaw):
 		item.set_text(3, str(new_pos.y))
 		item.set_text(4, str(new_pos.z))
 		item = item.get_next()
-
-func _on_ButtonResetTimer_timeout():
-	for key in original_button_texts:
-		var button_name = "Rotate" + key.capitalize() + "Button"
-		find_node(button_name).text = original_button_texts[key]
