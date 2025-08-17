@@ -250,10 +250,9 @@ func _gui_input(event):
 			var from = camera.project_ray_origin(screen_pos)
 			var to = from + camera.project_ray_normal(screen_pos) * 10000
 			var space_state = camera.get_world().direct_space_state
-			var exclude = [self] + get_tree().get_nodes_in_group("paintballs")
-			var result = space_state.intersect_ray(from, to, exclude, 0x7FFFFFFF, true, true)
+			var result = space_state.intersect_ray(from, to, [self], 1, true, true)
 
-			if result and result.collider.get_parent() == target_ball:
+			if result and result.collider and result.collider.get_parent() == target_ball:
 				var intersection_point = result.position
 
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
