@@ -2347,6 +2347,96 @@ func update_lnz_section_two_values(section_name, val1, val2):
 	var new_line = str(val1) + delim + str(val2)
 	set_line(start_line, new_line)
 
+func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var is_addball = ball_no > max_base_ball_no
+
+	var section_tag = "[Ballz Info]"
+	var size_field_index = 5  # 6th field is size
+	if is_addball:
+		section_tag = "[Add Ball]"
+		size_field_index = 10  # 11th field is size for addballs
+
+	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+	if is_addball:
+		var addball_index = ball_no - max_base_ball_no
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			if count == addball_index:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+			count += 1
+		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
+	else:
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
+			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
+			if count == ball_no:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() > size_field_index:
+					var old_size = parts[size_field_index].to_int()
+					var new_size = size_dif
+					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
+					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
+					parts[size_field_index] = str(new_size)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updated line: %s" % new_line)
+					save_file()
+					return
+				else:
+					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
+					return
+			count += 1
+		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
+
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
