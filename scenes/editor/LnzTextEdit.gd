@@ -1870,24 +1870,61 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 #		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
 
 func write_preset_to_ball(ball_no, properties, _write_target, should_override):
-	#if should_override:
-	#	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	#	if ball_no > max_base_ball_no:
-	#		print("Override is only supported for base balls.")
-	#		return
-	#
-	#	_add_or_update_override("[Ball Size Override]", ball_no, [properties.size], [1])
-	#	_add_or_update_override("[Color Info Override]", ball_no, [properties.color_index, properties.group, properties.texture_id], [1, 2, 3])
-	#	_add_or_update_override("[Outline Color Override]", ball_no, [properties.outline_color_index], [1])
-	#	_add_or_update_override("[Fuzz Override]", ball_no, [properties.fuzz], [1])
-	#
-	#	var non_override_props = {
-	#		"outline": properties.outline
-	#	}
-	#	apply_preset_to_ball(ball_no, non_override_props)
-	#
-	#else:
-	apply_preset_to_ball(ball_no, properties)
+	var applied_something = false
+	if properties.get("apply_ballz", true):
+		apply_preset_to_ball(ball_no, properties, false)
+		applied_something = true
+
+	if properties.get("apply_paintballz", true) and properties.has("paintballz"):
+		var paintballz = properties.paintballz
+		if paintballz.size() > 0:
+			applied_something = true
+			var bounds = _get_section_bounds("[Paint Ballz]")
+			var insert_line_num
+
+			if bounds.empty():
+				var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+				var all_lines = get_text().split("\n")
+				all_lines.insert(first_section, "[Paint Ballz]")
+				all_lines.insert(first_section + 1, "")
+				text = all_lines.join("\n")
+				_set_text_preserve(text)
+				bounds = _get_section_bounds("[Paint Ballz]")
+
+			insert_line_num = bounds["start"]
+			var j = 0
+			while true:
+				if insert_line_num + j >= get_line_count():
+					break
+				var line = get_line(insert_line_num + j).strip_edges()
+				if line != "" and not line.begins_with(";"):
+					break
+				j += 1
+			insert_line_num += j
+
+			var delim = _detect_delimiter(bounds["start"], bounds["end"])
+			var new_paintball_lines = ""
+			for paintball_info in paintballz:
+				var pos = paintball_info.position
+				var paintball_line = str(ball_no) + delim
+				paintball_line += str(paintball_info.size) + delim
+				paintball_line += str(pos.x) + delim
+				paintball_line += str(pos.y) + delim
+				paintball_line += str(pos.z) + delim
+				paintball_line += str(paintball_info.color_index) + delim
+				paintball_line += str(paintball_info.outline_color_index) + delim
+				paintball_line += str(paintball_info.fuzz) + delim
+				paintball_line += str(paintball_info.outline) + delim
+				paintball_line += "0" + delim # group, not in use for paintballz
+				paintball_line += str(paintball_info.texture_id) + delim
+				paintball_line += str(paintball_info.anchored)
+
+				new_paintball_lines += paintball_line + "\n"
+
+			_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
+
+	if applied_something:
+		save_file()
 
 
 func _on_LnzTextEdit_gui_input(event):

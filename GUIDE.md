@@ -55,7 +55,7 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 #### Paintball Mode
 
-In `Paintball Mode`, TBD
+In `Paintball Mode`, you can place prepared paintballz by point-and-click on ballz. You can enter `Paintball Mode` either by right-click `Tools Menu` on a specific ball (which locks paintballz editing to that ballz) or through the top `Options Menu` under `Mode`
 
 #### Project Mode
 
@@ -63,7 +63,11 @@ In `Project Mode`, you can quickly prototype body shapes. This mode allows you t
 
 #### Preset Mode
 
-In `Preset Mode`, TBD
+In `Preset Mode`, you can copy properties of existing ballz, including any applied paintballz, and apply these properties onto other ballz. It is here that you can also enter paintballz LNZ and have those paintballz get added to other ballz. You can also rotate those paintballz designs before applying.
+
+Holding the ALT key and clicking on a ballz will copy its properties and paintballz to the panel.
+
+For applying size properties, you have three options: true, set, and sum. True size determines what size difference is needed for a base ballz to match the effective visual size, or just sets that value for add ballz. Set applies the same value to base ballz and add ballz regardless. Sum can be used to increase or decrease sizes of ballz. The default is true size. Note that resizing ballz can also be done visually by holding SHIFT + ALT + left-click and dragging a ball inward (decrease) or outward (increase), which can be faster than click through sums via `Preset Mode`.
 
 #### Line Mode
 

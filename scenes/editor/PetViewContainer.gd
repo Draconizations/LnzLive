@@ -201,6 +201,8 @@ func _gui_input(event):
 						"texture_id": ball_data.texture_id,
 						"group": ball_data.group
 					}
+					if pet_node.lnz.paintballs.has(ball_no):
+						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
 					preset_settings_instance.set_properties(properties)
 			else: # Brush mode
 				var properties = preset_settings_instance.get_properties()
