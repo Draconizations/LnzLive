@@ -131,7 +131,7 @@ func _process(_delta):
 		else:
 			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
-				Input.set_custom_mouse_cursor(smallbrush)
+				Input.set_custom_mouse_cursor(bigbrush)
 	elif selecting_on:
 		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 	else:

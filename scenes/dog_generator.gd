@@ -1093,6 +1093,8 @@ func clear_pending_paintballs():
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
 
 func add_pending_paintball(paintball_info):
 	_pending_paintballs_data.append(paintball_info)

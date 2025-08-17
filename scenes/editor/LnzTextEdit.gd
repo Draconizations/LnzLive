@@ -141,7 +141,12 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	if sec.empty():
 		return {}
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var next_sec_search = search("[", 0, start_line, 0)
+	var end_line
+	if next_sec_search.empty():
+		end_line = get_line_count()
+	else:
+		end_line = next_sec_search[SEARCH_RESULT_LINE]
 	return {"start": start_line, "end": end_line}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
@@ -385,11 +390,12 @@ func _on_apply_paintballz():
 
 		insert_line_num = bounds["start"]
 		var j = 0
-		while true:
+		while insert_line_num + j < bounds["end"]:
 			var line = get_line(insert_line_num + j).strip_edges()
-			if line != "" and not line.begins_with(";"):
-				break
-			j += 1
+			if line.begins_with(";"):
+				j += 1
+				continue
+			break
 		insert_line_num += j
 
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
@@ -409,7 +415,7 @@ func _on_apply_paintballz():
 			paintball_line += str(paintball_info.outline_type) + delim
 			paintball_line += str(paintball_info.group) + delim
 			paintball_line += str(paintball_info.texture) + delim
-			paintball_line += str(int(paintball_info.anchored))
+			paintball_line += str(int(!paintball_info.anchored))
 
 			new_paintball_lines += paintball_line + "\n"
 
@@ -1893,13 +1899,12 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 
 			insert_line_num = bounds["start"]
 			var j = 0
-			while true:
-				if insert_line_num + j >= get_line_count():
-					break
+			while insert_line_num + j < bounds["end"]:
 				var line = get_line(insert_line_num + j).strip_edges()
-				if line != "" and not line.begins_with(";"):
-					break
-				j += 1
+				if line.begins_with(";"):
+					j += 1
+					continue
+				break
 			insert_line_num += j
 
 			var delim = _detect_delimiter(bounds["start"], bounds["end"])
