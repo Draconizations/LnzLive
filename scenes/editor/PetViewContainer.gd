@@ -32,6 +32,7 @@ var paintball_mode = false
 var project_mode = false
 var paintball_target_ball = null
 var ray_intersect_paintball = null
+var close_paintball_on_apply = false
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
@@ -717,6 +718,7 @@ func _on_delete_mode_toggled(is_on):
 		Input.set_custom_mouse_cursor(smallbrush)
 
 func _on_paintball_mode_for_ball_toggled(ball):
+	close_paintball_on_apply = true
 	paintball_target_ball = ball
 	set_active_selected_ball(ball)
 	paintball_settings_instance.find_node("Target").selected = 1
@@ -729,6 +731,7 @@ func _on_paintball_mode_toggled(is_on):
 	paintball_mode = is_on
 	if not is_on:
 		paintball_target_ball = null
+		close_paintball_on_apply = false
 	else:
 		if linez_mode:
 			linez_mode = false
@@ -891,3 +894,6 @@ func _on_eyedropper_toggled(is_on):
 		Input.set_custom_mouse_cursor(eyedropper)
 	else:
 		Input.set_custom_mouse_cursor(smallbrush)
+
+func close_paintball_mode():
+	paintball_check_box.pressed = false

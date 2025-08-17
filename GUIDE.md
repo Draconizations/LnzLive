@@ -55,7 +55,9 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 #### Paintball Mode
 
-In `Paintball Mode`, you can place prepared paintballz by point-and-click on ballz. You can enter `Paintball Mode` either by right-click `Tools Menu` on a specific ball (which locks paintballz editing to that ballz) or through the top `Options Menu` under `Mode`
+In `Paintball Mode`, you can place prepared paintballz by point-and-click on ballz. You can enter `Paintball Mode` either by right-click `Tools Menu` on a specific ball (which locks paintballz editing to that ballz) or through the top `Options Menu` under `Mode`.
+
+When you apply paintballz to Babyz, LnzLive will automatically insert the new LNZ 5x with comments `;rep#`. This is because in-game, paintballz have no respect and show up at their own whim, and repeating them can help them appear more stably.
 
 #### Project Mode
 

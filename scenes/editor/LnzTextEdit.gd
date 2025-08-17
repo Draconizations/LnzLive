@@ -376,6 +376,7 @@ func _on_apply_paintballz():
 	var pending_paintballs = pet_node._pending_paintballs_data
 
 	if pending_paintballs.size() > 0:
+		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _get_section_bounds("[Paint Ballz]")
 		var insert_line_num
 
@@ -400,6 +401,8 @@ func _on_apply_paintballz():
 
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
 		var new_paintball_lines = ""
+
+		var paintball_lines_list = []
 		for i in range(pending_paintballs.size() - 1, -1, -1):
 			var paintball_info = pending_paintballs[i]
 			var relative_pos_lnz = paintball_info.relative_pos_lnz
@@ -416,13 +419,24 @@ func _on_apply_paintballz():
 			paintball_line += str(paintball_info.group) + delim
 			paintball_line += str(paintball_info.texture) + delim
 			paintball_line += str(int(!paintball_info.anchored))
+			paintball_lines_list.append(paintball_line)
 
-			new_paintball_lines += paintball_line + "\n"
+		if is_babyz:
+			for rep in range(1, 6):
+				for line in paintball_lines_list:
+					new_paintball_lines += line + " ;rep" + str(rep) + "\n"
+		else:
+			for line in paintball_lines_list:
+				new_paintball_lines += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
 		pet_node.clear_pending_paintballs()
 
 	save_file()
+
+	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if pet_view_container.close_paintball_on_apply:
+		pet_view_container.close_paintball_mode()
 
 func _on_Tree_backup_file():
 	save_backup()

@@ -1131,6 +1131,10 @@ func add_pending_paintball(paintball_info):
 				pb_visual_ball.transparent_color = lnz.texture_list[paintball_info.texture].transparent_color
 
 	pb_visual_ball.palette = base_ball_node.palette
-	pb_visual_ball.z_add = float(_pending_paintballs_data.size())
+
+	var existing_paintballs_count = 0
+	if paintball_map.has(base_ball_no):
+		existing_paintballs_count = paintball_map[base_ball_no].size()
+	pb_visual_ball.z_add = float(existing_paintballs_count + _pending_paintballs_data.size())
 
 	_pending_paintball_nodes.append(pb_visual_ball)
