@@ -193,7 +193,6 @@ func _gui_input(event):
 
 				if ball_data:
 					var properties = {
-						"size": ball_data.size,
 						"fuzz": ball_data.fuzz,
 						"outline": ball_data.outline,
 						"color_index": ball_data.color_index,
@@ -201,21 +200,63 @@ func _gui_input(event):
 						"texture_id": ball_data.texture_id,
 						"group": ball_data.group
 					}
+
+					if pet_node.lnz.balls.has(ball_no): # It's a base ball
+						var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+						var lnz_size = ball_data.size
+						var scale = pet_node.lnz.scales[1]
+						var current_base_size = bhd_size + lnz_size
+						var final_size = round((current_base_size - 2) * (scale / 255.0))
+						final_size -= 1 - fmod(final_size, 2)
+						properties["size"] = int(round(final_size))
+					else: # It's an addball
+						properties["size"] = int(round(ball_data.size))
+
 					if pet_node.lnz.paintballs.has(ball_no):
 						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
 					preset_settings_instance.set_properties(properties)
 			else: # Brush mode
 				var properties = preset_settings_instance.get_properties()
+				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+				var ball_no = target_ball.ball_no
+				var size_mode = properties.get("size_mode", preset_settings_instance.SizeMode.TRUE)
 
-				if properties.get("size_is_additive", false):
-					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-					var ball_no = target_ball.ball_no
-					var original_size = 0
-					if pet_node.lnz.balls.has(ball_no):
-						original_size = pet_node.lnz.balls[ball_no].size
-					elif pet_node.lnz.addballs.has(ball_no):
-						original_size = pet_node.lnz.addballs[ball_no].size
-					properties["size"] = original_size + properties.size
+				match size_mode:
+					preset_settings_instance.SizeMode.SET:
+						pass # Size is already set in properties
+					preset_settings_instance.SizeMode.SUM:
+						var original_size = 0
+						if pet_node.lnz.balls.has(ball_no):
+							original_size = pet_node.lnz.balls[ball_no].size
+						elif pet_node.lnz.addballs.has(ball_no):
+							original_size = pet_node.lnz.addballs[ball_no].size
+						properties["size"] = original_size + properties.size
+					preset_settings_instance.SizeMode.TRUE:
+						if pet_node.lnz.balls.has(ball_no): # Only for base ballz
+							var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+							var scale = pet_node.lnz.scales[1]
+							var desired_final_size = properties.size
+
+							# Iterative approach to find the correct lnz_size
+							var new_lnz_size = 0
+							var calculated_size = 0
+
+							# Initial guess for new_lnz_size
+							var required_base_size = (desired_final_size / (scale / 255.0)) + 2
+							new_lnz_size = required_base_size - bhd_size
+
+							for i in range(3): # Iterate a few times to settle on the correct value
+								var current_base_size = bhd_size + new_lnz_size
+								calculated_size = round((current_base_size - 2) * (scale / 255.0))
+								calculated_size -= 1 - fmod(calculated_size, 2)
+
+								if calculated_size == desired_final_size:
+									break
+
+								var diff = desired_final_size - calculated_size
+								new_lnz_size += diff # Adjust lnz_size based on the difference
+
+							properties["size"] = int(round(new_lnz_size))
 
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
 		return
