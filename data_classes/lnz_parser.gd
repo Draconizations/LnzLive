@@ -406,7 +406,7 @@ func get_fuzz_override(file: File):
 
 func get_add_ball_override(file: File):
 	get_next_section(file, "Add Ball Override")
-	var parsed_lines = get_parsed_lines(file, ["ball", "base", "x", "y", "z"])
+	var parsed_lines = get_parsed_lines(file, ["ball", "x", "y", "z"])
 	for line in parsed_lines:
 		if addballs.has(line.ball):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
