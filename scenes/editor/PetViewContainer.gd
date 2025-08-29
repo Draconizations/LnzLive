@@ -8,6 +8,8 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 
+var input_is_paused := false
+
 var last_selected
 var selecting_on = false
 var active_selected_ball = null
@@ -180,6 +182,9 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	if input_is_paused:
+		return
+
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
@@ -521,6 +526,9 @@ func _gui_input(event):
 			return
 
 func _unhandled_key_input(event):
+	if input_is_paused:
+		return
+		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
