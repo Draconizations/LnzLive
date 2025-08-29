@@ -733,6 +733,7 @@ func _on_paintball_mode_toggled(is_on):
 		paintball_target_ball = null
 		close_paintball_on_apply = false
 	else:
+		paintball_settings_instance.find_node("Target").selected = 0
 		if linez_mode:
 			linez_mode = false
 			line_mode_check_box.pressed = false
