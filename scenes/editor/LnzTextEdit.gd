@@ -337,7 +337,7 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return start_point + i
 
 func get_corresponding_right_ball(left_ball_index):
-	if left_ball_index < 67:
+	if left_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if left_ball_index in [8, 9]:
 				return left_ball_index + 2
@@ -351,7 +351,7 @@ func get_corresponding_right_ball(left_ball_index):
 		return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
 		
 func get_corresponding_left_ball(right_ball_index):
-	if right_ball_index < 67:
+	if right_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if right_ball_index in [10, 11]:
 				return right_ball_index - 2
@@ -667,7 +667,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 
 	if reference_ball != null:
 		var ref_no = reference_ball.ball_no
-		var is_addball_ref = ref_no >= 67 or reference_ball.is_in_group("addballs")
+		var is_addball_ref = ref_no >= KeyBallsData.max_base_ball_num or reference_ball.is_in_group("addballs")
 
 		if is_addball_ref and lnz.addballs.has(ref_no):
 			var ref_ab = lnz.addballs[ref_no]
@@ -758,7 +758,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
-	var addball_no = 67 + _count_section_entries("[Add Ball]") - 1
+	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 
 	if also_connect_line:
 		_on_Node_line_created(addball_no, reference_ball.ball_no)
@@ -773,14 +773,25 @@ func _count_section_entries(section_name: String) -> int:
 	var section_find = search(section_name, 0, 0, 0)
 	if section_find.empty():
 		return 0
+		
 	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_line + i).strip_edges()
-		if line.begins_with("[") or line == "":
+	var entry_count = 0
+	var current_line_num = start_line
+	
+	while current_line_num < get_line_count():
+		var line = get_line(current_line_num).strip_edges()
+		
+		if line.begins_with("["):
 			break
-		i += 1
-	return i
+		
+		if line == "" or line.begins_with(";"):
+			current_line_num += 1
+			continue
+		
+		entry_count += 1
+		current_line_num += 1
+		
+	return entry_count
 
 func _find_insertion_line(start_line: int, end_line: int) -> int:
 	var i = end_line
@@ -939,7 +950,7 @@ func _insert_text_at_line(line_no: int, text: String):
 # v1 Delete Addballz
 # func _on_Node_addball_deleted(ball_no):
 # 	# remove the addball line
-# 	var line_no = find_line_in_addball_section(ball_no - 67)
+# 	var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 # 	select(line_no, 0, line_no + 1, 0)
 # 	cut()
 	
@@ -1334,9 +1345,9 @@ func _on_ToolsMenu_copy_l_to_r():
 	section_find = search('[Add Ball]', 0, 0, 0)
 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
 	i = 0
-	var ball_no = 67
+	var ball_no = KeyBallsData.max_base_ball_num
 	var balls_to_add_temp = []
-	var new_ball_count = 67
+	var new_ball_count = KeyBallsData.max_base_ball_num
 	while true:
 		var line = get_line(start_of_section + i).lstrip(" ")
 		# ignore comments for now
