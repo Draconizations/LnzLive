@@ -88,7 +88,7 @@ func _update_shader_texture_params():
 
 	if texture != null:
 		var raw_texture_size = texture.get_size()
-		var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
+		var eff_texture_size = texture_size if (texture_size != Vector2.ZERO and !tile_texture) else raw_texture_size
 
 		# print("Declared size from [Texture List]:", texture_size)
 		# print("Actual image size:", raw_texture_size)
