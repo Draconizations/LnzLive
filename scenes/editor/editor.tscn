@@ -241,7 +241,6 @@ __meta__ = {
 }
 
 [node name="FileOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel"]
-visible = false
 margin_right = 150.0
 margin_bottom = 30.0
 __meta__ = {
@@ -996,6 +995,7 @@ margin_left = -250.0
 margin_top = -250.0
 margin_right = 250.0
 margin_bottom = 250.0
+custom_styles/panel = ExtResource( 19 )
 window_title = "Help"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1008,8 +1008,8 @@ margin_left = 10.0
 margin_top = 10.0
 margin_right = -10.0
 margin_bottom = -10.0
-custom_fonts/bold_font = ExtResource( 34 )
-custom_fonts/normal_font = ExtResource( 34 )
+custom_fonts/bold_font = ExtResource( 27 )
+custom_fonts/normal_font = ExtResource( 27 )
 bbcode_enabled = true
 bbcode_text = "[b]Basic Controls[/b]
 
@@ -1019,44 +1019,23 @@ Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zo
 
 Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
 
-When you save, the edited LNZ will be stored in your browser's local storage.
+[b]Editing Modes[/b]
 
-If you want to load your own pet, extract the LNZ using LNZ Pro, paste into the text box and save. Only pet files are fully supported; breed files may not display correctly. Pasting requires browser permission to access your clipboard. No data is sent anywhere; all files and data are processed client-side in your browser.
+The editor has several modes for different tasks, available under the 'Mode' menu.
 
-To view animations, type an animation number in the box at the top and hit enter. There are roughly 500 animations per species.
+- [b]Select Mode:[/b] Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
+- [b]Paintball Mode:[/b] Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
+- [b]Line Mode:[/b] Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
+- [b]Preset Mode:[/b] Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
+- [b]Project Mode:[/b] Create complex skeletal deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
 
-[b]Selecting[/b]
+[b]Backups[/b]
 
-Tick the Select checkbox to turn on selecting.
-
-Highlight balls/paintballs using the mouse. Use the checkboxes to hide addballs/balls/paintballs if you don't want to select them.
-
-While a ball or addball is selected:
-- Double-click or press Z or B to go to the ball in the Ball Info/Add Ball section.
-
-- Press X or M to go to the ball in the Move section. If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Moves for that ball.
-
-- Press C or P to go to the ball in the Project section.  If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Projections for that ball.
-
-- Press V or L to go to the ball in the Linez section. If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Linez for that ball.
+Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
 
 [b]Tools Menu[/b]
 
-Press Ctrl+Space in the pet view to open the tools menu.
-
-You can color the entire pet or parts of the pet.
-
-While Select is on and you have a ball selected, you can add a new addball and line from the selected ball. If you have an addball selected, your new addball will be parented to the base ball, but connected via a line to the selected addball. The text editor will focus on your newly created addball.
-
-You can copy ball info, addballs, lines, and paintballs from the left side of the pet to the right. The left side of the pet is defined as the one which has ankle ball 0, i.e. the left side when looking at the pet face-on, NOT the pet's left side.
-
-This is a destructive operation - it will completely reorder your addballs, lines and paintballs, and will lose any non-symmetrical data from the right side of the pet.
-
-Because it's destructive, a backup will be created before running the operation.
-
-Note that this operation will mirror partial outlines, but does not know about mirrored textures (e.g. stripe16 vs stripe17).
-
-This operation will not work if you have comments or blank lines in your lnz file."
+Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
 text = "Basic Controls
 
 Load a sample pet by double-clicking it in the left-hand menu.
@@ -1065,78 +1044,66 @@ Click and drag in the centre screen to rotate the pet. Use the mouse wheel to zo
 
 Edit the LNZ file in the right-hand text box. Hit Ctrl+S to save your changes and refresh the pet render.
 
-When you save, the edited LNZ will be stored in your browser's local storage.
+Editing Modes
 
-If you want to load your own pet, extract the LNZ using LNZ Pro, paste into the text box and save. Only pet files are fully supported; breed files may not display correctly. Pasting requires browser permission to access your clipboard. No data is sent anywhere; all files and data are processed client-side in your browser.
+The editor has several modes for different tasks, available under the 'Mode' menu.
 
-To view animations, type an animation number in the box at the top and hit enter. There are roughly 500 animations per species.
+- Select Mode: Hover over balls to see their number. Use hotkeys (Z, X, C, V) to jump to their definitions in the LNZ. Double-click to select a ball.
+- Paintball Mode: Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
+- Line Mode: Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
+- Preset Mode: Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
+- Project Mode: Create complex skeletal deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
 
-Selecting
+Backups
 
-Tick the Select checkbox to turn on selecting.
-
-Highlight balls/paintballs using the mouse. Use the checkboxes to hide addballs/balls/paintballs if you don't want to select them.
-
-While a ball or addball is selected:
-- Double-click or press Z or B to go to the ball in the Ball Info/Add Ball section.
-
-- Press X or M to go to the ball in the Move section. If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Moves for that ball.
-
-- Press C or P to go to the ball in the Project section.  If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Projections for that ball.
-
-- Press V or L to go to the ball in the Linez section. If the ball doesn't exist there, you'll be taken to the start of the section. Press again to cycle through Linez for that ball.
+Most destructive operations (like applying paintballs, creating lines, or using tools from the Tools Menu) will now automatically create a backup of your LNZ file. Up to 3 rolling backups will be saved (e.g., `filename_backup_1.lnz`).
 
 Tools Menu
 
-Press Ctrl+Space in the pet view to open the tools menu.
-
-You can color the entire pet or parts of the pet.
-
-While Select is on and you have a ball selected, you can add a new addball and line from the selected ball. If you have an addball selected, your new addball will be parented to the base ball, but connected via a line to the selected addball. The text editor will focus on your newly created addball.
-
-You can copy ball info, addballs, lines, and paintballs from the left side of the pet to the right. The left side of the pet is defined as the one which has ankle ball 0, i.e. the left side when looking at the pet face-on, NOT the pet's left side.
-
-This is a destructive operation - it will completely reorder your addballs, lines and paintballs, and will lose any non-symmetrical data from the right side of the pet.
-
-Because it's destructive, a backup will be created before running the operation.
-
-Note that this operation will mirror partial outlines, but does not know about mirrored textures (e.g. stripe16 vs stripe17).
-
-This operation will not work if you have comments or blank lines in your lnz file."
+Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
 __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="PaletteViewerPopup" type="Popup" parent="SceneRoot"]
+[node name="PaletteViewerPopup" type="WindowDialog" parent="SceneRoot"]
 margin_left = 187.263
 margin_top = 172.014
 margin_right = 687.263
 margin_bottom = 672.014
 rect_min_size = Vector2( 500, 500 )
+custom_styles/panel = ExtResource( 19 )
+window_title = "Palette Viewer"
 script = ExtResource( 36 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="SceneRoot/PaletteViewerPopup"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -38.0
 rect_min_size = Vector2( 450, 500 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="SceneRoot/PaletteViewerPopup/PaletteViewerScrollContainer"]
-margin_right = 450.0
+margin_right = 484.0
 margin_bottom = 500.0
 rect_min_size = Vector2( 450, 500 )
 
 [node name="CloseButton" type="Button" parent="SceneRoot/PaletteViewerPopup"]
+anchor_left = 0.5
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-margin_left = 1.0
-margin_top = -35.0
-margin_right = -49.0
-rect_min_size = Vector2( 450, 0 )
+margin_left = -242.0
+margin_top = -34.0
+margin_right = 242.0
+margin_bottom = -14.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -1191,6 +1158,9 @@ margin_top = -160.0
 margin_right = 230.0
 margin_bottom = 213.0
 size_flags_horizontal = 3
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/title_font = ExtResource( 28 )
+custom_fonts/font = ExtResource( 28 )
 window_title = "Recolor"
 dialog_text = "Note: always excludes eyes, tongue and nose
 "
@@ -1448,3 +1418,5 @@ __meta__ = {
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EditOptionButton/PopupPanel/EditOptionContainer/HeadShotButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_HeadShotButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer/HelpPopupButton" to="SceneRoot/HelpPopupDialog" method="popup_centered"]

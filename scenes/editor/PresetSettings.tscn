@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scenes/editor/PresetSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
+[ext_resource path="res://scenes/editor/DraggablePanel.gd" type="Script" id=4]
 
 [sub_resource type="DynamicFont" id=1]
 size = 30
@@ -15,10 +16,11 @@ script = ExtResource( 1 )
 visible = false
 margin_left = 10.0
 margin_top = 10.0
-margin_right = 310.0
-margin_bottom = 370.0
-rect_min_size = Vector2( 300, 360 )
+margin_right = 410.0
+margin_bottom = 910.0
+rect_min_size = Vector2( 450, 1000 )
 custom_styles/panel = ExtResource( 2 )
+script = ExtResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -26,29 +28,60 @@ __meta__ = {
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 4.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 15.0
+margin_top = 15.0
+margin_right = -15.0
+margin_bottom = -15.0
+rect_min_size = Vector2( 300, 975 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_right = 292.0
+margin_right = 420.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 1 )
 text = "Preset Properties"
 align = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="ToggleContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 25.0
-margin_right = 292.0
-margin_bottom = 49.0
+margin_right = 420.0
+margin_bottom = 54.0
+
+[node name="ApplyBallzPresetToggle" type="CheckBox" parent="Panel/VBoxContainer/ToggleContainer"]
+margin_right = 208.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+pressed = true
+text = "Ballz"
+
+[node name="ApplyPaintballzPresetToggle" type="CheckBox" parent="Panel/VBoxContainer/ToggleContainer"]
+margin_left = 212.0
+margin_right = 420.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+pressed = true
+text = "Paintballz"
+
+[node name="BallzLabel" type="Label" parent="Panel/VBoxContainer"]
+margin_top = 58.0
+margin_right = 420.0
+margin_bottom = 79.0
+custom_fonts/font = SubResource( 1 )
+text = "Ballz Preset"
+align = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 83.0
+margin_right = 420.0
+margin_bottom = 107.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
 margin_top = 1.0
-margin_right = 95.0
+margin_right = 165.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.66
@@ -56,149 +89,172 @@ custom_fonts/font = SubResource( 1 )
 text = "Size"
 
 [node name="Size" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer"]
-margin_left = 99.0
-margin_right = 194.0
+margin_left = 169.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -100.0
 value = 10.0
 
-[node name="SizeAddToggle" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer"]
-margin_left = 198.0
-margin_right = 292.0
-margin_bottom = 24.0
+[node name="SizeOptionsContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 111.0
+margin_right = 420.0
+margin_bottom = 140.0
+
+[node name="SizeButtonGroup" type="Node" parent="Panel/VBoxContainer/SizeOptionsContainer"]
+
+[node name="SizeSetToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
+margin_right = 137.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Set"
+
+[node name="SizeSumToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
+margin_left = 141.0
+margin_right = 278.0
+margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Sum"
 
+[node name="SizeTrueToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
+margin_left = 282.0
+margin_right = 420.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+pressed = true
+text = "True"
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 53.0
-margin_right = 292.0
-margin_bottom = 77.0
+margin_top = 144.0
+margin_right = 420.0
+margin_bottom = 168.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer2"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Color"
 
 [node name="Color" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer2"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "0"
 placeholder_text = "color"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 81.0
-margin_right = 292.0
-margin_bottom = 105.0
+margin_top = 172.0
+margin_right = 420.0
+margin_bottom = 196.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline Color"
 
 [node name="OutlineColor" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer3"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "0"
 placeholder_text = "outcol"
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 109.0
-margin_right = 292.0
-margin_bottom = 133.0
+margin_top = 200.0
+margin_right = 420.0
+margin_bottom = 224.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer4"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline"
 
 [node name="Outline" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer4"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -2.0
 value = -1.0
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 137.0
-margin_right = 292.0
-margin_bottom = 161.0
+margin_top = 228.0
+margin_right = 420.0
+margin_bottom = 252.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer5"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Fuzz"
 
 [node name="Fuzz" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer5"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 165.0
-margin_right = 292.0
-margin_bottom = 189.0
+margin_top = 256.0
+margin_right = 420.0
+margin_bottom = 280.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer6"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Texture"
 
 [node name="Texture" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer6"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -1.0
 value = -1.0
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 221.0
-margin_right = 292.0
-margin_bottom = 245.0
+margin_top = 284.0
+margin_right = 420.0
+margin_bottom = 308.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer7"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 208.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Group"
 
 [node name="Group" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer7"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 212.0
+margin_right = 420.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -1.0
 value = -1.0
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 249.0
-margin_right = 292.0
-margin_bottom = 278.0
+margin_top = 312.0
+margin_right = 420.0
+margin_bottom = 312.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer8"]
 visible = false
@@ -217,9 +273,421 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 
 [node name="EyedropperToggle" type="CheckButton" parent="Panel/VBoxContainer"]
-margin_top = 282.0
-margin_right = 292.0
-margin_bottom = 322.0
+margin_top = 316.0
+margin_right = 420.0
+margin_bottom = 356.0
 custom_fonts/font = SubResource( 1 )
 text = "Eyedropper"
 align = 1
+
+[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
+margin_top = 360.0
+margin_right = 420.0
+margin_bottom = 364.0
+
+[node name="PaintballzLabel" type="Label" parent="Panel/VBoxContainer"]
+margin_top = 368.0
+margin_right = 420.0
+margin_bottom = 389.0
+custom_fonts/font = SubResource( 1 )
+text = "Paintballz Preset"
+align = 1
+
+[node name="PaintballzTextEdit" type="TextEdit" parent="Panel/VBoxContainer"]
+margin_top = 393.0
+margin_right = 420.0
+margin_bottom = 493.0
+rect_min_size = Vector2( 0, 100 )
+custom_fonts/font = SubResource( 1 )
+
+[node name="SetPaintballzButton" type="Button" parent="Panel/VBoxContainer"]
+margin_top = 497.0
+margin_right = 420.0
+margin_bottom = 524.0
+custom_fonts/font = SubResource( 1 )
+text = "Apply PB LNZ to PB Preset"
+
+[node name="PaintballzTree" type="Tree" parent="Panel/VBoxContainer"]
+margin_top = 528.0
+margin_right = 420.0
+margin_bottom = 628.0
+rect_min_size = Vector2( 0, 100 )
+hide_root = true
+
+[node name="MirrorLabel" type="Label" parent="Panel/VBoxContainer"]
+margin_top = 632.0
+margin_right = 420.0
+margin_bottom = 653.0
+custom_fonts/font = SubResource( 1 )
+text = "Mirror"
+align = 1
+
+[node name="MirrorGrid" type="GridContainer" parent="Panel/VBoxContainer"]
+margin_top = 657.0
+margin_right = 420.0
+margin_bottom = 684.0
+columns = 3
+
+[node name="MirrorXButton" type="Button" parent="Panel/VBoxContainer/MirrorGrid"]
+margin_right = 137.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "X-Axis"
+
+[node name="MirrorYButton" type="Button" parent="Panel/VBoxContainer/MirrorGrid"]
+margin_left = 141.0
+margin_right = 278.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Y-Axis"
+
+[node name="MirrorZButton" type="Button" parent="Panel/VBoxContainer/MirrorGrid"]
+margin_left = 282.0
+margin_right = 419.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Z-Axis"
+
+[node name="RotateLabel" type="Label" parent="Panel/VBoxContainer"]
+margin_top = 688.0
+margin_right = 420.0
+margin_bottom = 709.0
+custom_fonts/font = SubResource( 1 )
+text = "Rotate"
+align = 1
+
+[node name="RotationContainer" type="VBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 713.0
+margin_right = 420.0
+margin_bottom = 895.0
+
+[node name="RollContainer" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_right = 420.0
+margin_bottom = 27.0
+
+[node name="RollLabel" type="Label" parent="Panel/VBoxContainer/RotationContainer/RollContainer"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Roll"
+
+[node name="ButtonRollP30" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+30"
+
+[node name="ButtonRollP60" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+60"
+
+[node name="ButtonRollP120" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+120"
+
+[node name="ButtonRollP180" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+180"
+
+[node name="RollContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_top = 31.0
+margin_right = 420.0
+margin_bottom = 58.0
+
+[node name="RollLabel2" type="Label" parent="Panel/VBoxContainer/RotationContainer/RollContainer2"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+[node name="ButtonRollM30" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer2"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-30"
+
+[node name="ButtonRollM60" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer2"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-60"
+
+[node name="ButtonRollM120" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer2"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-120"
+
+[node name="ButtonRollM180" type="Button" parent="Panel/VBoxContainer/RotationContainer/RollContainer2"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-180"
+
+[node name="PitchContainer" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_top = 62.0
+margin_right = 420.0
+margin_bottom = 89.0
+
+[node name="PitchLabel" type="Label" parent="Panel/VBoxContainer/RotationContainer/PitchContainer"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Pitch"
+
+[node name="ButtonPitchP30" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+30"
+
+[node name="ButtonPitchP60" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+60"
+
+[node name="ButtonPitchP120" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+120"
+
+[node name="ButtonPitchP180" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+180"
+
+[node name="PitchContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_top = 93.0
+margin_right = 420.0
+margin_bottom = 120.0
+
+[node name="PitchLabel2" type="Label" parent="Panel/VBoxContainer/RotationContainer/PitchContainer2"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+[node name="ButtonPitchM30" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer2"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-30"
+
+[node name="ButtonPitchM60" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer2"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-60"
+
+[node name="ButtonPitchM120" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer2"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-120"
+
+[node name="ButtonPitchM180" type="Button" parent="Panel/VBoxContainer/RotationContainer/PitchContainer2"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-180"
+
+[node name="YawContainer" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_top = 124.0
+margin_right = 420.0
+margin_bottom = 151.0
+
+[node name="YawLabel" type="Label" parent="Panel/VBoxContainer/RotationContainer/YawContainer"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Yaw"
+
+[node name="ButtonYawP30" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+30"
+
+[node name="ButtonYawP60" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+60"
+
+[node name="ButtonYawP120" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+120"
+
+[node name="ButtonYawP180" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "+180"
+
+[node name="YawContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/RotationContainer"]
+margin_top = 155.0
+margin_right = 420.0
+margin_bottom = 182.0
+
+[node name="YawLabel2" type="Label" parent="Panel/VBoxContainer/RotationContainer/YawContainer2"]
+margin_top = 3.0
+margin_right = 80.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+[node name="ButtonYawM30" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer2"]
+margin_left = 84.0
+margin_right = 165.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-30"
+
+[node name="ButtonYawM60" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer2"]
+margin_left = 169.0
+margin_right = 250.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-60"
+
+[node name="ButtonYawM120" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer2"]
+margin_left = 254.0
+margin_right = 335.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-120"
+
+[node name="ButtonYawM180" type="Button" parent="Panel/VBoxContainer/RotationContainer/YawContainer2"]
+margin_left = 339.0
+margin_right = 420.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "-180"
+
+[node name="CustomRotationContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 899.0
+margin_right = 420.0
+margin_bottom = 923.0
+
+[node name="LabelRoll" type="Label" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_top = 1.0
+margin_right = 59.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Roll"
+
+[node name="RollSpinBox" type="SpinBox" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_left = 63.0
+margin_right = 137.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -360.0
+max_value = 360.0
+
+[node name="LabelPitch" type="Label" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_left = 141.0
+margin_top = 1.0
+margin_right = 200.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Pitch"
+
+[node name="PitchSpinBox" type="SpinBox" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_left = 204.0
+margin_right = 278.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -360.0
+max_value = 360.0
+
+[node name="LabelYaw" type="Label" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_left = 282.0
+margin_top = 1.0
+margin_right = 341.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Yaw"
+
+[node name="YawSpinBox" type="SpinBox" parent="Panel/VBoxContainer/CustomRotationContainer"]
+margin_left = 345.0
+margin_right = 419.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -360.0
+max_value = 360.0
+
+[node name="CustomRotateButton" type="Button" parent="Panel/VBoxContainer"]
+margin_top = 927.0
+margin_right = 420.0
+margin_bottom = 954.0
+custom_fonts/font = SubResource( 1 )
+text = "Apply Rotations to PB Preset"

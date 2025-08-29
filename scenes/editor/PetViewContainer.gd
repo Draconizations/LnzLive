@@ -8,6 +8,8 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 
+var input_is_paused := false
+
 var last_selected
 var selecting_on = false
 var active_selected_ball = null
@@ -27,10 +29,13 @@ var drag_start_pos = Vector2()
 
 var linez_mode = false
 var linez_start_ball = null
+var line_mode_close = false
 
 var paintball_mode = false
 var project_mode = false
 var paintball_target_ball = null
+var ray_intersect_paintball = null
+var close_paintball_on_apply = false
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
@@ -39,6 +44,7 @@ onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSpli
 onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
 
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
+onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
 
@@ -78,8 +84,9 @@ func _ready():
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
-	project_settings_instance.connect("randomize_projections", self, "_on_randomize_projections")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -109,18 +116,18 @@ func _process(_delta):
 			text = "Paintball Mode: Left-click to delete last paintball"
 		else:
 			text = "Paintball Mode: Left-click to add next paintball"
-	elif project_mode:
-		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 		
-		# Check for mode-specific hotkeys and append
 		if Input.is_key_pressed(KEY_SHIFT):
 			text += "\nSHIFT+wheel to change paintball diameter"
-		if Input.is_key_pressed(KEY_CONTROL):
-			text += "\nCTRL+left-click to delete last paintball"
-			Input.set_custom_mouse_cursor(eraser)
+		
+		#if Input.is_key_pressed(KEY_CONTROL):
+		#	text += "\nCTRL+left-click to delete last paintball"
+		#	Input.set_custom_mouse_cursor(eraser)
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+	elif project_mode:
+		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 	elif preset_mode:
 		if Input.is_key_pressed(KEY_ALT):
 			text = "Eyedropper Mode: Left-click a ball to sample its properties."
@@ -128,7 +135,7 @@ func _process(_delta):
 		else:
 			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
-				Input.set_custom_mouse_cursor(smallbrush)
+				Input.set_custom_mouse_cursor(bigbrush)
 	elif selecting_on:
 		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 	else:
@@ -175,6 +182,9 @@ func flip_camera_view():
 	camera.transform = camera_transform
 
 func _gui_input(event):
+	if input_is_paused:
+		return
+
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
@@ -190,7 +200,6 @@ func _gui_input(event):
 
 				if ball_data:
 					var properties = {
-						"size": ball_data.size,
 						"fuzz": ball_data.fuzz,
 						"outline": ball_data.outline,
 						"color_index": ball_data.color_index,
@@ -198,19 +207,63 @@ func _gui_input(event):
 						"texture_id": ball_data.texture_id,
 						"group": ball_data.group
 					}
+
+					if pet_node.lnz.balls.has(ball_no): # It's a base ball
+						var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+						var lnz_size = ball_data.size
+						var scale = pet_node.lnz.scales[1]
+						var current_base_size = bhd_size + lnz_size
+						var final_size = round((current_base_size - 2) * (scale / 255.0))
+						final_size -= 1 - fmod(final_size, 2)
+						properties["size"] = int(round(final_size))
+					else: # It's an addball
+						properties["size"] = int(round(ball_data.size))
+
+					if pet_node.lnz.paintballs.has(ball_no):
+						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
 					preset_settings_instance.set_properties(properties)
 			else: # Brush mode
 				var properties = preset_settings_instance.get_properties()
+				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+				var ball_no = target_ball.ball_no
+				var size_mode = properties.get("size_mode", preset_settings_instance.SizeMode.TRUE)
 
-				if properties.get("size_is_additive", false):
-					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-					var ball_no = target_ball.ball_no
-					var original_size = 0
-					if pet_node.lnz.balls.has(ball_no):
-						original_size = pet_node.lnz.balls[ball_no].size
-					elif pet_node.lnz.addballs.has(ball_no):
-						original_size = pet_node.lnz.addballs[ball_no].size
-					properties["size"] = original_size + properties.size
+				match size_mode:
+					preset_settings_instance.SizeMode.SET:
+						pass # Size is already set in properties
+					preset_settings_instance.SizeMode.SUM:
+						var original_size = 0
+						if pet_node.lnz.balls.has(ball_no):
+							original_size = pet_node.lnz.balls[ball_no].size
+						elif pet_node.lnz.addballs.has(ball_no):
+							original_size = pet_node.lnz.addballs[ball_no].size
+						properties["size"] = original_size + properties.size
+					preset_settings_instance.SizeMode.TRUE:
+						if pet_node.lnz.balls.has(ball_no): # Only for base ballz
+							var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+							var scale = pet_node.lnz.scales[1]
+							var desired_final_size = properties.size
+
+							# Iterative approach to find the correct lnz_size
+							var new_lnz_size = 0
+							var calculated_size = 0
+
+							# Initial guess for new_lnz_size
+							var required_base_size = (desired_final_size / (scale / 255.0)) + 2
+							new_lnz_size = required_base_size - bhd_size
+
+							for i in range(3): # Iterate a few times to settle on the correct value
+								var current_base_size = bhd_size + new_lnz_size
+								calculated_size = round((current_base_size - 2) * (scale / 255.0))
+								calculated_size -= 1 - fmod(calculated_size, 2)
+
+								if calculated_size == desired_final_size:
+									break
+
+								var diff = desired_final_size - calculated_size
+								new_lnz_size += diff # Adjust lnz_size based on the difference
+
+							properties["size"] = int(round(new_lnz_size))
 
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
 		return
@@ -247,9 +300,9 @@ func _gui_input(event):
 			var from = camera.project_ray_origin(screen_pos)
 			var to = from + camera.project_ray_normal(screen_pos) * 10000
 			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(from, to, [self], 0x7FFFFFFF, true, true)
+			var result = space_state.intersect_ray(from, to, [self], 1, true, true)
 
-			if result and result.collider.get_parent() == target_ball:
+			if result and result.collider and result.collider.get_parent() == target_ball:
 				var intersection_point = result.position
 
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
@@ -423,12 +476,15 @@ func _gui_input(event):
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
+			Input.set_custom_mouse_cursor(rope)
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 				if b != linez_start_ball:
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball:
 				hover.apply_outline_state(hover.OutlineState.HOVER)
+		elif not preset_mode and not paintball_mode and not project_mode:
+			Input.set_custom_mouse_cursor(hand_neutral)
 
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
@@ -470,6 +526,9 @@ func _gui_input(event):
 			return
 
 func _unhandled_key_input(event):
+	if input_is_paused:
+		return
+		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
@@ -668,6 +727,7 @@ func _on_delete_mode_toggled(is_on):
 		Input.set_custom_mouse_cursor(smallbrush)
 
 func _on_paintball_mode_for_ball_toggled(ball):
+	close_paintball_on_apply = true
 	paintball_target_ball = ball
 	set_active_selected_ball(ball)
 	paintball_settings_instance.find_node("Target").selected = 1
@@ -680,7 +740,9 @@ func _on_paintball_mode_toggled(is_on):
 	paintball_mode = is_on
 	if not is_on:
 		paintball_target_ball = null
+		close_paintball_on_apply = false
 	else:
+		paintball_settings_instance.find_node("Target").selected = 0
 		if linez_mode:
 			linez_mode = false
 			line_mode_check_box.pressed = false
@@ -689,11 +751,16 @@ func _on_paintball_mode_toggled(is_on):
 			preset_mode = false
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
+			_on_project_mode_toggled(false)
 	_update_paintball_mode_ui()
 
 func _on_line_mode_toggled(is_on):
 	linez_mode = is_on
 	if is_on:
+		line_mode_settings_instance.show()
 		Input.set_custom_mouse_cursor(rope)
 		if paintball_mode:
 			paintball_mode = false
@@ -704,6 +771,8 @@ func _on_line_mode_toggled(is_on):
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
 	else:
+		line_mode_close = false
+		line_mode_settings_instance.hide()
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
@@ -721,6 +790,10 @@ func _on_project_mode_toggled(is_on):
 			linez_mode = false
 			line_mode_check_box.pressed = false
 			_on_line_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
 	else:
 		project_settings_instance.hide()
 
@@ -733,54 +806,9 @@ func _flatten_symmetry_dict(dict: Dictionary) -> Array:
 				flat_list.append(part_info)
 	return flat_list
 
-func _on_randomize_projections():
-	var species = KeyBallsData.species
-	var symmetry_dict = null
-
-	if species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
-
-	if symmetry_dict == null:
-		print("Symmetry data not available for this species.")
-		return
-
-	var available_parts = _flatten_symmetry_dict(symmetry_dict)
-	if available_parts.empty():
-		print("No valid symmetrical parts to randomize.")
-		return
-
-	var new_projections = []
-	randomize()
-
-	for _i in range(10): # Create 10 pairs of projections for more variety
-		var part_a_info = available_parts[randi() % available_parts.size()]
-		var part_b_info = available_parts[randi() % available_parts.size()]
-
-		# Ensure left and right arrays are of the same size for 1-to-1 mapping
-		if part_a_info.left.size() != part_a_info.right.size() or part_b_info.left.size() != part_b_info.right.size():
-			continue
-
-		var idx_a = randi() % part_a_info.left.size()
-		var ball_a_left = part_a_info.left[idx_a]
-		var ball_a_right = part_a_info.right[idx_a]
-
-		var idx_b = randi() % part_b_info.left.size()
-		var ball_b_left = part_b_info.left[idx_b]
-		var ball_b_right = part_b_info.right[idx_b]
-
-		var amount = randi() % 201 - 100 # Random amount between -100 and 100
-
-		new_projections.append({"stationary": ball_a_left, "projected": ball_b_left, "amount": amount})
-		new_projections.append({"stationary": ball_a_right, "projected": ball_b_right, "amount": amount})
-
-	project_settings_instance.set_held_projections(new_projections)
-
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()
+	lnz_text_edit.save_backup()
 
 	# Two-value sections
 	var leg_ext1_min = int(settings.leg_ext_1.min)
@@ -849,6 +877,8 @@ func _handle_line_mode_input(event) -> bool:
 					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
 					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 					linez_start_ball = null
+					if line_mode_close:
+						line_mode_check_box.pressed = false
 			return true
 	return false
 
@@ -863,6 +893,9 @@ func _on_preset_mode_toggled(is_on):
 		if linez_mode:
 			linez_mode = false
 			line_mode_check_box.pressed = false
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
 		preset_settings_instance.hide()
@@ -874,3 +907,6 @@ func _on_eyedropper_toggled(is_on):
 		Input.set_custom_mouse_cursor(eyedropper)
 	else:
 		Input.set_custom_mouse_cursor(smallbrush)
+
+func close_paintball_mode():
+	paintball_check_box.pressed = false

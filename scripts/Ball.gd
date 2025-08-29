@@ -133,26 +133,32 @@ func set_z_add(new_value):
 
 func set_texture_size(new_value):
 	texture_size = new_value
+	_update_shader_texture_params()
 
 func set_texture(new_value):
 	texture = new_value
-	
-	if $MeshInstance.material_override != null:
-		$MeshInstance.material_override.set_shader_param("ball_texture", new_value)
-		if new_value != null:
-			var raw_texture_size = new_value.get_size()
-			var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
+	_update_shader_texture_params()
 
-			# print("Declared size from [Texture List]:", texture_size)
-			# print("Actual image size:", raw_texture_size)
-			# print("Effective texture_size passed to shader:", eff_texture_size)
-			# print("Texture resized? ", eff_texture_size != raw_texture_size)
-			
-			$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
-			$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
-			$MeshInstance.material_override.set_shader_param("has_texture", true)
-		else:
-			$MeshInstance.material_override.set_shader_param("has_texture", false)
+func _update_shader_texture_params():
+	if not is_inside_tree() or $MeshInstance.material_override == null:
+		return
+
+	if texture != null:
+		var raw_texture_size = texture.get_size()
+		var eff_texture_size = texture_size if (texture_size != Vector2.ZERO and !tile_texture) else raw_texture_size
+
+		# print("Declared size from [Texture List]:", texture_size)
+		# print("Actual image size:", raw_texture_size)
+		# print("Effective texture_size passed to shader:", eff_texture_size)
+		# print("Texture resized? ", eff_texture_size != raw_texture_size)
+		
+		$MeshInstance.material_override.set_shader_param("ball_texture", texture)
+		$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
+		$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
+		$MeshInstance.material_override.set_shader_param("has_texture", true)
+	else:
+		$MeshInstance.material_override.set_shader_param("ball_texture", null)
+		$MeshInstance.material_override.set_shader_param("has_texture", false)
 
 func set_palette(new_value):
 	if new_value != null:

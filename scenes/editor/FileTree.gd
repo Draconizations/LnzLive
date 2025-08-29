@@ -4,6 +4,8 @@ signal example_file_selected(filepath)
 signal user_file_selected(filepath)
 signal palette_selected(fileprefix)
 
+onready var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+
 var examples: TreeItem
 var local_storage: TreeItem
 var root: TreeItem
@@ -31,6 +33,7 @@ func _ready():
 	add_file_button.connect("pressed", self, "_on_AddFileButton_pressed")
 	option_add_file_button.connect("pressed", self, "_on_FileResourceButton_pressed")
 	file_dialog.connect("files_selected", self, "_on_FileDialog_files_selected")
+	file_dialog.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 	
 	file_dialog.clear_filters()
 	file_dialog.add_filter("*.lnz ; LNZ Files")
@@ -55,14 +58,19 @@ func _ready():
 	rescan_textures()
 	rescan_palettes()
 
+func _on_FileDialog_popup_hide():
+	pet_view_container.input_is_paused = false
+
 func _on_AddFileButton_pressed():
 	if (!OS.has_feature("HTML5")):
+		pet_view_container.input_is_paused = true
 		file_dialog.popup_centered()
 	else:
 		web_file_dialog()
 
 func _on_FileResourceButton_pressed():
 	if (!OS.has_feature("HTML5")):
+		pet_view_container.input_is_paused = true
 		file_dialog.popup_centered()
 	else:
 		web_file_dialog()
