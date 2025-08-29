@@ -48,6 +48,8 @@ func _ready():
 	var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
 	if file_tree and not file_tree.is_connected("palette_selected", self, "_on_palette_selected"):
 		file_tree.connect("palette_selected", self, "_on_palette_selected")
+	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):
+		file_tree.connect("example_file_selected", self, "_on_example_file_selected")
 
 func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
@@ -84,9 +86,25 @@ func _set_text_preserve(new_text: String):
 func save_backup():
 	if not is_user_file:
 		return
+
+	var dir = Directory.new()
+	var base_path = filepath.trim_suffix(".lnz")
+	var backup_path1 = base_path + "_backup_1.lnz"
+	var backup_path2 = base_path + "_backup_2.lnz"
+	var backup_path3 = base_path + "_backup_3.lnz"
+
+	# Rotate backups: 2 -> 3, 1 -> 2
+	if dir.file_exists(backup_path2):
+		if dir.file_exists(backup_path3):
+			dir.remove(backup_path3)
+		dir.rename(backup_path2, backup_path3)
+
+	if dir.file_exists(backup_path1):
+		dir.rename(backup_path1, backup_path2)
+
+	# Create new backup
 	var file = File.new()
-	var backup_path = filepath.replace(".lnz", "_backup.lnz")
-	file.open(backup_path, File.WRITE)
+	file.open(backup_path1, File.WRITE)
 	file.store_string(text)
 	file.close()
 	emit_signal("file_backed_up")
@@ -123,7 +141,12 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	if sec.empty():
 		return {}
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var next_sec_search = search("[", 0, start_line, 0)
+	var end_line
+	if next_sec_search.empty():
+		end_line = get_line_count()
+	else:
+		end_line = next_sec_search[SEARCH_RESULT_LINE]
 	return {"start": start_line, "end": end_line}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
@@ -141,11 +164,35 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 			return " "
 	return " "
 
-func _split_and_clean(line: String, delim: String) -> Array:
-	var parts = line.split(delim, false)
-	for i in range(parts.size()):
-		parts[i] = parts[i].strip_edges()
-	return parts
+func _split_and_clean(line: String) -> Array:
+	# First, handle the common case of lines with comments
+	var line_parts = line.split(";")
+	var data_part = line_parts[0].strip_edges()
+
+	# Now, try different delimiters on the data part
+	var delimiters = [", ", ",", "\t", " "]
+	for delim in delimiters:
+		var parts = data_part.split(delim, false)
+		
+		# Check if the split was successful (at least 2 parts for our case)
+		# The minimum size for a valid line is 2 (fixed_ball, project_ball),
+		# and later the code checks for 3 or 4.
+		if parts.size() >= 2:
+			var cleaned_parts = []
+			var valid_split = true
+			for part in parts:
+				var cleaned_part = part.strip_edges()
+				if cleaned_part.empty() and not (part.empty() and delim == " "):
+					# If a part becomes empty after stripping, but the original wasn't,
+					# it suggests the delimiter wasn't right (e.g., "1,,2" with a space delim)
+					valid_split = false
+					break
+				cleaned_parts.append(cleaned_part)
+			
+			if valid_split:
+				return cleaned_parts
+				
+	return []
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
@@ -290,7 +337,7 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return start_point + i
 
 func get_corresponding_right_ball(left_ball_index):
-	if left_ball_index < 67:
+	if left_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if left_ball_index in [8, 9]:
 				return left_ball_index + 2
@@ -304,7 +351,7 @@ func get_corresponding_right_ball(left_ball_index):
 		return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
 		
 func get_corresponding_left_ball(right_ball_index):
-	if right_ball_index < 67:
+	if right_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if right_ball_index in [10, 11]:
 				return right_ball_index - 2
@@ -320,13 +367,16 @@ func get_corresponding_left_ball(right_ball_index):
 var ball_map = {}
 
 func _on_ApplyChangesButton_pressed():
+	save_backup()
 	save_file()
 
 func _on_apply_paintballz():
+	save_backup()
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var pending_paintballs = pet_node._pending_paintballs_data
 
 	if pending_paintballs.size() > 0:
+		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _get_section_bounds("[Paint Ballz]")
 		var insert_line_num
 
@@ -340,9 +390,19 @@ func _on_apply_paintballz():
 			bounds = _get_section_bounds("[Paint Ballz]")
 
 		insert_line_num = bounds["start"]
+		var j = 0
+		while insert_line_num + j < bounds["end"]:
+			var line = get_line(insert_line_num + j).strip_edges()
+			if line.begins_with(";"):
+				j += 1
+				continue
+			break
+		insert_line_num += j
 
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
 		var new_paintball_lines = ""
+
+		var paintball_lines_list = []
 		for i in range(pending_paintballs.size() - 1, -1, -1):
 			var paintball_info = pending_paintballs[i]
 			var relative_pos_lnz = paintball_info.relative_pos_lnz
@@ -358,14 +418,25 @@ func _on_apply_paintballz():
 			paintball_line += str(paintball_info.outline_type) + delim
 			paintball_line += str(paintball_info.group) + delim
 			paintball_line += str(paintball_info.texture) + delim
-			paintball_line += str(int(paintball_info.anchored))
+			paintball_line += str(int(!paintball_info.anchored))
+			paintball_lines_list.append(paintball_line)
 
-			new_paintball_lines += paintball_line + "\n"
+		if is_babyz:
+			for rep in range(1, 6):
+				for line in paintball_lines_list:
+					new_paintball_lines += line + " ;rep" + str(rep) + "\n"
+		else:
+			for line in paintball_lines_list:
+				new_paintball_lines += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
 		pet_node.clear_pending_paintballs()
 
 	save_file()
+
+	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if pet_view_container.close_paintball_on_apply:
+		pet_view_container.close_paintball_mode()
 
 func _on_Tree_backup_file():
 	save_backup()
@@ -377,6 +448,7 @@ func _wrap_angle_deg(a: int) -> int:
 	return ang
 
 func _on_palette_selected(filename_without_extension):
+	save_backup()
 	var bounds = _get_section_bounds("[Palette]")
 	var new_line = filename_without_extension
 
@@ -405,6 +477,7 @@ func _on_palette_selected(filename_without_extension):
 	save_file()
 
 func _on_HeadShotButton_pressed():
+	save_backup()
 	var local_frame = int(frame_slider.value)
 	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
 
@@ -501,35 +574,87 @@ func _on_HeadShotButton_pressed():
 
 # Connect by Linez
 func _on_Node_line_created(start_ball, end_ball):
+	save_backup()
 	var bounds = _get_section_bounds("[Linez]")
 	var start_line = bounds["start"]
 	var end_line = bounds["end"]
 
 	if start_line == -1:
 		print("[LNZ EDIT] No [Linez] section found")
+		# You might want to create the section if it doesn't exist.
+		# For now, just returning.
 		return
 
 	var delim = _detect_delimiter(start_line, end_line)
 	var sep = delim
 
-	var insert_line = end_line
-	while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
-		insert_line -= 1
+	var line_mode_settings = get_tree().root.get_node("Root/SceneRoot/LineModeSettings")
+	var props = line_mode_settings.get_properties()
 
-	var new_line = "%s%s%s%s0%s-1%s-1%s-1%s95%s95%s-1%s0\n" % [
-		str(start_ball), sep,
-		str(end_ball), sep,
-		sep, sep, sep, sep, sep, sep, sep
-	]
+	# Search for an existing line
+	var line_updated = false
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
 
-	_insert_text_at_cursor_at_line(insert_line, new_line)
-	cursor_set_line(insert_line)
-	cursor_set_column(0)
-	center_viewport_to_cursor()
+		var parts = _split_and_clean(line)
+		if parts.size() < 2:
+			continue
+
+		var b1 = int(parts[0])
+		var b2 = int(parts[1])
+
+		if (b1 == start_ball and b2 == end_ball) or (b1 == end_ball and b2 == start_ball):
+			if parts.size() < 10:
+				parts.resize(10)
+			parts[2] = str(props.fuzz)
+			parts[3] = str(props.color)
+			parts[4] = str(props.left_outline_color)
+			parts[5] = str(props.right_outline_color)
+			parts[6] = str(props.start_thickness)
+			parts[7] = str(props.end_thickness)
+			parts[8] = str(props.outline_type)
+			parts[9] = str(props.draw_order)
+
+			set_line(i, parts.join(sep))
+			line_updated = true
+			break
+
+	if not line_updated:
+		var insert_line = end_line
+		while insert_line > start_line and get_line(insert_line - 1).strip_edges() == "":
+			insert_line -= 1
+
+		var new_line_parts = [
+			str(start_ball),
+			str(end_ball),
+			str(props.fuzz),
+			str(props.color),
+			str(props.left_outline_color),
+			str(props.right_outline_color),
+			str(props.start_thickness),
+			str(props.end_thickness),
+			str(props.outline_type),
+			str(props.draw_order)
+		]
+		var new_line = ""
+		for i in range(new_line_parts.size()):
+			new_line += new_line_parts[i]
+			if i < new_line_parts.size() - 1:
+				new_line += sep
+		new_line += "\n"
+
+		_insert_text_at_cursor_at_line(insert_line, new_line)
+		cursor_set_line(insert_line)
+		cursor_set_column(0)
+		center_viewport_to_cursor()
+
 	save_file()
 
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
+	save_backup()
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if reference_ball == null:
 		print("[LNZ EDIT] No reference ball given")
@@ -542,7 +667,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 
 	if reference_ball != null:
 		var ref_no = reference_ball.ball_no
-		var is_addball_ref = ref_no >= 67 or reference_ball.is_in_group("addballs")
+		var is_addball_ref = ref_no >= KeyBallsData.max_base_ball_num or reference_ball.is_in_group("addballs")
 
 		if is_addball_ref and lnz.addballs.has(ref_no):
 			var ref_ab = lnz.addballs[ref_no]
@@ -633,7 +758,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	cursor_set_column(0)
 	center_viewport_to_cursor()
 
-	var addball_no = 67 + _count_section_entries("[Add Ball]") - 1
+	var addball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]") - 1
 
 	if also_connect_line:
 		_on_Node_line_created(addball_no, reference_ball.ball_no)
@@ -648,14 +773,25 @@ func _count_section_entries(section_name: String) -> int:
 	var section_find = search(section_name, 0, 0, 0)
 	if section_find.empty():
 		return 0
+		
 	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_line + i).strip_edges()
-		if line.begins_with("[") or line == "":
+	var entry_count = 0
+	var current_line_num = start_line
+	
+	while current_line_num < get_line_count():
+		var line = get_line(current_line_num).strip_edges()
+		
+		if line.begins_with("["):
 			break
-		i += 1
-	return i
+		
+		if line == "" or line.begins_with(";"):
+			current_line_num += 1
+			continue
+		
+		entry_count += 1
+		current_line_num += 1
+		
+	return entry_count
 
 func _find_insertion_line(start_line: int, end_line: int) -> int:
 	var i = end_line
@@ -665,9 +801,10 @@ func _find_insertion_line(start_line: int, end_line: int) -> int:
 
 # Deletes an addball and references, or marks a base ball for omission
 func _on_ToolsMenu_delete_ball(ball_no: int):
+	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 	if is_addball:
-		var line_no = find_line_in_addball_section(ball_no - 67)
+		var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		if line_no != -1:
 			select(line_no, 0, line_no + 1, 0)
 			cut()
@@ -813,7 +950,7 @@ func _insert_text_at_line(line_no: int, text: String):
 # v1 Delete Addballz
 # func _on_Node_addball_deleted(ball_no):
 # 	# remove the addball line
-# 	var line_no = find_line_in_addball_section(ball_no - 67)
+# 	var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 # 	select(line_no, 0, line_no + 1, 0)
 # 	cut()
 	
@@ -929,12 +1066,12 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	var actual_start_point
 	if section == Section.Section.BALL:
 		if is_addball:
-			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		else:
 			actual_start_point = find_line_in_ball_section(ball_no)
 	elif section == Section.Section.MOVE:
 		if is_addball:
-			actual_start_point = find_line_in_addball_section(ball_no - max_addball_no)
+			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		else:
 			actual_start_point = find_line_in_move_section(ball_no)
 	elif section == Section.Section.PROJECT:
@@ -948,6 +1085,7 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	center_viewport_to_cursor()
 
 func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
+	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
 	if species == KeyBallsData.Species.CAT:
@@ -955,11 +1093,16 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_cat)
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
-	else:
+	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+	else:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+		balls_to_exclude.append_array(KeyBallsData.eyebrow_bab)
 		
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
@@ -1041,6 +1184,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 
 
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
+	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
 	if species == KeyBallsData.Species.CAT:
@@ -1049,12 +1193,16 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_cat)
-	else:
+	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_dog)
+	else:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
 		
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
@@ -1206,9 +1354,9 @@ func _on_ToolsMenu_copy_l_to_r():
 	section_find = search('[Add Ball]', 0, 0, 0)
 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
 	i = 0
-	var ball_no = 67
+	var ball_no = KeyBallsData.max_base_ball_num
 	var balls_to_add_temp = []
-	var new_ball_count = 67
+	var new_ball_count = KeyBallsData.max_base_ball_num
 	while true:
 		var line = get_line(start_of_section + i).lstrip(" ")
 		# ignore comments for now
@@ -1647,8 +1795,9 @@ func _on_ToolsMenu_copy_l_to_r():
 	save_file()
 
 func apply_preset_to_ball(ball_no, properties, do_save = true):
-	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	var is_addball = ball_no > max_base_ball_no
+	if do_save:
+		save_backup()
+	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Ballz Info]"
 	if is_addball:
@@ -1664,14 +1813,14 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 
 	var line_index = -1
 	if is_addball:
-		line_index = find_line_in_addball_section(ball_no - max_base_ball_no)
+		line_index = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 	else:
 		line_index = find_line_in_ball_section(ball_no)
 
 	if line_index != -1:
 		var delim = _detect_delimiter(start_line, end_line)
 		var line = get_line(line_index)
-		var parts = _split_and_clean(line, delim)
+		var parts = _split_and_clean(line)
 
 		if is_addball:
 			if properties.has("color_index"): parts[4] = str(properties.color_index)
@@ -1690,7 +1839,12 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 			if properties.has("group"): parts[6] = str(properties.group)
 			if properties.has("texture_id"): parts[7] = str(properties.texture_id)
 
-		var new_line = parts.join(delim)
+		var new_line = ""
+		for i in range(parts.size()):
+			new_line += parts[i]
+			if i < parts.size() - 1:
+				new_line += delim
+
 		set_line(line_index, new_line)
 		if do_save:
 			save_file()
@@ -1756,24 +1910,60 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 #		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
 
 func write_preset_to_ball(ball_no, properties, _write_target, should_override):
-	#if should_override:
-	#	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	#	if ball_no > max_base_ball_no:
-	#		print("Override is only supported for base balls.")
-	#		return
-	#
-	#	_add_or_update_override("[Ball Size Override]", ball_no, [properties.size], [1])
-	#	_add_or_update_override("[Color Info Override]", ball_no, [properties.color_index, properties.group, properties.texture_id], [1, 2, 3])
-	#	_add_or_update_override("[Outline Color Override]", ball_no, [properties.outline_color_index], [1])
-	#	_add_or_update_override("[Fuzz Override]", ball_no, [properties.fuzz], [1])
-	#
-	#	var non_override_props = {
-	#		"outline": properties.outline
-	#	}
-	#	apply_preset_to_ball(ball_no, non_override_props)
-	#
-	#else:
-	apply_preset_to_ball(ball_no, properties)
+	var applied_something = false
+	if properties.get("apply_ballz", true):
+		apply_preset_to_ball(ball_no, properties, false)
+		applied_something = true
+
+	if properties.get("apply_paintballz", true) and properties.has("paintballz"):
+		var paintballz = properties.paintballz
+		if paintballz.size() > 0:
+			applied_something = true
+			var bounds = _get_section_bounds("[Paint Ballz]")
+			var insert_line_num
+
+			if bounds.empty():
+				var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+				var all_lines = get_text().split("\n")
+				all_lines.insert(first_section, "[Paint Ballz]")
+				all_lines.insert(first_section + 1, "")
+				text = all_lines.join("\n")
+				_set_text_preserve(text)
+				bounds = _get_section_bounds("[Paint Ballz]")
+
+			insert_line_num = bounds["start"]
+			var j = 0
+			while insert_line_num + j < bounds["end"]:
+				var line = get_line(insert_line_num + j).strip_edges()
+				if line.begins_with(";"):
+					j += 1
+					continue
+				break
+			insert_line_num += j
+
+			var delim = _detect_delimiter(bounds["start"], bounds["end"])
+			var new_paintball_lines = ""
+			for paintball_info in paintballz:
+				var pos = paintball_info.position
+				var paintball_line = str(ball_no) + delim
+				paintball_line += str(paintball_info.size) + delim
+				paintball_line += str(pos.x) + delim
+				paintball_line += str(pos.y) + delim
+				paintball_line += str(pos.z) + delim
+				paintball_line += str(paintball_info.color_index) + delim
+				paintball_line += str(paintball_info.outline_color_index) + delim
+				paintball_line += str(paintball_info.fuzz) + delim
+				paintball_line += str(paintball_info.outline) + delim
+				paintball_line += "0" + delim # group, not in use for paintballz
+				paintball_line += str(paintball_info.texture_id) + delim
+				paintball_line += str(paintball_info.anchored)
+
+				new_paintball_lines += paintball_line + "\n"
+
+			_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
+
+	if applied_something:
+		save_file()
 
 
 func _on_LnzTextEdit_gui_input(event):
@@ -1976,6 +2166,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_file()
 
 func _on_ToolsMenu_move_head(x, y, z):
+	save_backup()
 	var head_balls: Array
 	if KeyBallsData.species == KeyBallsData.Species.CAT:
 		head_balls = KeyBallsData.head_ext_cat.duplicate()
@@ -2028,200 +2219,169 @@ func _on_ToolsMenu_move_head(x, y, z):
 	
 	save_file()
 
-func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
-	save_backup()
-	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	var is_addball = ball_no > max_base_ball_no
+func get_project_ball_section() -> Array:
+	var projections = []
+	var bounds = _get_section_bounds("[Project Ball]")
+	if bounds.empty():
+		return projections
 
-	var section_tag = "[Move]"
-	if is_addball:
-		section_tag = "[Add Ball]"
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
-		print("[LNZ EDIT] No %s section found" % section_tag)
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
+
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		var comment = ""
+		if line.find(";") != -1:
+			comment = line.substr(line.find(";") + 1).strip_edges()
+			line = line.substr(0, line.find(";")).strip_edges()
+
+		# Now, we try to split the line using multiple possible delimiters
+		var parts = []
+		
+		# Option 1: Try splitting by comma
+		var comma_parts = line.split(",", false)
+		if comma_parts.size() >= 3:
+			parts = comma_parts
+		else:
+			# Option 2: Try splitting by tab
+			var tab_parts = line.split("\t", false)
+			if tab_parts.size() >= 3:
+				parts = tab_parts
+			else:
+				# Option 3: Try splitting by space
+				var space_parts = line.split(" ", false)
+				if space_parts.size() >= 3:
+					parts = space_parts
+		
+		# Clean up the parts by stripping whitespace
+		for j in range(parts.size()):
+			parts[j] = parts[j].strip_edges()
+			
+		# Proceed only if we successfully got a valid number of parts
+		if parts.size() == 3:
+			var amount = int(parts[2])
+			projections.append({
+				"fixed_ball": int(parts[0]),
+				"project_ball": int(parts[1]),
+				"min_projection": amount - 50,
+				"max_projection": amount + 50,
+				"comment": comment
+			})
+		elif parts.size() >= 4:
+			projections.append({
+				"fixed_ball": int(parts[0]),
+				"project_ball": int(parts[1]),
+				"min_projection": int(parts[2]),
+				"max_projection": int(parts[3]),
+				"comment": comment
+			})
+	return projections
+
+func write_project_ball_section(projections: Array):
+	save_backup()
+	var bounds = _get_section_bounds("[Project Ball]")
+	if bounds.empty():
+		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section, "[Project Ball]")
+		all_lines.insert(first_section + 1, "")
+		text = all_lines.join("\n")
+		_set_text_preserve(text)
+		bounds = _get_section_bounds("[Project Ball]")
+
+	var start_line = bounds["start"]
+	var end_line = bounds["end"]
+
+	var existing_lines = []
+	if start_line < end_line:
+		for i in range(start_line, end_line):
+			existing_lines.append(get_line(i))
+
+	var output_lines = existing_lines.duplicate()
+	var new_lines_to_prepend = []
+	var processed_indices = []
+
+	for proj in projections:
+		var found_match = false
+		for i in range(existing_lines.size()):
+			var line = existing_lines[i]
+			var line_strip = line.strip_edges()
+			if line_strip.empty() or line_strip.begins_with(";"):
+				continue
+
+			var line_parts = line_strip.split(";")
+			var data_part = line_parts[0].strip_edges()
+			var parts = _split_and_clean(data_part)
+
+			# var parts = []
+			# var delim = " " # Default to space
+			
+			# if data_part.find(",") != -1:
+			# 	parts = data_part.split(",", false)
+			# 	delim = ","
+			# elif data_part.find("\t") != -1:
+			# 	parts = data_part.split("\t", false)
+			# 	delim = "\t"
+			# else:
+			# 	parts = data_part.split(" ", false)
+			# 	delim = " "
+
+			# for j in range(parts.size()):
+			# 	parts[j] = parts[j].strip_edges()
+
+			if parts.size() >= 2 and parts[0] == str(proj.fixed_ball) and parts[1] == str(proj.project_ball):
+				var line_text = str(proj.fixed_ball) + " " + str(proj.project_ball) + " " + str(proj.value)
+				if proj.has("comment") and not proj.comment.empty():
+					line_text += " ;" + proj.comment
+				output_lines[i] = line_text
+				processed_indices.append(i)
+				found_match = true
+				break
+
+		if not found_match:
+			var line_text = str(proj.fixed_ball) + " " + str(proj.project_ball) + " " + str(proj.value)
+			if proj.has("comment") and not proj.comment.empty():
+				line_text += " ;" + proj.comment
+			new_lines_to_prepend.append(line_text)
+
+	# Clear existing lines
+	if start_line < end_line:
+		select(start_line, 0, end_line, 0)
+		cut()
+
+	var final_text = ""
+	for line in new_lines_to_prepend:
+		final_text += line + "\n"
+	for line in output_lines:
+		final_text += line + "\n"
+
+	_insert_text_at_cursor_at_line(start_line, final_text)
+	save_file()
+
+func update_lnz_section_one_value(section_name, val1):
+	var bounds = _get_section_bounds(section_name)
+	if bounds.empty():
+		print("Section not found: " + section_name)
 		return
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-
-	var delim = " "
-	for i in range(end_line - 1, start_line - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with(";"):
-			continue
-		if line.find("\t") != -1:
-			delim = "\t"
-		elif line.find(", ") != -1:
-			delim = ", "
-		elif line.find(",") != -1:
-			delim = ","
-		else:
-			delim = " "
-		break
-
-	var sep = delim
-
-
-	if is_addball:
-		var idx = ball_no - max_base_ball_no
-		var count = 0
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
-			if count == idx:
-				var parts = raw.split(delim, false)
-				for j in range(parts.size()):
-					parts[j] = parts[j].strip_edges()
-				if parts.size() >= 4:
-					parts[1] = str(parts[1].to_int() + new_pos.x)
-					parts[2] = str(parts[2].to_int() + new_pos.y)
-					parts[3] = str(parts[3].to_int() + new_pos.z)
-					var new_line = parts.join(sep)
-					set_line(i, new_line)
-					print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
-				break
-			count += 1
-	else:
-		var updated = false
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
-			var parts = raw.split(delim, false)
-			for j in range(parts.size()):
-				parts[j] = parts[j].strip_edges()
-			if parts.size() >= 4 and parts[0].to_int() == ball_no:
-				parts[1] = str(parts[1].to_int() + new_pos.x)
-				parts[2] = str(parts[2].to_int() + new_pos.y)
-				parts[3] = str(parts[3].to_int() + new_pos.z)
-				var new_line = parts.join(sep)
-				set_line(i, new_line)
-				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
-				updated = true
-				break
-		if not updated:
-			var line_txt = "%d%s%d%s%d%s%d" % [
-				ball_no, sep,
-				new_pos.x, sep,
-				new_pos.y, sep,
-				new_pos.z
-			]
-			var insert_at = end_line
-			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
-				insert_at -= 1
-			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
-			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
-	save_file()
-
-func write_project_ball_section(projections: Array, _overwrite: bool): # _overwrite is ignored now
-	save_backup()
-	var section_tag = "[Project Ball]"
-	var bounds = _get_section_bounds(section_tag)
-
-	# If section doesn't exist, create it.
-	if bounds.empty():
-		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-		var insert_pos = 0
-		if first_section_line != -1:
-			insert_pos = first_section_line
-
-		var text_to_insert = section_tag + "\n\n"
-		if first_section_line == -1: # Empty file
-			text_to_insert = section_tag + "\n"
-
-		_insert_text_at_line(insert_pos, text_to_insert)
-		bounds = _get_section_bounds(section_tag)
 
 	var start_line = bounds["start"]
-	var end_line = bounds["end"]
-	if end_line == -1: # Section is at the end of the file
-		end_line = get_line_count()
+	set_line(start_line, str(val1))
 
-	var delim = _detect_delimiter(start_line, end_line)
-	if delim == " " or delim == "":
-		delim = "\t" # Default to tabs for clarity
-
-	var unmatched_projections = projections.duplicate()
-
-	# Update existing lines
-	for i in range(start_line, end_line):
-		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";") or line.begins_with("["):
-			continue
-
-		var parts = _smart_split(line)
-		if parts.size() < 2:
-			continue
-
-		var stationary_ball = int(parts[0])
-		var projected_ball = int(parts[1])
-
-		for j in range(unmatched_projections.size() - 1, -1, -1):
-			var proj = unmatched_projections[j]
-			if proj.stationary == stationary_ball and proj.projected == projected_ball:
-				var new_line = str(proj.stationary) + delim + str(proj.projected) + delim + str(proj.amount)
-				set_line(i, new_line)
-				unmatched_projections.remove(j)
-				break # Move to next line in file
-
-	# Add new lines for projections that didn't have a match
-	if not unmatched_projections.empty():
-		var insert_pos = _find_insertion_line(start_line, end_line)
-		var new_lines_text = ""
-		for proj in unmatched_projections:
-			new_lines_text += str(proj.stationary) + delim + str(proj.projected) + delim + str(proj.amount) + "\n"
-
-		_insert_text_at_cursor_at_line(insert_pos, new_lines_text)
-
-	save_file()
-
-func update_lnz_section_one_value(section_tag: String, value):
-	_update_lnz_section(section_tag, [value])
-
-func update_lnz_section_two_values(section_tag: String, value1, value2):
-	_update_lnz_section(section_tag, [value1, value2])
-
-func _update_lnz_section(section_tag: String, values: Array):
-	var bounds = _get_section_bounds(section_tag)
-
-	# If section doesn't exist, create it.
+func update_lnz_section_two_values(section_name, val1, val2):
+	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-		var insert_pos = 0
-		if first_section_line != -1:
-			insert_pos = first_section_line
-
-		var text_to_insert = section_tag + "\n\n"
-		if first_section_line == -1: # Empty file
-			text_to_insert = section_tag + "\n"
-
-		_insert_text_at_line(insert_pos, text_to_insert)
-		bounds = _get_section_bounds(section_tag)
+		print("Section not found: " + section_name)
+		return
 
 	var start_line = bounds["start"]
-	var end_line = bounds["end"]
-	if end_line == -1:
-		end_line = get_line_count()
-
-	var lines_to_update = []
-	for i in range(start_line, end_line):
-		var line_text = get_line(i).strip_edges()
-		if not line_text.empty() and not line_text.begins_with(";"):
-			lines_to_update.append(i)
-
-	for i in range(values.size()):
-		var value_str = str(values[i])
-		if i < lines_to_update.size():
-			# Update existing line
-			var line_idx = lines_to_update[i]
-			set_line(line_idx, value_str)
-		else:
-			# Insert new line
-			var insert_pos = _find_insertion_line(start_line, end_line + i)
-			_insert_text_at_cursor_at_line(insert_pos, value_str + "\n")
+	var delim = _detect_delimiter(start_line, bounds.end)
+	var new_line = str(val1) + delim + str(val2)
+	set_line(start_line, new_line)
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
-	save_backup()
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -2310,3 +2470,87 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					return
 			count += 1
 		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
+
+func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
+	save_backup()
+	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+
+	var section_tag = "[Move]"
+	if is_addball:
+		section_tag = "[Add Ball]"
+	var sec = search(section_tag, 0, 0, 0)
+	if sec.empty():
+		print("[LNZ EDIT] No %s section found" % section_tag)
+		return
+	var start_line = sec[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+
+	var delim = " "
+	for i in range(end_line - 1, start_line - 1, -1):
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with(";"):
+			continue
+		if line.find("\t") != -1:
+			delim = "\t"
+		elif line.find(", ") != -1:
+			delim = ", "
+		elif line.find(",") != -1:
+			delim = ","
+		else:
+			delim = " "
+		break
+
+	var sep = delim
+
+
+	if is_addball:
+		var idx = ball_no - KeyBallsData.max_base_ball_num
+		var count = 0
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			if count == idx:
+				var parts = raw.split(delim, false)
+				for j in range(parts.size()):
+					parts[j] = parts[j].strip_edges()
+				if parts.size() >= 4:
+					parts[1] = str(parts[1].to_int() + new_pos.x)
+					parts[2] = str(parts[2].to_int() + new_pos.y)
+					parts[3] = str(parts[3].to_int() + new_pos.z)
+					var new_line = parts.join(sep)
+					set_line(i, new_line)
+					print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
+				break
+			count += 1
+	else:
+		var updated = false
+		for i in range(start_line, end_line):
+			var raw = get_line(i).strip_edges()
+			if raw == "" or raw.begins_with(";"):
+				continue
+			var parts = raw.split(delim, false)
+			for j in range(parts.size()):
+				parts[j] = parts[j].strip_edges()
+			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				parts[1] = str(parts[1].to_int() + new_pos.x)
+				parts[2] = str(parts[2].to_int() + new_pos.y)
+				parts[3] = str(parts[3].to_int() + new_pos.z)
+				var new_line = parts.join(sep)
+				set_line(i, new_line)
+				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
+				updated = true
+				break
+		if not updated:
+			var line_txt = "%d%s%d%s%d%s%d" % [
+				ball_no, sep,
+				new_pos.x, sep,
+				new_pos.y, sep,
+				new_pos.z
+			]
+			var insert_at = end_line
+			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
+				insert_at -= 1
+			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
+			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
+	save_file()
