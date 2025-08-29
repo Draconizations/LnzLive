@@ -1093,11 +1093,16 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_cat)
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
-	else:
+	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+	else:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+		balls_to_exclude.append_array(KeyBallsData.eyebrow_bab)
 		
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
@@ -1188,12 +1193,16 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_cat)
-	else:
+	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_dog)
+	else:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
 		
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1

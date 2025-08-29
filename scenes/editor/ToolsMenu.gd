@@ -47,50 +47,72 @@ func _on_LineEdit_gui_input(event):
 					for ar in KeyBallsData.foot_ext_dog:
 						for v in ar:
 							core_ball_nos.erase(v)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.legs_cat[0])
 					core_ball_nos.append_array(KeyBallsData.legs_cat[1])
 					for ar in KeyBallsData.foot_ext_cat:
 						for v in ar:
 							core_ball_nos.erase(v)
+				else:
+					core_ball_nos.append_array(KeyBallsData.legs_bab[0])
+					core_ball_nos.append_array(KeyBallsData.legs_bab[1])
+					for ar in KeyBallsData.foot_ext_bab:
+						for v in ar:
+							core_ball_nos.erase(v)
 			elif current_action == RecolorAction.TAIL:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.tail_dog)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.tail_cat)
+				else:
+					core_ball_nos.append_array(KeyBallsData.tail_bab)
 			elif current_action == RecolorAction.HEAD:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.head_ext_dog)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.head_ext_cat)
+				else:
+					core_ball_nos.append_array(KeyBallsData.head_ext_bab)
 			elif current_action == RecolorAction.SNOUT:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.face_ext_dog)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.face_ext_cat)
+				else:
+					core_ball_nos.append_array(KeyBallsData.face_ext_bab)
 			elif current_action == RecolorAction.EARS:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					var v = KeyBallsData.ear_ext_dog.values()
 					core_ball_nos.append_array(v[0])
 					core_ball_nos.append_array(v[1])
 					core_ball_nos.append_array(KeyBallsData.ear_ext_dog.keys())
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					var v = KeyBallsData.ear_ext_cat.values()
 					core_ball_nos.append_array(v[0])
 					core_ball_nos.append_array(v[1])
 					core_ball_nos.append_array(KeyBallsData.ear_ext_cat.keys())
+				else:
+					var v = KeyBallsData.ear_ext_bab.values()
+					core_ball_nos.append_array(v[0])
+					core_ball_nos.append_array(v[1])
+					core_ball_nos.append_array(KeyBallsData.ear_ext_bab.keys())
 			elif current_action == RecolorAction.PAWS:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					for ar in KeyBallsData.foot_ext_dog:
 						core_ball_nos.append_array(ar)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					for ar in KeyBallsData.foot_ext_cat:
+						core_ball_nos.append_array(ar)
+				else:
+					for ar in KeyBallsData.foot_ext_bab:
 						core_ball_nos.append_array(ar)
 			elif current_action == RecolorAction.NOSE:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.nose_dog)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.nose_cat)
+				else:
+					core_ball_nos.append_array(KeyBallsData.nose_bab)
 			var part = RecolorAction.keys()[RecolorAction.values()[current_action]]
 			emit_signal("color_part_pet", core_ball_nos, base_color, outline_color, part)
 
