@@ -3,18 +3,22 @@
 ; and Kathy@Tabbloza's Pokeball Tattoo code to test paintball rendering
 
 [Texture List]
-\art\autobuild\hair3.bmp 1 256 256
-\art\autobuild\clear.bmp 0 256 256
-\art\autobuild\cottonwhite.bmp 0 256 256
-\art\autobuild\B_DarkBrown3.bmp	1 256 256
-\art\autobuild\B_DarkBrown3.bmp	1 256 256
-\resource\textures\test_no_tex_rot_size_100x100.bmp 0 256 256 ; old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
-\resource\textures\test_no_tex_rot_size_256x256.bmp 0 256 256 ; new style of no rotate BMP, which performs as expected
-\resource\textures\test_iris_texture.bmp 0 64 64 ; textured iris
+\art\autobuild\hair3.bmp 1 256 256 ;0
+\art\autobuild\clear.bmp 0 256 256 ;1
+\art\autobuild\cottonwhite.bmp 0 256 256 ;2
+\art\autobuild\B_DarkBrown3.bmp	1 256 256 ;3
+\art\autobuild\B_DarkBrown3.bmp	1 256 256 ;4
+\resource\textures\test_no_tex_rot_size_100x100.bmp 0 256 256 ; 5 old style of no rotate BMP before realized that 256 256 refers to dimensions, which does not perform as expected
+\resource\textures\test_no_tex_rot_size_256x256.bmp 0 256 256 ; 6 new style of no rotate BMP, which performs as expected
+\resource\textures\test_iris_texture.bmp 0 64 64 ; 7 textured iris
+\resource\textures\babyz_64x64_centered.bmp 0 64 64 ; 8
+\resource\textures\babyz_128x128_centered.bmp 0 128 128 ; 9
+\resource\textures\babyz_256x256_centered.bmp 0 256 256 ; 10
 
 [No Texture Rotate]
 162
 163
+164
 68 ;irisL is textured!
 
 [Num Ballz]
@@ -176,8 +180,11 @@ abx.lnz
 156,	75,	-20,	0,	26,	0,	0,	0,	0,	-1,	20,	1,	0,	3
 156,	60,	-40,	-20,	26,	0,	0,	0,	0,	-1,	20,	1,	0,	3
 ; no rotate BMP example (ball 162 and 163)
-63,	120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	5 ;162
-63,	-120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	6 ;163
+;63,	120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	5 ;162
+;63,	-120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	300,	0,	0,	6 ;163
+63,	-120,	-160,	-50,	94,	244,	244,	0,	0,	-1,	64,	0,	0,	8 ;163
+63,	-120,	-60,	-50,	94,	244,	244,	0,	0,	-1,	128,	0,	0,	9 ;163
+63,	-120,	60,	-50,	94,	244,	244,	0,	0,	-1,	256,	0,	0,	10 ;163
 
 [Thin/Fat]
 0 -8 10
