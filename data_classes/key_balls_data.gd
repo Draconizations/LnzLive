@@ -21,11 +21,11 @@ var body_ext_bab = [ 87, 0, 1, 2, 3, 4, 5, 6, 10, 11, 32, 33, 34, 59, 60, 61, 62
 
 var face_ext_dog = [ 51, 53, 55, 56, 63, 64, 17, 41, 15, 39 ]
 var face_ext_cat = [ 7, 30, 31, 37, 40, 57, 58, 59, 60, 61, 62, 29 ]
-var face_ext_bab = [ 7, 30, 31, 37, 40, 57, 58, 59, 60, 61, 62, 29 ]
+var face_ext_bab = [ 7, 84, 82, 83, 85, 86, 8, 9, 79, 80, 12, 13, 14, 15, 109, 110, 111, 112, 113, 114, 115 ]
 
 var head_ext_dog = [ 52, 1, 2, 3, 4, 5, 6, 8, 14, 15, 17, 25, 26, 27, 28, 29, 30, 32, 38, 39, 41, 51, 53, 55, 56, 63, 64 ]
 var head_ext_cat = [ 24, 4, 5, 7, 8, 9, 10, 11, 14, 15, 27, 28, 29, 30, 31, 37, 40, 55, 56, 57, 58, 59, 60, 61, 62 ]
-var head_ext_bab = [ 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 63, 68, 69, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 96, 97, 108, 109, 110, 111, 112, 113, 114, 115 ]
+var head_ext_bab = [ 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 63, 68, 69, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 86, 96, 97, 108, 109, 110, 111, 112, 113, 114, 115 ]
 
 var foot_ext_dog = [ 
 	[ 12, 20, 21, 22 ],
@@ -56,7 +56,9 @@ var eyes_bab = { 68: 35, 69: 36 }
 
 var nose_dog = [17, 41, 55]
 var nose_cat = [37]
-var nose_bab = [84, 82, 83]
+var nose_bab = [84, 82, 83, 86, 85]
+
+var eyebrow_bab = [37, 38, 39, 40, 41, 42] # excluding eyebrows 37 to 42 too
 
 var tail_dog = [57, 58, 59, 60, 61, 62 ]
 var tail_cat = [43, 44, 45, 46, 47, 48 ]
@@ -70,6 +72,34 @@ var belly_cat = 2
 var belly_dog = 48
 var belly_bab = 4
 
+var projection_standards = {
+	"cat": [
+		{"fixed_ball": 43, "project_ball": 44, "min_projection": 80, "max_projection": 120, "comment": "tail"},
+		{"fixed_ball": 44, "project_ball": 45, "min_projection": 80, "max_projection": 120, "comment": "tail"},
+		{"fixed_ball": 45, "project_ball": 46, "min_projection": 80, "max_projection": 120, "comment": "tail"},
+		{"fixed_ball": 46, "project_ball": 47, "min_projection": 80, "max_projection": 120, "comment": "tail"},
+		{"fixed_ball": 47, "project_ball": 48, "min_projection": 80, "max_projection": 120, "comment": "tail"}
+	],
+	"dog": [
+		{"fixed_ball": 49, "project_ball": 57, "min_projection": 20, "max_projection": 80, "comment": "tail"},
+		{"fixed_ball": 51, "project_ball": 64, "min_projection": 60, "max_projection": 80, "comment": "tail"},
+		{"fixed_ball": 51, "project_ball": 77, "min_projection": 60, "max_projection": 130, "comment": "tail"},
+		{"fixed_ball": 52, "project_ball": 63, "min_projection": 60, "max_projection": 130, "comment": "tail"},
+		{"fixed_ball": 53, "project_ball": 63, "min_projection": 50, "max_projection": 70, "comment": "tail"},
+		{"fixed_ball": 56, "project_ball": 63, "min_projection": 50, "max_projection": 70, "comment": "tail"},
+		{"fixed_ball": 57, "project_ball": 58, "min_projection": 0, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 58, "project_ball": 59, "min_projection": 0, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 59, "project_ball": 60, "min_projection": 0, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 59, "project_ball": 94, "min_projection": 50, "max_projection": 70, "comment": "tail"},
+		{"fixed_ball": 60, "project_ball": 61, "min_projection": 0, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 61, "project_ball": 62, "min_projection": 0, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 63, "project_ball": 64, "min_projection": 50, "max_projection": 100, "comment": "tail"},
+		{"fixed_ball": 64, "project_ball": 77, "min_projection": 50, "max_projection": 100, "comment": "tail"}
+	],
+	"bab": [
+		{"fixed_ball": 4, "project_ball": 63, "min_projection": 80, "max_projection": 100, "comment": "bellyhead"}
+	]
+}
 
 var symmetry_mode_hide_balls_cat = [0, 4, 8, 9, 12, 14, 16, 17, 18, 22, 25, 27, 30, 32, 34, 38, 41, 49, 50, 51, 57, 58, 59, 63]
 var symmetry_mode_hide_balls_dog = []
@@ -274,3 +304,18 @@ var baby_body_part_symmetry = {
         "Toes": { "left": [5, 102, 104, 106], "right": [6, 103, 105, 107] }
     }
 };
+
+func get_mirrored_ball(ball_no, symmetry_dict):
+	for main_part in symmetry_dict:
+		for sub_part in symmetry_dict[main_part]:
+			var part_info = symmetry_dict[main_part][sub_part]
+			if part_info.has("left") and part_info.has("right"):
+				if ball_no in part_info.left:
+					var index = part_info.left.find(ball_no)
+					if index != -1 and index < part_info.right.size():
+						return part_info.right[index]
+				elif ball_no in part_info.right:
+					var index = part_info.right.find(ball_no)
+					if index != -1 and index < part_info.left.size():
+						return part_info.left[index]
+	return -1 # No mirror found

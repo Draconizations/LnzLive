@@ -347,11 +347,12 @@ func apply_projections():
 	var outputs = {}
 	
 	for project_ball_data in lnz.project_ball:
-		var visual_ball = ball_map[project_ball_data.ball] as Spatial
-		var static_ball = ball_map[project_ball_data.base] as Spatial
+		var visual_ball = ball_map[project_ball_data.project_ball] as Spatial
+		var static_ball = ball_map[project_ball_data.fixed_ball] as Spatial
 		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
 		var base_pos = static_ball.global_transform.origin
-		visual_ball.global_transform.origin = base_pos + (vec * project_ball_data.amount / 100.0)
+		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
+		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
 
 func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 	for k in all_ball_dict.balls:
@@ -527,10 +528,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if new_create:
 				# Apply texture if needed
 				if ball.texture_id >= 0:
-					var texture_eye = load_texture_from_list(ball.texture_id, texture_list)
-					if texture_eye:
-						visual_ball.texture = texture_eye
+					var tex_info_eye = texture_list[ball.texture_id]
+					var tex_load_eye = load_texture_from_list(ball.texture_id, texture_list)
+					if tex_load_eye:
+						visual_ball.texture = tex_load_eye
 						visual_ball.transparent_color = texture_list[ball.texture_id].transparent_color
+						if tex_info_eye.has("texture_size") and tex_info_eye.texture_size != null:
+							visual_ball.texture_size = tex_info_eye.texture_size
 				visual_ball.color_index = ball.color_index
 				visual_ball.outline_color_index = ball.outline_color_index
 				visual_ball.ball_size = get_real_ball_size(ball.size)
@@ -596,10 +600,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			if new_create:
 				if ball.texture_id >= 0:
-					var texture_main = load_texture_from_list(ball.texture_id, texture_list)
-					if texture_main:
-						visual_ball.texture = texture_main
-						visual_ball.transparent_color = texture_list[ball.texture_id].transparent_color
+					var tex_info_base = texture_list[ball.texture_id]
+					var text_load_base = load_texture_from_list(ball.texture_id, texture_list)
+					if text_load_base:
+						visual_ball.texture = text_load_base
+						visual_ball.transparent_color = tex_info_base.transparent_color
+						if tex_info_base.has("texture_size") and tex_info_base.texture_size != null:
+							visual_ball.texture_size = tex_info_base.texture_size
 				visual_ball.color_index = ball.color_index
 				visual_ball.outline_color_index = ball.outline_color_index
 				visual_ball.ball_size = get_real_ball_size(ball.size)
@@ -656,10 +663,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			add_visual_ball.base_ball_no = add_ball.base
 			add_visual_ball.outline_color_index = add_ball.outline_color_index
 			if add_ball.texture_id >= 0:
-				var tex_info_add = load_texture_from_list(add_ball.texture_id, texture_list)
-				if tex_info_add:
-					add_visual_ball.texture = tex_info_add
-					add_visual_ball.transparent_color = texture_list[add_ball.texture_id].transparent_color
+				var tex_info_add = texture_list[add_ball.texture_id]
+				var text_load_add = load_texture_from_list(add_ball.texture_id, texture_list)
+				if text_load_add:
+					add_visual_ball.texture = text_load_add
+					add_visual_ball.transparent_color = tex_info_add.transparent_color
+					if tex_info_add.has("texture_size") and tex_info_add.texture_size != null:
+						add_visual_ball.texture_size = tex_info_add.texture_size
 			add_visual_ball.color_index = add_ball.color_index
 			add_visual_ball.palette = pal_texture
 
@@ -716,10 +726,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_visual_ball.species = species
 
 				if paintball.texture_id > -1:
-					var tex_pb = load_texture_from_list(paintball.texture_id, texture_list)
-					if tex_pb:
-						pb_visual_ball.texture = tex_pb
-						pb_visual_ball.transparent_color = texture_list[paintball.texture_id].transparent_color
+					var tex_info_pb = texture_list[paintball.texture_id]
+					var tex_load_pb = load_texture_from_list(paintball.texture_id, texture_list)
+					if tex_load_pb:
+						pb_visual_ball.texture = tex_load_pb
+						pb_visual_ball.transparent_color = tex_info_pb.transparent_color
+						if tex_info_pb.has("texture_size") and tex_info_pb.texture_size != null:
+							pb_visual_ball.texture_size = tex_info_pb.texture_size
 				pb_visual_ball.color_index = paintball.color_index
 				pb_visual_ball.palette = pal_texture
 
@@ -732,6 +745,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			pb_visual_ball.fuzz_amount = clamp(paintball.fuzz / 2, 0, 5)
 			pb_visual_ball.z_add = float(count)
 			pb_visual_ball.base_ball_no = paintball.base
+
 
 			if !draw_paintballs:
 				pb_visual_ball.visible_override = false
@@ -1092,6 +1106,8 @@ func clear_pending_paintballs():
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
 
 func add_pending_paintball(paintball_info):
 	_pending_paintballs_data.append(paintball_info)
@@ -1128,6 +1144,10 @@ func add_pending_paintball(paintball_info):
 				pb_visual_ball.transparent_color = lnz.texture_list[paintball_info.texture].transparent_color
 
 	pb_visual_ball.palette = base_ball_node.palette
-	pb_visual_ball.z_add = float(_pending_paintballs_data.size())
+
+	var existing_paintballs_count = 0
+	if paintball_map.has(base_ball_no):
+		existing_paintballs_count = paintball_map[base_ball_no].size()
+	pb_visual_ball.z_add = float(existing_paintballs_count + _pending_paintballs_data.size())
 
 	_pending_paintball_nodes.append(pb_visual_ball)
