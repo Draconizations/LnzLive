@@ -73,7 +73,7 @@ For applying size properties, you have three options: true, set, and sum. True s
 
 #### Line Mode
 
-In `Line Mode`, TBD
+In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified.
 
 ### Render
 
@@ -81,7 +81,9 @@ Here, you will find toggles for what elements should be drawn in the pet view. T
 
 ### Export
 
-- Export OBJ 3D Model
+#### Export OBJ 3D Model
+
+Experimental feature to export a 3D model of the loaded LNZ and animation frame! Your mileage may vary.
 
 ### Help
 
@@ -92,13 +94,9 @@ This option offers links to several handy resources, including [Carolyn Horn's h
 
 Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
 
-GIF HERE
-
 ### Eyelid Toggle
 
 Clicking on the eyeball will cycle through eyelid rendering options: neutral, none, angry, and scared.
-
-GIF HERE
 
 ### Animation Controller
 
