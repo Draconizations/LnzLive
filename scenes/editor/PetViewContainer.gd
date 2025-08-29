@@ -27,6 +27,7 @@ var drag_start_pos = Vector2()
 
 var linez_mode = false
 var linez_start_ball = null
+var line_mode_close = false
 
 var paintball_mode = false
 var project_mode = false
@@ -762,6 +763,7 @@ func _on_line_mode_toggled(is_on):
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
 	else:
+		line_mode_close = false
 		line_mode_settings_instance.hide()
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
@@ -867,6 +869,8 @@ func _handle_line_mode_input(event) -> bool:
 					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
 					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 					linez_start_ball = null
+					if line_mode_close:
+						line_mode_check_box.pressed = false
 			return true
 	return false
 
