@@ -191,7 +191,7 @@ Similar to textures, custom palettes can be loaded from local storage, but need 
 - [Petz Palette Converter](https://draconizations.github.io/petz-palette-converter/)
 - [Petz Paletteiare](https://tabbzi.github.io/petz-paletteiare/)
 
-To load your palette image, use the "Import LNZ / BMP / PNG" button. These should now appear under `Local Palettes` in the file tree. You can now apply the paletes as normal in the LNZ data, make sure to omit the `.png` at the end.
+To load your palette image, use the "Import LNZ / BMP / PNG" button. These should now appear under `Local Palettes` in the file tree. You can now apply the palettes as normal in the LNZ data, make sure to omit the `.png` at the end. Or, double-click the palette file name to apply automatically.
 
 You can also add files directly for LnzLive to access from your file system:
 
@@ -206,4 +206,5 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 While editing the LNZ:
 
 - Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
+
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
