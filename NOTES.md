@@ -1,0 +1,13 @@
+- comments in sections disrupt the hotkey jumps
+- hotkey jumps don't loop
+- 1 to 182 trying to recolor tongue did not work, check keyballs data
+- fix mirror project to also change others
+- quick mirror all lock all on project mode
+- if applyling paintballz, then unselect first
+- be able to change the head rotation
+- render option draw paintballz -- do not hide the irises
+- frame number doesn't copy right when entering into animation frame? or just frame isnt captured right? -1?
+- Quick flash with CTRL+Q does not affect addballz
+- Add texture color to recolor menu
+- Links in Options Menu -> Help open both URLs at once
+- Scale up overshoots size
