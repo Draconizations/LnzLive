@@ -15,3 +15,13 @@ See the [usage guide](GUIDE.md).
 This app is in development. Expect crashes and visual bugs.
 
 If you would like to help with development, raise [an issue](https://github.com/tabbzi/LnzLive/issues) (as long as it's not covered above) or a pull request.
+
+## Link to LnzLive
+
+Feel free to save and share these buttons/stamps for linking to the latest release of LnzLive:
+
+```
+https://github.com/tabbzi/LnzLive
+```
+
+![stamp](RULnzLiving.gif) ![button](LnzLiveButton.gif)
