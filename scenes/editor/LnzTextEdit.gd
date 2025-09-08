@@ -150,49 +150,55 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	return {"start": start_line, "end": end_line}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
-	for i in range(end_line - 1, start_line - 1, -1):
+	var delim_counts = {", ": 0, ",": 0, "\t": 0, " ": 0}
+	var lines_scanned = 0
+	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with(";"):
+		if line.empty() or line.begins_with(";"):
 			continue
-		if line.find("\t") != -1:
-			return "\t"
-		elif line.find(", ") != -1:
-			return ", "
-		elif line.find(",") != -1:
-			return ","
-		else:
-			return " "
-	return " "
+		lines_scanned += 1
 
-func _split_and_clean(line: String) -> Array:
-	# First, handle the common case of lines with comments
+		if line.find(", ") != -1:
+			delim_counts[", "] += 1
+		elif line.find(",") != -1:
+			delim_counts[","] += 1
+		elif line.find("\t") != -1:
+			delim_counts["\t"] += 1
+		elif line.find(" ") != -1:
+			if line.split(" ", false).size() > 1:
+				delim_counts[" "] += 1
+
+	if lines_scanned == 0:
+		return " "
+
+	var most_frequent_delim = " "
+	var max_count = 0
+	for delim in [", ", ",", "\t", " "]:
+		if delim_counts[delim] > max_count:
+			max_count = delim_counts[delim]
+			most_frequent_delim = delim
+
+	return most_frequent_delim
+
+func _split_and_clean(line: String, p_delimiter: String = "") -> Array:
 	var line_parts = line.split(";")
 	var data_part = line_parts[0].strip_edges()
 
-	# Now, try different delimiters on the data part
-	var delimiters = [", ", ",", "\t", " "]
-	for delim in delimiters:
-		var parts = data_part.split(delim, false)
-		
-		# Check if the split was successful (at least 2 parts for our case)
-		# The minimum size for a valid line is 2 (fixed_ball, project_ball),
-		# and later the code checks for 3 or 4.
-		if parts.size() >= 2:
-			var cleaned_parts = []
-			var valid_split = true
-			for part in parts:
-				var cleaned_part = part.strip_edges()
-				if cleaned_part.empty() and not (part.empty() and delim == " "):
-					# If a part becomes empty after stripping, but the original wasn't,
-					# it suggests the delimiter wasn't right (e.g., "1,,2" with a space delim)
-					valid_split = false
-					break
-				cleaned_parts.append(cleaned_part)
-			
-			if valid_split:
-				return cleaned_parts
-				
-	return []
+	var delimiter = p_delimiter
+	if delimiter == "":
+		if data_part.find(", ") != -1: delimiter = ", "
+		elif data_part.find(",") != -1: delimiter = ","
+		elif data_part.find("\t") != -1: delimiter = "\t"
+		else: delimiter = " "
+
+	var parts = data_part.split(delimiter, false)
+	var cleaned_parts = []
+	for part in parts:
+		var cleaned_part = part.strip_edges()
+		if not cleaned_part.empty():
+			cleaned_parts.append(cleaned_part)
+
+	return cleaned_parts
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
@@ -201,7 +207,15 @@ func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 			new_parts.append(updates[i])
 		else:
 			new_parts.append(parts[i])
-	return new_parts.join(sep)
+	return _join_array(new_parts, sep)
+
+func _join_array(parts: Array, delimiter: String) -> String:
+	var result = ""
+	for i in range(parts.size()):
+		result += str(parts[i])
+		if i < parts.size() - 1:
+			result += delimiter
+	return result
 
 func _for_each_line_in_section(tag: String, callback):
 	var bounds = _get_section_bounds(tag)
@@ -595,7 +609,7 @@ func _on_Node_line_created(start_ball, end_ball):
 	var line_updated = false
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"):
+		if line.empty() or line == "" or line.begins_with(";"):
 			continue
 
 		var parts = _split_and_clean(line)
@@ -2392,6 +2406,8 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 			delim = "\t"
 		elif line.find(", ") != -1:
 			delim = ", "
+		elif line.find(",\t") != -1:
+			delim = ",\t"
 		elif line.find(",") != -1:
 			delim = ","
 		else:
