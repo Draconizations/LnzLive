@@ -10,10 +10,8 @@ onready var pitch_spinbox = find_node("PitchSpinBox")
 onready var yaw_spinbox = find_node("YawSpinBox")
 
 const PaintBallData = preload("res://data_classes/paintball_data.gd")
-var r = RegEx.new()
 
 func _ready():
-	r.compile("[-.\\d]+")
 	find_node("EyedropperToggle").connect("toggled", self, "_on_EyedropperToggle_toggled")
 	set_paintballz_button.connect("pressed", self, "_on_SetPaintballzButton_pressed")
 
@@ -69,6 +67,20 @@ func show():
 func hide():
 	$Panel.hide()
 
+func _split_and_clean_paintball(line: String) -> Array:
+	var line_parts = line.split(";", false, 1)
+	var data_part = line_parts[0].strip_edges()
+
+	var delimiters = [", ", ",", "\t", " "]
+	for delim in delimiters:
+		var parts = data_part.split(delim, false)
+		if parts.size() >= 11:
+			var cleaned_parts = []
+			for part in parts:
+				cleaned_parts.append(part.strip_edges())
+			return cleaned_parts
+	return []
+
 func _on_SetPaintballzButton_pressed():
 	var text = paintballz_text_edit.text
 	var lines = text.split("\n")
@@ -77,23 +89,26 @@ func _on_SetPaintballzButton_pressed():
 	for line in lines:
 		if line.empty() or line.begins_with(";") or line.begins_with("#") or line.begins_with("["):
 			continue
-		var parsed = r.search_all(line)
-		if parsed.size() < 11:
+
+		var parts = _split_and_clean_paintball(line)
+		if parts.empty():
+			printerr("Could not parse paintball preset line: ", line)
 			continue
 
 		var item = paintballz_tree.create_item(root)
-		item.set_text(0, parsed[0].get_string())
-		item.set_text(1, parsed[1].get_string())
-		item.set_text(2, parsed[2].get_string())
-		item.set_text(3, parsed[3].get_string())
-		item.set_text(4, parsed[4].get_string())
-		item.set_text(5, parsed[5].get_string())
-		item.set_text(6, parsed[6].get_string())
-		item.set_text(7, parsed[7].get_string())
-		item.set_text(8, parsed[8].get_string())
-		item.set_text(9, parsed[10].get_string()) # there is a gap in the lnz format
-		if parsed.size() > 11:
-			item.set_text(10, parsed[11].get_string())
+		item.set_text(0, parts[0]) # Base
+		item.set_text(1, parts[1]) # Size
+		item.set_text(2, parts[2]) # Pos X
+		item.set_text(3, parts[3]) # Pos Y
+		item.set_text(4, parts[4]) # Pos Z
+		item.set_text(5, parts[5]) # Color
+		item.set_text(6, parts[6]) # Outline Color
+		item.set_text(7, parts[7]) # Fuzz
+		item.set_text(8, parts[8]) # Outline
+		item.set_text(9, parts[10]) # Texture (skip group at index 9)
+
+		if parts.size() > 11:
+			item.set_text(10, parts[11]) # Anchored
 		else:
 			item.set_text(10, "0")
 

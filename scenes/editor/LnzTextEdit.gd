@@ -2238,46 +2238,28 @@ func get_project_ball_section() -> Array:
 			comment = line.substr(line.find(";") + 1).strip_edges()
 			line = line.substr(0, line.find(";")).strip_edges()
 
-		# Now, we try to split the line using multiple possible delimiters
-		var parts = []
-		
-		# Option 1: Try splitting by comma
-		var comma_parts = line.split(",", false)
-		if comma_parts.size() >= 3:
-			parts = comma_parts
-		else:
-			# Option 2: Try splitting by tab
-			var tab_parts = line.split("\t", false)
-			if tab_parts.size() >= 3:
-				parts = tab_parts
-			else:
-				# Option 3: Try splitting by space
-				var space_parts = line.split(" ", false)
-				if space_parts.size() >= 3:
-					parts = space_parts
-		
-		# Clean up the parts by stripping whitespace
-		for j in range(parts.size()):
-			parts[j] = parts[j].strip_edges()
-			
-		# Proceed only if we successfully got a valid number of parts
-		if parts.size() == 3:
-			var amount = int(parts[2])
-			projections.append({
-				"fixed_ball": int(parts[0]),
-				"project_ball": int(parts[1]),
-				"min_projection": amount - 50,
-				"max_projection": amount + 50,
-				"comment": comment
-			})
-		elif parts.size() >= 4:
-			projections.append({
-				"fixed_ball": int(parts[0]),
-				"project_ball": int(parts[1]),
-				"min_projection": int(parts[2]),
-				"max_projection": int(parts[3]),
-				"comment": comment
-			})
+		var parts = _split_and_clean(line)
+		if parts.empty():
+			continue
+
+		if parts.size() >= 3:
+			if parts.size() == 3:
+				var amount = int(parts[2])
+				projections.append({
+					"fixed_ball": int(parts[0]),
+					"project_ball": int(parts[1]),
+					"min_projection": amount - 50,
+					"max_projection": amount + 50,
+					"comment": comment
+				})
+			elif parts.size() >= 4:
+				projections.append({
+					"fixed_ball": int(parts[0]),
+					"project_ball": int(parts[1]),
+					"min_projection": int(parts[2]),
+					"max_projection": int(parts[3]),
+					"comment": comment
+				})
 	return projections
 
 func write_project_ball_section(projections: Array):
