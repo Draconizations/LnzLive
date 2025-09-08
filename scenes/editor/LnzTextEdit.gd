@@ -2018,165 +2018,160 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 	if all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
 		var section_find = search('[Ballz Info]', 0, 0, 0)
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			if i in balls_to_exclude:
-				i += 1
-				continue
-			var line = get_line(start_of_section + i).lstrip(" ")
-			if line.begins_with("[") or i > get_line_count():
-				break
-			if line.begins_with(";") or line.empty():
-				i += 1
-				continue
-			# here the first number is color and second is outline col
-			
-			# var parsed_line = r.search_all(line)
-			var delimiters = [", ", ",", "\t", " "]
-			var parsed_line = []
-			for delim in delimiters:
-				if line.split(delim).size() > 2:
-					parsed_line = line.split(delim, false)
-					break
+		if section_find:
+			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
+				
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
 
-			var color = parsed_line[0]
-			var outline_color = parsed_line[1]
-			if (recolor_info.has(color) and all_recolor_info.balls_on) or (recolor_info.has(outline_color) and all_recolor_info.ball_outlines_on):
-				var n = 0
-				var final_line = ""
-				for r_item in parsed_line:
-					var item = r_item
-					if n == 0 and recolor_info.has(item) and all_recolor_info.balls_on:
-						final_line += recolor_info[color] + " "
-					elif n == 1 and recolor_info.has(item) and all_recolor_info.ball_outlines_on:
-						final_line += recolor_info[outline_color] + " "
-					else:
-						final_line += item + " "
-					n += 1
-				set_line(start_of_section + i, final_line)
-			i += 1
-		
-		section_find = search('[Add Ball]', 0, 0, 0)
-		start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		i = 0
-		while true:
-			if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
-				i += 1
-				continue
-			var line = get_line(start_of_section + i).lstrip(" ")
-			if line.begins_with("[") or i > get_line_count():
-				break
-			if line.begins_with(";") or line.empty():
-				i += 1
-				continue
-			# here the fifth number is color
+				if i in balls_to_exclude or line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
 
-			# var parsed_line = r.search_all(line)
-			var delimiters = [", ", ",", "\t", " "]
-			var parsed_line = []
-			for delim in delimiters:
-				if line.split(delim).size() > 2:
-					parsed_line = line.split(delim, false)
-					break
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				if parsed_line.size() < 2:
+					i += 1
+					continue
+				
+				var color = parsed_line[0]
+				var outline_color = parsed_line[1]
+				var updates = {}
+				
+				if all_recolor_info.balls_on and recolor_info.has(color):
+					updates[0] = recolor_info[color]
+				
+				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
+					updates[1] = recolor_info[outline_color]
+				
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
+				
+				i += 1
 
-			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
-				i += 1
-				continue
-			var color = parsed_line[4]
-			var outline_color = parsed_line[5]
-			if (recolor_info.has(color) and all_recolor_info.balls_on) or (recolor_info.has(outline_color) and all_recolor_info.ball_outlines_on):
-				var n = 0
-				var final_line = ""
-				for r_item in parsed_line:
-					var item = r_item
-					if n == 4 and recolor_info.has(item) and all_recolor_info.balls_on:
-						final_line += recolor_info[color] + " "
-					elif n == 5 and recolor_info.has(item) and all_recolor_info.ball_outlines_on:
-						final_line += recolor_info[outline_color] + " "
-					else:
-						final_line += item + " "
-					n += 1
-				set_line(start_of_section + i, final_line)
-			i += 1
-			
-	if all_recolor_info.paintballs_on:
-		var section_find = search('[Paint Ballz]', 0, 0, 0)
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
-				i += 1
-				continue
-			var line = get_line(start_of_section + i).lstrip(" ")
-			if line.begins_with("[") or i > get_line_count():
-				break
-			if line.begins_with(";") or line.empty():
-				i += 1
-				continue
-			# here the sixth number is color
+	if all_recolor_info.paintballs_on or all_recolor_info.balls_on or all_recolor_info.ball_outlines_on:
+		var addball_find = search('[Add Ball]', 0, 0, 0)
+		var paintball_find = search('[Paint Ballz]', 0, 0, 0)
 
-			# var parsed_line = r.search_all(line)
-			var delimiters = [", ", ",", "\t", " "]
-			var parsed_line = []
-			for delim in delimiters:
-				if line.split(delim).size() > 2:
-					parsed_line = line.split(delim, false)
-					break
+		if addball_find and (all_recolor_info.balls_on or all_recolor_info.ball_outlines_on):
+			var start_of_section = addball_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
+				
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
+				
+				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
 
-			if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+					i += 1
+					continue
+				
+				var color = parsed_line[4]
+				var outline_color = parsed_line[5]
+				var updates = {}
+				
+				if all_recolor_info.balls_on and recolor_info.has(color):
+					updates[4] = recolor_info[color]
+				
+				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
+					updates[5] = recolor_info[outline_color]
+
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
+				
 				i += 1
-				continue
-			var color = parsed_line[5]
-			if recolor_info.has(color):
-				var n = 0
-				var final_line = ""
-				for r_item in parsed_line:
-					var item = r_item
-					if n == 5:
-						final_line += recolor_info[color] + " "
-					else:
-						final_line += item + " "
-					n += 1
-				set_line(start_of_section + i, final_line)
-			i += 1
-		
+
+		if paintball_find and all_recolor_info.paintballs_on:
+			var start_of_section = paintball_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
+
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
+
+				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
+				
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+					i += 1
+					continue
+
+				var color = parsed_line[5]
+				var updates = {}
+
+				if recolor_info.has(color):
+					updates[5] = recolor_info[color]
+
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
+
+				i += 1
+
 	if all_recolor_info.lines_on:
 		var section_find = search('[Linez]', 0, 0, 0)
-		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-		var i = 0
-		while true:
-			var line = get_line(start_of_section + i).lstrip(" ")
-			# ignore comments for now
-			if line.begins_with("[") or line.empty() or i > get_line_count():
-				break
+		if section_find:
+			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
+				
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
+				
+				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
 
-			# var parsed_line = r.search_all(line)
-			var delimiters = [", ", ",", "\t", " "]
-			var parsed_line = []
-			for delim in delimiters:
-				if line.split(delim).size() > 2:
-					parsed_line = line.split(delim, false)
-					break
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				if parsed_line.size() < 6:
+					i += 1
+					continue
+				
+				var mainColor = parsed_line[3]
+				var lColor = parsed_line[4]
+				var rColor = parsed_line[5]
+				var updates = {}
+				
+				if recolor_info.has(mainColor):
+					updates[3] = recolor_info[mainColor]
+				
+				if recolor_info.has(lColor):
+					updates[4] = recolor_info[lColor]
+				
+				if recolor_info.has(rColor):
+					updates[5] = recolor_info[rColor]
+				
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
 
-			var mainColor = parsed_line[3]
-			var lColor = parsed_line[4]
-			var rColor = parsed_line[5]
-			if recolor_info.has(mainColor) or recolor_info.has(lColor) or recolor_info.has(rColor):
-				var n = 0
-				var final_line = ""
-				for item in parsed_line:
-					if n == 3 and recolor_info.has(mainColor):
-						final_line += recolor_info[mainColor] + " "
-					elif n == 4 and recolor_info.has(lColor):
-						final_line += recolor_info[lColor] + " "
-					elif n == 5 and recolor_info.has(rColor):
-						final_line += recolor_info[rColor] + " "
-					else:
-						final_line += item + " "
-					n += 1
-				set_line(start_of_section + i, final_line)
-			i += 1
+				i += 1
+				
 	save_file()
 
 func _on_ToolsMenu_move_head(x, y, z):
