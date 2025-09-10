@@ -391,7 +391,7 @@ func _on_RandomizeButton_pressed():
 				if num_bands > 0:
 					var band_index = floor(i * num_bands / properties.num_spots)
 					var y = lerp(-0.8, 0.8, float(band_index) / max(1, num_bands - 1))
-					var angle = rand_range(-PI / 6.0, PI / 6.0)
+					var angle = rand_range(0, TAU)
 					var r = sqrt(max(0, 1.0 - y*y))
 					var x = r * cos(angle)
 					var z = r * sin(angle)
@@ -400,18 +400,12 @@ func _on_RandomizeButton_pressed():
 				var num_bands = properties.num_bands
 				if num_bands > 0:
 					var band_index = floor(i * num_bands / properties.num_spots)
-					var x = lerp(-0.7, 0.7, float(band_index) / max(1, num_bands - 1))
-					var y = rand_range(-0.7, 0.7)
-					position = Vector3(x, y, 0).normalized()
-				# var num_bands = properties.num_bands
-				# if num_bands > 0:
-				# 	var band = floor(i * num_bands / properties.num_spots)
-				# 	var angle = lerp(0, 2 * PI, float(band) / num_bands + rand_range(0, 1.0/num_bands))
-				# 	var y = rand_range(-1, 1)
-				# 	var r = sqrt(max(0, 1.0 - y*y))
-				# 	var x = r * cos(angle)
-				# 	var z = r * sin(angle)
-				# 	position = Vector3(x, y, z)
+					var angle = lerp(0, TAU, float(band_index) / max(1, num_bands - 1))
+					var y = rand_range(-0.8, 0.8)
+					var r = sqrt(max(0, 1.0 - y*y))
+					var x = r * cos(angle)
+					var z = r * sin(angle)
+					position = Vector3(x, y, z)
 			elif distribution_mode == 5: # Grid
 				var grid_size = properties.grid_size
 				if grid_size > 0:
@@ -425,19 +419,46 @@ func _on_RandomizeButton_pressed():
 					var z = cos(phi)
 					position = Vector3(x, y, z)
 			elif distribution_mode == 6: # Checkerboard
-				var grid_size = properties.grid_size
-				if grid_size > 0:
-					var u = i % int(grid_size)
-					var v = floor(i / grid_size)
-					if (u + v) % 2 == 0:
-						continue
-					var theta = float(u) / grid_size * 2 * PI
-					var acos_arg = clamp(2 * (float(v) / grid_size) - 1, -1.0, 1.0)
-					var phi = acos(acos_arg)
-					var x = sin(phi) * cos(theta)
-					var y = sin(phi) * sin(theta)
-					var z = cos(phi)
-					position = Vector3(x, y, z)
+				var grid_size = int(properties.grid_size)
+				if grid_size > 0 and properties.num_spots > 0:
+					var num_on_squares = ceil(grid_size * grid_size / 2.0)
+					var spots_per_square = int(ceil(properties.num_spots / num_on_squares))
+
+					for v_idx in range(grid_size):
+						for u_idx in range(grid_size):
+							if (u_idx + v_idx) % 2 == 1:
+								for _j in range(spots_per_square):
+									var u_start = float(u_idx) / grid_size
+									var u_end = float(u_idx + 1) / grid_size
+									var v_start = float(v_idx) / grid_size
+									var v_end = float(v_idx + 1) / grid_size
+
+									var rand_u = rand_range(u_start, u_end)
+									var rand_v = rand_range(v_start, v_end)
+
+									var theta = rand_u * TAU
+									var cos_phi = lerp(1.0, -1.0, rand_v)
+									var phi = acos(cos_phi)
+									
+									var x = sin(phi) * cos(theta)
+									var z = sin(phi) * sin(theta)
+									var y = cos(phi)
+									
+									var p_ball_index = affected_ballz[randi() % affected_ballz.size()]
+									var p_size = rand_range(properties.size_min, properties.size_max)
+									var p_color = color_list[randi() % color_list.size()]
+									var p_outline_color = outline_color_list[randi() % outline_color_list.size()]
+									var p_outline_type = floor(rand_range(properties.outline_type_min, properties.outline_type_max))
+									var p_fuzz = floor(rand_range(properties.fuzz_min, properties.fuzz_max))
+									var p_texture = texture_list[randi() % texture_list.size()]
+									var p_group = properties.group
+									
+									var p = PaintBallData.new(
+										p_ball_index, p_size, Vector3(x,y,z), p_color, p_outline_color,
+										p_outline_type, p_fuzz, 0, p_texture, 1 if properties.anchored else 0, p_group
+									)
+									paintballz.append(p)
+					continue 
 			elif distribution_mode == 7: # Random Walk
 				if i == 0 or paintballz.size() == 0:
 					position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
