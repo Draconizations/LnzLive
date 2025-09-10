@@ -126,10 +126,30 @@ func get_species(file: File):
 	get_next_section(file, "Species")
 	var parsed_lines = get_parsed_lines(file, ["species"])
 	if parsed_lines.size() == 0:
-		species = 2
+		print("[Species] not found. Looking for [Default Linez File] as a fallback.")
+		file.seek(0)
+		get_next_section(file, "Default Linez File")
+		var path_line = file.get_line().strip_edges()
+		var lower_path = path_line.to_lower()
+		if "dog" in lower_path:
+			print("[Default Linez File] path contained 'dog'. Setting species to Dogz (Species = 2).")
+			species = 2
+		elif "cat" in lower_path:
+			print("[Default Linez File] path contained 'cat'. Setting species to Catz (Species = 1).")
+			species = 1
+		else:
+			print("Could not determine species from file. Defaulting to Catz (Species = 1).")
+			species = 1
 	else:
 		species = parsed_lines[0].species
-	# print("Species detected: " + str(species))
+		if species == 1:
+			print("[Species] detected: Catz (Species = " + str(species) + ")")
+		elif species == 2:
+			print("[Species] detected: Dogz (Species = " + str(species) + ")")
+		elif species == 3:
+			print("[Species] detected: Babyz (Species = " + str(species) + ")")
+		else:
+			print("[Species] detected: ??? (Species = " + str(species) + ")")		
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")

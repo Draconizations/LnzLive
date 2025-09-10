@@ -1,9 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://scenes/editor/PresetSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://scenes/editor/DraggablePanel.gd" type="Script" id=4]
+
+[sub_resource type="ButtonGroup" id=2]
 
 [sub_resource type="DynamicFont" id=1]
 size = 30
@@ -101,13 +103,12 @@ margin_top = 111.0
 margin_right = 420.0
 margin_bottom = 140.0
 
-[node name="SizeButtonGroup" type="Node" parent="Panel/VBoxContainer/SizeOptionsContainer"]
-
 [node name="SizeSetToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
 margin_right = 137.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
+group = SubResource( 2 )
 text = "Set"
 
 [node name="SizeSumToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
@@ -116,6 +117,7 @@ margin_right = 278.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
+group = SubResource( 2 )
 text = "Sum"
 
 [node name="SizeTrueToggle" type="CheckBox" parent="Panel/VBoxContainer/SizeOptionsContainer"]
@@ -125,6 +127,7 @@ margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 pressed = true
+group = SubResource( 2 )
 text = "True"
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]

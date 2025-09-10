@@ -20,6 +20,7 @@ func _ready():
 	find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
 	projections_tree.connect("item_edited", self, "_on_ProjectionsTree_item_edited")
 	projections_tree.connect("button_pressed", self, "_on_ProjectionsTree_button_pressed")
+	projections_tree.connect("column_title_pressed", self, "_on_ProjectionsTree_column_title_pressed")
 
 	# Setup Tree
 	projections_tree.set_column_titles_visible(true)
@@ -186,18 +187,66 @@ func _on_RandomizeProjectionsButton_pressed():
 	if not root:
 		return
 
+	var species = KeyBallsData.species
+	var symmetry_dict = null
+	if species == KeyBallsData.Species.DOG:
+		symmetry_dict = KeyBallsData.dog_body_part_symmetry
+	elif species == KeyBallsData.Species.CAT:
+		symmetry_dict = KeyBallsData.cat_body_part_symmetry
+	elif species == KeyBallsData.Species.BABY:
+		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+
+	var processed_items = []
+	var all_items = []
 	var item = root.get_children()
 	while item:
-		if not item.is_checked(5): # if not locked
-			var min_proj = item.get_text(2).to_int()
-			var max_proj = item.get_text(3).to_int()
+		all_items.append(item)
+		item = item.get_next()
+
+	for item_a in all_items:
+		if item_a in processed_items:
+			continue
+
+		if not item_a.is_checked(5): # if not locked
+			var min_proj = item_a.get_text(2).to_int()
+			var max_proj = item_a.get_text(3).to_int()
 			var random_val = 0
 			if min_proj < max_proj:
 				random_val = randi() % (max_proj - min_proj + 1) + min_proj
 			else:
 				random_val = min_proj
-			item.set_text(4, str(random_val))
-		item = item.get_next()
+			item_a.set_text(4, str(random_val))
+
+		processed_items.append(item_a)
+
+		if not symmetry_dict:
+			continue
+
+		# Find and update the mirror
+		var fixed_a = item_a.get_text(0).to_int()
+		var proj_a = item_a.get_text(1).to_int()
+
+		var mirrored_fixed = KeyBallsData.get_mirrored_ball(fixed_a, symmetry_dict)
+		var mirrored_proj = KeyBallsData.get_mirrored_ball(proj_a, symmetry_dict)
+
+		if mirrored_fixed == -1: mirrored_fixed = fixed_a
+		if mirrored_proj == -1: mirrored_proj = proj_a
+
+		for item_b in all_items:
+			if item_b in processed_items:
+				continue
+
+			var fixed_b = item_b.get_text(0).to_int()
+			var proj_b = item_b.get_text(1).to_int()
+
+			var is_mirror = (fixed_b == mirrored_fixed and proj_b == mirrored_proj)
+			var is_swapped_mirror = (fixed_b == mirrored_proj and proj_b == mirrored_fixed)
+
+			if is_mirror or is_swapped_mirror:
+				if not item_b.is_checked(5): # if not locked
+					item_b.set_text(4, item_a.get_text(4))
+				processed_items.append(item_b)
+				break
 
 func _on_RandomizeBodyButton_pressed():
 	var settings = {
@@ -216,7 +265,6 @@ func _on_RandomizeBodyButton_pressed():
 	emit_signal("randomize_body_proportions", settings)
 
 func _on_ApplyButton_pressed():
-	var lnz_projections = []
 	var root = projections_tree.get_root()
 	if not root:
 		return
@@ -230,44 +278,59 @@ func _on_ApplyButton_pressed():
 	elif species == KeyBallsData.Species.BABY:
 		symmetry_dict = KeyBallsData.baby_body_part_symmetry
 
+	var lnz_projections = []
+	
+	# Scan to see which projections already exist
+	var existing_pairs = {}
 	var item = root.get_children()
 	while item:
+		var fixed = item.get_text(0).to_int()
+		var project = item.get_text(1).to_int()
+		var key = Vector2(min(fixed, project), max(fixed, project))
+		existing_pairs[key] = true
+		item = item.get_next()
+
+	# Build list of projections
+	item = root.get_children()
+	while item:
+		var fixed_ball = item.get_text(0).to_int()
+		var project_ball = item.get_text(1).to_int()
+		
 		var proj = {
-			"fixed_ball": item.get_text(0).to_int(),
-			"project_ball": item.get_text(1).to_int(),
+			"fixed_ball": fixed_ball,
+			"project_ball": project_ball,
 			"value": item.get_text(4).to_int(),
 			"comment": item.get_text(7)
 		}
 		lnz_projections.append(proj)
 
-		if item.is_checked(6) and symmetry_dict: # if mirrored
-			var mirrored_fixed = KeyBallsData.get_mirrored_ball(proj.fixed_ball, symmetry_dict)
-			var mirrored_projected = KeyBallsData.get_mirrored_ball(proj.project_ball, symmetry_dict)
+		# If mirrored, create the mirrored version and add ONLY if it doesn't already exist as a separate entry
+		if item.is_checked(6) and symmetry_dict:
+			var mirrored_fixed_raw = KeyBallsData.get_mirrored_ball(proj.fixed_ball, symmetry_dict)
+			var mirrored_project_raw = KeyBallsData.get_mirrored_ball(proj.project_ball, symmetry_dict)
 
-			if mirrored_fixed != -1 or mirrored_projected != -1:
-				var new_fixed = mirrored_fixed
-				if new_fixed == -1:
-					new_fixed = proj.fixed_ball
+			# If a ball doesn't have a mirror, it mirrors to itself
+			var mirrored_fixed = mirrored_fixed_raw if mirrored_fixed_raw != -1 else proj.fixed_ball
+			var mirrored_project = mirrored_project_raw if mirrored_project_raw != -1 else proj.project_ball
+			
+			# Check if the mirrored pair is the same as the original
+			var is_self_mirrored = (mirrored_fixed == proj.fixed_ball) and (mirrored_project == proj.project_ball)
+			
+			if not is_self_mirrored:
+				var mirror_key = Vector2(min(mirrored_fixed, mirrored_project), max(mirrored_fixed, mirrored_project))
+				
+				# If this mirrored pair was NOT found in our initial scan, add it
+				if not existing_pairs.has(mirror_key):
+					var mirrored_proj = {
+						"fixed_ball": mirrored_fixed,
+						"project_ball": mirrored_project,
+						"value": proj.value,
+						"comment": proj.comment
+					}
+					lnz_projections.append(mirrored_proj)
+					# Add it to the set so it doesn't get added again by another mirror check
+					existing_pairs[mirror_key] = true
 
-				var new_projected = mirrored_projected
-				if new_projected == -1:
-					new_projected = proj.project_ball
-
-				var mirrored_proj = {
-					"fixed_ball": new_fixed,
-					"project_ball": new_projected,
-					"value": proj.value,
-					"comment": proj.comment
-				}
-
-				if not (mirrored_proj.fixed_ball == proj.fixed_ball and mirrored_proj.project_ball == proj.project_ball):
-					var is_duplicate = false
-					for p in lnz_projections:
-						if p.fixed_ball == mirrored_proj.fixed_ball and p.project_ball == mirrored_proj.project_ball:
-							is_duplicate = true
-							break
-					if not is_duplicate:
-						lnz_projections.append(mirrored_proj)
 		item = item.get_next()
 
 	emit_signal("apply_projections", lnz_projections)
@@ -280,3 +343,28 @@ func show():
 
 func hide():
 	panel.hide()
+
+func _on_ProjectionsTree_column_title_pressed(column_index):
+	if column_index == 5 or column_index == 6: # Lock or Mirror
+		var root = projections_tree.get_root()
+		if not root:
+			return
+
+		var item = root.get_children()
+		if not item:
+			return
+
+		# Determine target state: if any are unchecked, check all. Otherwise, uncheck all.
+		var target_state = false
+		var current_item = item
+		while current_item:
+			if not current_item.is_checked(column_index):
+				target_state = true
+				break
+			current_item = current_item.get_next()
+
+		# Apply the target state to all items
+		current_item = item
+		while current_item:
+			current_item.set_checked(column_index, target_state)
+			current_item = current_item.get_next()

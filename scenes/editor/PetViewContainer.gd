@@ -608,7 +608,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	var to = from + camera.project_ray_normal(screen_pos) * 10000
 
 	var space_state = camera.get_world().direct_space_state
-	var result = space_state.intersect_ray(from, to, [], 0x7FFFFFFF, false, true)
+	var result = space_state.intersect_ray(from, to, [], 1, false, true)
 
 	if result and result.collider:
 		var parent = result.collider.get_parent()
