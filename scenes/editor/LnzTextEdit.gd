@@ -149,6 +149,14 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 		end_line = next_sec_search[SEARCH_RESULT_LINE]
 	return {"start": start_line, "end": end_line}
 
+func _split_line(line: String) -> Array:
+	var regex = RegEx.new()
+	regex.compile("[\\s,]+")
+	var cleaned_line = line.strip_edges()
+	var normalized_line = regex.sub(cleaned_line, " ", true)
+	var parts = normalized_line.split(" ", false)
+	return parts
+
 func _detect_delimiter(start_line: int, end_line: int) -> String:
 	var delim_counts = {", ": 0, ",": 0, "\t": 0, " ": 0}
 	var lines_scanned = 0
@@ -184,21 +192,23 @@ func _split_and_clean(line: String, p_delimiter: String = "") -> Array:
 	var line_parts = line.split(";")
 	var data_part = line_parts[0].strip_edges()
 
-	var delimiter = p_delimiter
-	if delimiter == "":
-		if data_part.find(", ") != -1: delimiter = ", "
-		elif data_part.find(",") != -1: delimiter = ","
-		elif data_part.find("\t") != -1: delimiter = "\t"
-		else: delimiter = " "
+	return _split_line(data_part)
 
-	var parts = data_part.split(delimiter, false)
-	var cleaned_parts = []
-	for part in parts:
-		var cleaned_part = part.strip_edges()
-		if not cleaned_part.empty():
-			cleaned_parts.append(cleaned_part)
+	# var delimiter = p_delimiter
+	# if delimiter == "":
+	# 	if data_part.find(", ") != -1: delimiter = ", "
+	# 	elif data_part.find(",") != -1: delimiter = ","
+	# 	elif data_part.find("\t") != -1: delimiter = "\t"
+	# 	else: delimiter = " "
 
-	return cleaned_parts
+	# var parts = data_part.split(delimiter, false)
+	# var cleaned_parts = []
+	# for part in parts:
+	# 	var cleaned_part = part.strip_edges()
+	# 	if not cleaned_part.empty():
+	# 		cleaned_parts.append(cleaned_part)
+
+	# return cleaned_parts
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
