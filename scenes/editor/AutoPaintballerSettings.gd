@@ -51,7 +51,8 @@ func _on_Distribution_item_selected(index):
 			params_container.get_node("StripesContainer").show()
 		14: # Leopard
 			params_container.get_node("LeopardContainer").show()
-
+		15: # Rainbow
+			params_container.get_node("RainbowContainer").show()
 
 func _on_RandomizeButton_pressed():
 	var properties = get_properties()
@@ -310,6 +311,58 @@ func _on_RandomizeButton_pressed():
 						rand_range(properties.fuzz_min, properties.fuzz_max), 0, texture_list[randi() % texture_list.size()],
 						1 if properties.anchored else 0, properties.group)
 					paintballz.append(paintball)
+	elif distribution_mode == 15: # Rainbow
+		var num_rainbows = properties.num_spots
+		
+		for i in range(num_rainbows):
+			var paintball_size = rand_range(properties.size_min, properties.size_max)
+			
+			var arc_start = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			if arc_start.length_squared() == 0: arc_start = Vector3.FORWARD
+			
+			var basis = _get_basis_from_normal(arc_start)
+			
+			var arc_direction = basis.x
+			
+			var rotation_axis = arc_start.cross(arc_direction).normalized()
+			
+			rotation_axis = rotation_axis.slerp(arc_start, properties.rainbow_curvature)
+			
+			rotation_axis = rotation_axis.rotated(arc_start, deg2rad(properties.rainbow_angle))
+
+			for color_index in range(color_list.size()):
+				var current_color = color_list[color_index]
+				
+				var offset_axis = rotation_axis.cross(arc_start).normalized()
+				var offset_dist = (float(color_index) - float(color_list.size() - 1) / 2.0) * properties.rainbow_width
+				var band_offset_rad = atan(offset_dist * paintball_size * 0.1) 
+				
+				var band_start = arc_start.rotated(offset_axis, band_offset_rad)
+				var band_axis = rotation_axis.rotated(offset_axis, band_offset_rad)
+
+				var arc_length_rad = PI * properties.rainbow_length
+				
+				var num_paintballs_in_line = 0
+				var angular_diameter = 2 * atan(paintball_size * 0.01)
+				if angular_diameter > 0:
+					num_paintballs_in_line = floor(arc_length_rad / (angular_diameter * 0.9))
+
+				for p_idx in range(num_paintballs_in_line):
+					var step_angle = (float(p_idx) / max(1, num_paintballs_in_line - 1)) * arc_length_rad
+					var pos = band_start.rotated(band_axis, step_angle)
+					
+					var paintball = PaintBallData.new(
+						affected_ballz[randi() % affected_ballz.size()],
+						paintball_size, pos, current_color,
+						outline_color_list[randi() % outline_color_list.size()],
+						floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
+						rand_range(properties.fuzz_min, properties.fuzz_max),
+						0, # z_add
+						texture_list[randi() % texture_list.size()],
+						1 if properties.anchored else 0,
+						properties.group
+					)
+					paintballz.append(paintball)
 	else:
 		for i in range(properties.num_spots):
 			var ball_index = affected_ballz[randi() % affected_ballz.size()]
@@ -504,6 +557,11 @@ func get_properties():
 	properties["leopard_completeness"] = find_node("LeopardCompleteness").value
 	properties["leopard_completeness"] = find_node("LeopardCompleteness").value
 	properties["leopard_use_paired_colors"] = find_node("LeopardPairedColors").pressed
+	properties["rainbow_angle"] = find_node("RainbowAngle").value
+	properties["rainbow_curvature"] = find_node("RainbowCurvature").value
+	properties["rainbow_width"] = find_node("RainbowWidth").value
+	properties["rainbow_length"] = find_node("RainbowLength").value
+	properties["halfie_axis"] = find_node("HalfieAxis").selected
 	properties["halfie_axis"] = find_node("HalfieAxis").selected
 	properties["halfie_side"] = find_node("HalfieSide").selected
 	properties["num_rings"] = find_node("NumRings").value

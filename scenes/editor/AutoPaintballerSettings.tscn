@@ -111,7 +111,7 @@ margin_right = 392.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "Uniform"
-items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null ]
+items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null ]
 selected = 0
 
 [node name="HBoxContainer12" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
@@ -222,6 +222,100 @@ margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = 1.0
 value = 4.0
+
+[node name="RainbowContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+# This entire block is new. Add it inside the "ParamsContainer" node.
+visible = false
+margin_right = 392.0
+margin_bottom = 116.0
+
+[node name="AngleContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+margin_right = 392.0
+margin_bottom = 24.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
+margin_top = 5.0
+margin_right = 194.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Angle"
+
+[node name="RainbowAngle" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
+margin_left = 198.0
+margin_right = 392.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 5.0
+
+[node name="CurvatureContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+margin_top = 28.0
+margin_right = 392.0
+margin_bottom = 52.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
+margin_top = 5.0
+margin_right = 194.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Curvature"
+
+[node name="RainbowCurvature" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
+margin_left = 198.0
+margin_right = 392.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+max_value = 1.0
+step = 0.05
+
+[node name="WidthContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+margin_top = 56.0
+margin_right = 392.0
+margin_bottom = 80.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
+margin_top = 5.0
+margin_right = 194.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Width"
+
+[node name="RainbowWidth" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
+margin_left = 198.0
+margin_right = 392.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = 0.01
+max_value = 10.0
+step = 0.01
+value = 0.5
+
+[node name="LengthContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+margin_top = 84.0
+margin_right = 392.0
+margin_bottom = 108.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
+margin_top = 5.0
+margin_right = 194.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Length"
+
+[node name="RainbowLength" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
+margin_left = 198.0
+margin_right = 392.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = 0.1
+max_value = 4.0
+step = 0.1
+value = 1.0
 
 [node name="NumBandsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
