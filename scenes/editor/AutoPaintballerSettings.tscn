@@ -111,7 +111,7 @@ margin_right = 392.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "Uniform"
-items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null, "Dragon Curve", null, false, 16, null, "Sierpinski", null, false, 17, null, "Barnsley Fern", null, false, 18, null ]
+items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null, "Dragon Curve", null, false, 16, null, "Sierpinski", null, false, 17, null, "Barnsley Fern", null, false, 18, null, "River Dragon", null, false, 19, null, "Forest Curve", null, false, 20, null, "Branching", null, false, 21, null ]
 selected = 0
 
 [node name="HBoxContainer12" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]

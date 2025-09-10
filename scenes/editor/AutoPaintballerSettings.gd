@@ -53,7 +53,7 @@ func _on_Distribution_item_selected(index):
 			params_container.get_node("LeopardContainer").show()
 		15: # Rainbow
 			params_container.get_node("RainbowContainer").show()
-		16, 17, 18: # Fractals
+		16, 17, 18, 19, 20, 21: # Fractals
 			params_container.get_node("FractalContainer").show()
 
 func _on_RandomizeButton_pressed():
@@ -71,7 +71,7 @@ func _on_RandomizeButton_pressed():
 		return
 
 	var texture_list_str = properties.texture_list
-	var texture_list = _parse_number_list(texture_list_str, true) # Allow negatives
+	var texture_list = _parse_number_list(texture_list_str, true)
 	if texture_list.empty() and not texture_list_str.strip_edges().empty():
 		push_warning("Could not parse Texture List. Using default.")
 		texture_list.append(-1)
@@ -90,12 +90,21 @@ func _on_RandomizeButton_pressed():
 			16: # Dragon Curve
 				axiom = "F"
 				rules = {"F": "F+G", "G": "F-G"}
-			17: # Sierpinski Triangle (Arrowhead Curve)
+			17: # Sierpinski Triangle
 				axiom = "A"
 				rules = {"A": "B-A-B", "B": "A+B+A"}
 			18: # Barnsley Fern
 				axiom = "X"
 				rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
+			19: # River Dragon
+				axiom = "X"
+				rules = {"X": "YF-XF+Y", "Y": "YFX"}
+			20: # Forest Curve
+				axiom = "X"
+				rules = {"X": "F+X--X+F"}
+			21: # Branching
+				axiom = "X"
+				rules = {"F": "F[+F]-F"}
 
 		var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
 		
