@@ -68,8 +68,12 @@ func _on_RandomizeButton_pressed():
 	if outline_color_list.empty():
 		return
 
-	var texture_list = _parse_number_list(properties.texture_list)
-	if texture_list.empty():
+	var texture_list_str = properties.texture_list
+	var texture_list = _parse_number_list(texture_list_str, true) # Allow negatives
+	if texture_list.empty() and not texture_list_str.strip_edges().empty():
+		push_warning("Could not parse Texture List. Using default.")
+		texture_list.append(-1)
+	elif texture_list.empty():
 		texture_list.append(-1)
 
 	var paintballz = []
@@ -517,21 +521,24 @@ func _on_RandomizeButton_pressed():
 
 	emit_signal("randomize_auto_paintballz", paintballz)
 
-func _parse_number_list(s):
+func _parse_number_list(s, allow_negatives=false):
 	var list = []
 	var parts = s.split(",", false)
 	for part in parts:
+		part = part.strip_edges()
 		if "-" in part:
-			var range_parts = part.split("-")
-			if range_parts.size() == 2:
-				var start = range_parts[0].to_int()
-				var end = range_parts[1].to_int()
-				for i in range(start, end + 1):
-					list.append(i)
-		else:
+			if part.rfind("-") > 0:
+				var range_parts = part.split("-")
+				if range_parts.size() == 2:
+					var start = range_parts[0].to_int()
+					var end = range_parts[1].to_int()
+					for i in range(start, end + 1):
+						list.append(i)
+			elif allow_negatives and part.is_valid_integer():
+				list.append(part.to_int())
+		elif part.is_valid_integer():
 			list.append(part.to_int())
 	return list
-
 func _on_ApplyButton_pressed():
 	emit_signal("apply_auto_paintballz")
 
