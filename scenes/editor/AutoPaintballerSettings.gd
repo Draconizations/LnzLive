@@ -67,85 +67,62 @@ func _on_RandomizeButton_pressed():
 	if outline_color_list.empty():
 		return
 
+	var texture_list = _parse_number_list(properties.texture_list)
+	if texture_list.empty():
+		texture_list.append(-1)
+
 	var paintballz = []
 	var distribution_mode = properties.distribution
 	var cluster_center = Vector3()
 
 	if distribution_mode == 2: # Star
 		var num_stars = properties.num_spots
-		var num_points = properties.star_points
+		var num_points = int(properties.star_points)
+		var point_size = int(properties.star_point_size)
 		var ray_length = properties.ray_length
 
-		if num_points <= 0 or ray_length <= 0:
+		if num_points <= 1 or ray_length <= 0:
 			return
 
 		for i in range(num_stars):
 			var star_color = color_list[randi() % color_list.size()]
 			var star_outline_color = outline_color_list[randi() % outline_color_list.size()]
 			var star_ball_index = affected_ballz[randi() % affected_ballz.size()]
-
+			
 			var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-
+			
+			var basis = _get_basis_from_normal(star_center)
+			
 			for p in range(num_points):
-				var ray_dir = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+				var angle = (float(p) / num_points) * 2 * PI
+				var tangent_dir = (basis.x * cos(angle) + basis.z * sin(angle))
+				
+				var ray_angle_factor = 0.1
+				var tip = star_center.slerp(star_center + tangent_dir, ray_length * ray_angle_factor).normalized()
 
-				for j in range(ray_length):
-					var pos = star_center.slerp(ray_dir, float(j + 1) / (ray_length * 2.0))
+				var ray_base_size = rand_range(properties.size_min, properties.size_max)
+
+				for j in range(int(ray_length)):
+					var pos = star_center.slerp(tip, float(j + 1) / ray_length)
+					
+					var progress = float(j) / ray_length
+					var progressive_size = lerp(ray_base_size, point_size, progress)
+					var final_size = max(progressive_size, point_size)
 
 					var paintball = PaintBallData.new(
 						star_ball_index,
-						rand_range(properties.size_min, properties.size_max),
-						pos,
+						final_size,
+						pos.normalized(),
 						star_color,
 						star_outline_color,
 						floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-						rand_range(properties.fuzz_min, properties.fuzz_max),
+						floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
 						0, # z_add
-						floor(rand_range(properties.texture_min, properties.texture_max)),
+						texture_list[randi() % texture_list.size()],
 						1 if properties.anchored else 0,
 						properties.group
 					)
 					paintballz.append(paintball)
-		# var num_stars = properties.num_spots
-		# var num_points = int(properties.star_points)
-		# var ray_length = properties.ray_length
-
-		# if num_points <= 1 or ray_length <= 0:
-		# 	return
-
-		# for i in range(num_stars):
-		# 	var star_color = color_list[randi() % color_list.size()]
-		# 	var star_outline_color = outline_color_list[randi() % outline_color_list.size()]
-		# 	var star_ball_index = affected_ballz[randi() % affected_ballz.size()]
-			
-		# 	var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-			
-		# 	var basis = _get_basis_from_normal(star_center)
-			
-		# 	for p in range(num_points):
-		# 		var angle = (float(p) / num_points) * 2 * PI
-		# 		var tangent_dir = (basis.x * cos(angle) + basis.y * sin(angle))
-				
-		# 		var ray_angle_factor = 0.1 # This factor controls how large the stars are
-		# 		var tip = star_center.slerp(star_center + tangent_dir, ray_length * ray_angle_factor).normalized()
-
-		# 		for j in range(int(ray_length)):
-		# 			var pos = star_center.slerp(tip, float(j + 1) / ray_length)
-					
-		# 			var paintball = PaintBallData.new(
-		# 				star_ball_index,
-		# 				rand_range(properties.size_min, properties.size_max),
-		# 				pos.normalized(),
-		# 				star_color,
-		# 				star_outline_color,
-		# 				floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-		# 				floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
-		# 				0, # z_add
-		# 				floor(rand_range(properties.texture_min, properties.texture_max)),
-		# 				1 if properties.anchored else 0,
-		# 				properties.group
-		# 			)
-		# 			paintballz.append(paintball)
 	elif distribution_mode == 12: # Bullseye
 		var num_targets = properties.num_spots
 		var num_rings = properties.num_rings
@@ -171,7 +148,7 @@ func _on_RandomizeButton_pressed():
 					floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
 					floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
 					0, # z_add
-					floor(rand_range(properties.texture_min, properties.texture_max)),
+					texture_list[randi() % texture_list.size()],
 					1 if properties.anchored else 0,
 					properties.group
 				)
@@ -222,7 +199,7 @@ func _on_RandomizeButton_pressed():
 				var outline_color = outline_color_list[randi() % outline_color_list.size()]
 				var outline_type = floor(rand_range(properties.outline_type_min, properties.outline_type_max))
 				var fuzz = floor(rand_range(properties.fuzz_min, properties.fuzz_max))
-				var texture = floor(rand_range(properties.texture_min, properties.texture_max))
+				var texture = texture_list[randi() % texture_list.size()]
 				var group = properties.group
 				
 				var paintball = PaintBallData.new(
@@ -295,7 +272,7 @@ func _on_RandomizeButton_pressed():
 					var paintball = PaintBallData.new(affected_ballz[randi() % affected_ballz.size()],
 						paintball_size, pos, color_outline,
 						outline_color_list[randi() % outline_color_list.size()], floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-						rand_range(properties.fuzz_min, properties.fuzz_max), 0, floor(rand_range(properties.texture_min, properties.texture_max)),
+						rand_range(properties.fuzz_min, properties.fuzz_max), 0, texture_list[randi() % texture_list.size()],
 						1 if properties.anchored else 0, properties.group)
 					paintballz.append(paintball)
 
@@ -315,7 +292,7 @@ func _on_RandomizeButton_pressed():
 					var paintball = PaintBallData.new(affected_ballz[randi() % affected_ballz.size()],
 						paintball_size, pos, color_fill,
 						outline_color_list[randi() % outline_color_list.size()], floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-						rand_range(properties.fuzz_min, properties.fuzz_max), 0, floor(rand_range(properties.texture_min, properties.texture_max)),
+						rand_range(properties.fuzz_min, properties.fuzz_max), 0, texture_list[randi() % texture_list.size()],
 						1 if properties.anchored else 0, properties.group)
 					paintballz.append(paintball)
 
@@ -330,7 +307,7 @@ func _on_RandomizeButton_pressed():
 					var paintball = PaintBallData.new(affected_ballz[randi() % affected_ballz.size()],
 						paintball_size * 0.6, pos, color_outline,
 						outline_color_list[randi() % outline_color_list.size()], floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-						rand_range(properties.fuzz_min, properties.fuzz_max), 0, floor(rand_range(properties.texture_min, properties.texture_max)),
+						rand_range(properties.fuzz_min, properties.fuzz_max), 0, texture_list[randi() % texture_list.size()],
 						1 if properties.anchored else 0, properties.group)
 					paintballz.append(paintball)
 	else:
@@ -341,7 +318,7 @@ func _on_RandomizeButton_pressed():
 			var outline_color = outline_color_list[randi() % outline_color_list.size()]
 			var outline_type = floor(rand_range(properties.outline_type_min, properties.outline_type_max))
 			var fuzz = floor(rand_range(properties.fuzz_min, properties.fuzz_max))
-			var texture = floor(rand_range(properties.texture_min, properties.texture_max))
+			var texture = texture_list[randi() % texture_list.size()]
 			var group = properties.group
 
 			var position = Vector3()
@@ -512,6 +489,7 @@ func get_properties():
 	properties["num_spots"] = find_node("NumSpots").value
 	properties["spiral_turns"] = find_node("SpiralTurns").value
 	properties["star_points"] = find_node("StarPoints").value
+	properties["star_point_size"] = find_node("StarPointSize").value
 	properties["num_bands"] = find_node("NumBands").value
 	properties["grid_size"] = find_node("GridSize").value
 	properties["num_clusters"] = find_node("NumClusters").value
@@ -537,8 +515,7 @@ func get_properties():
 	properties["outline_type_max"] = find_node("OutlineTypeMax").value
 	properties["fuzz_min"] = find_node("FuzzMin").value
 	properties["fuzz_max"] = find_node("FuzzMax").value
-	properties["texture_min"] = find_node("TextureMin").value
-	properties["texture_max"] = find_node("TextureMax").value
+	properties["texture_list"] = find_node("TextureList").text
 	properties["group"] = find_node("Group").value
 	properties["anchored"] = find_node("Anchored").pressed
 	return properties
