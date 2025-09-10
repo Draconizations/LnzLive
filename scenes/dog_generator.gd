@@ -30,6 +30,8 @@ var current_bdt: BdtParser
 
 var _pending_paintballs_data = []
 var _pending_paintball_nodes = []
+var _auto_paintballs_data = []
+var _auto_paintball_nodes = []
 
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
@@ -1151,3 +1153,90 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.z_add = float(existing_paintballs_count + _pending_paintballs_data.size())
 
 	_pending_paintball_nodes.append(pb_visual_ball)
+
+func _on_randomize_auto_paintballz(paintballz):
+	_on_clear_auto_paintballz()
+	_auto_paintballs_data = paintballz
+
+	for paintball_data in _auto_paintballs_data:
+		var base_ball_no = paintball_data.base
+		if !ball_map.has(base_ball_no):
+			continue
+
+		var base_ball_node = ball_map[base_ball_no]
+		var pb_visual_ball = paintball_scene.instance()
+
+		base_ball_node.add_child(pb_visual_ball)
+		pb_visual_ball.set_owner(get_root())
+		pb_visual_ball.add_to_group("paintballs")
+
+		var final_size = base_ball_node.ball_size * (float(paintball_data.size) / 100.0)
+		final_size -= 1 - fmod(final_size, 2)
+		pb_visual_ball.ball_size = final_size
+
+		pb_visual_ball.species = lnz.species
+		pb_visual_ball.base_ball_no = base_ball_no
+		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
+		pb_visual_ball.base_ball_size = base_ball_node.ball_size
+		pb_visual_ball.transform.origin = paintball_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
+		pb_visual_ball.color_index = paintball_data.color_index
+		pb_visual_ball.outline_color_index = paintball_data.outline_color_index
+		pb_visual_ball.outline = paintball_data.outline
+		pb_visual_ball.fuzz_amount = clamp(paintball_data.fuzz / 2, 0, 5)
+
+		if paintball_data.texture_id > -1:
+			var tex_pb = load_texture_from_list(paintball_data.texture_id, lnz.texture_list)
+			if tex_pb:
+				pb_visual_ball.texture = tex_pb
+				if paintball_data.texture_id < lnz.texture_list.size():
+					pb_visual_ball.transparent_color = lnz.texture_list[paintball_data.texture_id].transparent_color
+
+		pb_visual_ball.palette = base_ball_node.palette
+
+		var existing_paintballs_count = 0
+		if paintball_map.has(base_ball_no):
+			existing_paintballs_count = paintball_map[base_ball_no].size()
+		pb_visual_ball.z_add = float(existing_paintballs_count + _auto_paintball_nodes.size())
+
+		_auto_paintball_nodes.append(pb_visual_ball)
+
+func _on_clear_auto_paintballz():
+	for node in _auto_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_auto_paintball_nodes.clear()
+	_auto_paintballs_data.clear()
+
+func _on_apply_auto_paintballz():
+	for pb_data in _auto_paintballs_data:
+		var base_ball_node = ball_map.get(pb_data.base)
+		if not is_instance_valid(base_ball_node):
+			continue
+
+		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
+		var world_relative_pos = base_ball_node.to_global(local_pos) - base_ball_node.global_transform.origin
+
+		var lnz_scale = lnz.scales.x / 255.0
+		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
+		relative_pos_lnz.y *= -1
+
+		var paintball_info = {
+			"base_ball_no": pb_data.base,
+			"relative_pos_local": local_pos,
+			"relative_pos_lnz": relative_pos_lnz,
+			"diameter": pb_data.size,
+			"color": pb_data.color_index,
+			"outline_color": pb_data.outline_color_index,
+			"outline_type": pb_data.outline,
+			"fuzz": pb_data.fuzz,
+			"texture": pb_data.texture_id,
+			"group": pb_data.group,
+			"anchored": (pb_data.anchored == 1)
+		}
+		_pending_paintballs_data.append(paintball_info)
+
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	if lnz_text_edit:
+		lnz_text_edit._on_apply_paintballz()
+
+	_on_clear_auto_paintballz()

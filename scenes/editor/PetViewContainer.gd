@@ -7,6 +7,7 @@ onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContai
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
+onready var dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
 
 var input_is_paused := false
 
@@ -33,15 +34,21 @@ var line_mode_close = false
 
 var paintball_mode = false
 var project_mode = false
+var auto_paintballer_mode = false
+
 var paintball_target_ball = null
 var ray_intersect_paintball = null
 var close_paintball_on_apply = false
+
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
-onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
+onready var auto_paintballer_settings_instance = preload("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
+
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
 onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
+onready var auto_paintballer_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox")
 
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
@@ -66,25 +73,33 @@ const ZOOM_STEP := 1.2
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
-
-	var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
+	
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
-	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	project_mode_check_box.connect("toggled", self, "_on_project_mode_toggled")
+
+	auto_paintballer_check_box.connect("toggled", self, "_on_auto_paintballer_mode_toggled")
+
+	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
+	auto_paintballer_settings_instance.connect("randomize_auto_paintballz", dog_generator, "_on_randomize_auto_paintballz")
+	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
+	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
@@ -126,6 +141,8 @@ func _process(_delta):
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+	elif auto_paintballer_mode:
+		text = "Auto Paintballer: Use the panel to generate random paintballs.\nClick 'Apply' to save changes."
 	elif project_mode:
 		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 	elif preset_mode:
@@ -756,6 +773,30 @@ func _on_paintball_mode_toggled(is_on):
 			project_mode_check_box.pressed = false
 			_on_project_mode_toggled(false)
 	_update_paintball_mode_ui()
+
+func _on_auto_paintballer_mode_toggled(is_on):
+	auto_paintballer_mode = is_on
+	if is_on:
+		auto_paintballer_settings_instance.show()
+		if paintball_mode:
+			paintball_mode = false
+			paintball_check_box.pressed = false
+			_on_paintball_mode_toggled(false)
+		if linez_mode:
+			linez_mode = false
+			line_mode_check_box.pressed = false
+			_on_line_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
+			_on_project_mode_toggled(false)
+	else:
+		auto_paintballer_settings_instance.hide()
+		dog_generator._on_clear_auto_paintballz()
 
 func _on_line_mode_toggled(is_on):
 	linez_mode = is_on
