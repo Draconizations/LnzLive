@@ -53,6 +53,8 @@ func _on_Distribution_item_selected(index):
 			params_container.get_node("LeopardContainer").show()
 		15: # Rainbow
 			params_container.get_node("RainbowContainer").show()
+		16, 17, 18: # Fractals
+			params_container.get_node("FractalContainer").show()
 
 func _on_RandomizeButton_pressed():
 	var properties = get_properties()
@@ -80,7 +82,63 @@ func _on_RandomizeButton_pressed():
 	var distribution_mode = properties.distribution
 	var cluster_center = Vector3()
 
-	if distribution_mode == 2: # Star
+	if distribution_mode >= 16 and distribution_mode <= 18: # Fractals
+		var axiom = ""
+		var rules = {}
+		
+		match distribution_mode:
+			16: # Dragon Curve
+				axiom = "F"
+				rules = {"F": "F+G", "G": "F-G"}
+			17: # Sierpinski Triangle (Arrowhead Curve)
+				axiom = "A"
+				rules = {"A": "B-A-B", "B": "A+B+A"}
+			18: # Barnsley Fern
+				axiom = "X"
+				rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
+
+		var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
+		
+		var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var basis = _get_basis_from_normal(start_pos)
+		var turtle_state = {"pos": start_pos, "heading": basis.x}
+		var state_stack = []
+
+		var paintball_size = rand_range(properties.size_min, properties.size_max)
+		var step_angle_rad = atan(paintball_size * 0.02) * 0.9
+
+		for command in fractal_string:
+			match command:
+				"F", "G", "A", "B": # Draw forward
+					var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
+					if move_axis.length_squared() > 0:
+						turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
+						turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
+						
+						var paintball = PaintBallData.new(
+							affected_ballz[randi() % affected_ballz.size()],
+							paintball_size, turtle_state.pos, color_list[randi() % color_list.size()],
+							outline_color_list[randi() % outline_color_list.size()],
+							floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
+							rand_range(properties.fuzz_min, properties.fuzz_max), 0,
+							texture_list[randi() % texture_list.size()],
+							1 if properties.anchored else 0, properties.group)
+						paintballz.append(paintball)
+				"+": # Turn Right
+					var turn_axis = turtle_state.pos
+					turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
+				"-": # Turn Left
+					var turn_axis = turtle_state.pos
+					turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
+				"[": # Push state
+					state_stack.append(turtle_state.duplicate(true))
+				"]": # Pop state
+					if not state_stack.empty():
+						turtle_state = state_stack.pop_back()
+		
+		emit_signal("randomize_auto_paintballz", paintballz)
+		return
+	elif distribution_mode == 2: # Star
 		var num_stars = properties.num_spots
 		var num_points = int(properties.star_points)
 		var point_size = int(properties.star_point_size)
@@ -563,6 +621,19 @@ func _get_basis_from_normal(normal_vec):
 	
 	return Basis(basis_x, basis_y, basis_z)
 
+func _generate_lsystem_string(axiom, rules, iterations):
+	var current_string = axiom
+	for i in range(iterations):
+		var new_string = ""
+		for char_idx in range(current_string.length()):
+			var current_char = current_string[char_idx]
+			if rules.has(current_char):
+				new_string += rules[current_char]
+			else:
+				new_string += current_char
+		current_string = new_string
+	return current_string
+
 func get_properties():
 	var properties = {}
 	properties["affected_ballz"] = find_node("AffectedBallz").text
@@ -589,6 +660,8 @@ func get_properties():
 	properties["rainbow_curvature"] = find_node("RainbowCurvature").value
 	properties["rainbow_width"] = find_node("RainbowWidth").value
 	properties["rainbow_length"] = find_node("RainbowLength").value
+	properties["fractal_iterations"] = find_node("FractalIterations").value
+	properties["fractal_angle"] = find_node("FractalAngle").value
 	properties["halfie_axis"] = find_node("HalfieAxis").selected
 	properties["halfie_axis"] = find_node("HalfieAxis").selected
 	properties["halfie_side"] = find_node("HalfieSide").selected

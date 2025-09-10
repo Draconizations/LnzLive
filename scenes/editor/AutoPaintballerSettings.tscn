@@ -111,7 +111,7 @@ margin_right = 392.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "Uniform"
-items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null ]
+items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null, "Dragon Curve", null, false, 16, null, "Sierpinski", null, false, 17, null, "Barnsley Fern", null, false, 18, null ]
 selected = 0
 
 [node name="HBoxContainer12" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
@@ -140,6 +140,54 @@ value = 25.0
 margin_top = 84.0
 margin_right = 392.0
 margin_bottom = 84.0
+
+[node name="FractalContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+visible = false
+margin_right = 592.0
+margin_bottom = 70.0
+
+[node name="IterationsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+margin_right = 592.0
+margin_bottom = 30.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
+margin_top = 2.0
+margin_right = 294.0
+margin_bottom = 28.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Iterations"
+
+[node name="FractalIterations" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
+margin_left = 298.0
+margin_right = 592.0
+margin_bottom = 30.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 10.0
+value = 5.0
+
+[node name="AngleContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+margin_top = 34.0
+margin_right = 592.0
+margin_bottom = 64.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
+margin_top = 2.0
+margin_right = 294.0
+margin_bottom = 28.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Angle"
+
+[node name="FractalAngle" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
+margin_left = 298.0
+margin_right = 592.0
+margin_bottom = 30.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 180.0
+value = 90.0
 
 [node name="SpiralTurnsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
