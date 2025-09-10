@@ -119,8 +119,9 @@ margin_left = 198.0
 margin_right = 392.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
 text = "Uniform"
-items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null, "Dragon Curve", null, false, 16, null, "Sierpinski", null, false, 17, null, "Barnsley Fern", null, false, 18, null ]
+items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Horizontal Bands", null, false, 3, null, "Vertical Bands", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null, "Stripes", null, false, 13, null, "Leospots", null, false, 14, null, "Rainbow", null, false, 15, null, "Fractal", null, false, 16, null ]
 selected = 0
 
 [node name="HBoxContainer12" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
@@ -153,7 +154,76 @@ margin_bottom = 84.0
 [node name="FractalContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
-margin_bottom = 70.0
+margin_bottom = 258.0
+
+[node name="PresetContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+margin_right = 592.0
+margin_bottom = 24.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+margin_top = 5.0
+margin_right = 195.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Preset"
+
+[node name="FractalPreset" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+margin_left = 199.0
+margin_right = 394.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Custom"
+items = [ "Custom", null, false, 0, null, "Dragon Curve", null, false, 1, null, "Sierpinski", null, false, 2, null, "Barnsley Fern", null, false, 3, null ]
+selected = 0
+
+[node name="RandomSystemButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+margin_left = 398.0
+margin_right = 592.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Generate Random"
+
+[node name="AxiomContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+margin_top = 28.0
+margin_right = 592.0
+margin_bottom = 52.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
+margin_top = 5.0
+margin_right = 294.0
+margin_bottom = 19.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Axiom"
+
+[node name="FractalAxiom" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
+margin_left = 298.0
+margin_right = 592.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+placeholder_text = "F"
+
+[node name="RulesContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+margin_top = 56.0
+margin_right = 592.0
+margin_bottom = 186.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
+margin_right = 592.0
+margin_bottom = 14.0
+custom_fonts/font = SubResource( 1 )
+text = "Rules (e.g. F=F+G)"
+
+[node name="FractalRules" type="TextEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
+margin_top = 18.0
+margin_right = 592.0
+margin_bottom = 130.0
+rect_min_size = Vector2( 0, 112 )
+show_line_numbers = true
+wrap_enabled = true
 
 [node name="IterationsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_right = 592.0

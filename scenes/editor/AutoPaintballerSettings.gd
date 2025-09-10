@@ -1,5 +1,29 @@
 extends CanvasLayer
 
+enum Distribution {
+	UNIFORM,            # 00
+	SPIRAL,             # 01
+	STAR,               # 02
+	HORIZONTAL_BANDS,   # 03
+	VERTICAL_BANDS,     # 04
+	GRID,               # 05
+	CHECKERBOARD,       # 06
+	RANDOM_WALK,        # 07
+	CLUSTERED,          # 08
+	POLE_FOCUSED,       # 09
+	EQUATOR_FOCUSED,    # 10
+	HALFIE,             # 11
+	BULLSEYE,           # 12
+	STRIPES,            # 13
+	LEOPARD,            # 14
+	RAINBOW,            # 15
+	FRACTAL             # 16
+}
+
+enum FractalPreset { CUSTOM, DRAGON_CURVE, SIERPINSKI, BARNSLEY_FERN }
+
+const ALLOWED_FRACTAL_CHARS = "FGABX+-[]"
+
 signal randomize_auto_paintballz(paintballz)
 
 signal apply_auto_paintballz
@@ -13,10 +37,69 @@ func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
+
+	find_node("FractalPreset").connect("item_selected", self, "_on_FractalPreset_item_selected")
+	find_node("FractalAxiom").connect("text_changed", self, "_on_FractalAxiom_text_changed")
+
+	find_node("RandomSystemButton").connect("pressed", self, "_on_RandomSystemButton_pressed")
+	
 	get_viewport().connect("size_changed", self, "_on_viewport_size_changed")
 	_on_viewport_size_changed()
 	_on_Distribution_item_selected(0)
 
+	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
+
+func _on_RandomSystemButton_pressed():
+	var axiom_edit = find_node("FractalAxiom")
+	var rules_edit = find_node("FractalRules")
+	var angle_edit = find_node("FractalAngle")
+	
+	var random_system = _generate_random_lsystem()
+	axiom_edit.text = random_system.axiom
+	rules_edit.text = random_system.rules_text
+	angle_edit.value = [30, 45, 60, 90, 120][randi() % 5]
+
+func _on_FractalPreset_item_selected(index):
+	var axiom_edit = find_node("FractalAxiom")
+	var rules_edit = find_node("FractalRules")
+	var angle_edit = find_node("FractalAngle")
+	var random_button = find_node("RandomSystemButton")
+
+	axiom_edit.editable = false
+	rules_edit.readonly = true
+	random_button.hide()
+	
+	match index:
+		FractalPreset.DRAGON_CURVE:
+			axiom_edit.text = "F"
+			rules_edit.text = "F=F+G\nG=F-G"
+			angle_edit.value = 90.0
+		FractalPreset.SIERPINSKI:
+			axiom_edit.text = "A"
+			rules_edit.text = "A=B-A-B\nB=A+B+A"
+			angle_edit.value = 60.0
+		FractalPreset.BARNSLEY_FERN:
+			axiom_edit.text = "X"
+			rules_edit.text = "X=F+[[X]-X]-F[-FX]+X\nF=FF"
+			angle_edit.value = 25.0
+		FractalPreset.CUSTOM:
+			axiom_edit.editable = true
+			rules_edit.readonly = false
+			random_button.show()
+			pass
+
+func _on_FractalAxiom_text_changed(new_text: String):
+	var axiom_edit = find_node("FractalAxiom")
+	var sanitized_text = ""
+	
+	for current_char in new_text:
+		if ALLOWED_FRACTAL_CHARS.find(current_char) != -1:
+			sanitized_text += current_char
+			
+	if sanitized_text != new_text:
+		var cursor_pos = axiom_edit.caret_position
+		axiom_edit.text = sanitized_text
+		axiom_edit.caret_position = min(cursor_pos, sanitized_text.length())
 
 func _on_viewport_size_changed():
 	var viewport_size = get_viewport().size
@@ -53,7 +136,7 @@ func _on_Distribution_item_selected(index):
 			params_container.get_node("LeopardContainer").show()
 		15: # Rainbow
 			params_container.get_node("RainbowContainer").show()
-		16, 17, 18: # Fractals
+		16: # Fractal
 			params_container.get_node("FractalContainer").show()
 
 func _on_RandomizeButton_pressed():
@@ -82,62 +165,8 @@ func _on_RandomizeButton_pressed():
 	var distribution_mode = properties.distribution
 	var cluster_center = Vector3()
 
-	if distribution_mode >= 16 and distribution_mode <= 18: # Fractals
-		var axiom = ""
-		var rules = {}
-		
-		match distribution_mode:
-			16: # Dragon Curve
-				axiom = "F"
-				rules = {"F": "F+G", "G": "F-G"}
-			17: # Sierpinski Triangle (Arrowhead Curve)
-				axiom = "A"
-				rules = {"A": "B-A-B", "B": "A+B+A"}
-			18: # Barnsley Fern
-				axiom = "X"
-				rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
-
-		var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
-		
-		var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		var basis = _get_basis_from_normal(start_pos)
-		var turtle_state = {"pos": start_pos, "heading": basis.x}
-		var state_stack = []
-
-		var paintball_size = rand_range(properties.size_min, properties.size_max)
-		var step_angle_rad = atan(paintball_size * 0.02) * 0.9
-
-		for command in fractal_string:
-			match command:
-				"F", "G", "A", "B": # Draw forward
-					var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
-					if move_axis.length_squared() > 0:
-						turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
-						turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
-						
-						var paintball = PaintBallData.new(
-							affected_ballz[randi() % affected_ballz.size()],
-							paintball_size, turtle_state.pos, color_list[randi() % color_list.size()],
-							outline_color_list[randi() % outline_color_list.size()],
-							floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-							rand_range(properties.fuzz_min, properties.fuzz_max), 0,
-							texture_list[randi() % texture_list.size()],
-							1 if properties.anchored else 0, properties.group)
-						paintballz.append(paintball)
-				"+": # Turn Right
-					var turn_axis = turtle_state.pos
-					turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
-				"-": # Turn Left
-					var turn_axis = turtle_state.pos
-					turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
-				"[": # Push state
-					state_stack.append(turtle_state.duplicate(true))
-				"]": # Pop state
-					if not state_stack.empty():
-						turtle_state = state_stack.pop_back()
-		
-		emit_signal("randomize_auto_paintballz", paintballz)
-		return
+	if distribution_mode == 16: # Fractal
+		paintballz = _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
 	elif distribution_mode == 2: # Star
 		var num_stars = properties.num_spots
 		var num_points = int(properties.star_points)
@@ -621,6 +650,95 @@ func _get_basis_from_normal(normal_vec):
 	
 	return Basis(basis_x, basis_y, basis_z)
 
+func _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var axiom = ""
+	var rules = {}
+
+	match properties.fractal_preset:
+		FractalPreset.DRAGON_CURVE:
+			axiom = "F"
+			rules = {"F": "F+G", "G": "F-G"}
+		FractalPreset.SIERPINSKI:
+			axiom = "A"
+			rules = {"A": "B-A-B", "B": "A+B+A"}
+		FractalPreset.BARNSLEY_FERN:
+			axiom = "X"
+			rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
+		_: # Default to Custom
+			axiom = properties.fractal_axiom
+			rules = _parse_lsystem_rules(properties.fractal_rules)
+	
+	if axiom.empty() or rules.empty():
+		push_warning("Fractal generation failed: Axiom or Rules are not defined.")
+		return []
+
+	var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
+	
+	var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+	if start_pos.length_squared() == 0: start_pos = Vector3.FORWARD
+	
+	var basis = _get_basis_from_normal(start_pos)
+	var turtle_state = {"pos": start_pos, "heading": basis.x}
+	var state_stack = []
+
+	var paintball_size = rand_range(properties.size_min, properties.size_max)
+	var step_angle_rad = atan(paintball_size * 0.02) * 0.9
+
+	for command in fractal_string:
+		match command:
+			"F", "G", "A", "B": # Draw forward
+				var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
+				if move_axis.length_squared() > 0:
+					turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
+					turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
+					
+					var paintball = _create_fractal_paintball(
+						turtle_state.pos,
+						paintball_size,
+						properties, affected_ballz, color_list, outline_color_list, texture_list
+					)
+					paintballz.append(paintball)
+			"+": # Turn Right
+				var turn_axis = turtle_state.pos
+				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
+			"-": # Turn Left
+				var turn_axis = turtle_state.pos
+				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
+			"[": # Push state
+				state_stack.append(turtle_state.duplicate(true))
+			"]": # Pop state
+				if not state_stack.empty():
+					turtle_state = state_stack.pop_back()
+	return paintballz
+
+func _create_fractal_paintball(pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list):
+	return PaintBallData.new(
+		affected_ballz[randi() % affected_ballz.size()],
+		size,
+		pos,
+		color_list[randi() % color_list.size()],
+		outline_color_list[randi() % outline_color_list.size()],
+		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
+		rand_range(properties.fuzz_min, properties.fuzz_max),
+		0, # z_add
+		texture_list[randi() % texture_list.size()],
+		1 if properties.anchored else 0,
+		properties.group
+	)
+
+func _parse_lsystem_rules(rules_text: String) -> Dictionary:
+	var rules = {}
+	var lines = rules_text.split("\n", false)
+	for line in lines:
+		var parts = line.split("=", false, 1)
+		if parts.size() == 2:
+			var key = parts[0].strip_edges()
+			var value = parts[1].strip_edges()
+			if not key.empty():
+				rules[key] = value
+	return rules
+
 func _generate_lsystem_string(axiom, rules, iterations):
 	var current_string = axiom
 	for i in range(iterations):
@@ -633,6 +751,41 @@ func _generate_lsystem_string(axiom, rules, iterations):
 				new_string += current_char
 		current_string = new_string
 	return current_string
+
+func _generate_random_lsystem() -> Dictionary:
+	var variables = ["F", "G", "A", "B", "X"]
+	var constants = ["+", "-"]
+	var all_chars = variables + constants
+
+	var axiom = variables[randi() % variables.size()]
+
+	var rules = {}
+	var num_rules = 2 + randi() % 2 
+	
+	variables.shuffle()
+	
+	for i in range(num_rules):
+		var key = variables[i]
+		var value = ""
+		var value_length = 3 + randi() % 5
+		
+		var current_len = 0
+		while current_len < value_length:
+			if randf() < 0.2 and current_len < value_length - 2:
+				value += "[" + all_chars[randi() % all_chars.size()] + "]"
+				current_len += 3
+			else:
+				value += all_chars[randi() % all_chars.size()]
+				current_len += 1
+		
+		rules[key] = value
+
+	var rule_lines = []
+	for key in rules:
+		rule_lines.append(key + "=" + rules[key])
+	var rules_text = PoolStringArray(rule_lines).join("\n")
+
+	return {"axiom": axiom, "rules_text": rules_text}
 
 func get_properties():
 	var properties = {}
@@ -654,7 +807,6 @@ func get_properties():
 	properties["leopard_radius_max"] = find_node("LeopardRadiusMax").value
 	properties["leopard_irregularity"] = find_node("LeopardIrregularity").value
 	properties["leopard_completeness"] = find_node("LeopardCompleteness").value
-	properties["leopard_completeness"] = find_node("LeopardCompleteness").value
 	properties["leopard_use_paired_colors"] = find_node("LeopardPairedColors").pressed
 	properties["rainbow_angle"] = find_node("RainbowAngle").value
 	properties["rainbow_curvature"] = find_node("RainbowCurvature").value
@@ -662,7 +814,9 @@ func get_properties():
 	properties["rainbow_length"] = find_node("RainbowLength").value
 	properties["fractal_iterations"] = find_node("FractalIterations").value
 	properties["fractal_angle"] = find_node("FractalAngle").value
-	properties["halfie_axis"] = find_node("HalfieAxis").selected
+	properties["fractal_preset"] = find_node("FractalPreset").selected
+	properties["fractal_axiom"] = find_node("FractalAxiom").text
+	properties["fractal_rules"] = find_node("FractalRules").text
 	properties["halfie_axis"] = find_node("HalfieAxis").selected
 	properties["halfie_side"] = find_node("HalfieSide").selected
 	properties["num_rings"] = find_node("NumRings").value
