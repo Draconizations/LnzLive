@@ -63,6 +63,15 @@ margin_bottom = 29.0
 custom_fonts/font = SubResource( 1 )
 text = "Clear"
 
+[node name="AutoPaintballerWarning" type="RichTextLabel" parent="Panel/VBoxContainer"]
+custom_fonts/normal_font = SubResource( 1 )
+margin_top = 25.0
+margin_right = 292.0
+margin_bottom = 40.0
+text = "Warning: experimental tool! Depending on number of spots and distribution modes, randomize could take a long time to preview."
+fit_content_height = true
+align = 1
+
 [node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer"]
 margin_top = 53.0
 margin_right = 392.0
