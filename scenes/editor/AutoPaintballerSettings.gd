@@ -163,10 +163,96 @@ func _on_RandomizeButton_pressed():
 
 	var paintballz = []
 	var distribution_mode = properties.distribution
-	var cluster_center = Vector3()
+
+	var seed_hash = OS.get_unix_time()
 
 	if distribution_mode == 16: # Fractal
 		paintballz = _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
+	elif distribution_mode == 7: # Random Walk
+		for ball_index in affected_ballz:
+			rand_seed(seed_hash + ball_index)
+
+			var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
+			var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
+			
+			if ball_index == affected_ballz.back():
+				num_spots_per_ball += spots_remainder
+			
+			var last_pos = Vector3()
+			
+			for i in range(num_spots_per_ball):
+				var position = Vector3()
+				if i == 0:
+					position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+				else:
+					var offset = Vector3(rand_range(-0.2, 0.2), rand_range(-0.2, 0.2), rand_range(-0.2, 0.2))
+					position = (last_pos + offset).normalized()
+				
+				var size = rand_range(properties.size_min, properties.size_max)
+				var color = color_list[randi() % color_list.size()]
+				var outline_color = outline_color_list[randi() % outline_color_list.size()]
+				var outline_type = floor(rand_range(properties.outline_type_min, properties.outline_type_max))
+				var fuzz = floor(rand_range(properties.fuzz_min, properties.fuzz_max))
+				var texture = texture_list[randi() % texture_list.size()]
+				var group = properties.group
+				
+				var paintball = PaintBallData.new(
+					ball_index,
+					size,
+					position,
+					color,
+					outline_color,
+					outline_type,
+					fuzz,
+					0, # z_add
+					texture,
+					1 if properties.anchored else 0,
+					group
+				)
+				paintballz.append(paintball)
+				last_pos = position
+	elif distribution_mode == 8: # Clustered
+		for ball_index in affected_ballz:
+			var cluster_center = Vector3()
+			rand_seed(seed_hash + ball_index)
+			
+			var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
+			var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
+			
+			if ball_index == affected_ballz.back():
+				num_spots_per_ball += spots_remainder
+			
+			for i in range(num_spots_per_ball):
+				var num_clusters = properties.num_clusters
+				if num_clusters > 0:
+					var cluster_size = num_spots_per_ball / num_clusters
+					if cluster_size > 0 and i % int(cluster_size) == 0:
+						cluster_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+					var offset = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
+					var position = (cluster_center + offset).normalized()
+
+					var size = rand_range(properties.size_min, properties.size_max)
+					var color = color_list[randi() % color_list.size()]
+					var outline_color = outline_color_list[randi() % outline_color_list.size()]
+					var outline_type = floor(rand_range(properties.outline_type_min, properties.outline_type_max))
+					var fuzz = floor(rand_range(properties.fuzz_min, properties.fuzz_max))
+					var texture = texture_list[randi() % texture_list.size()]
+					var group = properties.group
+					
+					var paintball = PaintBallData.new(
+						ball_index,
+						size,
+						position,
+						color,
+						outline_color,
+						outline_type,
+						fuzz,
+						0, # z_add
+						texture,
+						1 if properties.anchored else 0,
+						group
+					)
+					paintballz.append(paintball)
 	elif distribution_mode == 2: # Star
 		var num_stars = properties.num_spots
 		var num_points = int(properties.star_points)
@@ -550,21 +636,21 @@ func _on_RandomizeButton_pressed():
 									)
 									paintballz.append(p)
 					continue 
-			elif distribution_mode == 7: # Random Walk
-				if i == 0 or paintballz.size() == 0:
-					position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-				else:
-					var last_pos = paintballz[paintballz.size() - 1].position
-					var offset = Vector3(rand_range(-0.2, 0.2), rand_range(-0.2, 0.2), rand_range(-0.2, 0.2))
-					position = (last_pos + offset).normalized()
-			elif distribution_mode == 8: # Clustered
-				var num_clusters = properties.num_clusters
-				if num_clusters > 0:
-					var cluster_size = properties.num_spots / num_clusters
-					if cluster_size > 0 and i % int(cluster_size) == 0:
-						cluster_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-					var offset = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
-					position = (cluster_center + offset).normalized()
+			# elif distribution_mode == 7: # Random Walk
+			# 	if i == 0 or paintballz.size() == 0:
+			# 		position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			# 	else:
+			# 		var last_pos = paintballz[paintballz.size() - 1].position
+			# 		var offset = Vector3(rand_range(-0.2, 0.2), rand_range(-0.2, 0.2), rand_range(-0.2, 0.2))
+			# 		position = (last_pos + offset).normalized()
+			# elif distribution_mode == 8: # Clustered
+			# 	var num_clusters = properties.num_clusters
+			# 	if num_clusters > 0:
+			# 		var cluster_size = properties.num_spots / num_clusters
+			# 		if cluster_size > 0 and i % int(cluster_size) == 0:
+			# 			cluster_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			# 		var offset = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
+			# 		position = (cluster_center + offset).normalized()
 			elif distribution_mode == 9: # Pole-Focused
 				var y = 1.0 - pow(randf(), 2)
 				if randf() > 0.5:
