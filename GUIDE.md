@@ -48,10 +48,6 @@ For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to
 
 - **Import LNZ / BMP / PNG:** Load LNZ files or custom texture/palette image files from your computer.
 
-### Edit
-
-- **Capture Head Shot:** Captures the current animation frame and camera angle and writes it to the `[Head Shot]` section of the LNZ with helpful comments.
-
 ### Tool
 
 #### Auto Paintballer
@@ -122,6 +118,9 @@ Pops open a numbered preview of the paletted color index matching whichever game
 
 The Recolor Menu can be used to quickly recolor ballz, paintballz, and linez. Enter the color mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the color swap.
 
+#### Capture Head Shot
+
+Captures the current animation frame and camera angle and writes it to the `[Head Shot]` section of the LNZ with helpful comments.
 
 ### Mode
 
