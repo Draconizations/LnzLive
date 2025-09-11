@@ -12,41 +12,122 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 
 Don't forget to hit save or apply changes to see the results!
 
-> *Loading and saving LNZ data of game files directly is a **planned feature**.*
+> Note: *Loading and saving LNZ data of game files directly is a **planned feature**.*
 
 ## Help! It crashes when I do X!
 
-LnzLive is definitely a work in progress! Please make regular backups of your LNZ files.
+LnzLive is a work in progress! Please make regular backups of your LNZ files.
 
-Raise an issue in the GitHub repository if you have a bug or suggestion to report, so that can be tracked and resolved.
+If you encounter a bug or have a suggestion, please raise an issue in the GitHub repository so it can be tracked and resolved.
 
 ## File Tree
-You can either start from a preset LNZ file under `Examples` in the file tree (left-hand panel) by double-clicking to load, or paste LNZ copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
 
-To load your own LNZ file, open in LNZPro, paste the contents into the editor, and hit `Apply Changes` or save (`CRTL+S`) to refresh the pet view. These will appear under `Local Storage` in the file tree, and can be right-clicked to rename or make backups, which is recommended.
+The file tree on the left panel allows you to manage your LNZ files.
 
-Once you have a LNZ file saved under `Local Storage`, you can right-click the file to see some options. While a file is loaded, you can hit `Back Up` to save a copy of the file named `{filename}_backup.lnz`. Note, this will overwrite any existing file of that name. You can also rename or delete files.
+- **Examples:** Contains preset LNZ files you can double-click to load.
+
+- **Local Storage:** Stores LNZ files that you have saved from the editor.
+
+- **Local Textures:** Shows custom texture BMP files you have imported. A thumbnail preview of your texture will also show here.
+
+- **Local Palettes:** Shows custom palette PNG files you have imported. Double-clicking on a palette will apply to the current LNZ file.
+
+Once you have an LNZ file saved under Local Storage, you can right-click it to see more options:
+
+- **Back Up:** Creates a copy of the file named `{filename}_backup_#.lnz`. LnzLive keeps the three most recent backups.
+
+- **Rename:** Changes the name of the LNZ file.
+
+- **Delete:** Removes the LNZ file permanently.
+
+For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to get the file prefix for easy pasting into LNZ.
 
 ## Menu Options
 
 ### File
 
-- Import LNZ / BMP / PNG
+- **Import LNZ / BMP / PNG:** Load LNZ files or custom texture/palette image files from your computer.
 
 ### Edit
 
-- Capture Head Shot
+- **Capture Head Shot:** Captures the current animation frame and camera angle and writes it to the `[Head Shot]` section of the LNZ with helpful comments.
 
 ### Tool
 
-- View Palette
-- Recolor Menu
+#### Auto Paintballer
+
+The `Auto Paintballer` is tool for procedurally generating either simple spots, complex patterns, or intricate fractals using `[Paintballz]`, which get placed according to selected distribution modes.
+
+**Common Properties:**
+
+These settings are used by most distribution modes.
+
+- **Affected Ballz:** A comma-separated list of ball numbers (or ranges, e.g., `1,5,10-15`) that paintballs can be attached to.
+- **Number of Spots:** The total number of spots, which could comprise multiple paintballz, to generate.
+- **Size Min/Max:** The random size range for each paintball.
+- **Color/Outline Color List:** Comma-separated lists of color indices (or ranges, e.g., `150-159,180-189,214`) to be used for the fill and outline of the paintballs.
+- **Outline Type Min/Max:** The random range for the outline type.
+- **Fuzz Min/Max:** The random range for fuzziness.
+- **Texture List:** A comma-separated list of texture IDs to apply. Use -1 for no texture.
+- **Group:** The group number to assign to the generated paintballs.
+- **Anchored:** If checked, the paintballs will be anchored.
+
+**Distribution Modes:**
+
+This dropdown determines the algorithm used to place paintballs.
+
+- Uniform: Places paintballs randomly across the entire surface.
+- Spiral: Arranges paintballs in a spiral pattern around the pet.
+- Star: Creates starburst patterns with configurable points and ray length.
+- Horizontal/Vertical Bands: Confines paintball placement to distinct bands.
+- Grid/Checkerboard: Arranges paintballs in a grid or checkerboard pattern.
+- Random Walk: Each new paintball is placed near the previous one, creating winding paths.
+- Clustered: Groups paintballs into tight, randomly placed clusters.
+- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle of the pet.
+- Halfie: Restricts paintballs to one half of the pet along a selected axis (X, Y, or Z) and size (positive or negative).
+- Bullseye: Creates concentric rings of different colors.
+- Stripes: Generates organic, wavy stripes using noise. You can control the frequency, scale, distortion, and thickness.
+- Leopard: Creates irregular, ringed spots. You can control the spot radius, irregularity, and how complete the rings are. Use "Paired Colors" to define ordered outer/inner colors from your color list (e.g., `155,45,185,45` will only sample 155 outer / 45 inner and 185 outer / 45 inner if "Paired Colors" is checked; otherwise, random pairs will be drawn).
+- Rainbow: Generates multi-color arcs of paintballz. You can control the angle, curvature, width, and length of the arcs.
+- Fractal: A powerful mode using Lindenmayer system aka turtle-walking procedure for generating complex, self-repeating patterns.
+
+    - *Preset:* Choose a classic fractal like Dragon Curve, Sierpinski Triangle, or Barnsley Fern to see how it works. Select "Custom" to define your own rules.
+	- *Generate Random:* When "Custom" preset is selected, this button creates a new, randomized (but valid) rules for you to experiment with making new fractals.
+	- *Axiom:* The starting string for the fractal (e.g., `F`).
+	- *Rules:* The replacement rules, one per line (e.g., `F=F+G`). The allowed characters are `F`, `G`, `A`, `B`, `X`, `+`, `-`, `[, ]`. The *Axiom* and *Rules* fields are only editable when the "Custom" preset is selected.
+	- *Iterations:* How many times to apply the rules. Higher numbers create more complex patterns.
+	- *Angle:* The angle in degrees for turning commands (`+` or `-`). Each preset comes with a recommended angle.
+
+	The Lindenmayer system works by starting with a string of characters (the *Axiom*) and repeatedly replacing characters according to a set of *Rules*. This process, called iteration, creates a long and complex string of commands. This string is then used to guide a "turtle" that moves across the ballz surface, placing paintballz along the pattern.
+	
+	The basic commands are:
+
+	`F`, `G`, `A`, `B`: Move forward and draw a paintball.
+
+	`X`: A placeholder character used in rules that could replace it. It does not draw any paintballz itself.
+
+	`+`: Turn right by the specified *Angle*.
+
+	`-`: Turn left by the specified *Angle*.
+
+	`[`: Save the current position and direction (creates a branch).
+
+	`]`: Return to the last saved position and direction (ends a branch).
+
+#### View Palette
+
+Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
+
+#### Recolor Menu
+
+The Recolor Menu can be used to quickly recolor ballz, paintballz, and linez. Enter the color mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the color swap.
+
 
 ### Mode
 
 #### Select Mode
 
-In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections in the LNZ text editor.
+In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ text editor.
 
 - **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
@@ -55,9 +136,7 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 #### Paintball Mode
 
-In `Paintball Mode`, you can place prepared paintballz by point-and-click on ballz. You can enter `Paintball Mode` either by right-click `Tools Menu` on a specific ball (which locks paintballz editing to that ballz) or through the top `Options Menu` under `Mode`.
-
-When you apply paintballz to Babyz, LnzLive will automatically insert the new LNZ 5x with comments `;rep#`. This is because in-game, paintballz have no respect and show up at their own whim, and repeating them can help them appear more stably.
+In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically repeats the LNZ entries five times with `;rep#` comments to improve their stability in-game.
 
 #### Project Mode
 
@@ -81,9 +160,7 @@ Here, you will find toggles for what elements should be drawn in the pet view. T
 
 ### Export
 
-#### Export OBJ 3D Model
-
-Experimental feature to export a 3D model of the loaded LNZ and animation frame! Your mileage may vary.
+- **Export OBJ 3D Model:** Experimental feature to export a 3D model of the loaded LNZ and animation frame! Your mileage may vary.
 
 ### Help
 
@@ -112,14 +189,6 @@ Use these controls to preview and navigate animations:
 - Use the mouse wheel to zoom in and out.
 - Press down on mouse wheel or hold space and drag to move pet around viewport.
 
-## Edit functions
-
-Options under the "Edit" menu button...
-
-### Capture Head Shot
-
-Click this button to capture current animation frame and view angle in `[Head Shot]` section.
-
 ## Visual editing
 
 Ballz can be moved and resized directly in the pet view.
@@ -138,17 +207,15 @@ The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
 
 ## Tools menu
 
-Warning: make sure you do not have empty lines or comments in your LNZ before using any Tools.
+Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
 
-Press Ctrl+Space in the pet view to open the tools menu, or right-click on a ball in the pet view.
+### Color...
 
-### Color
+The "Color..." option opens a menu of additional options for recoloring.
 
-The Color menu can be used to recolor the pet. When you select a part to recolor, two text entry boxes will appear at your cursor. The first is for the ball colour, the second is for outline color. Type a color number (e.g. 25) and hit Enter to apply. Leave a box blank if you don't want to affect the color/outline.
+For most of these, when you select what to recolor, two text entry boxes will appear at your cursor. The first is for the ball colour, the second is for outline color. Type a color number (e.g., 25) and hit Enter to apply. Leave a box blank if you don't want to affect the color/outline.
 
-### Color Swap
-
-The Color Swap tool under the Color menu can be used to quickly create a recolor. Enter the color mappings you want to apply (e.g. 35 -> 15). Use the checkboxes to select what to apply the color swap to.
+The "Color Swap" option opens the Recolor Menu, which can be used to quickly recolor ballz, paintballz, and linez. Enter the color mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the color swap.
 
 ### Create Add Ballz (+ Linez)
 
@@ -178,9 +245,9 @@ Useful for making Color Info Override sections in breeds. Not supported in all b
 
 ## Backups
 
-Some tools like `Color Swap` and `Copy L to R` can be destructive! The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
+Destructive tools like `Color Swap` and `Copy L to R` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
 
-> *Improved save states or file versioning is a **planned feature**.*
+> Note: *Improved save states or file versioning is a **planned feature**.*
 
 ## Textures and Palettes
 
@@ -199,7 +266,7 @@ Go to `%APPDATA%/Godot/app_userdata/PetzRendering/resources/textures` (you may h
 
 After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree.
 
-> *Loading palettes from palette BMP files directly is a **planned feature**.*
+> Note: *Loading palettes from palette BMP files directly is a **planned feature**.*
 
 ## Other features
 
