@@ -1208,6 +1208,8 @@ func _on_clear_auto_paintballz():
 	_auto_paintballs_data.clear()
 
 func _on_apply_auto_paintballz():
+	var processed_paintballs = {}
+
 	for pb_data in _auto_paintballs_data:
 		var base_ball_node = ball_map.get(pb_data.base)
 		if not is_instance_valid(base_ball_node):
@@ -1219,6 +1221,19 @@ func _on_apply_auto_paintballz():
 		var lnz_scale = lnz.scales.x / 255.0
 		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
 		relative_pos_lnz.y *= -1
+
+		var key = str(
+			pb_data.base, "_",
+			relative_pos_lnz.x, "_",
+			relative_pos_lnz.y, "_",
+			relative_pos_lnz.z, "_",
+			pb_data.size
+		)
+		
+		if processed_paintballs.has(key):
+			continue
+		
+		processed_paintballs[key] = true
 
 		var paintball_info = {
 			"base_ball_no": pb_data.base,
