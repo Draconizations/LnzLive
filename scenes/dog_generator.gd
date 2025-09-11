@@ -86,6 +86,9 @@ func set_animation(anim_index: int):
 	current_bdt = BdtParser.new(species + str(anim_index) + ".bdt", anim_frames, bhd.num_balls)
 	set_frame(0)
 	emit_signal("animation_loaded", anim_frames.size())
+	
+	var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
+	anim_picker.text = str(anim_index)
 
 func set_frame(frame: int):
 	current_frame = frame
