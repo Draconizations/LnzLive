@@ -321,6 +321,10 @@ func find_line_in_linez_section(ball_no):
 		var looped = start_point + i
 		var line = get_line(looped).lstrip(" ")
 
+		if line.begins_with(";"):
+			i += 1
+			continue
+			
 		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
@@ -1992,17 +1996,55 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_Q:
-		#if in the balls or addballs section, use line number
 		var nearest_section_start = search("[", SEARCH_BACKWARDS, cursor_get_line(), 0)
-		var nearest_section = get_line(nearest_section_start[SEARCH_RESULT_LINE])
-		if nearest_section == "[Ballz Info]":
-			var line_number = cursor_get_line() - nearest_section_start[SEARCH_RESULT_LINE] - 1
-			emit_signal("find_ball", line_number)
-		elif nearest_section == "[Add Ball]":
-			var line_number = cursor_get_line() - nearest_section_start[SEARCH_RESULT_LINE] + 66
-			emit_signal("find_ball", line_number)
-		else:
+		
+		if nearest_section_start.empty():
 			emit_signal("find_ball", int(get_word_under_cursor()))
+			return
+		
+		var nearest_section_line = nearest_section_start[SEARCH_RESULT_LINE]
+		var nearest_section = get_line(nearest_section_line)
+		
+		var ball_no = -1
+		
+		if nearest_section == "[Ballz Info]":
+			ball_no = _get_ball_no_from_line_index(cursor_get_line(), "[Ballz Info]")
+		elif nearest_section == "[Add Ball]":
+			ball_no = _get_ball_no_from_line_index(cursor_get_line(), "[Add Ball]")
+		else:
+			var word = get_word_under_cursor()
+			if word.is_valid_integer():
+				ball_no = int(word)
+
+		if ball_no != -1:
+			emit_signal("find_ball", ball_no)
+
+func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -> int:
+	var section_find = search(section_tag, 0, 0, 0)
+	if section_find.empty():
+		return -1
+	
+	var start_line = section_find[SEARCH_RESULT_LINE] + 1
+	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	if end_line == -1:
+		end_line = get_line_count()
+
+	var ball_counter = -1
+	for i in range(start_line, end_line):
+		var line = get_line(i).lstrip(" ")
+		if line.begins_with(";") or line.empty() or line.begins_with("["):
+			continue
+		
+		ball_counter += 1
+		
+		if i == target_line_index:
+			if section_tag == "[Add Ball]":
+				# Offset addball numbers by max_base_ball_num
+				return ball_counter + KeyBallsData.max_base_ball_num
+			else:
+				return ball_counter
+				
+	return -1
 
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
