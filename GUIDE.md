@@ -42,6 +42,23 @@ Once you have an LNZ file saved under Local Storage, you can right-click it to s
 
 For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to get the file prefix for easy pasting into LNZ.
 
+## Basic Navigation
+
+- Click and hold the left mouse button in the pet view (center panel) to rotate the pet.
+- Use the mouse wheel to zoom in and out.
+- Press down on mouse wheel or hold space and drag to move pet around viewport.
+- Tap these numbers to perform a quick jump to various camera views:
+    - 1: Front View
+	- 2: Top View
+	- 3: Bottom View
+	- 4: Left View
+	- 5: Right View
+	- 6: Back View
+	- 7: Right-Bottom Isometric View
+	- 8: Right-Top Isometric View
+	- 9: Left-Bottom Isometric View
+	- 0: Left-Top Isometric View
+
 ## Menu Options
 
 ### File
@@ -181,12 +198,6 @@ Use these controls to preview and navigate animations:
 - Jump through animations with the arrows or by entering an animation index in the box.
 - Click `Play` button or press `SPACE` to start or stop a playback.
 - Slide through animation frames by dragging the handle.
-
-## Basic Navigation
-
-- Click and hold the left mouse button in the pet view (center panel) to rotate the pet.
-- Use the mouse wheel to zoom in and out.
-- Press down on mouse wheel or hold space and drag to move pet around viewport.
 
 ## Visual editing
 

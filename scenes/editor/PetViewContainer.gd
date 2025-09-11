@@ -563,6 +563,28 @@ func _unhandled_key_input(event):
 		linez_start_ball = last_selected
 		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
 	else:
+		if event.pressed:
+			match event.scancode:
+				KEY_1:
+					_set_camera_view("front")
+				KEY_2:
+					_set_camera_view("bottom")
+				KEY_3:
+					_set_camera_view("top")
+				KEY_4:
+					_set_camera_view("right")
+				KEY_5:
+					_set_camera_view("left")
+				KEY_6:
+					_set_camera_view("back")
+				KEY_7:
+					_set_camera_view("isorightbottom")
+				KEY_8:
+					_set_camera_view("isorighttop")
+				KEY_9:
+					_set_camera_view("isoleftbottom")
+				KEY_0:
+					_set_camera_view("isolefttop")
 		if event.pressed and last_selected_is_valid():
 			last_selected._input(event)
 
@@ -948,6 +970,31 @@ func _on_eyedropper_toggled(is_on):
 		Input.set_custom_mouse_cursor(eyedropper)
 	else:
 		Input.set_custom_mouse_cursor(smallbrush)
+
+func _set_camera_view(view_name: String):
+	camera_holder.rotation = Vector3.ZERO
+	
+	match view_name:
+		"front":
+			camera_holder.rotation_degrees = Vector3(0, 0, 0)
+		"back":
+			camera_holder.rotation_degrees = Vector3(0, 180, 0)
+		"right":
+			camera_holder.rotation_degrees = Vector3(0, 90, 0)
+		"left":
+			camera_holder.rotation_degrees = Vector3(0, -90, 0)
+		"bottom":
+			camera_holder.rotation_degrees = Vector3(-90, 0, 0)
+		"top":
+			camera_holder.rotation_degrees = Vector3(90, 0, 0)
+		"isorightbottom":
+			camera_holder.rotation_degrees = Vector3(-35, 45, 0)
+		"isorighttop":
+			camera_holder.rotation_degrees = Vector3(35, 45, 0)
+		"isoleftbottom":
+			camera_holder.rotation_degrees = Vector3(-35, -45, 0)
+		"isolefttop":
+			camera_holder.rotation_degrees = Vector3(35, -45, 0)
 
 func close_paintball_mode():
 	paintball_check_box.pressed = false
