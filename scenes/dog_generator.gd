@@ -1212,8 +1212,13 @@ func _on_clear_auto_paintballz():
 
 func _on_apply_auto_paintballz():
 	var processed_paintballs = {}
+	var processed_count = 0
+	var cap = 1000
 
 	for pb_data in _auto_paintballs_data:
+		if processed_count >= cap:
+			break
+
 		var base_ball_node = ball_map.get(pb_data.base)
 		if not is_instance_valid(base_ball_node):
 			continue
@@ -1252,6 +1257,8 @@ func _on_apply_auto_paintballz():
 			"anchored": (pb_data.anchored == 1)
 		}
 		_pending_paintballs_data.append(paintball_info)
+
+		processed_count += 1
 
 	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
 	if lnz_text_edit:
