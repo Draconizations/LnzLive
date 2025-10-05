@@ -9,6 +9,14 @@ onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") a
 onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 onready var dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
 
+var _nearby_balls_cache: Array = []
+var _current_tab_index: int = -1
+var _last_selected_by_tab: Spatial = null
+var _tab_activation_mouse_pos := Vector2.ZERO
+const MAX_NEARBY_BALLS := 3
+const NEARBY_SCREEN_RADIUS := 60.0
+const TAB_RESET_THRESHOLD_PIXELS := 15.0
+
 var input_is_paused := false
 
 var last_selected
@@ -117,10 +125,27 @@ func _ready():
 	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
+func _reset_tab_state():
+	if is_instance_valid(_last_selected_by_tab):
+		_last_selected_by_tab.apply_outline_state(get_visual_state_for_ball(_last_selected_by_tab))
+	_last_selected_by_tab = null
+	_current_tab_index = -1
+	_nearby_balls_cache.clear()
+	_tab_activation_mouse_pos = Vector2.ZERO
+
 func _process(_delta):
 	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
-	if linez_mode:
+	if is_instance_valid(_last_selected_by_tab):
+		var target_ball = _last_selected_by_tab
+		var total_count = _nearby_balls_cache.size()
+		var current_idx = max(0, _current_tab_index) + 1
+		
+		# Helper text required by user
+		text = "Hovered: ball #%d (tabbable %d/%d)" % [target_ball.ball_no, current_idx, total_count]
+		text += "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+
+	elif linez_mode:
 		if is_instance_valid(linez_start_ball):
 			text = "Line Mode: Left-click a 2nd ball to end a line.\n"
 		else:
@@ -201,6 +226,9 @@ func flip_camera_view():
 func _gui_input(event):
 	if input_is_paused:
 		return
+
+	if event is InputEventMouseButton and event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+		_reset_tab_state()
 
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
@@ -382,7 +410,14 @@ func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		var alt_key = Input.is_key_pressed(KEY_ALT)
 
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		#var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+
+		var hover = null
+		if is_instance_valid(_last_selected_by_tab):
+			hover = _last_selected_by_tab
+		else:
+			hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+
 		if hover:
 			drag_ball = hover
 			is_dragging = true
@@ -479,6 +514,13 @@ func _gui_input(event):
 	if event is InputEventMouseMotion and not is_dragging:
 		#label.rect_global_position = event.global_position
 
+		if is_instance_valid(_last_selected_by_tab):
+			var current_mouse_pos = get_viewport().get_mouse_position()
+			if current_mouse_pos.distance_to(_tab_activation_mouse_pos) > TAB_RESET_THRESHOLD_PIXELS:
+				_reset_tab_state()
+			else:
+				pass
+
 		var space_and_left = Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT)
 		var middle_drag = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
 
@@ -503,9 +545,8 @@ func _gui_input(event):
 		elif not preset_mode and not paintball_mode and not project_mode:
 			Input.set_custom_mouse_cursor(hand_neutral)
 
-
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not paintball_mode:
+	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab):
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -544,6 +585,11 @@ func _gui_input(event):
 
 func _unhandled_key_input(event):
 	if input_is_paused:
+		return
+
+	if event.is_pressed() and event.scancode == KEY_TAB:
+		get_tree().set_input_as_handled()
+		_cycle_nearby_ballz()
 		return
 		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
@@ -654,6 +700,84 @@ func get_ball_under_mouse(screen_pos: Vector2):
 		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
 			return parent
 	return null
+
+func _sort_by_distance(a, b):
+	return a.distance < b.distance
+
+func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
+	var balls_list = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var nearby_balls = []
+	
+	var viewport_global_offset = tex.get_global_transform().origin
+	
+	for ball in balls_list:
+		if !is_instance_valid(ball): continue
+		
+		# Project world pos to 2D screen pos
+		var projected_pos_local = camera.unproject_position(ball.global_transform.origin)
+		
+		# Apply ViewportContainer scale and global offset to get ball pos in raw global screen coords
+		var ball_global_pos = viewport_global_offset + (projected_pos_local * tex.rect_scale)
+
+		# Calculate distance in global screen space
+		var screen_distance = ball_global_pos.distance_to(raw_mouse_pos)
+		
+		# Only consider ballz within NEARBY_SCREEN_RADIUS
+		if screen_distance < NEARBY_SCREEN_RADIUS:
+			nearby_balls.append({
+				"ball": ball,
+				"distance": screen_distance
+			})
+
+	# Sort by distance (closest first)
+	nearby_balls.sort_custom(self, "_sort_by_distance")
+	
+	# Return the ball objects, limited by MAX_NEARBY_BALLS
+	var result_balls = []
+	for i in range(min(nearby_balls.size(), MAX_NEARBY_BALLS)):
+		result_balls.append(nearby_balls[i].ball)
+		
+	return result_balls
+
+func _cycle_nearby_ballz():
+	var raw_mouse_pos = get_viewport().get_mouse_position()
+	
+	# Clear visual state of the previously TAB-selected ball
+	deal_with_last_selected()
+	
+	if _current_tab_index == -1 or _current_tab_index >= _nearby_balls_cache.size() - 1:
+		_current_tab_index = 0
+		
+		_nearby_balls_cache = _get_sorted_nearby_balls(raw_mouse_pos)
+		
+		if _nearby_balls_cache.size() > 0:
+			# Store the raw mouse position where TAB was pressed for persistence checking
+			_tab_activation_mouse_pos = raw_mouse_pos
+	else:
+		# Move to the next ball in the existing cache
+		_current_tab_index += 1
+
+	if _nearby_balls_cache.size() > 0:
+		var target_ball = _nearby_balls_cache[_current_tab_index]
+		
+		# Set new selection state (updates last_selected)
+		last_selected = target_ball
+		_last_selected_by_tab = target_ball
+		
+		# Apply highlight
+		if selecting_on and target_ball.has_method("_on_Area_mouse_entered"):
+			target_ball._on_Area_mouse_entered()
+		
+		# Update floating ball number label
+		ball_label.text = str(target_ball.ball_no)
+		ball_label.rect_global_position = raw_mouse_pos + Vector2(25, 15)
+		ball_label.show()
+		
+	else:
+		# No nearby balls
+		_reset_tab_state()
+		# Set a temporary message for the helper label if no balls are found
+		helper_label.text = "No nearby ballz found for cycling (Radius: %s px)." % [NEARBY_SCREEN_RADIUS]
 
 func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
 	# Read current and original world positions

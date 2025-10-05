@@ -4,7 +4,7 @@ signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
 signal add_ball(selected_ball, connect_line)
 signal delete_ball(selected_ball)
-signal copy_l_to_r()
+signal copy_l_to_r(ball_no)
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal print_ball_colors()
@@ -128,8 +128,13 @@ func _on_RecolorMenuButton_pressed():
 	get_parent().get_node("RecolorPopup").popup_centered()
 
 func _on_ToolsMenu_index_pressed(index):
+	var ball_no = -1
+
+	if is_instance_valid(selected_visual_ball):
+		ball_no = selected_visual_ball.ball_no
+
 	if index == 5: # Copy L to R
-		emit_signal("copy_l_to_r")
+		emit_signal("copy_l_to_r", ball_no)
 	elif index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, true)
@@ -155,9 +160,65 @@ func _on_ToolsMenu_index_pressed(index):
 	elif index == 8: # Print Ballz Colors
 		emit_signal("print_ball_colors")
 
+# func _on_ToolsMenu_about_to_show():
+# 	var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+# 	#set_item_disabled(1, !view_container.last_selected_is_valid())
+
 func _on_ToolsMenu_about_to_show():
-	var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	#set_item_disabled(1, !view_container.last_selected_is_valid())
+	var is_ball_selected = is_instance_valid(selected_visual_ball)
+	var ball_no = -1
+	if is_ball_selected:
+		ball_no = selected_visual_ball.ball_no
+
+	# 1: Create Addballz + Linez
+	var item_1_text = "Create Addballz + Linez"
+	set_item_disabled(1, !is_ball_selected)
+	if is_ball_selected:
+		item_1_text += " (#" + str(ball_no) + ")"
+	set_item_text(1, item_1_text)
+
+	# 2: Create Addballz
+	var item_2_text = "Create Addballz"
+	set_item_disabled(2, !is_ball_selected)
+	if is_ball_selected:
+		item_2_text += " (#" + str(ball_no) + ")"
+	set_item_text(2, item_2_text)
+
+	# 3: Delete Addballz / Omit Ballz
+	var item_3_text = "Delete Addballz / Omit Ballz"
+	set_item_disabled(3, !is_ball_selected)
+	if is_ball_selected:
+		item_3_text += " (#" + str(ball_no) + ")"
+	set_item_text(3, item_3_text)
+
+	# 4: Connect by Linez
+	var item_4_text = "Connect by Linez"
+	set_item_disabled(4, !is_ball_selected)
+	if is_ball_selected:
+		item_4_text += " (Start: #" + str(ball_no) + ")"
+	set_item_text(4, item_4_text)
+
+	# 5: Copy L to R
+	var item_5_text = "Copy L to R"
+	if is_ball_selected:
+		item_5_text += " (#" + str(ball_no) + ")"
+	else:
+		item_5_text += " (all ballz)"
+	set_item_text(5, item_5_text)
+
+	# 6: Paintball Mode
+	var item_6_text = "Paintball Mode"
+	if is_ball_selected:
+		item_6_text += " (#" + str(ball_no) + ")"
+	else:
+		item_6_text += " (all ballz)"
+	set_item_text(6, item_6_text)
+
+	# 7: Move Head Ballz
+	set_item_text(7, "Move Head Ballz")
+	
+	# 8: Copy Ballz Colors to Clipboard
+	set_item_text(8, "Copy Ballz Colors to Clipboard")
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")

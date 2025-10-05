@@ -15,6 +15,7 @@ export var z_add                  = 0.0                setget set_z_add
 
 export var override_ball_no       = -1
 export var visible_override       = true               setget set_visible
+export var omitted                = false
 
 export var tile_texture           = true               setget set_tile_texture
 export var texture                : Texture            setget set_texture
