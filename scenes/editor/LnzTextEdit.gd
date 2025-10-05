@@ -1336,7 +1336,57 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		i += 1
 	save_file()
 
-func _on_ToolsMenu_copy_l_to_r():
+#####
+
+func _find_mirrored_ball(ball_no: int) -> int:
+    if ball_no >= KeyBallsData.max_base_ball_num:
+        return ball_no
+        
+    var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+    var species = pet_node.lnz.species 
+    var symmetry_dict = {}
+
+    if species == KeyBallsData.Species.CAT:
+        symmetry_dict = KeyBallsData.cat_body_part_symmetry
+    elif species == KeyBallsData.Species.DOG:
+        symmetry_dict = KeyBallsData.dog_body_part_symmetry
+    elif species == KeyBallsData.Species.BABY:
+        symmetry_dict = KeyBallsData.baby_body_part_symmetry
+    else:
+        return ball_no
+
+    for main_part in symmetry_dict:
+        for sub_part in symmetry_dict[main_part]:
+            var part_info = symmetry_dict[main_part][sub_part]
+            if part_info.has("left") and part_info.has("right"):
+                var index = part_info.left.find(ball_no)
+                if index != -1 and index < part_info.right.size():
+                    return part_info.right[index]
+                
+                index = part_info.right.find(ball_no)
+                if index != -1 and index < part_info.left.size():
+                    return part_info.left[index]
+    
+    var left_balls = []
+    if species == KeyBallsData.Species.CAT:
+        left_balls = KeyBallsData.symmetry_mode_hide_balls_cat
+    elif species == KeyBallsData.Species.DOG:
+        left_balls = KeyBallsData.symmetry_mode_hide_balls_dog
+    elif species == KeyBallsData.Species.BABY:
+        left_balls = KeyBallsData.symmetry_mode_hide_balls_bab
+        
+    if ball_no in left_balls:
+        return get_corresponding_right_ball(ball_no)
+
+    return ball_no
+
+func _on_ToolsMenu_copy_l_to_r(selected_ball_no: int = -1):
+    if selected_ball_no == -1:
+        _mirror_l_to_r_full()
+    else:
+        _mirror_l_to_r_ball(selected_ball_no)
+
+func _mirror_l_to_r_full():
 	save_backup()
 	
 	# build up ball map
@@ -1599,11 +1649,20 @@ func _on_ToolsMenu_copy_l_to_r():
 			moves_list.append(line)
 			var final_line = ""
 			var p = 0
+			
+			var has_anchor = parsed_line.size() > 4
+			var new_anchor = -1
+			if has_anchor:
+			  var old_anchor = parsed_line[4].to_int()
+			  new_anchor = _find_mirrored_ball(old_anchor)
+			
 			for item in parsed_line:
 				if p == 0:
 					final_line += str(get_corresponding_right_ball(move_ball_no)) + " "
 				elif p == 1:
 					final_line += str(int(item) * -1.0) + " "
+				elif p == 4 and has_anchor:
+					final_line += str(new_anchor) + " "
 				else:
 					final_line += item + " "
 				p += 1
@@ -1730,7 +1789,7 @@ func _on_ToolsMenu_copy_l_to_r():
 				if p == 0:
 					final_line += str(get_corresponding_right_ball(base_ball_no)) + " "
 				elif p == 2:
-					final_line += str(float(item) * -1.0) +  " "
+					final_line += str(float(item) * -1.0) + " "
 				else:
 					final_line += item + " "
 				p += 1
@@ -1841,6 +1900,36 @@ func _on_ToolsMenu_copy_l_to_r():
 	ball_map = {}
 	
 	save_file()
+
+func _mirror_l_to_r_ball(target_ball_no: int):
+	save_backup()
+	
+	if target_ball_no >= KeyBallsData.max_base_ball_num:
+		print("[LNZ EDIT] Copy L to R is only supported for base balls (0-%d)." % (KeyBallsData.max_base_ball_num - 1))
+		return
+		
+	var mirrored_ball_no = _find_mirrored_ball(target_ball_no)
+	
+	var is_mirrored = mirrored_ball_no != target_ball_no
+	if !is_mirrored:
+		print("[LNZ EDIT] Ball #%d is a middle ball. Skipping full L to R mirror." % target_ball_no)
+		return
+		
+	# [Ballz Info]
+	
+	# [Paint Ballz]
+
+	# [Move]
+
+	# [Add Ball]
+
+	# [Linez]
+		
+	print("[LNZ EDIT] Successfully performed selective L to R mirror for ball #%d." % target_ball_no)
+
+	save_file()
+
+#####
 
 func apply_preset_to_ball(ball_no, properties, do_save = true):
 	if do_save:
