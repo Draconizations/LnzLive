@@ -240,6 +240,7 @@ func _for_each_line_in_section(tag: String, callback):
 func _insert_text_at_cursor_at_line(line: int, text: String):
 	cursor_set_line(line)
 	cursor_set_column(0)
+	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
 
 func find_line_in_ball_section(ball_no):
@@ -459,6 +460,8 @@ func _on_apply_paintballz():
 
 		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
 		pet_node.clear_pending_paintballs()
+	
+	save_backup()
 
 	save_file()
 
