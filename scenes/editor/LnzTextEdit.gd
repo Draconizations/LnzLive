@@ -110,6 +110,23 @@ func save_backup():
 	emit_signal("file_backed_up")
 
 func save_file():
+	if filepath == null or filepath.empty():
+		var dir = Directory.new()
+		var base_path = "user://resources/"
+		dir.open("user://")
+		dir.make_dir_recursive("resources") 
+		
+		var default_name = "unnamed.lnz"
+		var possible_file_name = base_path + default_name
+		var counter = 1
+		
+		while dir.file_exists(possible_file_name):
+			possible_file_name = base_path + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
+			counter += 1
+		
+		filepath = possible_file_name
+		is_user_file = true
+
 	if is_user_file:
 		var dir = Directory.new()
 		dir.open("user://")
