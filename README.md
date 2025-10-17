@@ -6,6 +6,12 @@
 
 ![screenshot](screenshot.png)
 
+## Browser
+
+The web version of LnzLive Petz & Babyz beta can be accessed here:
+
+[https://tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive)
+
 ## Instructions
 
 See the [usage guide](GUIDE.md).
