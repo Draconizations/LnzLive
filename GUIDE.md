@@ -272,7 +272,7 @@ To load your palette image, use the "Import LNZ / BMP / PNG" button. These shoul
 
 You can also add files directly for LnzLive to access from your file system:
 
-Go to `%APPDATA%/Godot/app_userdata/PetzRendering/resources/textures` (you may have to create this folder).
+Go to `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures` (you may have to create this folder).
 
 After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree.
 
@@ -285,3 +285,4 @@ While editing the LNZ:
 - Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
 
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
+
