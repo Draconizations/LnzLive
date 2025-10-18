@@ -154,7 +154,6 @@ func _on_web_file_upload_popup_confirmed():
 		return
 	file.store_buffer(file_blob)
 	rescan_with_extension(file_extension, dest_path)
-	
 
 func rescan_with_extension(file_extension: String, dest_path: String):
 	if file_extension == "lnz":
@@ -301,6 +300,7 @@ func _on_Tree_item_rmb_selected(position):
 	$ItemPopupMenu.set_item_disabled(1, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(2, item.get_parent() != local_storage)
 	$ItemPopupMenu.set_item_disabled(3, false)
+	$ItemPopupMenu.set_item_disabled(4, item.get_parent() != local_storage)
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id):
@@ -322,6 +322,69 @@ func _on_ItemPopupMenu_id_pressed(id):
 		var filepath = item.get_metadata(0)
 		var filename = filepath.get_file()
 		OS.set_clipboard(filename)
+	elif id == 4: # export file
+		var item = get_selected() as TreeItem
+		var item_filepath = item.get_metadata(0)
+		var filename = item.get_text(0)
+		var file = File.new()
+		if file.open(item_filepath, File.READ) != OK:
+			print("Error: Could not open file for reading: " + item_filepath)
+			return
+		var content_bytes = file.get_buffer(file.get_len())
+		file.close()
+		
+		_save_file_as(filename, content_bytes)
+
+func _on_SaveDialog_file_selected(path, content_bytes):
+	var file = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_buffer(content_bytes)
+		file.close()
+		print("File saved successfully to: " + path)
+	else:
+		print("Error saving file to: " + path)
+
+	if is_instance_valid(self):
+		for child in get_children():
+			if child is FileDialog and child.window_title == "Save File As":
+				child.queue_free()
+				return
+
+
+func _save_file_as(filename: String, content_bytes: PoolByteArray):	
+	if OS.has_feature("HTML5"):		
+		var escaped_filename = filename.replace("'", "\\'")
+		var base64_content = Marshalls.raw_to_base64(content_bytes)
+		
+		var mime_type = "application/octet-stream"
+		if filename.ends_with(".lnz"): mime_type = "text/plain"
+		elif filename.ends_with(".bmp"): mime_type = "image/bmp"
+		elif filename.ends_with(".png"): mime_type = "image/png"
+		
+		var js_code = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:""" + mime_type + """;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + escaped_filename + """');
+		
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+		
+	else:
+		var save_dialog = FileDialog.new()
+		
+		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
+		
+		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
+		save_dialog.mode = FileDialog.MODE_SAVE_FILE
+		save_dialog.window_title = "Save File As"
+		save_dialog.current_file = filename
+		
+		add_child(save_dialog)
+		save_dialog.popup_centered()
 
 func _on_RenameDialog_confirmed():
 	var item = get_selected() as TreeItem
