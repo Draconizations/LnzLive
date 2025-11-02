@@ -157,21 +157,11 @@ void fragment() {
 
         // Normalize by actual BMP size to get UV coordinates and shift for centering
         tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
-
-        // Pixel-accurate, centered texture (e.g., iris/hair)
-        //vec2 offset = FRAGCOORD.xy - center_fragcoord;
-
-        // Calculate screen-space pixel correction if texture is smaller than declared size
-        //vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
-        //offset -= base_center_offset;
-
-        // Normalize by actual texture size and center
-        //tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
     }
 
-        // Flip to match game orientation
-        tex_coords.x = 1.0 - tex_coords.x;
-        tex_coords.y = 1.0 - tex_coords.y;
+    // Flip to match game orientation
+    tex_coords.x = 1.0 - tex_coords.x;
+    tex_coords.y = 1.0 - tex_coords.y;
 
     vec3 texture_color;
     bool is_transparent = false;
@@ -186,7 +176,7 @@ void fragment() {
         // Look up RGB color using the Petz palette
         vec4 original_color = texture(petz_palette, vec2(float(palette_index)/255.0, 0.5));
         
-        // Quantize color to the Babyz paletteQuantize color to the Babyz palette
+        // Quantize color to the Babyz palette
         if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
             texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
             is_transparent = true;
@@ -194,7 +184,12 @@ void fragment() {
             vec4 best_color = vec4(0.0);
             float best_distance_sq = 1e20;
             
-            for (int i = 0; i < palette_size; i++) {
+            const int MAX_PALETTE_SIZE = 256;
+            for (int i = 0; i < MAX_PALETTE_SIZE; i++) {
+                if (i >= palette_size) {
+                    break;
+                }
+
                 if (i == TRANSPARENT_COLOR_INDEX) {
                     continue;
                 }

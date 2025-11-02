@@ -83,7 +83,12 @@ void fragment() {
             vec4 best_color = vec4(0.0);
             float best_distance_sq = 1e20;
             
-            for (int i = 0; i < palette_size; i++) {
+            const int MAX_PALETTE_SIZE = 256;
+            for (int i = 0; i < MAX_PALETTE_SIZE; i++) {
+                if (i >= palette_size) {
+                    break;
+                }
+            
                 if (i == TRANSPARENT_COLOR_INDEX) {
                     continue;
                 }
