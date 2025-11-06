@@ -223,13 +223,25 @@ func _on_ToolsMenu_about_to_show():
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
 	var lines = popup.get_node("RecolorLines").get_children()
-	var recolor_info = {recolors = {}}
+	var recolor_info = {recolors = []}
 	for l in lines:
-		var original_color = l.get_child(0).text as String
-		var new_color = l.get_child(2).text as String
-		if original_color.empty() or new_color.empty():
+		var before_color = l.get_node("BeforeColor").text
+		var before_texture = l.get_node("BeforeTexture").text
+		var after_color = l.get_node("AfterColor").text
+		var after_texture = l.get_node("AfterTexture").text
+
+		if before_color.empty() and before_texture.empty():
 			continue
-		recolor_info.recolors[original_color] = new_color
+		if after_color.empty() and after_texture.empty():
+			continue
+
+		recolor_info.recolors.append({
+			"before_color": before_color,
+			"before_texture": before_texture,
+			"after_color": after_color,
+			"after_texture": after_texture
+		})
+
 	var balls_on = popup.get_node("CheckContainer/Balls").pressed
 	var ball_outlines_on = popup.get_node("CheckContainer/Ball outlines").pressed
 	var paintballs_on = popup.get_node("CheckContainer/Paintballs").pressed
@@ -238,14 +250,16 @@ func _on_RecolorPopup_confirmed():
 	recolor_info.ball_outlines_on = ball_outlines_on
 	recolor_info.paintballs_on = paintballs_on
 	recolor_info.lines_on = lines_on
-	emit_signal("recolor", recolor_info)	
+	emit_signal("recolor", recolor_info)
 
 func _on_ClearButton_pressed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
 	var lines = popup.get_node("RecolorLines").get_children()
 	for l in lines:
-		l.get_child(0).text = ""
-		l.get_child(2).text = ""
+		l.get_node("BeforeColor").text = ""
+		l.get_node("BeforeTexture").text = ""
+		l.get_node("AfterColor").text = ""
+		l.get_node("AfterTexture").text = ""
 	for cb in popup.get_node("CheckContainer").get_children():
 		cb.pressed = true
 

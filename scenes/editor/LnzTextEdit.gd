@@ -2477,7 +2477,7 @@ func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
-	var recolor_info = all_recolor_info.recolors
+	var recolor_rules = all_recolor_info.recolors
 	
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
@@ -2515,19 +2515,33 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 2:
+				if parsed_line.size() < 8:
 					i += 1
 					continue
 				
 				var color = parsed_line[0]
 				var outline_color = parsed_line[1]
+				var texture = parsed_line[7]
 				var updates = {}
-				
-				if all_recolor_info.balls_on and recolor_info.has(color):
-					updates[0] = recolor_info[color]
-				
-				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
-					updates[1] = recolor_info[outline_color]
+
+				for rule in recolor_rules:
+					var color_match = rule.before_color.empty() or rule.before_color == color
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					
+					if all_recolor_info.balls_on and color_match and texture_match:
+						if not rule.after_color.empty():
+							updates[0] = rule.after_color
+						if not rule.after_texture.empty():
+							updates[7] = rule.after_texture
+						break
+
+				for rule in recolor_rules:
+					var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if all_recolor_info.ball_outlines_on and outline_color_match and texture_match:
+						if not rule.after_color.empty():
+							updates[1] = rule.after_color
+						break
 				
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2556,19 +2570,33 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+				if parsed_line.size() < 14 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
 					continue
 				
 				var color = parsed_line[4]
 				var outline_color = parsed_line[5]
+				var texture = parsed_line[13]
 				var updates = {}
+
+				for rule in recolor_rules:
+					var color_match = rule.before_color.empty() or rule.before_color == color
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+
+					if all_recolor_info.balls_on and color_match and texture_match:
+						if not rule.after_color.empty():
+							updates[4] = rule.after_color
+						if not rule.after_texture.empty():
+							updates[13] = rule.after_texture
+						break
 				
-				if all_recolor_info.balls_on and recolor_info.has(color):
-					updates[4] = recolor_info[color]
-				
-				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
-					updates[5] = recolor_info[outline_color]
+				for rule in recolor_rules:
+					var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if all_recolor_info.ball_outlines_on and outline_color_match and texture_match:
+						if not rule.after_color.empty():
+							updates[5] = rule.after_color
+						break
 
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2593,15 +2621,24 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+				if parsed_line.size() < 11 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
 					continue
 
 				var color = parsed_line[5]
+				var texture = parsed_line[10]
 				var updates = {}
+				
+				for rule in recolor_rules:
+					var color_match = rule.before_color.empty() or rule.before_color == color
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
 
-				if recolor_info.has(color):
-					updates[5] = recolor_info[color]
+					if color_match and texture_match:
+						if not rule.after_color.empty():
+							updates[5] = rule.after_color
+						if not rule.after_texture.empty():
+							updates[10] = rule.after_texture
+						break
 
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2637,14 +2674,80 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var rColor = parsed_line[5]
 				var updates = {}
 				
-				if recolor_info.has(mainColor):
-					updates[3] = recolor_info[mainColor]
+				for rule in recolor_rules:
+					# Lines don't have textures, so skip rules that specify one
+					if not rule.before_texture.empty():
+						continue
+					if rule.before_color.empty() or rule.before_color == mainColor:
+						if not rule.after_color.empty():
+							updates[3] = rule.after_color
+						break
+				for rule in recolor_rules:
+					if not rule.before_texture.empty():
+						continue
+					if rule.before_color.empty() or rule.before_color == lColor:
+						if not rule.after_color.empty():
+							updates[4] = rule.after_color
+						break
+				for rule in recolor_rules:
+					if not rule.before_texture.empty():
+						continue
+					if rule.before_color.empty() or rule.before_color == rColor:
+						if not rule.after_color.empty():
+							updates[5] = rule.after_color
+						break
 				
-				if recolor_info.has(lColor):
-					updates[4] = recolor_info[lColor]
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
+
+				i += 1
+	
+	# Godot 3.4 does not have built-in support for eyelids in its LNZ parser.
+	# The following is a custom implementation to handle the [Eyelid Color] section.
+	var eyelids_on = all_recolor_info.get("eyelids_on", false)
+	if eyelids_on:
+		var section_find = search('[Eyelid Color]', 0, 0, 0)
+		if section_find:
+			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
 				
-				if recolor_info.has(rColor):
-					updates[5] = recolor_info[rColor]
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
+				
+				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
+
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				if parsed_line.size() < 2:
+					i += 1
+					continue
+				
+				var l_color = parsed_line[0]
+				var r_color = parsed_line[1]
+				var updates = {}
+				
+				for rule in recolor_rules:
+					# Eyelids don't have textures, so skip rules that specify one
+					if not rule.before_texture.empty():
+						continue
+					if rule.before_color.empty() or rule.before_color == l_color:
+						if not rule.after_color.empty():
+							updates[0] = rule.after_color
+						break
+				for rule in recolor_rules:
+					if not rule.before_texture.empty():
+						continue
+					if rule.before_color.empty() or rule.before_color == r_color:
+						if not rule.after_color.empty():
+							updates[1] = rule.after_color
+						break
 				
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)

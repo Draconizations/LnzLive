@@ -7,20 +7,36 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="LineEdit" type="LineEdit" parent="."]
-margin_right = 170.0
+[node name="BeforeColor" type="LineEdit" parent="."]
+margin_right = 85.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+placeholder_text = "Color"
+
+[node name="BeforeTexture" type="LineEdit" parent="."]
+margin_left = 89.0
+margin_right = 174.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+placeholder_text = "Texture"
 
 [node name="Label" type="Label" parent="."]
-margin_left = 174.0
+margin_left = 178.0
 margin_top = 5.0
-margin_right = 187.0
+margin_right = 191.0
 margin_bottom = 19.0
 text = "->"
 
-[node name="LineEdit2" type="LineEdit" parent="."]
-margin_left = 191.0
-margin_right = 361.0
+[node name="AfterColor" type="LineEdit" parent="."]
+margin_left = 195.0
+margin_right = 280.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+placeholder_text = "Color"
+
+[node name="AfterTexture" type="LineEdit" parent="."]
+margin_left = 284.0
+margin_right = 369.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+placeholder_text = "Texture"
