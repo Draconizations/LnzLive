@@ -768,6 +768,7 @@ custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "User Guide"
 script = ExtResource( 13 )
+url = "https://github.com/tabbzi/LnzLive/blob/master/GUIDE.md"
 
 [node name="CarolynHornLinkButton" type="LinkButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
 margin_left = 295.0
@@ -779,6 +780,7 @@ custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "Carolyn's Bible"
 script = ExtResource( 13 )
+url = "https://github.com/melissamcewen/carolyns-bible"
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 553.0
