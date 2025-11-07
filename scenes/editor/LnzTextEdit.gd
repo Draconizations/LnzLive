@@ -168,6 +168,8 @@ func save_file():
 	_set_text_preserve(get_text())
 	print("Saved LNZ and Applied Changes!")
 
+# TBD fix all delimiter handling...
+
 func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
@@ -190,29 +192,46 @@ func _split_line(line: String) -> Array:
 	return parts
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
-	var delim_counts = {", ": 0, ",": 0, "\t": 0, " ": 0}
+	# Define join strings and the patterns to find them
+	# Check for most complex (comma + whitespace) first
+	var delim_counts = {
+		", ": 0,  # "comma-space", "comma-tab", "comma-multispace"
+		",": 0,   # "comma"
+		"\t": 0,  # "tab"
+		" ": 0    # "space", "multispace"
+	}
 	var lines_scanned = 0
+	
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"):
 			continue
 		lines_scanned += 1
+		
+		var data_part = line.split(";", false)[0] # Only check data part
 
-		if line.find(", ") != -1:
+		# Check in order of specificity
+		if data_part.find(",\t") != -1 or data_part.find(", ") != -1:
+			# Catches comma-tab, comma-space, comma-multispace
 			delim_counts[", "] += 1
-		elif line.find(",") != -1:
+		elif data_part.find(",") != -1:
+			# Catches comma-only
 			delim_counts[","] += 1
-		elif line.find("\t") != -1:
+		elif data_part.find("\t") != -1:
+			# Catches tab
 			delim_counts["\t"] += 1
-		elif line.find(" ") != -1:
-			if line.split(" ", false).size() > 1:
+		elif data_part.find(" ") != -1:
+			# Catches space, multispace
+			if data_part.split(" ", false).size() > 1:
 				delim_counts[" "] += 1
 
 	if lines_scanned == 0:
-		return " "
+		return " " # Default joiner
 
 	var most_frequent_delim = " "
 	var max_count = 0
+
+	# Iterate in the same priority order to select the winner
 	for delim in [", ", ",", "\t", " "]:
 		if delim_counts[delim] > max_count:
 			max_count = delim_counts[delim]
@@ -225,22 +244,6 @@ func _split_and_clean(line: String, p_delimiter: String = "") -> Array:
 	var data_part = line_parts[0].strip_edges()
 
 	return _split_line(data_part)
-
-	# var delimiter = p_delimiter
-	# if delimiter == "":
-	# 	if data_part.find(", ") != -1: delimiter = ", "
-	# 	elif data_part.find(",") != -1: delimiter = ","
-	# 	elif data_part.find("\t") != -1: delimiter = "\t"
-	# 	else: delimiter = " "
-
-	# var parts = data_part.split(delimiter, false)
-	# var cleaned_parts = []
-	# for part in parts:
-	# 	var cleaned_part = part.strip_edges()
-	# 	if not cleaned_part.empty():
-	# 		cleaned_parts.append(cleaned_part)
-
-	# return cleaned_parts
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
@@ -274,6 +277,27 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	cursor_set_column(0)
 	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
+
+# Helper for multi-delimiter line splitting
+func _smart_split(line: String) -> PoolStringArray:
+	var delimiters = [", ", ",", "\t", " "]
+	for delim in delimiters:
+		var split = line.split(delim, false)
+		if split.size() >= 3:
+			return split
+	return PoolStringArray()
+
+# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
+func _insert_text_at_line(line_no: int, text: String):
+	var result = ""
+	var total_lines = get_line_count()
+	for i in range(total_lines):
+		if i == line_no:
+			result += text.strip_edges() + "\n"
+		result += get_line(i) + "\n"
+	if line_no >= total_lines:
+		result += text.strip_edges() + "\n"
+	set_text(result.strip_edges())
 
 func find_line_in_ball_section(ball_no):
 	var section_find = search('[Ballz Info]', 0, 0, 0)
@@ -986,143 +1010,6 @@ func _update_paintballz_section(header: String, ball_no: int):
 		elif b > ball_no:
 			set_line(start + i, "%s %s" % [str(b - 1), split[1]])
 		i += 1
-
-# Helper for multi-delimiter line splitting
-func _smart_split(line: String) -> PoolStringArray:
-	var delimiters = [", ", ",", "\t", " "]
-	for delim in delimiters:
-		var split = line.split(delim, false)
-		if split.size() >= 3:
-			return split
-	return PoolStringArray()
-
-# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
-func _insert_text_at_line(line_no: int, text: String):
-	var result = ""
-	var total_lines = get_line_count()
-	for i in range(total_lines):
-		if i == line_no:
-			result += text.strip_edges() + "\n"
-		result += get_line(i) + "\n"
-	if line_no >= total_lines:
-		result += text.strip_edges() + "\n"
-	set_text(result.strip_edges())
-
-#####
-
-# v1 Delete Addballz
-# func _on_Node_addball_deleted(ball_no):
-# 	# remove the addball line
-# 	var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
-# 	select(line_no, 0, line_no + 1, 0)
-# 	cut()
-	
-# 	# all the addballs after this have now been renumbered
-# 	# so we need to correct the linez, omissions, projections, paintballz
-# 	# linez
-# 	var section_find = search('[Linez]', 0, 0, 0)
-# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	var i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		# var parsed_line = r.search_all(line)
-# 		var delimiters = [", ", ",", "\t", " "]
-# 		var parsed_line = []
-# 		for delim in delimiters:
-# 			if line.split(delim).size() > 2:
-# 				parsed_line = line.split(delim, false)
-# 				break
-
-# 		var start_ball = int(parsed_line[0])
-# 		var end_ball = int(parsed_line[1])
-# 		if start_ball == ball_no or end_ball == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		if start_ball > ball_no or end_ball > ball_no:
-# 			var replaced_line = ""
-# 			if start_ball > ball_no:
-# 				start_ball -= 1
-# 			if end_ball > ball_no:
-# 				end_ball -= 1
-# 			replaced_line += str(start_ball) + " " + str(end_ball) + " "
-# 			var start_of_rest = parsed_line[2].get_start()
-# 			replaced_line += line.substr(start_of_rest)
-# 			set_line(start_of_section + i, replaced_line)
-# 		i += 1
-	
-# 	# omissions
-# 	section_find = search('[Omissions]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-# 		if int(line) == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif int(line) > ball_no:
-# 			var replace_line = str(int(line) - 1)
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-	
-# 	# projections
-# 	section_find = search('[Project Ball]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		# var parsed_line = r.search_all(line)
-# 		var delimiters = [", ", ",", "\t", " "]
-# 		var parsed_line = []
-# 		for delim in delimiters:
-# 			if line.split(delim).size() > 2:
-# 				parsed_line = line.split(delim, false)
-# 				break
-
-# 		var move_ball_no = int(parsed_line[1])
-# 		if move_ball_no == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif move_ball_no > ball_no:
-# 			var replace_line = "%s %s %s" % [parsed_line[0], str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-		
-# 	# paintballz
-# 	section_find = search('[Paint Ballz]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		var split = line.split(" ", false, 1)
-# 		var base_ball_no = int(split[0])
-# 		if base_ball_no == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif base_ball_no > ball_no:
-# 			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-		
-# 	save_file()
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	# need to find line number for the ball
