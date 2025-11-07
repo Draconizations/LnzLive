@@ -15,4 +15,4 @@ func _on_color_changed(new_color: Color):
 
 func _on_ViewPaletteButton_pressed():
 	palette_viewer_popup.populate_colors()
-	palette_viewer_popup.popup_centered_minsize()
+	palette_viewer_popup.show()
