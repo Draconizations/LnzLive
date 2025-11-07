@@ -764,7 +764,6 @@ margin_left = 295.0
 margin_top = 4.0
 margin_right = 396.0
 margin_bottom = 24.0
-custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "User Guide"
 script = ExtResource( 13 )
@@ -776,11 +775,21 @@ margin_top = 4.0
 margin_right = 396.0
 margin_bottom = 24.0
 focus_mode = 2
-custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "Carolyn's Bible"
 script = ExtResource( 13 )
 url = "https://github.com/melissamcewen/carolyns-bible"
+
+[node name="PaletteiareLinkButton" type="LinkButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
+margin_left = 295.0
+margin_top = 4.0
+margin_right = 396.0
+margin_bottom = 24.0
+focus_mode = 2
+custom_fonts/font = ExtResource( 28 )
+text = "Petz Paletteiare"
+script = ExtResource( 13 )
+url = "https://tabbzi.github.io/petz-paletteiare/"
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 553.0
