@@ -419,7 +419,8 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			break
 
 	if texture == null:
-		texture = preloader.get_resource(texture_filename.to_lower())
+		if preloader.has_resource(texture_filename.to_lower()):
+			texture = preloader.get_resource(texture_filename.to_lower())
 
 	return texture
 
@@ -466,7 +467,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			pal_texture = ResourceLoader.load(user_res_path)
 		elif ResourceLoader.exists(res_res_path):
 			pal_texture = ResourceLoader.load(res_res_path)
-		else:
+		elif preloader.has_resource("palette_" + palette.to_lower()):
 			pal_texture = preloader.get_resource("palette_" + palette.to_lower())
 	else:
 		pal_texture = default_palette
