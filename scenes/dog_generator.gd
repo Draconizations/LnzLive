@@ -71,7 +71,7 @@ signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
 
 func _ready():
-	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 
 func set_animation(anim_index: int):
@@ -1260,7 +1260,7 @@ func _on_apply_auto_paintballz():
 
 		processed_count += 1
 
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if lnz_text_edit:
 		lnz_text_edit._on_apply_paintballz()
 

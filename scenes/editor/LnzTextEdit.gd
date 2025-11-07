@@ -17,7 +17,9 @@ signal file_saved(filepath)
 signal find_ball(ball_no)
 signal file_backed_up()
 
-onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
+var min_font_size = 16
+
+onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 
 onready var frame_slider = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
@@ -82,6 +84,19 @@ func _set_text_preserve(new_text: String):
 	set_h_scroll(old_h)
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
+
+func _on_IncreaseFontButton_pressed():
+	var font = get_font("font")
+	if font:
+		font.size += 2
+		# Rerender to apply font changes
+		_set_text_preserve(get_text())
+
+func _on_DecreaseFontButton_pressed():
+	var font = get_font("font")
+	if font:
+		font.size = max(min_font_size, font.size - 2)
+		_set_text_preserve(get_text())
 
 func save_backup():
 	if not is_user_file:
@@ -2702,58 +2717,53 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					set_line(current_line_num, final_line)
 
 				i += 1
-	
-	# Godot 3.4 does not have built-in support for eyelids in its LNZ parser.
-	# The following is a custom implementation to handle the [Eyelid Color] section.
-	var eyelids_on = all_recolor_info.get("eyelids_on", false)
-	if eyelids_on:
-		var section_find = search('[Eyelid Color]', 0, 0, 0)
-		if section_find:
-			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-			var i = 0
-			while true:
-				var current_line_num = start_of_section + i
-				if current_line_num >= get_line_count(): break
-				
-				var line = get_line(current_line_num)
-				if line.begins_with("["): break
-				
-				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
-					i += 1
-					continue
 
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_and_clean(line, delimiter)
-				
-				if parsed_line.size() < 2:
-					i += 1
-					continue
-				
-				var l_color = parsed_line[0]
-				var r_color = parsed_line[1]
-				var updates = {}
-				
-				for rule in recolor_rules:
-					# Eyelids don't have textures, so skip rules that specify one
-					if not rule.before_texture.empty():
-						continue
-					if rule.before_color.empty() or rule.before_color == l_color:
-						if not rule.after_color.empty():
-							updates[0] = rule.after_color
-						break
-				for rule in recolor_rules:
-					if not rule.before_texture.empty():
-						continue
-					if rule.before_color.empty() or rule.before_color == r_color:
-						if not rule.after_color.empty():
-							updates[1] = rule.after_color
-						break
-				
-				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
-					set_line(current_line_num, final_line)
-
+	var section_find = search('[256 Eyelid Color]', 0, 0, 0)
+	if section_find:
+		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+		var i = 0
+		while true:
+			var current_line_num = start_of_section + i
+			if current_line_num >= get_line_count(): break
+			
+			var line = get_line(current_line_num)
+			if line.begins_with("["): break
+			
+			if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
 				i += 1
+				continue
+
+			var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+			var parsed_line = _split_and_clean(line, delimiter)
+			
+			if parsed_line.size() < 2:
+				i += 1
+				continue
+			
+			var l_color = parsed_line[0]
+			var r_color = parsed_line[1]
+			var updates = {}
+			
+			for rule in recolor_rules:
+				if not rule.before_texture.empty():
+					continue
+				if rule.before_color.empty() or rule.before_color == l_color:
+					if not rule.after_color.empty():
+						updates[0] = rule.after_color
+					break
+			for rule in recolor_rules:
+				if not rule.before_texture.empty():
+					continue
+				if rule.before_color.empty() or rule.before_color == r_color:
+					if not rule.after_color.empty():
+						updates[1] = rule.after_color
+					break
+			
+			if not updates.empty():
+				var final_line = _update_fields(parsed_line, updates, delimiter)
+				set_line(current_line_num, final_line)
+
+			i += 1
 				
 	save_file()
 
