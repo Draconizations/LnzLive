@@ -770,7 +770,7 @@ func _cycle_nearby_ballz():
 		
 		# Update floating ball number label
 		ball_label.text = str(target_ball.ball_no)
-		ball_label.rect_global_position = raw_mouse_pos + Vector2(25, 15)
+		ball_label.rect_global_position = raw_mouse_pos + Vector2(35, 15)
 		ball_label.show()
 		
 	else:
