@@ -183,12 +183,17 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 		end_line = next_sec_search[SEARCH_RESULT_LINE]
 	return {"start": start_line, "end": end_line}
 
-func _split_line(line: String) -> Array:
+func _split_line(line: String) -> PoolStringArray:
 	var regex = RegEx.new()
-	regex.compile("[\\s,]+")
+	regex.compile("[\\s,]+") 
+	
 	var cleaned_line = line.strip_edges()
+	if cleaned_line.empty():
+		return PoolStringArray() # Return empty array for empty lines
+
 	var normalized_line = regex.sub(cleaned_line, " ", true)
-	var parts = normalized_line.split(" ", false)
+	
+	var parts = normalized_line.split(" ", false) 
 	return parts
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
@@ -239,10 +244,9 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 
 	return most_frequent_delim
 
-func _split_and_clean(line: String, p_delimiter: String = "") -> Array:
+func _split_and_clean(line: String, p_delimiter: String = "") -> PoolStringArray:
 	var line_parts = line.split(";")
 	var data_part = line_parts[0].strip_edges()
-
 	return _split_line(data_part)
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
@@ -278,14 +282,9 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
 
-# Helper for multi-delimiter line splitting
+# TODO: replace smart_split calls with split_line calls
 func _smart_split(line: String) -> PoolStringArray:
-	var delimiters = [", ", ",", "\t", " "]
-	for delim in delimiters:
-		var split = line.split(delim, false)
-		if split.size() >= 3:
-			return split
-	return PoolStringArray()
+	return _split_line(line)
 
 # Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
 func _insert_text_at_line(line_no: int, text: String):
@@ -382,13 +381,7 @@ func find_line_in_linez_section(ball_no):
 			i += 1
 			continue
 			
-		# var parsed_line = r.search_all(line)
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
-				break
+		var parsed_line = _split_line(line)
 
 		if line.begins_with("["):
 			if start_point == start_of_section:
@@ -397,6 +390,12 @@ func find_line_in_linez_section(ball_no):
 				start_point = start_of_section
 				i = 0
 				continue
+		
+		# Check if parsed_line is empty to avoid index error
+		if parsed_line.empty():
+			i += 1
+			continue
+
 		if parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no):
 			break
 		
