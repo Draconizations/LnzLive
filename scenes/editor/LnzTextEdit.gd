@@ -21,6 +21,8 @@ var min_font_size = 16
 
 onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 
+onready var find_panel = get_node("../FindPanel")
+
 onready var frame_slider = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
 ) as HSlider
@@ -30,6 +32,10 @@ onready var camera_holder = get_tree().root.get_node(
 ) as Spatial
 
 func _ready():
+	var menu = get_menu()
+	menu.add_item("Find/Replace", 100)
+	menu.connect("id_pressed", self, "_on_menu_id_pressed")
+
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
@@ -73,6 +79,9 @@ func _on_user_file_selected(filepath):
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file()
+	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
+		find_panel.visible = !find_panel.visible
+		self.readonly = find_panel.visible
 
 func _set_text_preserve(new_text: String):
 	var old_v = get_v_scroll()
@@ -97,6 +106,20 @@ func _on_DecreaseFontButton_pressed():
 	if font:
 		font.size = max(min_font_size, font.size - 2)
 		_set_text_preserve(get_text())
+
+func _on_AutowrapButton_pressed():
+	self.wrap_enabled = !self.wrap_enabled
+
+	var button = get_node("../HBoxContainer/AutowrapButton")
+	if self.wrap_enabled:
+		button.text = "Wrap: On"
+	else:
+		button.text = "Wrap: Off"
+	update() # Force a redraw just in case
+
+func _on_FindReplaceButton_pressed():
+	find_panel.visible = !find_panel.visible
+	self.readonly = find_panel.visible
 
 func save_backup():
 	if not is_user_file:
@@ -2996,3 +3019,254 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
+
+func _escape_regex(pattern_str: String) -> String:
+	var special_chars = ".+*?()[]{}|^$\\/"
+	var escaped_str = ""
+	for this_char in pattern_str:
+		if special_chars.find(this_char) != -1:
+			escaped_str += "\\"
+		escaped_str += this_char
+	return escaped_str
+
+func _pos_to_offset(line: int, col: int) -> int:
+	var offset = 0
+	for i in range(line):
+		offset += get_line(i).length() + 1 # +1 for newline character
+	offset += col
+	return offset
+
+func _offset_to_pos(offset: int) -> Vector2:
+	var current_offset = 0
+	for line_num in range(get_line_count()):
+		var line_len = get_line(line_num).length() + 1 # +1 for newline
+		if current_offset + line_len > offset:
+			var col = offset - current_offset
+			return Vector2(col, line_num) # x=col, y=line
+		current_offset += line_len
+	# If offset is at the very end of the file
+	var last_line = get_line_count() - 1
+	if last_line < 0: return Vector2(0,0)
+	var col_on_last_line = offset - current_offset
+	return Vector2(col_on_last_line, last_line)
+
+func _on_menu_id_pressed(id):
+	if id == 100: # Find
+		find_panel.show()
+		self.readonly = true
+
+func _on_NotificationTimer_timeout():
+	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
+	wrap_notification_label.hide()
+
+func _on_FindCloseButton_pressed():
+	find_panel.hide()
+	self.readonly = false
+
+func _on_FindNextButton_pressed():
+	_find_text(true)
+
+func _on_FindPrevButton_pressed():
+	_find_text(false)
+
+func _on_ReplaceButton_pressed():
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	var search_text = find_line_edit.text
+	var replace_text = replace_line_edit.text
+
+	if search_text.empty():
+		return
+
+	if is_selection_active():
+		var selected_text = get_selection_text()
+
+		var pattern = _escape_regex(search_text)
+		if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+			pattern = "\\b" + pattern + "\\b"
+
+		if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+			pattern = "(?i)" + pattern
+
+		# Anchor the pattern to ensure the whole selection matches
+		var anchored_pattern = "^" + pattern + "$"
+
+		var regex = RegEx.new()
+		
+		var error = regex.compile(anchored_pattern) 
+
+		if error == OK:
+			var this_match = regex.search(selected_text, 0) 
+			if this_match != null:
+				self.readonly = false
+				insert_text_at_cursor(replace_text)
+				self.readonly = true
+
+	# After attempting a replace, find the next occurrence.
+	_find_text(true)
+
+
+func _on_ReplaceAllButton_pressed():
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	var search_text = find_line_edit.text
+	var replace_text = replace_line_edit.text
+
+	if search_text.empty():
+		return
+
+	var pattern = _escape_regex(search_text)
+	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+		pattern = "\\b" + pattern + "\\b"
+
+	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+		pattern = "(?i)" + pattern
+
+	var regex = RegEx.new()
+	
+	# compile() only takes 1 argument
+	var error = regex.compile(pattern) 
+	if error != OK:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+	else:
+		find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	self.readonly = false
+
+	if is_selection_active():
+		var sel_from_line = get_selection_from_line()
+		var sel_from_col = get_selection_from_column()
+		var sel_to_line = get_selection_to_line()
+		var sel_to_col = get_selection_to_column()
+
+		var selection_text = get_selection_text()
+		var matches = regex.search_all(selection_text)
+
+		# Iterate backwards to not mess up offsets
+		for i in range(matches.size() - 1, -1, -1):
+			var this_match = matches[i]
+			selection_text = selection_text.substr(0, this_match.get_start()) + replace_text + selection_text.substr(this_match.get_end())
+
+		if get_selection_text() != selection_text:
+			deselect()
+			select(sel_from_line, sel_from_col, sel_to_line, sel_to_col)
+			insert_text_at_cursor(selection_text)
+
+	else:
+		var original_text = self.text
+		var matches = regex.search_all(original_text) 
+		var new_text = original_text
+
+		# Iterate backwards
+		for i in range(matches.size() - 1, -1, -1):
+			var this_match = matches[i]
+			new_text = new_text.substr(0, this_match.get_start()) + replace_text + new_text.substr(this_match.get_end())
+
+		if original_text != new_text:
+			_set_text_preserve(new_text)
+
+	self.readonly = true
+
+
+func _find_text(forward):
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var search_text = find_line_edit.text
+	if search_text.empty():
+		return
+
+	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
+	var notification_timer = find_panel.get_node("NotificationTimer")
+	wrap_notification_label.hide()
+	find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	var all_text = self.text
+	if all_text.empty():
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+		return
+
+	var pattern = _escape_regex(search_text)
+	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+		pattern = "\\b" + pattern + "\\b"
+
+	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+		pattern = "(?i)" + pattern
+
+	var regex = RegEx.new()
+	var error = regex.compile(pattern)
+	if error != OK:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+
+	var all_matches = regex.search_all(all_text)
+	if all_matches.size() == 0:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Not found
+		return
+
+	var result = null
+	var wrapped = false
+
+	if forward:
+		var start_offset
+		if is_selection_active():
+			# If selected, start search AFTER the selection
+			start_offset = _pos_to_offset(get_selection_to_line(), get_selection_to_column())
+		else:
+			# If no selection, start search AFTER the cursor
+			start_offset = _pos_to_offset(cursor_get_line(), cursor_get_column()) + 1
+			
+		var best_match = null
+		# Find the first match *at or after* our starting point
+		for this_match in all_matches:
+			if this_match.get_start() >= start_offset:
+				best_match = this_match
+				break
+		
+		result = best_match
+		if result == null: # Wrap search
+			if all_matches.size() > 0:
+				result = all_matches[0]
+				wrapped = true
+
+	else: # Backward
+		var start_offset
+		if is_selection_active():
+			# If selected, start search BEFORE the selection
+			start_offset = _pos_to_offset(get_selection_from_line(), get_selection_from_column())
+		else:
+			# If no selection, start search BEFORE the cursor
+			start_offset = _pos_to_offset(cursor_get_line(), cursor_get_column())
+
+		var best_match = null
+		# Find the last match *before* our starting point
+		for this_match in all_matches:
+			if this_match.get_start() < start_offset:
+				best_match = this_match
+			else:
+				break
+		
+		result = best_match
+		if result == null: # Wrap search
+			if all_matches.size() > 0:
+				result = all_matches[all_matches.size() - 1]
+				wrapped = true
+
+	if result != null:
+		if wrapped:
+			wrap_notification_label.show()
+			notification_timer.start()
+			
+		var start_pos = _offset_to_pos(result.get_start())
+		var end_pos = _offset_to_pos(result.get_end())
+
+		var start_col = int(start_pos.x)
+		var start_line = int(start_pos.y)
+		var end_col = int(end_pos.x)
+		var end_line = int(end_pos.y)
+
+		cursor_set_line(start_line)
+		cursor_set_column(start_col)
+		center_viewport_to_cursor()
+		select(start_line, start_col, end_line, end_col)
+	else:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
