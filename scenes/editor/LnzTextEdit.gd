@@ -2398,6 +2398,53 @@ func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -
 				
 	return -1
 
+func _get_ramp_color(current_color_str: String, rule):
+	# Rule must be a ramp rule with valid before/after colors
+	if not rule.is_ramp or rule.before_color.empty() or rule.after_color.empty():
+		return null
+
+	# All colors involved must be valid numbers
+	if not current_color_str.is_valid_integer() or \
+	   not rule.before_color.is_valid_integer() or \
+	   not rule.after_color.is_valid_integer():
+		return null
+
+	var current_color: int = int(current_color_str)
+	var before_color: int = int(rule.before_color)
+	var after_color: int = int(rule.after_color)
+
+	# Ramp ranges are 10-199
+	if current_color < 10 or current_color > 199:
+		return null
+	if before_color < 10 or before_color > 199:
+		return null
+
+	# Find the base of the 10-unit ramp range (e.g., 62 -> 60)
+	var current_base: int = int(current_color / 10) * 10
+	var before_base: int = int(before_color / 10) * 10
+
+	# Check if the current color is in the same ramp range as the rule's "before" color
+	if current_base != before_base:
+		return null # Not in the same ramp, this rule doesn't apply
+
+	if after_color >= 10 and after_color <= 199:
+		# "After" color is *also* in a ramp range (10-199)
+		# Map to the corresponding color in the "after" ramp
+		# e.g., Rule: 62 -> 55. Current: 60.
+		# offset = 60 - 60 = 0
+		# after_base = 50
+		# new_color = 50 + 0 = 50
+		var offset: int = current_color - current_base
+		var after_base: int = int(after_color / 10) * 10
+		var new_color: int = after_base + offset
+		return str(new_color)
+	else:
+		# "After" color is *outside* ramp ranges (e.g., 244)
+		# Map all colors in the "before" range to this single "after" color
+		# e.g., Rule: 62 -> 244. Current: 60.
+		# new_color = 244
+		return str(after_color)
+
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
@@ -2449,22 +2496,39 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var updates = {}
 
 				for rule in recolor_rules:
-					var color_match = rule.before_color.empty() or rule.before_color == color
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.balls_on or not texture_match:
+						continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
 					
-					if all_recolor_info.balls_on and color_match and texture_match:
-						if not rule.after_color.empty():
-							updates[0] = rule.after_color
+					if new_color != null:
+						updates[0] = new_color
 						if not rule.after_texture.empty():
 							updates[7] = rule.after_texture
 						break
 
 				for rule in recolor_rules:
-					var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if all_recolor_info.ball_outlines_on and outline_color_match and texture_match:
-						if not rule.after_color.empty():
-							updates[1] = rule.after_color
+					if not all_recolor_info.ball_outlines_on or not texture_match:
+						continue
+
+					var new_outline_color = null
+					if rule.is_ramp:
+						new_outline_color = _get_ramp_color(outline_color, rule)
+					else:
+						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+						if outline_color_match and not rule.after_color.empty():
+							new_outline_color = rule.after_color
+					
+					if new_outline_color != null:
+						updates[1] = new_outline_color
 						break
 				
 				if not updates.empty():
@@ -2504,22 +2568,39 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var updates = {}
 
 				for rule in recolor_rules:
-					var color_match = rule.before_color.empty() or rule.before_color == color
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.balls_on or not texture_match:
+						continue
 
-					if all_recolor_info.balls_on and color_match and texture_match:
-						if not rule.after_color.empty():
-							updates[4] = rule.after_color
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[4] = new_color
 						if not rule.after_texture.empty():
 							updates[13] = rule.after_texture
 						break
-				
+
 				for rule in recolor_rules:
-					var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if all_recolor_info.ball_outlines_on and outline_color_match and texture_match:
-						if not rule.after_color.empty():
-							updates[5] = rule.after_color
+					if not all_recolor_info.ball_outlines_on or not texture_match:
+						continue
+
+					var new_outline_color = null
+					if rule.is_ramp:
+						new_outline_color = _get_ramp_color(outline_color, rule)
+					else:
+						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+						if outline_color_match and not rule.after_color.empty():
+							new_outline_color = rule.after_color
+					
+					if new_outline_color != null:
+						updates[5] = new_outline_color
 						break
 
 				if not updates.empty():
@@ -2554,12 +2635,20 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var updates = {}
 				
 				for rule in recolor_rules:
-					var color_match = rule.before_color.empty() or rule.before_color == color
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not texture_match:
+						continue
 
-					if color_match and texture_match:
-						if not rule.after_color.empty():
-							updates[5] = rule.after_color
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[5] = new_color
 						if not rule.after_texture.empty():
 							updates[10] = rule.after_texture
 						break
@@ -2599,26 +2688,48 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var updates = {}
 				
 				for rule in recolor_rules:
-					# Lines don't have textures, so skip rules that specify one
-					if not rule.before_texture.empty():
-						continue
-					if rule.before_color.empty() or rule.before_color == mainColor:
-						if not rule.after_color.empty():
-							updates[3] = rule.after_color
+					if not rule.before_texture.empty(): continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(mainColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == mainColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[3] = new_color
 						break
+
 				for rule in recolor_rules:
-					if not rule.before_texture.empty():
-						continue
-					if rule.before_color.empty() or rule.before_color == lColor:
-						if not rule.after_color.empty():
-							updates[4] = rule.after_color
+					if not rule.before_texture.empty(): continue
+					
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(lColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == lColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[4] = new_color
 						break
+
 				for rule in recolor_rules:
-					if not rule.before_texture.empty():
-						continue
-					if rule.before_color.empty() or rule.before_color == rColor:
-						if not rule.after_color.empty():
-							updates[5] = rule.after_color
+					if not rule.before_texture.empty(): continue
+					
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(rColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == rColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[5] = new_color
 						break
 				
 				if not updates.empty():
@@ -2654,18 +2765,33 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			var updates = {}
 			
 			for rule in recolor_rules:
-				if not rule.before_texture.empty():
-					continue
-				if rule.before_color.empty() or rule.before_color == l_color:
-					if not rule.after_color.empty():
-						updates[0] = rule.after_color
+				if not rule.before_texture.empty(): continue
+
+				var new_color = null
+				if rule.is_ramp:
+					new_color = _get_ramp_color(l_color, rule)
+				else:
+					var color_match = rule.before_color.empty() or rule.before_color == l_color
+					if color_match and not rule.after_color.empty():
+						new_color = rule.after_color
+				
+				if new_color != null:
+					updates[0] = new_color
 					break
+
 			for rule in recolor_rules:
-				if not rule.before_texture.empty():
-					continue
-				if rule.before_color.empty() or rule.before_color == r_color:
-					if not rule.after_color.empty():
-						updates[1] = rule.after_color
+				if not rule.before_texture.empty(): continue
+				
+				var new_color = null
+				if rule.is_ramp:
+					new_color = _get_ramp_color(r_color, rule)
+				else:
+					var color_match = rule.before_color.empty() or rule.before_color == r_color
+					if color_match and not rule.after_color.empty():
+						new_color = rule.after_color
+				
+				if new_color != null:
+					updates[1] = new_color
 					break
 			
 			if not updates.empty():

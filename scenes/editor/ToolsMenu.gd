@@ -229,6 +229,7 @@ func _on_RecolorPopup_confirmed():
 		var before_texture = l.get_node("BeforeTexture").text
 		var after_color = l.get_node("AfterColor").text
 		var after_texture = l.get_node("AfterTexture").text
+		var is_ramp = l.get_node("ColorRampCheck").pressed
 
 		if before_color.empty() and before_texture.empty():
 			continue
@@ -239,7 +240,8 @@ func _on_RecolorPopup_confirmed():
 			"before_color": before_color,
 			"before_texture": before_texture,
 			"after_color": after_color,
-			"after_texture": after_texture
+			"after_texture": after_texture,
+			"is_ramp": is_ramp
 		})
 
 	var balls_on = popup.get_node("CheckContainer/Balls").pressed
