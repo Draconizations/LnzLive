@@ -1,6 +1,8 @@
 extends Spatial
-
-# Paintball.gd
+## Paintball.gd
+## Represents paintballz parented to ballz
+## This script manages the visual properties of a paintball from parsed LNZ document data
+## It uses a shader to project the paintball onto the surface of its base ball
 
 export var base_ball_no           = 0
 export var base_ball_position     = Vector3.ZERO       setget set_base_ball_position

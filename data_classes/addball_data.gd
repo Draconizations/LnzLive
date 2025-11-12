@@ -1,5 +1,7 @@
 extends Node
 class_name AddBallData
+## addball_data.gd
+## A data class that holds the properties for objects built from [Add Ball] LNZ data
 
 export var base = 0
 export var size = 1

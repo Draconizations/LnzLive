@@ -1,5 +1,10 @@
 extends Node
 class_name BhdParser
+## bhd_parser.gd
+## A parser for `.bhd` animation header files
+## This class reads binary `.bdt` files, which contain metadata about animations
+## for a model, such as number of ballz, animation ranges, and location of frame
+## data in corresponding `.bdt` files
 
 var animation_ranges = []
 var num_balls: int

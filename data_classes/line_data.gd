@@ -1,5 +1,7 @@
 extends Node
 class_name LineData
+## line_data.gd
+## A data class that holds the properties for objects built from [Linez] LNZ data
 
 export var start: int
 export var end: int

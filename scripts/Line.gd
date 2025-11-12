@@ -1,6 +1,9 @@
 extends Spatial
-
-# Line.gd
+## Line.gd
+## Represents linez connecting ballz in the 3D Viewport
+## This script manages the visual properties of a line from parsed LNZ document data
+## The line is rendered as a simple quad mesh dynamically positioned and oriented
+## in the shader based on the world positions of the two connected ballz
 
 export var line_widths            = Vector2(10, 10)    setget set_line_width
 export var fuzz_amount            = 0                  setget set_fuzz_amount

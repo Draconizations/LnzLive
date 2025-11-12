@@ -1,6 +1,10 @@
 extends Spatial
+## Polygon.gd
+## Represents polygonz connecting four ballz
+## This script manages the visual properties of a polygon from parsed LNZ document data
+## The polygon is rendered as a simple quad mesh dynamically positioned and oriented
+## in the shader based on the world positions of the four connected ballz
 
-# Polygon.gd
 export var fuzz_amount            = 0                  setget set_fuzz_amount
 export var color_index            = 0                  setget set_color_index
 export var l_edge_color           = 0                  setget set_l_edge_color

@@ -1,4 +1,6 @@
 extends TextEdit
+## TextEdit.gd
+## NOTE: I don't think this gets used anywhere anymore so maybe delete
 
 var current_file_name
 signal file_saved 

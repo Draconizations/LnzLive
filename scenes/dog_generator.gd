@@ -1,4 +1,10 @@
 extends Node
+## dog_generator.gd
+## The central controller for generating and managing model from LNZ document data
+## This script is the core of LnzLive and coordinates entire process of loading,
+## parsing, building, rendering, animating, and updating models generated
+## from LNZ document data (ballz, paintballz, linez, polygonz)
+## NOTE: Could really use a rename and refactor, script is huge...
 
 export var pixel_world_size = 0.002
 
@@ -98,11 +104,9 @@ func set_frame(frame: int):
 		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
 	init_visual_balls(lnz, false)
 
-var line_instance = null
-
-func clear_ball_data():
+func clear_lnz_data():
 	for ball in balls:
-		if ball.instance_exists():
+		if ball != null:
 			ball.queue_free()
 	balls.clear()
 	ball_map.clear()
@@ -110,17 +114,10 @@ func clear_ball_data():
 	polygons_map.clear()
 	lines_map.clear()
 
-func cleanup_balls():
-	for ball in balls:
-		if ball != null:
-			ball.queue_free()
-	balls.clear()
-
 func init_ball_data(species):
-	cleanup_balls()
-
 	# print("Species:", species)
-
+	clear_lnz_data()
+	
 	if species == KeyBallsData.Species.DOG:
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())

@@ -1,4 +1,11 @@
 extends Node
+## key_balls_data.gd
+## A data repository for species-specific ball information
+## This script contains hardcoded data that defines key ball groups
+## for different game species (Catz, Dogz, Babyz) and provides data for
+## symmetry mapping, standard projection values, and body area assignments
+## NOTE: figure out where KeyBallsData gets defined because apparently
+## this cannot be called `class_name KeyBallsData`...
 
 var bodyarea_map = {}
 
@@ -72,6 +79,7 @@ var belly_cat = 2
 var belly_dog = 48
 var belly_bab = 4
 
+# NOTE: needs to be updated to reflect min and max possible for ballz typically set across original P.F. Magic breeds
 var projection_standards = {
 	"cat": [
 		{"fixed_ball": 43, "project_ball": 44, "min_projection": 80, "max_projection": 120, "comment": "tail"},
