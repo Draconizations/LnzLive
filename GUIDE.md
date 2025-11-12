@@ -11,7 +11,7 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 You can load LNZ data in several ways:
 
 *   **Examples:** Double-click a preset LNZ file under `Examples` in the file tree (left-hand panel). These are useful for getting started and experimenting with the editor's features.
-*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the Text Editor (right-hand panel).
+*   **Copy-and-Paste:** Paste LNZ data copied from a pet/baby file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the Text Editor (right-hand panel).
 *   **Import from File:** Click `File > Import LNZ / BMP / PNG` to load a `.lnz` text file from your computer.
 
 To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
@@ -60,9 +60,9 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 ## Basic Viewport Navigation
 
-- Click and hold the left mouse button in the vietport (center panel) to rotate the pet.
+- Click and hold the left mouse button in the vietport (center panel) to rotate the model.
 - Use the mouse wheel to zoom in and out.
-- Press down on mouse wheel or hold space and drag to move pet around viewport.
+- Press down on mouse wheel or hold space and drag to move model around viewport.
 - Tap these numbers to perform a quick jump to various camera views:
     - 1: Front View
 	- 2: Top View
@@ -105,16 +105,16 @@ These settings are used by most distribution modes.
 
 This dropdown determines the algorithm used to place paintballs.
 
-- Uniform: Places paintballs randomly across the entire surface.
-- Spiral: Arranges paintballs in a spiral pattern around the pet.
+- Uniform: Places paintballs randomly.
+- Spiral: Arranges paintballs in a spiral pattern.
 - Star: Creates starburst patterns with configurable points and ray length.
 - Bands: Creates bands of spots. 'Bands' controls the number of bands. Use 'Direction' to choose horizontal or vertical alignment.
 - Noise: Places spots organically based on simplex noise.
 - Grid/Checkerboard: Arranges paintballs in a grid or checkerboard pattern.
 - Random Walk: Each new paintball is placed near the previous one, creating winding paths.
 - Clustered: Groups paintballs into tight, randomly placed clusters.
-- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle of the pet.
-- Halfie: Restricts paintballs to one half of the pet along a selected axis (X, Y, or Z) and size (positive or negative).
+- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle.
+- Halfie: Restricts paintballs to one half along a selected axis (X, Y, or Z) and size (positive or negative).
 - Bullseye: Creates concentric rings of different colors.
 - Leopard: Creates irregular, ringed spots. You can control the spot radius, irregularity, and how complete the rings are. Use "Paired Colors" to define ordered outer/inner colors from your color list (e.g., `155,45,185,45` will only sample 155 outer / 45 inner and 185 outer / 45 inner if "Paired Colors" is checked; otherwise, random pairs will be drawn).
 - Rainbow: Generates multi-color arcs of paintballz. You can control the angle, curvature, width, and length of the arcs.
@@ -264,7 +264,7 @@ Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy L to R
 
-The Copy L to R tool will apply all changes on the left side of the pet (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the pet head-on, NOT the pet's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
+The Copy L to R tool will apply all changes on the left side of the model (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the model head-on, NOT the model's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
 
 ### Move Head
 
