@@ -1,4 +1,12 @@
 extends CanvasLayer
+## PaintballSettings.gd
+## Manages the UI panel and logic for the Paintball Mode settings
+## This script controls the visibility of the settings panel and provides methods to:
+## 1. Initialize the panel to the bottom center of the viewport and connect UI signals
+## 2. Show and hide the panel
+## 3. Retrieve all current paintball properties (e.g., diameter, color, fuzz)
+## 4. Emit the `apply_paintballz` signal when the "Apply" button is pressed
+## 5. Emit the `delete_mode_toggled(is_on)` signal when the checkbox is toggled
 
 signal apply_paintballz
 signal delete_mode_toggled(is_on)

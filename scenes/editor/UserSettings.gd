@@ -1,4 +1,9 @@
 extends Control
+## UserSettings.gd
+## Manages user-specific global settings and UI interactions
+## 1. Handles changes to the 3D viewport's background color by connecting the ColorPickerButton to a background ColorRect
+## 2. Triggers the display of the PaletteViewerPopup when the "View Palette" button is pressed
+## 3. Calls populate_colors() on the viewer popup to ensure the current pet's palette is displayed before showing the popup
 
 onready var color_picker = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/BackgroundColorPickerButton")
 onready var color_rect = get_node("BackgroundColorRect")

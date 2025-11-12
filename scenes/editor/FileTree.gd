@@ -1,4 +1,12 @@
 extends Tree
+## FileTree.gd
+## Manages the Tree UI for organizing and interacting with Petz LNZ files textures and palettes
+## This script builds the file structure from two sources: read-only Examples (res://) and user Local Storage (user://)
+## 1. Loading: Scans directories to populate the tree with LNZ files textures and palettes
+## 2. Selection: Handles item activation to load the selected file/palette by emitting example_file_selected user_file_selected or palette_selected
+## 3. Import: Manages file uploading for both desktop and web builds copying LNZ BMP and PNG files to local storage
+## 4. Management: Provides a right-click context menu for user-stored files allowing for renaming deleting and backing up the currently active LNZ file
+## 5. Rescan: Provides dedicated methods to refresh the LNZ texture and palette sections of the tree
 
 signal example_file_selected(filepath)
 signal user_file_selected(filepath)

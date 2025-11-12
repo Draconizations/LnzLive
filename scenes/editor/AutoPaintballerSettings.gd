@@ -1,4 +1,11 @@
 extends CanvasLayer
+## AutoPaintballerSettings.gd
+## Manages panel UI and logic for the Auto Paintballer tool
+## This script controls procedural generation of paintballz
+## 1. Gathers all selected properties
+## 2. Generates a list of `PaintBallData` objects
+## 3. Emits `randomize_auto_paintballz` signal for the `dog_generator` to queue and display
+## 4. Commits to applying and clearing of queued paintballz
 
 enum Distribution {
 	UNIFORM,            # 00

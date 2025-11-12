@@ -1,4 +1,12 @@
 extends PopupMenu
+## ToolsMenu.gd
+## Manages the right-click context menu (PopupMenu) for the 3D Viewport
+## This script defines and controls all actions related to ball manipulation recoloring and LNZ data editing
+## 1. Initialization: Defines all main and submenu items (Color... Create Addballz Delete Move Head etc)
+## 2. Contextual Update: Updates menu item text and disabled status before showing the menu based on the currently selected ball
+## 3. Recoloring: Handles simple recoloring for entire pets or specific parts (e g legs tail head) by opening ColorPopup
+## 4. Advanced Recolor: Manages the complex RecolorPopup for color swapping across all LNZ components
+## 5. Actions: Acts as a router to emit signals that perform LNZ modifications including Add/Delete Addballz Start Linez mode Copy L to R and Move Head Ballz
 
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)

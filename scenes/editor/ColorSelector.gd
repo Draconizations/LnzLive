@@ -1,4 +1,11 @@
 extends Panel
+## PaletteViewer.gd
+## Manages a popup that displays the currently loaded pet color palette
+## This script generates a visual grid of colors from the active palette file
+## 1. Initialization: Connects the close button to hide the popup
+## 2. Population: Clears the existing view, loads the correct palette texture for the active pet, and creates a GridContainer
+## 3. Display: Iterates through the palette's colors, generating a ColorRect and a numbered Label for each color index
+## 4. Loading: Contains logic to find the appropriate palette file based on  LNZ document data
 
 var dragging = false
 var drag_start = Vector2()
