@@ -11,7 +11,7 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 You can load LNZ data in several ways:
 
 *   **Examples:** Double-click a preset LNZ file under `Examples` in the file tree (left-hand panel). These are useful for getting started and experimenting with the editor's features.
-*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
+*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the Text Editor (right-hand panel).
 *   **Import from File:** Click `File > Import LNZ / BMP / PNG` to load a `.lnz` text file from your computer.
 
 To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
@@ -40,7 +40,7 @@ Right-click on a file in `Local Storage` for more options:
 
 ### Viewport (Center Panel)
 
-The 3D viewport displays the LNZ model.
+The 3D Viewport displays the LNZ model.
 
 *   **Rotate:** Click and hold the left mouse button to rotate the model.
 *   **Zoom:** Use the mouse wheel to zoom in and out.
@@ -49,7 +49,7 @@ The 3D viewport displays the LNZ model.
 
 ### Text Editor (Right Panel)
 
-The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
+The Text Editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
 
 
 ## Help! It crashes when I do X!
@@ -164,7 +164,7 @@ Captures the current animation frame and camera angle and writes it to the `[Hea
 
 #### Select Mode
 
-In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ text editor.
+In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ Text Editor.
 
 - **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
@@ -193,7 +193,7 @@ In `Line Mode`, you can click a series of start and end ballz to connect linez w
 
 ### Render
 
-Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+Here, you will find toggles for what elements should be drawn in the 3D Viewport. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
 
 ### Export
 
@@ -206,7 +206,7 @@ This option offers links to several handy resources, including [Carolyn Horn's h
 
 ### Background Color Selector
 
-Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
+Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the 3D Viewport.
 
 ### Eyelid Toggle
 
@@ -222,7 +222,7 @@ Use these controls to preview and navigate animations:
 
 ## Visual editing
 
-Ballz can be moved and resized directly in the pet view.
+Ballz can be moved and resized directly in the 3D Viewport.
 
 ### Move a ball
 SHIFT + left-click and drag to move a ball in 3D space.
@@ -238,7 +238,7 @@ The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
 
 ## Tools menu
 
-Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
+Press CTRL + SPACE in the 3D Viewport to open the tools menu, or right-click on a ball in the 3D Viewport.
 
 ### Color...
 
@@ -303,6 +303,6 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 
 While editing the LNZ:
 
-- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
+- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the 3D Viewport so you can locate it.
 
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
