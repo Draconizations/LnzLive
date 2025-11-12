@@ -30,8 +30,8 @@ func _gui_input(event):
 		rect_global_position = get_global_mouse_position() - drag_start
 
 func populate_colors():
-	# Clear previous entries
 	for child in vbox.get_children():
+		vbox.remove_child(child)
 		child.queue_free()
 
 	if dog_generator.lnz == null:
@@ -108,3 +108,10 @@ func load_palette_texture(palette_filename: String) -> Texture:
 		texture = preloader.get_resource("palette_" + palette_filename.to_lower())
 
 	return texture
+
+func _on_palette_selected(filename_no_ext: String):
+	if dog_generator.lnz == null:
+		return 
+		
+	dog_generator.lnz.palette = filename_no_ext + ".png"
+	populate_colors()
