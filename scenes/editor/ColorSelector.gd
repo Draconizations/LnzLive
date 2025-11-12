@@ -1,5 +1,5 @@
 extends Panel
-## PaletteViewer.gd
+## ColorSelector.gd
 ## Manages a popup that displays the currently loaded pet color palette
 ## This script generates a visual grid of colors from the active palette file
 ## 1. Initialization: Connects the close button to hide the popup
