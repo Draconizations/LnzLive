@@ -1418,7 +1418,6 @@ custom_fonts/font = ExtResource( 35 )
 placeholder_text = "outcol #"
 
 [node name="RecolorPopup" type="ConfirmationDialog" parent="SceneRoot"]
-visible = true
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
