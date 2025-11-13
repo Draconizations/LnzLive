@@ -1,4 +1,12 @@
 extends Tree
+## FileTree.gd
+## Manages the Tree UI for organizing and interacting with Petz LNZ files textures and palettes
+## This script builds the file structure from two sources: read-only Examples (res://) and user Local Storage (user://)
+## 1. Loading: Scans directories to populate the tree with LNZ files textures and palettes
+## 2. Selection: Handles item activation to load the selected file/palette by emitting example_file_selected user_file_selected or palette_selected
+## 3. Import: Manages file uploading for both desktop and web builds copying LNZ BMP and PNG files to local storage
+## 4. Management: Provides a right-click context menu for user-stored files allowing for renaming deleting and backing up the currently active LNZ file
+## 5. Rescan: Provides dedicated methods to refresh the LNZ texture and palette sections of the tree
 
 signal example_file_selected(filepath)
 signal user_file_selected(filepath)
@@ -399,7 +407,7 @@ func _on_RenameDialog_confirmed():
 
 func _on_ItemPopupMenu_about_to_show():
 	var clicked_item = get_selected() as TreeItem
-	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit") as TextEdit
+	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit") as TextEdit
 	var clicked_filepath = clicked_item.get_metadata(0)
 	if (clicked_filepath != null):
 		$ItemPopupMenu.set_item_disabled(2, !textlnz.filepath == clicked_filepath)

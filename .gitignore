@@ -12,8 +12,11 @@ export_presets.cfg
 *.TMP
 
 # ignore WIP folders
-*/wip
 local/
 
 # Ignore engine (too big)
 engine/*.exe
+export/index.html
+export/index.js
+export/index.pck
+*.html

@@ -1,4 +1,12 @@
 extends CanvasLayer
+## PresetSettings.gd
+## Manages the UI panel and logic for the Preset Mode settings
+## This script controls the visibility of the settings panel and provides methods to:
+## 1. Initialize the panel, connect all UI signals, and set up the paintball list (Tree)
+## 2. Retrieve and set the full set of preset properties for the ball and its paintballz
+## 3. Parse raw text input into structured paintball data for the list
+## 4. Handle advanced list transformations (mirroring and custom/preset rotation)
+## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
 signal eyedropper_toggled(is_on)
 

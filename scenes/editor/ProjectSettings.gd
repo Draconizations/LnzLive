@@ -1,4 +1,16 @@
 extends CanvasLayer
+## ProjectSettings.gd
+## Manages the UI panel and logic for the Project Mode settings
+## This script combines two key LNZ editing features:
+## 1. Project Ball Editor (`[Project Ball]`)
+## Controls a Tree UI for creating and editing ball projections. It provides methods to:
+## - Load: Copy existing projections from the LNZ or load defaults based on species
+## - Edit: Add, remove, reorder, lock, and edit projection values (Fixed/Project Ball, Min/Max/Value)
+## - Randomize: Generate random projection values within the defined Min/Max range, respecting locked or mirrored projections
+## - Apply: Gather all projections (and auto-generate symmetrical mirrors if needed) and emit the `apply_projections` signal
+## 2. Body Proportion Randomizer
+## Manages UI spinboxes for defining Min/Max ranges for LNZ body proportion sections (e.g., `[Leg Extension]`, `[Head Enlargement]`)
+## and emits the `randomize_body_proportions` signal to apply random values within those ranges
 
 signal apply_projections(projections)
 signal randomize_body_proportions(settings)

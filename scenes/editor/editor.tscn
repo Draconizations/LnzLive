@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=2]
+[gd_scene load_steps=36 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -9,7 +9,7 @@
 [ext_resource path="res://scenes/editor/FPSLabel.gd" type="Script" id=7]
 [ext_resource path="res://scenes/editor/ExportButtonOBJ.gd" type="Script" id=9]
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
-[ext_resource path="res://data_classes/RecolorLine.tscn" type="PackedScene" id=11]
+[ext_resource path="res://scenes/editor/RecolorLine.tscn" type="PackedScene" id=11]
 [ext_resource path="res://scenes/editor/OptionButton.gd" type="Script" id=12]
 [ext_resource path="res://scenes/editor/MenuButton.gd" type="Script" id=13]
 [ext_resource path="res://scenes/editor/UserSettings.gd" type="Script" id=14]
@@ -32,6 +32,46 @@
 [ext_resource path="res://scenes/editor/ColorSelector.gd" type="Script" id=36]
 
 [sub_resource type="CubeMesh" id=1]
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=3]
+bg_color = Color( 0.196078, 0.294118, 0.294118, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=4]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=5]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.196078, 0.294118, 0.294118, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
 
 [node name="Root" type="Node"]
 
@@ -167,8 +207,8 @@ margin_bottom = 300.0
 window_title = "Open File(s)"
 mode = 1
 access = 2
-current_dir = "/Users/talgr/Desktop/Kathy/LnzLive-master/LnzLive-master"
-current_path = "/Users/talgr/Desktop/Kathy/LnzLive-master/LnzLive-master/"
+current_dir = "/Users/kathl/Documents/GitHub/LnzLive"
+current_path = "/Users/kathl/Documents/GitHub/LnzLive/"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -729,8 +769,8 @@ margin_bottom = 8.0
 custom_styles/panel = ExtResource( 24 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel"]
-margin_right = 98.0
-margin_bottom = 61.0
+margin_right = 111.0
+margin_bottom = 82.0
 
 [node name="HelpPopupButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
 margin_right = 12.0
@@ -748,10 +788,10 @@ margin_left = 295.0
 margin_top = 4.0
 margin_right = 396.0
 margin_bottom = 24.0
-custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "User Guide"
 script = ExtResource( 13 )
+url = "https://github.com/tabbzi/LnzLive/blob/master/GUIDE.md"
 
 [node name="CarolynHornLinkButton" type="LinkButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
 margin_left = 295.0
@@ -759,10 +799,21 @@ margin_top = 4.0
 margin_right = 396.0
 margin_bottom = 24.0
 focus_mode = 2
-custom_styles/focus = ExtResource( 20 )
 custom_fonts/font = ExtResource( 28 )
 text = "Carolyn's Bible"
 script = ExtResource( 13 )
+url = "https://github.com/melissamcewen/carolyns-bible"
+
+[node name="PaletteiareLinkButton" type="LinkButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer"]
+margin_left = 295.0
+margin_top = 4.0
+margin_right = 396.0
+margin_bottom = 24.0
+focus_mode = 2
+custom_fonts/font = ExtResource( 28 )
+text = "Petz Paletteiare"
+script = ExtResource( 13 )
+url = "https://tabbzi.github.io/petz-paletteiare/"
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 553.0
@@ -948,11 +999,209 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/panel = ExtResource( 23 )
 
-[node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer"]
 margin_left = 1.0
 margin_top = 1.0
 margin_right = 758.0
 margin_bottom = 1079.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+margin_right = 757.0
+margin_bottom = 21.0
+size_flags_horizontal = 3
+
+[node name="DecreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_right = 20.0
+margin_bottom = 21.0
+rect_min_size = Vector2( 20, 20 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "-"
+
+[node name="IncreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 24.0
+margin_right = 46.0
+margin_bottom = 21.0
+rect_min_size = Vector2( 22, 20 )
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "+"
+
+[node name="AutowrapButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 50.0
+margin_right = 126.0
+margin_bottom = 21.0
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "Wrap: Off"
+
+[node name="FindReplaceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 130.0
+margin_right = 236.0
+margin_bottom = 21.0
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "Find/Replace"
+
+[node name="TextModeButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 240.0
+margin_right = 327.0
+margin_bottom = 21.0
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "Text Editor"
+
+[node name="TableModeButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+visible = false
+margin_left = 349.0
+margin_right = 447.0
+margin_bottom = 21.0
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = ExtResource( 27 )
+text = "Table Editor"
+
+[node name="FindPanel" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+visible = false
+margin_top = 25.0
+margin_right = 757.0
+margin_bottom = 134.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NotificationTimer" type="Timer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel"]
+wait_time = 2.0
+one_shot = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 750.0
+margin_bottom = 102.0
+
+[node name="LineEdit" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer"]
+margin_right = 743.0
+margin_bottom = 31.0
+custom_fonts/font = ExtResource( 27 )
+
+[node name="ReplaceLineEdit" type="LineEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer"]
+margin_top = 35.0
+margin_right = 743.0
+margin_bottom = 66.0
+custom_fonts/font = ExtResource( 27 )
+
+[node name="WrapNotificationLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer"]
+visible = false
+margin_top = 56.0
+margin_right = 755.0
+margin_bottom = 70.0
+custom_colors/font_color = Color( 0.6, 1, 0.6, 1 )
+text = "Search wrapped"
+align = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer"]
+margin_top = 70.0
+margin_right = 743.0
+margin_bottom = 95.0
+
+[node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_right = 81.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Find Next"
+
+[node name="FindPrevButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 85.0
+margin_right = 168.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Find Prev"
+
+[node name="ReplaceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 172.0
+margin_right = 247.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Replace"
+
+[node name="ReplaceAllButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 251.0
+margin_right = 352.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Replace All"
+
+[node name="MatchCaseCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 356.0
+margin_right = 475.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Match Case"
+
+[node name="WholeWordsCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 479.0
+margin_right = 609.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Whole Words"
+
+[node name="CloseButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
+margin_left = 613.0
+margin_right = 743.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 27 )
+text = "Close"
+
+[node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+margin_top = 25.0
+margin_right = 757.0
+margin_bottom = 1078.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_fonts/font = ExtResource( 32 )
@@ -960,8 +1209,10 @@ highlight_current_line = true
 syntax_highlighting = true
 show_line_numbers = true
 draw_tabs = true
+draw_spaces = true
 breakpoint_gutter = true
 fold_gutter = true
+highlight_all_occurrences = true
 minimap_draw = true
 minimap_width = 50
 script = ExtResource( 1 )
@@ -1083,14 +1334,14 @@ __meta__ = {
 "_edit_use_anchors_": true
 }
 
-[node name="PaletteViewerPopup" type="WindowDialog" parent="SceneRoot"]
+[node name="PaletteViewerPopup" type="Panel" parent="SceneRoot"]
+visible = false
 margin_left = 187.263
 margin_top = 172.014
 margin_right = 687.263
 margin_bottom = 672.014
 rect_min_size = Vector2( 500, 500 )
 custom_styles/panel = ExtResource( 19 )
-window_title = "Palette Viewer"
 script = ExtResource( 36 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1171,13 +1422,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-margin_left = -180.0
-margin_top = -160.0
-margin_right = 230.0
-margin_bottom = 213.0
+margin_left = -497.0
+margin_top = 131.0
+margin_right = 141.0
+margin_bottom = 515.0
 size_flags_horizontal = 3
 window_title = "Recolor"
-dialog_text = "Note: always excludes eyes, tongue and nose
+dialog_text = "Note that Recolor Menu always excludes eyes, tongue and nose from recoloring
 "
 __meta__ = {
 "_edit_use_anchors_": false
@@ -1189,100 +1440,106 @@ anchor_bottom = 1.0
 margin_left = 8.0
 margin_top = 39.0
 margin_right = -8.0
-margin_bottom = -34.0
+margin_bottom = -36.0
 size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer"]
-margin_right = 44.0
-margin_bottom = 20.0
+[node name="CheckContainer" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
+margin_right = 622.0
+margin_bottom = 29.0
+
+[node name="Balls" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_right = 151.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Balls/addballs"
+
+[node name="Ball outlines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 155.0
+margin_right = 287.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Ball outlines"
+
+[node name="Paintballs" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 291.0
+margin_right = 403.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Paintballs"
+
+[node name="Lines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 407.0
+margin_right = 474.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Lines"
+
+[node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 478.0
+margin_right = 535.0
+margin_bottom = 29.0
 size_flags_horizontal = 0
+custom_fonts/font = ExtResource( 27 )
 text = "Clear"
 
 [node name="RecolorLines" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
-margin_top = 24.0
-margin_right = 394.0
-margin_bottom = 272.0
+margin_top = 33.0
+margin_right = 622.0
+margin_bottom = 308.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="Line1" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_right = 394.0
+margin_right = 622.0
+margin_bottom = 27.0
 
 [node name="Line2" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 28.0
-margin_right = 394.0
-margin_bottom = 52.0
+margin_top = 31.0
+margin_right = 622.0
+margin_bottom = 58.0
 
 [node name="Line3" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 56.0
-margin_right = 394.0
-margin_bottom = 80.0
+margin_top = 62.0
+margin_right = 622.0
+margin_bottom = 89.0
 
 [node name="Line4" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 84.0
-margin_right = 394.0
-margin_bottom = 108.0
+margin_top = 93.0
+margin_right = 622.0
+margin_bottom = 120.0
 
 [node name="Line5" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 112.0
-margin_right = 394.0
-margin_bottom = 136.0
+margin_top = 124.0
+margin_right = 622.0
+margin_bottom = 151.0
 
 [node name="Line6" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 140.0
-margin_right = 394.0
-margin_bottom = 164.0
+margin_top = 155.0
+margin_right = 622.0
+margin_bottom = 182.0
 
 [node name="Line7" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 168.0
-margin_right = 394.0
-margin_bottom = 192.0
+margin_top = 186.0
+margin_right = 622.0
+margin_bottom = 213.0
 
 [node name="Line8" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 196.0
-margin_right = 394.0
-margin_bottom = 220.0
+margin_top = 217.0
+margin_right = 622.0
+margin_bottom = 244.0
 
 [node name="Line9" parent="SceneRoot/RecolorPopup/VBoxContainer/RecolorLines" instance=ExtResource( 11 )]
-margin_top = 224.0
-margin_right = 394.0
-margin_bottom = 248.0
-
-[node name="CheckContainer" type="HBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
-margin_top = 276.0
-margin_right = 394.0
-margin_bottom = 300.0
-
-[node name="Balls" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_right = 117.0
-margin_bottom = 24.0
-pressed = true
-text = "Balls/addballs"
-
-[node name="Ball outlines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 121.0
-margin_right = 229.0
-margin_bottom = 24.0
-pressed = true
-text = "Ball outlines"
-
-[node name="Paintballs" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 233.0
-margin_right = 323.0
-margin_bottom = 24.0
-pressed = true
-text = "Paintballs"
-
-[node name="Lines" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
-margin_left = 327.0
-margin_right = 389.0
-margin_bottom = 24.0
-pressed = true
-text = "Lines"
+margin_top = 248.0
+margin_right = 622.0
+margin_bottom = 275.0
 
 [node name="WebFileUploadPopup" type="ConfirmationDialog" parent="SceneRoot"]
 anchor_left = 0.4
@@ -1376,24 +1633,24 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
+[connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]
 [connection signal="ball_mouse_enter" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_Node_ball_mouse_enter"]
-[connection signal="ball_selected" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_selected"]
-[connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
-[connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
-[connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_Tree_backup_file"]
+[connection signal="ball_selected" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_selected"]
+[connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
+[connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
+[connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_rmb_selected"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="resized" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_resized"]
 [connection signal="sort_children" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_sort_children"]
-[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/HeadShotButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_HeadShotButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/HeadShotButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_HeadShotButton_pressed"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PolygonCheckBox" to="PetRoot/Node" method="_on_PolygonCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/LineCheckBox" to="PetRoot/Node" method="_on_LineCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PaintballCheckBox" to="PetRoot/Node" method="_on_PaintballCheckBox_toggled"]
@@ -1409,29 +1666,39 @@ __meta__ = {
 [connection signal="value_changed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" to="PetRoot/Node" method="set_frame"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button" method="_on_Button_toggled"]
 [connection signal="timeout" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button/Timer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_Timer_timeout"]
-[connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
-[connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
-[connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
-[connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/DecreaseFontButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_DecreaseFontButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/IncreaseFontButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_IncreaseFontButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/AutowrapButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_AutowrapButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/FindReplaceButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindReplaceButton_pressed"]
+[connection signal="timeout" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/NotificationTimer" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_NotificationTimer_timeout"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/FindNextButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindNextButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/FindPrevButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindPrevButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
+[connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
+[connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
+[connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
+[connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
 [connection signal="confirmed" from="SceneRoot/RenameDialog" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_RenameDialog_confirmed"]
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit2" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="confirmed" from="SceneRoot/RecolorPopup" to="SceneRoot/ToolsMenu" method="_on_RecolorPopup_confirmed"]
-[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
 [connection signal="confirmed" from="SceneRoot/WebFileUploadPopup" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_web_file_upload_popup_confirmed"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditY" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditZ" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="about_to_show" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_about_to_show"]
-[connection signal="add_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_add_ball"]
-[connection signal="color_entire_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_color_entire_pet"]
-[connection signal="color_part_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_color_part_pet"]
-[connection signal="copy_l_to_r" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_copy_l_to_r"]
-[connection signal="delete_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_delete_ball"]
+[connection signal="add_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_add_ball"]
+[connection signal="color_entire_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_entire_pet"]
+[connection signal="color_part_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_part_pet"]
+[connection signal="copy_l_to_r" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_copy_l_to_r"]
+[connection signal="delete_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_delete_ball"]
 [connection signal="index_pressed" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_index_pressed"]
-[connection signal="move_head" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_move_head"]
+[connection signal="move_head" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_move_head"]
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
-[connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
+[connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="id_pressed" from="SceneRoot/ToolsMenu/RecolorMenu" to="SceneRoot/ToolsMenu" method="_on_RecolorMenu_id_pressed"]

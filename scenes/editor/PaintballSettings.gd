@@ -1,11 +1,19 @@
 extends CanvasLayer
+## PaintballSettings.gd
+## Manages the UI panel and logic for the Paintball Mode settings
+## This script controls the visibility of the settings panel and provides methods to:
+## 1. Initialize the panel to the bottom center of the viewport and connect UI signals
+## 2. Show and hide the panel
+## 3. Retrieve all current paintball properties (e.g., diameter, color, fuzz)
+## 4. Emit the `apply_paintballz` signal when the "Apply" button is pressed
+## 5. Emit the `delete_mode_toggled(is_on)` signal when the checkbox is toggled
 
 signal apply_paintballz
 signal delete_mode_toggled(is_on)
 
 func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
-	find_node("DeleteModeCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
+	find_node("EraserCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
 	var viewport_size = get_viewport().size
 	var panel = $Panel
 	var panel_size = panel.rect_size
@@ -28,13 +36,38 @@ func hide():
 
 func get_properties():
 	var properties = {}
-	properties["diameter"] = find_node("Diameter").value
-	properties["color"] = find_node("Color").text.to_int()
-	properties["outline_color"] = find_node("OutlineColor").text.to_int()
-	properties["outline_type"] = find_node("OutlineType").value
-	properties["fuzz"] = find_node("Fuzz").value
-	properties["texture"] = find_node("Texture").value
+	properties["diameter_min"] = find_node("DiameterMin").value
+	properties["diameter_max"] = find_node("DiameterMax").value
+	properties["color"] = find_node("Color").text
+	properties["outline_color"] = find_node("OutlineColor").text
+	properties["outline_type_min"] = find_node("OutlineTypeMin").value
+	properties["outline_type_max"] = find_node("OutlineTypeMax").value
+	properties["fuzz_min"] = find_node("FuzzMin").value
+	properties["fuzz_max"] = find_node("FuzzMax").value
+	properties["texture"] = find_node("Texture").text
 	properties["group"] = find_node("Group").value
 	properties["anchored"] = find_node("Anchored").pressed
 	properties["target_mode"] = find_node("Target").selected
+	properties["freeline"] = find_node("FreelineCheckBox").pressed
+	properties["spacing"] = find_node("Spacing").value
+	properties["jitter"] = find_node("Jitter").value
 	return properties
+
+func _parse_number_list(s, allow_negatives=false):
+	var list = []
+	var parts = s.split(",", false)
+	for part in parts:
+		part = part.strip_edges()
+		if "-" in part:
+			if part.rfind("-") > 0:
+				var range_parts = part.split("-")
+				if range_parts.size() == 2:
+					var start = range_parts[0].to_int()
+					var end = range_parts[1].to_int()
+					for i in range(start, end + 1):
+						list.append(i)
+			elif allow_negatives and part.is_valid_integer():
+				list.append(part.to_int())
+		elif part.is_valid_integer():
+			list.append(part.to_int())
+	return list

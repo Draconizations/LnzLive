@@ -1,18 +1,56 @@
-# LnzLive guide
+# LnzLive Guide
+
+LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk you through the various features of LnzLive and how to use them!
 
 ## Quickstart
 
-### Load LNZ into the editor
+### Loading LNZ into the Editor
 
-You can either start from a preset LNZ file under `Examples` in the file tree (left-hand panel) by double-clicking to load, or paste LNZ copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
+> Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in LnzPro or another editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
 
-To load your own LNZ file, open in LNZPro, paste the contents into the editor, and hit `Apply Changes` or save (`CRTL+S`) to refresh the pet view. These will appear under `Local Storage` in the file tree, and can be right-clicked to rename or make backups, which is recommended.
+You can load LNZ data in several ways:
+
+*   **Examples:** Double-click a preset LNZ file under `Examples` in the file tree (left-hand panel). These are useful for getting started and experimenting with the editor's features.
+*   **Copy-and-Paste:** Paste LNZ data copied from a pet/baby file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the Text Editor (right-hand panel).
+*   **Import from File:** Click `File > Import LNZ / BMP / PNG` to load a `.lnz` text file from your computer.
+
+To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
+
+
+## User Interface Overview
 
 Helpful tips will appear at the top of the screen about visual and text editing tools.
 
-Don't forget to hit save or apply changes to see the results!
+### File Tree (Left Panel)
 
-> Note: *Loading and saving LNZ data of game files directly is a **planned feature**.*
+The file tree organizes your LNZ files, textures, and palettes.
+
+*   **Examples:** Contains preset LNZ files for you to explore and learn from.
+*   **Local Storage:** Stores LNZ files you have saved from the editor.
+*   **Local Textures:** Shows imported BMP texture files with a thumbnail preview. This allows you to quickly see which textures you have available.
+*   **Local Palettes:** Shows imported PNG palette files. Double-click to apply a palette to the current model.
+
+Right-click on a file in `Local Storage` for more options:
+
+*   **Delete:** Permanently removes the file.
+*   **Rename:** Changes the name of the file.
+*   **Backup File:** Creates a copy of the file named `{filename}_backup_#.lnz`. LnzLive keeps the 3 most recent backups, so you can revert to a previous version if something goes wrong.
+*   **Copy Filename:** For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to get the file prefix for easy pasting into LNZ.
+*   **Export File:** Exports LNZ data to a `.lnz` text file to a save spot of your choosing. 
+
+### Viewport (Center Panel)
+
+The 3D Viewport displays the LNZ model.
+
+*   **Rotate:** Click and hold the left mouse button to rotate the model.
+*   **Zoom:** Use the mouse wheel to zoom in and out.
+*   **Pan:** Press the middle mouse button or hold `Space` and drag to move the model.
+*   **Quick Views:** Use the number keys `1-0` to jump to different camera angles (front, top, isometric, etc.).
+
+### Text Editor (Right Panel)
+
+The Text Editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
+
 
 ## Help! It crashes when I do X!
 
@@ -20,33 +58,11 @@ LnzLive is a work in progress! Please make regular backups of your LNZ files.
 
 If you encounter a bug or have a suggestion, please raise an issue in the GitHub repository so it can be tracked and resolved.
 
-## File Tree
+## Basic Viewport Navigation
 
-The file tree on the left panel allows you to manage your LNZ files.
-
-- **Examples:** Contains preset LNZ files you can double-click to load.
-
-- **Local Storage:** Stores LNZ files that you have saved from the editor.
-
-- **Local Textures:** Shows custom texture BMP files you have imported. A thumbnail preview of your texture will also show here.
-
-- **Local Palettes:** Shows custom palette PNG files you have imported. Double-clicking on a palette will apply to the current LNZ file.
-
-Once you have an LNZ file saved under Local Storage, you can right-click it to see more options:
-
-- **Back Up:** Creates a copy of the file named `{filename}_backup_#.lnz`. LnzLive keeps the three most recent backups.
-
-- **Rename:** Changes the name of the LNZ file.
-
-- **Delete:** Removes the LNZ file permanently.
-
-For any LNZ, BMP, or PNG file, you can right-click and choose "Copy Filename" to get the file prefix for easy pasting into LNZ.
-
-## Basic Navigation
-
-- Click and hold the left mouse button in the pet view (center panel) to rotate the pet.
+- Click and hold the left mouse button in the vietport (center panel) to rotate the model.
 - Use the mouse wheel to zoom in and out.
-- Press down on mouse wheel or hold space and drag to move pet around viewport.
+- Press down on mouse wheel or hold space and drag to move model around viewport.
 - Tap these numbers to perform a quick jump to various camera views:
     - 1: Front View
 	- 2: Top View
@@ -89,19 +105,20 @@ These settings are used by most distribution modes.
 
 This dropdown determines the algorithm used to place paintballs.
 
-- Uniform: Places paintballs randomly across the entire surface.
-- Spiral: Arranges paintballs in a spiral pattern around the pet.
+- Uniform: Places paintballs randomly.
+- Spiral: Arranges paintballs in a spiral pattern.
 - Star: Creates starburst patterns with configurable points and ray length.
-- Horizontal/Vertical Bands: Confines paintball placement to distinct bands.
+- Bands: Creates bands of spots. 'Bands' controls the number of bands. Use 'Direction' to choose horizontal or vertical alignment.
+- Noise: Places spots organically based on simplex noise.
 - Grid/Checkerboard: Arranges paintballs in a grid or checkerboard pattern.
 - Random Walk: Each new paintball is placed near the previous one, creating winding paths.
 - Clustered: Groups paintballs into tight, randomly placed clusters.
-- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle of the pet.
-- Halfie: Restricts paintballs to one half of the pet along a selected axis (X, Y, or Z) and size (positive or negative).
+- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle.
+- Halfie: Restricts paintballs to one half along a selected axis (X, Y, or Z) and size (positive or negative).
 - Bullseye: Creates concentric rings of different colors.
-- Stripes: Generates organic, wavy stripes using noise. You can control the frequency, scale, distortion, and thickness.
 - Leopard: Creates irregular, ringed spots. You can control the spot radius, irregularity, and how complete the rings are. Use "Paired Colors" to define ordered outer/inner colors from your color list (e.g., `155,45,185,45` will only sample 155 outer / 45 inner and 185 outer / 45 inner if "Paired Colors" is checked; otherwise, random pairs will be drawn).
 - Rainbow: Generates multi-color arcs of paintballz. You can control the angle, curvature, width, and length of the arcs.
+- Stripes: Generates natural Turing patterns like stripes and blotches using Gray-Scott reaction-diffusion. Feed/Kill rates determine density and Diffusion controls feature size.
 - Fractal: A powerful mode using Lindenmayer system aka turtle-walking procedure for generating complex, self-repeating patterns.
 
     - *Preset:* Choose a classic fractal like Dragon Curve, Sierpinski Triangle, or Barnsley Fern to see how it works. Select "Custom" to define your own rules.
@@ -127,6 +144,10 @@ This dropdown determines the algorithm used to place paintballs.
 
 	`]`: Return to the last saved position and direction (ends a branch).
 
+- Voronoi: Creates patterns based on cellular boundaries. 'Cells' controls the density of the pattern, and 'Edge Size' controls the thickness of the lines.
+
+- Wave: Generates wave-like or banded patterns using spherical harmonics. 'Degree (L)' controls vertical frequency and 'Order (M)' controls horizontal frequency.
+
 #### View Palette
 
 Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
@@ -143,7 +164,7 @@ Captures the current animation frame and camera angle and writes it to the `[Hea
 
 #### Select Mode
 
-In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ text editor.
+In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ Text Editor.
 
 - **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
@@ -172,7 +193,7 @@ In `Line Mode`, you can click a series of start and end ballz to connect linez w
 
 ### Render
 
-Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+Here, you will find toggles for what elements should be drawn in the 3D Viewport. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
 
 ### Export
 
@@ -185,7 +206,7 @@ This option offers links to several handy resources, including [Carolyn Horn's h
 
 ### Background Color Selector
 
-Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
+Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the 3D Viewport.
 
 ### Eyelid Toggle
 
@@ -201,7 +222,7 @@ Use these controls to preview and navigate animations:
 
 ## Visual editing
 
-Ballz can be moved and resized directly in the pet view.
+Ballz can be moved and resized directly in the 3D Viewport.
 
 ### Move a ball
 SHIFT + left-click and drag to move a ball in 3D space.
@@ -217,7 +238,7 @@ The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
 
 ## Tools menu
 
-Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
+Press CTRL + SPACE in the 3D Viewport to open the tools menu, or right-click on a ball in the 3D Viewport.
 
 ### Color...
 
@@ -243,7 +264,7 @@ Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy L to R
 
-The Copy L to R tool will apply all changes on the left side of the pet (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the pet head-on, NOT the pet's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
+The Copy L to R tool will apply all changes on the left side of the model (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the model head-on, NOT the model's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
 
 ### Move Head
 
@@ -282,7 +303,6 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 
 While editing the LNZ:
 
-- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
+- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the 3D Viewport so you can locate it.
 
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
-

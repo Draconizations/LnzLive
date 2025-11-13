@@ -1,4 +1,14 @@
-extends Popup
+extends Panel
+## ColorSelector.gd
+## Manages a popup that displays the currently loaded pet color palette
+## This script generates a visual grid of colors from the active palette file
+## 1. Initialization: Connects the close button to hide the popup
+## 2. Population: Clears the existing view, loads the correct palette texture for the active pet, and creates a GridContainer
+## 3. Display: Iterates through the palette's colors, generating a ColorRect and a numbered Label for each color index
+## 4. Loading: Contains logic to find the appropriate palette file based on  LNZ document data
+
+var dragging = false
+var drag_start = Vector2()
 
 onready var vbox = $PaletteViewerScrollContainer/PaletteViewerVBoxContainer
 onready var dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
@@ -8,9 +18,20 @@ onready var close_button = $CloseButton
 func _ready():
 	close_button.connect("pressed", self, "hide")
 
+func _gui_input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				dragging = true
+				drag_start = get_global_mouse_position() - rect_global_position
+			else:
+				dragging = false
+	elif event is InputEventMouseMotion and dragging:
+		rect_global_position = get_global_mouse_position() - drag_start
+
 func populate_colors():
-	# Clear previous entries
 	for child in vbox.get_children():
+		vbox.remove_child(child)
 		child.queue_free()
 
 	if dog_generator.lnz == null:
@@ -87,3 +108,10 @@ func load_palette_texture(palette_filename: String) -> Texture:
 		texture = preloader.get_resource("palette_" + palette_filename.to_lower())
 
 	return texture
+
+func _on_palette_selected(filename_no_ext: String):
+	if dog_generator.lnz == null:
+		return 
+		
+	dog_generator.lnz.palette = filename_no_ext + ".png"
+	populate_colors()

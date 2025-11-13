@@ -1,4 +1,6 @@
 extends Spatial
+## rotator.gd
+## NOTE: I don't think this gets used anywhere anymore so maybe delete
 
 var time = 0.0
 export var enabled = false

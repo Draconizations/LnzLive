@@ -1,5 +1,7 @@
 extends Node
 class_name PaintBallData
+## paintball_data.gd
+## A data class that holds the properties for objects built from [Paint Ballz] LNZ data
 
 export var base = 0
 export var size = 1

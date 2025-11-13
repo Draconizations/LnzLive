@@ -1,4 +1,10 @@
 extends CanvasLayer
+## LineModeSettings.gd
+## Manages the UI panel and logic for the Line Mode settings
+## This script controls the visibility of the settings panel and provides methods to:
+## 1. Initialize the panel to the bottom center of the viewport
+## 2. Show and hide the panel
+## 3. Retrieve all current line properties (e.g., fuzz, color, thickness) set by the user
 
 func _ready():
 	var viewport_size = get_viewport().size

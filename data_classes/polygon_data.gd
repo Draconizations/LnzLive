@@ -1,5 +1,7 @@
-extends Resource
+extends Node
 class_name PolyData
+## polygon_data.gd
+## A data class that holds the properties for objects built from [Polygons] LNZ data
 
 var ball1: int
 var ball2: int

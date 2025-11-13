@@ -1,0 +1,65 @@
+[gd_scene load_steps=2 format=2]
+[ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=1]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=2]
+
+[sub_resource type="DynamicFont" id=1]
+size = 24
+font_data = ExtResource( 2 )
+
+[node name="HBoxContainer" type="HBoxContainer"]
+margin_right = 421.0
+margin_bottom = 24.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BeforeColor" type="LineEdit" parent="."]
+margin_right = 85.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+placeholder_text = "Color"
+
+[node name="BeforeTexture" type="LineEdit" parent="."]
+margin_left = 89.0
+margin_right = 174.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+placeholder_text = "Texture"
+
+[node name="Label" type="Label" parent="."]
+margin_left = 178.0
+margin_top = 5.0
+margin_right = 191.0
+margin_bottom = 19.0
+custom_fonts/font = SubResource( 1 )
+
+text = "->"
+
+[node name="AfterColor" type="LineEdit" parent="."]
+margin_left = 195.0
+margin_right = 280.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+placeholder_text = "Color"
+
+[node name="AfterTexture" type="LineEdit" parent="."]
+margin_left = 284.0
+margin_right = 369.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+
+placeholder_text = "Texture"
+
+[node name="ColorRampCheck" type="CheckBox" parent="."]
+margin_left = 373.0
+margin_right = 421.0
+margin_bottom = 24.0
+custom_fonts/font = SubResource( 1 )
+
+text = "Ramp"

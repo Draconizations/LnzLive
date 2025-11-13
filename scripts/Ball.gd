@@ -1,6 +1,8 @@
 extends Spatial
-
-# Ball.gd
+## Ball.gd
+## Represents ballz in the 3D Viewport
+## This script manages the visual properties of a ball from parsed LNZ document data
+## and handles user interactions like mouse-over highlighting and selection events
 
 export var ball_no                = 0
 export var base_ball_no           = -1

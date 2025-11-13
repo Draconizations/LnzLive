@@ -1,5 +1,9 @@
 extends Node
 class_name BdtParser
+## bdt_parser.gd
+## A parser for `.bdt` animation files
+## This class reads binary `.bdt` files, which contain animation frame data for
+## models and extracts position and rotation for each ball for specified frames
 
 var frames = []
 

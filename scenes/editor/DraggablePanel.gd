@@ -1,4 +1,7 @@
 extends Panel
+## DraggablePanel.gd
+## Attach script to a `Panel` or `PanelContainer` node to allow the user
+## to click and drag it around the screen
 
 var dragging = false
 var drag_start = Vector2()

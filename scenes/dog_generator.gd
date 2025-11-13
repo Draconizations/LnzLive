@@ -1,4 +1,10 @@
 extends Node
+## dog_generator.gd
+## The central controller for generating and managing model from LNZ document data
+## This script is the core of LnzLive and coordinates entire process of loading,
+## parsing, building, rendering, animating, and updating models generated
+## from LNZ document data (ballz, paintballz, linez, polygonz)
+## NOTE: Could really use a rename and refactor, script is huge...
 
 export var pixel_world_size = 0.002
 
@@ -71,7 +77,7 @@ signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
 
 func _ready():
-	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 
 func set_animation(anim_index: int):
@@ -98,11 +104,9 @@ func set_frame(frame: int):
 		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
 	init_visual_balls(lnz, false)
 
-var line_instance = null
-
-func clear_ball_data():
+func clear_lnz_data():
 	for ball in balls:
-		if ball.instance_exists():
+		if ball != null:
 			ball.queue_free()
 	balls.clear()
 	ball_map.clear()
@@ -110,17 +114,10 @@ func clear_ball_data():
 	polygons_map.clear()
 	lines_map.clear()
 
-func cleanup_balls():
-	for ball in balls:
-		if ball != null:
-			ball.queue_free()
-	balls.clear()
-
 func init_ball_data(species):
-	cleanup_balls()
-
 	# print("Species:", species)
-
+	clear_lnz_data()
+	
 	if species == KeyBallsData.Species.DOG:
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
@@ -187,9 +184,18 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
 	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create, lnz_info.no_texture_rotate)
+
+	if new_create:
+		call_deferred("_finish_dependent_geometry", new_create)
+	else:
+		apply_projections()
+		generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
+		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+
+func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
-	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
-	generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
+	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -419,7 +425,8 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			break
 
 	if texture == null:
-		texture = preloader.get_resource(texture_filename.to_lower())
+		if preloader.has_resource(texture_filename.to_lower()):
+			texture = preloader.get_resource(texture_filename.to_lower())
 
 	return texture
 
@@ -466,7 +473,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			pal_texture = ResourceLoader.load(user_res_path)
 		elif ResourceLoader.exists(res_res_path):
 			pal_texture = ResourceLoader.load(res_res_path)
-		else:
+		elif preloader.has_resource("palette_" + palette.to_lower()):
 			pal_texture = preloader.get_resource("palette_" + palette.to_lower())
 	else:
 		pal_texture = default_palette
@@ -914,14 +921,25 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		var distance = (target_pos - start_pos).length()
 		var middle_point = lerp(start.global_transform.origin, end.global_transform.origin, 0.5)
 
+		# This check handles zero-length lines (start_pos == target_pos)
 		if target_pos == middle_point:
 			visual_line.global_transform.origin = middle_point
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
 		else:
-			visual_line.look_at_from_position(middle_point, target_pos, Vector3.UP)
+			# Check if the line is vertical to avoid error with Vector3.UP
+			var look_at_direction = (target_pos - middle_point).normalized()
+			var up_vector = Vector3.UP
+			var dot = look_at_direction.dot(Vector3.UP)
+
+			if abs(dot) > 0.9999:
+				up_vector = Vector3.FORWARD
+
+			visual_line.look_at_from_position(middle_point, target_pos, up_vector)
+			
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
+
 		if new_create:
 			visual_line.texture = start.texture
 			visual_line.species = species
@@ -1107,6 +1125,17 @@ func remove_last_pending_paintball():
 			
 		_pending_paintballs_data.pop_back()
 
+func remove_specific_pending_paintball(paintball_node):
+	var index = _pending_paintball_nodes.find(paintball_node)
+	if index != -1:
+		_pending_paintball_nodes.remove(index)
+		_pending_paintballs_data.remove(index)
+		if is_instance_valid(paintball_node):
+			paintball_node.queue_free()
+
+func get_pending_paintball_nodes():
+	return _pending_paintball_nodes
+
 func clear_pending_paintballs():
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
@@ -1260,7 +1289,7 @@ func _on_apply_auto_paintballz():
 
 		processed_count += 1
 
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if lnz_text_edit:
 		lnz_text_edit._on_apply_paintballz()
 

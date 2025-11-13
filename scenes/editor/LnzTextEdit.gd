@@ -17,7 +17,11 @@ signal file_saved(filepath)
 signal find_ball(ball_no)
 signal file_backed_up()
 
-onready var apply_changes_button = get_node("../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
+var min_font_size = 16
+
+onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
+
+onready var find_panel = get_node("../FindPanel")
 
 onready var frame_slider = get_tree().root.get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
@@ -28,6 +32,8 @@ onready var camera_holder = get_tree().root.get_node(
 ) as Spatial
 
 func _ready():
+	_setup_context_menu()
+
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
@@ -51,6 +57,18 @@ func _ready():
 	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):
 		file_tree.connect("example_file_selected", self, "_on_example_file_selected")
 
+func _setup_context_menu():
+    var menu = get_menu()
+    
+    if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
+        menu.connect("id_pressed", self, "_on_menu_id_pressed")
+
+    if menu.get_item_index(100) == -1:
+        menu.add_item("Find/Replace", 100)
+    
+    if menu.get_item_index(101) == -1:
+        menu.add_item("Toggle Comment", 101)
+
 func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
 	file.open(filepath, File.READ)
@@ -71,6 +89,10 @@ func _on_user_file_selected(filepath):
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file()
+	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
+		find_panel.visible = !find_panel.visible
+		self.readonly = find_panel.visible
+		_setup_context_menu()
 
 func _set_text_preserve(new_text: String):
 	var old_v = get_v_scroll()
@@ -82,6 +104,34 @@ func _set_text_preserve(new_text: String):
 	set_h_scroll(old_h)
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
+
+func _on_IncreaseFontButton_pressed():
+	var font = get_font("font")
+	if font:
+		font.size += 2
+		# Rerender to apply font changes
+		_set_text_preserve(get_text())
+
+func _on_DecreaseFontButton_pressed():
+	var font = get_font("font")
+	if font:
+		font.size = max(min_font_size, font.size - 2)
+		_set_text_preserve(get_text())
+
+func _on_AutowrapButton_pressed():
+	self.wrap_enabled = !self.wrap_enabled
+
+	var button = get_node("../HBoxContainer/AutowrapButton")
+	if self.wrap_enabled:
+		button.text = "Wrap: On"
+	else:
+		button.text = "Wrap: Off"
+	update() # Force a redraw just in case
+
+func _on_FindReplaceButton_pressed():
+	find_panel.visible = !find_panel.visible
+	self.readonly = find_panel.visible
+	_setup_context_menu()
 
 func save_backup():
 	if not is_user_file:
@@ -153,6 +203,8 @@ func save_file():
 	_set_text_preserve(get_text())
 	print("Saved LNZ and Applied Changes!")
 
+# TBD fix all delimiter handling...
+
 func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
@@ -166,38 +218,60 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 		end_line = next_sec_search[SEARCH_RESULT_LINE]
 	return {"start": start_line, "end": end_line}
 
-func _split_line(line: String) -> Array:
+func _split_line(line: String) -> PoolStringArray:
 	var regex = RegEx.new()
-	regex.compile("[\\s,]+")
+	regex.compile("[\\s,]+") 
+	
 	var cleaned_line = line.strip_edges()
+	if cleaned_line.empty():
+		return PoolStringArray() # Return empty array for empty lines
+
 	var normalized_line = regex.sub(cleaned_line, " ", true)
-	var parts = normalized_line.split(" ", false)
+	
+	var parts = normalized_line.split(" ", false) 
 	return parts
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
-	var delim_counts = {", ": 0, ",": 0, "\t": 0, " ": 0}
+	# Define join strings and the patterns to find them
+	# Check for most complex (comma + whitespace) first
+	var delim_counts = {
+		", ": 0,  # "comma-space", "comma-tab", "comma-multispace"
+		",": 0,   # "comma"
+		"\t": 0,  # "tab"
+		" ": 0    # "space", "multispace"
+	}
 	var lines_scanned = 0
+	
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"):
 			continue
 		lines_scanned += 1
+		
+		var data_part = line.split(";", false)[0] # Only check data part
 
-		if line.find(", ") != -1:
+		# Check in order of specificity
+		if data_part.find(",\t") != -1 or data_part.find(", ") != -1:
+			# Catches comma-tab, comma-space, comma-multispace
 			delim_counts[", "] += 1
-		elif line.find(",") != -1:
+		elif data_part.find(",") != -1:
+			# Catches comma-only
 			delim_counts[","] += 1
-		elif line.find("\t") != -1:
+		elif data_part.find("\t") != -1:
+			# Catches tab
 			delim_counts["\t"] += 1
-		elif line.find(" ") != -1:
-			if line.split(" ", false).size() > 1:
+		elif data_part.find(" ") != -1:
+			# Catches space, multispace
+			if data_part.split(" ", false).size() > 1:
 				delim_counts[" "] += 1
 
 	if lines_scanned == 0:
-		return " "
+		return " " # Default joiner
 
 	var most_frequent_delim = " "
 	var max_count = 0
+
+	# Iterate in the same priority order to select the winner
 	for delim in [", ", ",", "\t", " "]:
 		if delim_counts[delim] > max_count:
 			max_count = delim_counts[delim]
@@ -205,27 +279,10 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 
 	return most_frequent_delim
 
-func _split_and_clean(line: String, p_delimiter: String = "") -> Array:
+func _split_and_clean(line: String, p_delimiter: String = "") -> PoolStringArray:
 	var line_parts = line.split(";")
 	var data_part = line_parts[0].strip_edges()
-
 	return _split_line(data_part)
-
-	# var delimiter = p_delimiter
-	# if delimiter == "":
-	# 	if data_part.find(", ") != -1: delimiter = ", "
-	# 	elif data_part.find(",") != -1: delimiter = ","
-	# 	elif data_part.find("\t") != -1: delimiter = "\t"
-	# 	else: delimiter = " "
-
-	# var parts = data_part.split(delimiter, false)
-	# var cleaned_parts = []
-	# for part in parts:
-	# 	var cleaned_part = part.strip_edges()
-	# 	if not cleaned_part.empty():
-	# 		cleaned_parts.append(cleaned_part)
-
-	# return cleaned_parts
 
 func _update_fields(parts: Array, updates: Dictionary, sep: String) -> String:
 	var new_parts = []
@@ -259,6 +316,22 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	cursor_set_column(0)
 	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
+
+# TODO: replace smart_split calls with split_line calls
+func _smart_split(line: String) -> PoolStringArray:
+	return _split_line(line)
+
+# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
+func _insert_text_at_line(line_no: int, text: String):
+	var result = ""
+	var total_lines = get_line_count()
+	for i in range(total_lines):
+		if i == line_no:
+			result += text.strip_edges() + "\n"
+		result += get_line(i) + "\n"
+	if line_no >= total_lines:
+		result += text.strip_edges() + "\n"
+	set_text(result.strip_edges())
 
 func find_line_in_ball_section(ball_no):
 	var section_find = search('[Ballz Info]', 0, 0, 0)
@@ -343,13 +416,7 @@ func find_line_in_linez_section(ball_no):
 			i += 1
 			continue
 			
-		# var parsed_line = r.search_all(line)
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
-				break
+		var parsed_line = _split_line(line)
 
 		if line.begins_with("["):
 			if start_point == start_of_section:
@@ -358,6 +425,12 @@ func find_line_in_linez_section(ball_no):
 				start_point = start_of_section
 				i = 0
 				continue
+		
+		# Check if parsed_line is empty to avoid index error
+		if parsed_line.empty():
+			i += 1
+			continue
+
 		if parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no):
 			break
 		
@@ -971,143 +1044,6 @@ func _update_paintballz_section(header: String, ball_no: int):
 		elif b > ball_no:
 			set_line(start + i, "%s %s" % [str(b - 1), split[1]])
 		i += 1
-
-# Helper for multi-delimiter line splitting
-func _smart_split(line: String) -> PoolStringArray:
-	var delimiters = [", ", ",", "\t", " "]
-	for delim in delimiters:
-		var split = line.split(delim, false)
-		if split.size() >= 3:
-			return split
-	return PoolStringArray()
-
-# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
-func _insert_text_at_line(line_no: int, text: String):
-	var result = ""
-	var total_lines = get_line_count()
-	for i in range(total_lines):
-		if i == line_no:
-			result += text.strip_edges() + "\n"
-		result += get_line(i) + "\n"
-	if line_no >= total_lines:
-		result += text.strip_edges() + "\n"
-	set_text(result.strip_edges())
-
-#####
-
-# v1 Delete Addballz
-# func _on_Node_addball_deleted(ball_no):
-# 	# remove the addball line
-# 	var line_no = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
-# 	select(line_no, 0, line_no + 1, 0)
-# 	cut()
-	
-# 	# all the addballs after this have now been renumbered
-# 	# so we need to correct the linez, omissions, projections, paintballz
-# 	# linez
-# 	var section_find = search('[Linez]', 0, 0, 0)
-# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	var i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		# var parsed_line = r.search_all(line)
-# 		var delimiters = [", ", ",", "\t", " "]
-# 		var parsed_line = []
-# 		for delim in delimiters:
-# 			if line.split(delim).size() > 2:
-# 				parsed_line = line.split(delim, false)
-# 				break
-
-# 		var start_ball = int(parsed_line[0])
-# 		var end_ball = int(parsed_line[1])
-# 		if start_ball == ball_no or end_ball == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		if start_ball > ball_no or end_ball > ball_no:
-# 			var replaced_line = ""
-# 			if start_ball > ball_no:
-# 				start_ball -= 1
-# 			if end_ball > ball_no:
-# 				end_ball -= 1
-# 			replaced_line += str(start_ball) + " " + str(end_ball) + " "
-# 			var start_of_rest = parsed_line[2].get_start()
-# 			replaced_line += line.substr(start_of_rest)
-# 			set_line(start_of_section + i, replaced_line)
-# 		i += 1
-	
-# 	# omissions
-# 	section_find = search('[Omissions]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-# 		if int(line) == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif int(line) > ball_no:
-# 			var replace_line = str(int(line) - 1)
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-	
-# 	# projections
-# 	section_find = search('[Project Ball]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		# var parsed_line = r.search_all(line)
-# 		var delimiters = [", ", ",", "\t", " "]
-# 		var parsed_line = []
-# 		for delim in delimiters:
-# 			if line.split(delim).size() > 2:
-# 				parsed_line = line.split(delim, false)
-# 				break
-
-# 		var move_ball_no = int(parsed_line[1])
-# 		if move_ball_no == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif move_ball_no > ball_no:
-# 			var replace_line = "%s %s %s" % [parsed_line[0], str(move_ball_no - 1), line.substr(parsed_line[2].get_start())]
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-		
-# 	# paintballz
-# 	section_find = search('[Paint Ballz]', 0, 0, 0)
-# 	start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		# ignore comments for now
-# 		if line.begins_with("[") or line.empty():
-# 			break
-		
-# 		var split = line.split(" ", false, 1)
-# 		var base_ball_no = int(split[0])
-# 		if base_ball_no == ball_no:
-# 			select(start_of_section + i, 0, start_of_section + i + 1, 0)
-# 			cut()
-# 			continue
-# 		elif base_ball_no > ball_no:
-# 			var replace_line = "%s %s" % [str(base_ball_no), split[1]]
-# 			set_line(start_of_section + i, replace_line)
-# 		i += 1
-		
-# 	save_file()
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	# need to find line number for the ball
@@ -2474,10 +2410,57 @@ func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -
 				
 	return -1
 
+func _get_ramp_color(current_color_str: String, rule):
+	# Rule must be a ramp rule with valid before/after colors
+	if not rule.is_ramp or rule.before_color.empty() or rule.after_color.empty():
+		return null
+
+	# All colors involved must be valid numbers
+	if not current_color_str.is_valid_integer() or \
+	   not rule.before_color.is_valid_integer() or \
+	   not rule.after_color.is_valid_integer():
+		return null
+
+	var current_color: int = int(current_color_str)
+	var before_color: int = int(rule.before_color)
+	var after_color: int = int(rule.after_color)
+
+	# Ramp ranges are 10-199
+	if current_color < 10 or current_color > 199:
+		return null
+	if before_color < 10 or before_color > 199:
+		return null
+
+	# Find the base of the 10-unit ramp range (e.g., 62 -> 60)
+	var current_base: int = int(current_color / 10) * 10
+	var before_base: int = int(before_color / 10) * 10
+
+	# Check if the current color is in the same ramp range as the rule's "before" color
+	if current_base != before_base:
+		return null # Not in the same ramp, this rule doesn't apply
+
+	if after_color >= 10 and after_color <= 199:
+		# "After" color is *also* in a ramp range (10-199)
+		# Map to the corresponding color in the "after" ramp
+		# e.g., Rule: 62 -> 55. Current: 60.
+		# offset = 60 - 60 = 0
+		# after_base = 50
+		# new_color = 50 + 0 = 50
+		var offset: int = current_color - current_base
+		var after_base: int = int(after_color / 10) * 10
+		var new_color: int = after_base + offset
+		return str(new_color)
+	else:
+		# "After" color is *outside* ramp ranges (e.g., 244)
+		# Map all colors in the "before" range to this single "after" color
+		# e.g., Rule: 62 -> 244. Current: 60.
+		# new_color = 244
+		return str(after_color)
+
 func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 	save_backup()
 	
-	var recolor_info = all_recolor_info.recolors
+	var recolor_rules = all_recolor_info.recolors
 	
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
@@ -2515,19 +2498,50 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 2:
+				if parsed_line.size() < 8:
 					i += 1
 					continue
 				
 				var color = parsed_line[0]
 				var outline_color = parsed_line[1]
+				var texture = parsed_line[7]
 				var updates = {}
-				
-				if all_recolor_info.balls_on and recolor_info.has(color):
-					updates[0] = recolor_info[color]
-				
-				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
-					updates[1] = recolor_info[outline_color]
+
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.balls_on or not texture_match:
+						continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[0] = new_color
+						if not rule.after_texture.empty():
+							updates[7] = rule.after_texture
+						break
+
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.ball_outlines_on or not texture_match:
+						continue
+
+					var new_outline_color = null
+					if rule.is_ramp:
+						new_outline_color = _get_ramp_color(outline_color, rule)
+					else:
+						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+						if outline_color_match and not rule.after_color.empty():
+							new_outline_color = rule.after_color
+					
+					if new_outline_color != null:
+						updates[1] = new_outline_color
+						break
 				
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2556,19 +2570,50 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+				if parsed_line.size() < 14 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
 					continue
 				
 				var color = parsed_line[4]
 				var outline_color = parsed_line[5]
+				var texture = parsed_line[13]
 				var updates = {}
-				
-				if all_recolor_info.balls_on and recolor_info.has(color):
-					updates[4] = recolor_info[color]
-				
-				if all_recolor_info.ball_outlines_on and recolor_info.has(outline_color):
-					updates[5] = recolor_info[outline_color]
+
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.balls_on or not texture_match:
+						continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[4] = new_color
+						if not rule.after_texture.empty():
+							updates[13] = rule.after_texture
+						break
+
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not all_recolor_info.ball_outlines_on or not texture_match:
+						continue
+
+					var new_outline_color = null
+					if rule.is_ramp:
+						new_outline_color = _get_ramp_color(outline_color, rule)
+					else:
+						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+						if outline_color_match and not rule.after_color.empty():
+							new_outline_color = rule.after_color
+					
+					if new_outline_color != null:
+						updates[5] = new_outline_color
+						break
 
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2593,15 +2638,32 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = _split_and_clean(line, delimiter)
 				
-				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
+				if parsed_line.size() < 11 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
 					continue
 
 				var color = parsed_line[5]
+				var texture = parsed_line[10]
 				var updates = {}
+				
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not texture_match:
+						continue
 
-				if recolor_info.has(color):
-					updates[5] = recolor_info[color]
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(color, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == color
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[5] = new_color
+						if not rule.after_texture.empty():
+							updates[10] = rule.after_texture
+						break
 
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
@@ -2637,20 +2699,118 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var rColor = parsed_line[5]
 				var updates = {}
 				
-				if recolor_info.has(mainColor):
-					updates[3] = recolor_info[mainColor]
-				
-				if recolor_info.has(lColor):
-					updates[4] = recolor_info[lColor]
-				
-				if recolor_info.has(rColor):
-					updates[5] = recolor_info[rColor]
+				for rule in recolor_rules:
+					if not rule.before_texture.empty(): continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(mainColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == mainColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[3] = new_color
+						break
+
+				for rule in recolor_rules:
+					if not rule.before_texture.empty(): continue
+					
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(lColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == lColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[4] = new_color
+						break
+
+				for rule in recolor_rules:
+					if not rule.before_texture.empty(): continue
+					
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(rColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == rColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[5] = new_color
+						break
 				
 				if not updates.empty():
 					var final_line = _update_fields(parsed_line, updates, delimiter)
 					set_line(current_line_num, final_line)
 
 				i += 1
+
+	var section_find = search('[256 Eyelid Color]', 0, 0, 0)
+	if section_find:
+		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+		var i = 0
+		while true:
+			var current_line_num = start_of_section + i
+			if current_line_num >= get_line_count(): break
+			
+			var line = get_line(current_line_num)
+			if line.begins_with("["): break
+			
+			if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+				i += 1
+				continue
+
+			var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+			var parsed_line = _split_and_clean(line, delimiter)
+			
+			if parsed_line.size() < 2:
+				i += 1
+				continue
+			
+			var l_color = parsed_line[0]
+			var r_color = parsed_line[1]
+			var updates = {}
+			
+			for rule in recolor_rules:
+				if not rule.before_texture.empty(): continue
+
+				var new_color = null
+				if rule.is_ramp:
+					new_color = _get_ramp_color(l_color, rule)
+				else:
+					var color_match = rule.before_color.empty() or rule.before_color == l_color
+					if color_match and not rule.after_color.empty():
+						new_color = rule.after_color
+				
+				if new_color != null:
+					updates[0] = new_color
+					break
+
+			for rule in recolor_rules:
+				if not rule.before_texture.empty(): continue
+				
+				var new_color = null
+				if rule.is_ramp:
+					new_color = _get_ramp_color(r_color, rule)
+				else:
+					var color_match = rule.before_color.empty() or rule.before_color == r_color
+					if color_match and not rule.after_color.empty():
+						new_color = rule.after_color
+				
+				if new_color != null:
+					updates[1] = new_color
+					break
+			
+			if not updates.empty():
+				var final_line = _update_fields(parsed_line, updates, delimiter)
+				set_line(current_line_num, final_line)
+
+			i += 1
 				
 	save_file()
 
@@ -2872,24 +3032,8 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 
-	var delim = " "
-	for i in range(end_line - 1, start_line - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with(";"):
-			continue
-		if line.find("\t") != -1:
-			delim = "\t"
-		elif line.find(", ") != -1:
-			delim = ", "
-		elif line.find(",\t") != -1:
-			delim = ",\t"
-		elif line.find(",") != -1:
-			delim = ","
-		else:
-			delim = " "
-		break
-
-	var sep = delim
+	if end_line == -1:
+		end_line = get_line_count()
 
 	if is_addball:
 		var addball_index = ball_no - max_base_ball_no
@@ -2899,16 +3043,14 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 			if raw == "" or raw.begins_with(";"):
 				continue
 			if count == addball_index:
-				var parts = raw.split(delim, false)
-				for j in range(parts.size()):
-					parts[j] = parts[j].strip_edges()
+				var parts = _split_and_clean(raw)
 				if parts.size() > size_field_index:
 					var old_size = parts[size_field_index].to_int()
 					var new_size = size_dif
 					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
 					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
 					parts[size_field_index] = str(new_size)
-					var new_line = parts.join(sep)
+					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
 					print("[LNZ EDIT] Updated line: %s" % new_line)
 					save_file()
@@ -2924,16 +3066,14 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
 			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
 			if count == ball_no:
-				var parts = raw.split(delim, false)
-				for j in range(parts.size()):
-					parts[j] = parts[j].strip_edges()
+				var parts = _split_and_clean(raw)
 				if parts.size() > size_field_index:
 					var old_size = parts[size_field_index].to_int()
 					var new_size = size_dif
 					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
 					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
 					parts[size_field_index] = str(new_size)
-					var new_line = parts.join(sep)
+					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
 					print("[LNZ EDIT] Updated line: %s" % new_line)
 					save_file()
@@ -2957,64 +3097,54 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 		return
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-
-	var delim = " "
-	for i in range(end_line - 1, start_line - 1, -1):
-		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with(";"):
-			continue
-		if line.find("\t") != -1:
-			delim = "\t"
-		elif line.find(", ") != -1:
-			delim = ", "
-		elif line.find(",") != -1:
-			delim = ","
-		else:
-			delim = " "
-		break
-
-	var sep = delim
-
+	if end_line == -1:
+		end_line = get_line_count()
 
 	if is_addball:
-		var idx = ball_no - KeyBallsData.max_base_ball_num
-		var count = 0
-		for i in range(start_line, end_line):
-			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
-			if count == idx:
-				var parts = raw.split(delim, false)
-				for j in range(parts.size()):
-					parts[j] = parts[j].strip_edges()
-				if parts.size() >= 4:
-					parts[1] = str(parts[1].to_int() + new_pos.x)
-					parts[2] = str(parts[2].to_int() + new_pos.y)
-					parts[3] = str(parts[3].to_int() + new_pos.z)
-					var new_line = parts.join(sep)
-					set_line(i, new_line)
-					print("[LNZ EDIT] Updating [Add Ball] line %d: %s" % [i, new_line])
-				break
-			count += 1
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		var moved_ball_node = pet_node.ball_map.get(ball_no)
+		if moved_ball_node:
+			var base_ball_no = moved_ball_node.base_ball_no
+			var base_ball_node = pet_node.ball_map.get(base_ball_no)
+			if base_ball_node:
+				var new_relative_pos = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
+				new_relative_pos /= (pet_node.pixel_world_size * (pet_node.lnz.scales.x / 255.0))
+				new_relative_pos.y *= -1.0
+
+				var idx = ball_no - KeyBallsData.max_base_ball_num
+				var count = 0
+				for i in range(start_line, end_line):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"):
+						continue
+					if count == idx:
+						var parts = _split_and_clean(raw)
+						if parts.size() >= 4:
+							parts[1] = str(round(new_relative_pos.x))
+							parts[2] = str(round(new_relative_pos.y))
+							parts[3] = str(round(new_relative_pos.z))
+							var new_line = _join_array(parts, " ")
+							set_line(i, new_line)
+						break
+					count += 1
 	else:
 		var updated = false
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"):
 				continue
-			var parts = raw.split(delim, false)
-			for j in range(parts.size()):
-				parts[j] = parts[j].strip_edges()
+			var parts = _split_and_clean(raw)
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
 				parts[1] = str(parts[1].to_int() + new_pos.x)
 				parts[2] = str(parts[2].to_int() + new_pos.y)
 				parts[3] = str(parts[3].to_int() + new_pos.z)
-				var new_line = parts.join(sep)
+				var new_line = _join_array(parts, " ")
 				set_line(i, new_line)
 				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
 				updated = true
 				break
 		if not updated:
+			var sep = " "
 			var line_txt = "%d%s%d%s%d%s%d" % [
 				ball_no, sep,
 				new_pos.x, sep,
@@ -3027,3 +3157,325 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
+
+func _escape_regex(pattern_str: String) -> String:
+	var special_chars = ".+*?()[]{}|^$\\/"
+	var escaped_str = ""
+	for this_char in pattern_str:
+		if special_chars.find(this_char) != -1:
+			escaped_str += "\\"
+		escaped_str += this_char
+	return escaped_str
+
+func _pos_to_offset(line: int, col: int) -> int:
+	var offset = 0
+	for i in range(line):
+		offset += get_line(i).length() + 1 # +1 for newline character
+	offset += col
+	return offset
+
+func _offset_to_pos(offset: int) -> Vector2:
+	var current_offset = 0
+	for line_num in range(get_line_count()):
+		var line_len = get_line(line_num).length() + 1 # +1 for newline
+		if current_offset + line_len > offset:
+			var col = offset - current_offset
+			return Vector2(col, line_num) # x=col, y=line
+		current_offset += line_len
+	# If offset is at the very end of the file
+	var last_line = get_line_count() - 1
+	if last_line < 0: return Vector2(0,0)
+	var col_on_last_line = offset - current_offset
+	return Vector2(col_on_last_line, last_line)
+
+func _on_menu_id_pressed(id):
+	if id == 100: # Find/Replace
+		find_panel.show()
+		self.readonly = true
+	elif id == 101: # Toggle Comment
+		_toggle_comment()
+
+func _on_NotificationTimer_timeout():
+	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
+	wrap_notification_label.hide()
+
+func _on_FindCloseButton_pressed():
+	find_panel.hide()
+	self.readonly = false
+	_setup_context_menu()
+
+func _on_FindNextButton_pressed():
+	_find_text(true)
+
+func _on_FindPrevButton_pressed():
+	_find_text(false)
+
+func _on_ReplaceButton_pressed():
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	var search_text = find_line_edit.text
+	var replace_text = replace_line_edit.text
+
+	if search_text.empty():
+		return
+
+	if is_selection_active():
+		var selected_text = get_selection_text()
+
+		var pattern = _escape_regex(search_text)
+		if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+			pattern = "\\b" + pattern + "\\b"
+
+		if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+			pattern = "(?i)" + pattern
+
+		# Anchor the pattern to ensure the whole selection matches
+		var anchored_pattern = "^" + pattern + "$"
+
+		var regex = RegEx.new()
+		
+		var error = regex.compile(anchored_pattern) 
+
+		if error == OK:
+			var this_match = regex.search(selected_text, 0) 
+			if this_match != null:
+				self.readonly = false
+				insert_text_at_cursor(replace_text)
+				self.readonly = true
+
+	# After attempting a replace, find the next occurrence.
+	_find_text(true)
+
+
+func _on_ReplaceAllButton_pressed():
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
+	var search_text = find_line_edit.text
+	var replace_text = replace_line_edit.text
+
+	if search_text.empty():
+		return
+
+	var pattern = _escape_regex(search_text)
+	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+		pattern = "\\b" + pattern + "\\b"
+
+	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+		pattern = "(?i)" + pattern
+
+	var regex = RegEx.new()
+	
+	# compile() only takes 1 argument
+	var error = regex.compile(pattern) 
+	if error != OK:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+	else:
+		find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	self.readonly = false
+
+	if is_selection_active():
+		var sel_from_line = get_selection_from_line()
+		var sel_from_col = get_selection_from_column()
+		var sel_to_line = get_selection_to_line()
+		var sel_to_col = get_selection_to_column()
+
+		var selection_text = get_selection_text()
+		var matches = regex.search_all(selection_text)
+
+		# Iterate backwards to not mess up offsets
+		for i in range(matches.size() - 1, -1, -1):
+			var this_match = matches[i]
+			selection_text = selection_text.substr(0, this_match.get_start()) + replace_text + selection_text.substr(this_match.get_end())
+
+		if get_selection_text() != selection_text:
+			deselect()
+			select(sel_from_line, sel_from_col, sel_to_line, sel_to_col)
+			insert_text_at_cursor(selection_text)
+
+	else:
+		var original_text = self.text
+		var matches = regex.search_all(original_text) 
+		var new_text = original_text
+
+		# Iterate backwards
+		for i in range(matches.size() - 1, -1, -1):
+			var this_match = matches[i]
+			new_text = new_text.substr(0, this_match.get_start()) + replace_text + new_text.substr(this_match.get_end())
+
+		if original_text != new_text:
+			_set_text_preserve(new_text)
+
+	self.readonly = true
+
+
+func _find_text(forward):
+	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
+	var search_text = find_line_edit.text
+	if search_text.empty():
+		return
+
+	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
+	var notification_timer = find_panel.get_node("NotificationTimer")
+	wrap_notification_label.hide()
+	find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
+
+	var all_text = self.text
+	if all_text.empty():
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+		return
+
+	var pattern = _escape_regex(search_text)
+	if find_panel.get_node("VBoxContainer/HBoxContainer/WholeWordsCheckBox").pressed:
+		pattern = "\\b" + pattern + "\\b"
+
+	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
+		pattern = "(?i)" + pattern
+
+	var regex = RegEx.new()
+	var error = regex.compile(pattern)
+	if error != OK:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		return
+
+	var all_matches = regex.search_all(all_text)
+	if all_matches.size() == 0:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Not found
+		return
+
+	var result = null
+	var wrapped = false
+
+	if forward:
+		var start_offset
+		if is_selection_active():
+			# If selected, start search AFTER the selection
+			start_offset = _pos_to_offset(get_selection_to_line(), get_selection_to_column())
+		else:
+			# If no selection, start search AFTER the cursor
+			start_offset = _pos_to_offset(cursor_get_line(), cursor_get_column()) + 1
+			
+		var best_match = null
+		# Find the first match *at or after* our starting point
+		for this_match in all_matches:
+			if this_match.get_start() >= start_offset:
+				best_match = this_match
+				break
+		
+		result = best_match
+		if result == null: # Wrap search
+			if all_matches.size() > 0:
+				result = all_matches[0]
+				wrapped = true
+
+	else: # Backward
+		var start_offset
+		if is_selection_active():
+			# If selected, start search BEFORE the selection
+			start_offset = _pos_to_offset(get_selection_from_line(), get_selection_from_column())
+		else:
+			# If no selection, start search BEFORE the cursor
+			start_offset = _pos_to_offset(cursor_get_line(), cursor_get_column())
+
+		var best_match = null
+		# Find the last match *before* our starting point
+		for this_match in all_matches:
+			if this_match.get_start() < start_offset:
+				best_match = this_match
+			else:
+				break
+		
+		result = best_match
+		if result == null: # Wrap search
+			if all_matches.size() > 0:
+				result = all_matches[all_matches.size() - 1]
+				wrapped = true
+
+	if result != null:
+		if wrapped:
+			wrap_notification_label.show()
+			notification_timer.start()
+			
+		var start_pos = _offset_to_pos(result.get_start())
+		var end_pos = _offset_to_pos(result.get_end())
+
+		var start_col = int(start_pos.x)
+		var start_line = int(start_pos.y)
+		var end_col = int(end_pos.x)
+		var end_line = int(end_pos.y)
+
+		cursor_set_line(start_line)
+		cursor_set_column(start_col)
+		center_viewport_to_cursor()
+		select(start_line, start_col, end_line, end_col)
+	else:
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+
+func _toggle_comment():
+	# Get the selection range
+	var start_line
+	var end_line
+	
+	if is_selection_active():
+		start_line = get_selection_from_line()
+		end_line = get_selection_to_line()
+		
+		# If the selection ends at column 0 of a new line,
+		# it shouldn't include that new line.
+		if get_selection_to_column() == 0 and end_line > start_line:
+			end_line -= 1
+	else:
+		# No selection, just use the current line
+		start_line = cursor_get_line()
+		end_line = cursor_get_line()
+
+	var comment_prefix = "; "
+	var lines_to_process = []
+	var should_uncomment = true
+
+	# We only uncomment if ALL non-empty selected lines are already commented.
+	for i in range(start_line, end_line + 1):
+		var line_text = get_line(i)
+		
+		# Skip empty lines
+		if line_text.strip_edges().empty():
+			continue
+		
+		lines_to_process.append(i)
+		var stripped_line = line_text.lstrip(" \t")
+		
+		if not stripped_line.begins_with(comment_prefix):
+			should_uncomment = false
+
+	if lines_to_process.empty():
+		return # Nothing to do
+
+	if should_uncomment:
+		# --- UNCOMMENT ---
+		for i in lines_to_process:
+			var line_text = get_line(i)
+			# Find the indentation
+			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+			var indent = line_text.substr(0, indent_len)
+			var content = line_text.lstrip(" \t")
+			
+			# Remove the prefix
+			var new_line = indent + content.substr(comment_prefix.length())
+			set_line(i, new_line)
+	else:
+		# --- COMMENT ---
+		for i in lines_to_process:
+			var line_text = get_line(i)
+			# Find the indentation
+			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+			var indent = line_text.substr(0, indent_len)
+			var content = line_text.lstrip(" \t")
+			
+			# Add the prefix, preserving indentation
+			var new_line = indent + comment_prefix + content
+			set_line(i, new_line)
+
+	# Restore selection to cover the lines we just modified
+	deselect()
+	select(start_line, 0, end_line, get_line(end_line).length())
