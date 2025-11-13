@@ -526,8 +526,8 @@ func _gui_input(event):
 
 		if space_and_left or middle_drag:
 			var motion = event.relative
-			tex.rect_position += motion
-			return
+			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
+			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 		elif Input.is_mouse_button_pressed(BUTTON_LEFT):
 			var motion = event.relative
 			camera_holder.rotation.x += motion.y * 0.01
