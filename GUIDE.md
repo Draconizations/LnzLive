@@ -175,6 +175,12 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically repeats the LNZ entries five times with `;rep#` comments to improve their stability in-game.
 
+- Accessing via right-click on ballz restricts editing to that ballz.
+- Setting properties as comma-separated ranges (e.g., setting Color to 150-159,170-179) means that each paintball queued will randomly sample from those ranges (e.g., 15,155,156,15,15,171,...) as placed.
+= Checking Freeline will lock rotation view and allow you to trace paintballz from where you begin and end a left-click-and-drag operation, and placement is affected by Spacing and Jitter properties. Alternatively, holding SHIFT will temporarily activate Freeline for as long as held.
+- Checking Eraser means you can point-and-click to delete queued paintballz. Alternatively, holding CTRL will temporarily activate Eraser.
+- Holding SHIFT and using mouse scroll wheel will resize the min/max size properties.
+
 #### Project Mode
 
 In `Project Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
@@ -304,5 +310,6 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 While editing the LNZ:
 
 - Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the 3D Viewport so you can locate it.
+
 
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
