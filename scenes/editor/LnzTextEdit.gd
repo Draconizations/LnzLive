@@ -34,6 +34,7 @@ onready var camera_holder = get_tree().root.get_node(
 func _ready():
 	var menu = get_menu()
 	menu.add_item("Find/Replace", 100)
+	menu.add_item("Toggle Comment", 101)
 	menu.connect("id_pressed", self, "_on_menu_id_pressed")
 
 	wrap_enabled = false
@@ -3177,9 +3178,11 @@ func _offset_to_pos(offset: int) -> Vector2:
 	return Vector2(col_on_last_line, last_line)
 
 func _on_menu_id_pressed(id):
-	if id == 100: # Find
+	if id == 100: # Find/Replace
 		find_panel.show()
 		self.readonly = true
+	elif id == 101: # Toggle Comment
+		_toggle_comment()
 
 func _on_NotificationTimer_timeout():
 	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
@@ -3396,3 +3399,71 @@ func _find_text(forward):
 		select(start_line, start_col, end_line, end_col)
 	else:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
+
+func _toggle_comment():
+	# Get the selection range
+	var start_line
+	var end_line
+	
+	if is_selection_active():
+		start_line = get_selection_from_line()
+		end_line = get_selection_to_line()
+		
+		# If the selection ends at column 0 of a new line,
+		# it shouldn't include that new line.
+		if get_selection_to_column() == 0 and end_line > start_line:
+			end_line -= 1
+	else:
+		# No selection, just use the current line
+		start_line = cursor_get_line()
+		end_line = cursor_get_line()
+
+	var comment_prefix = "; "
+	var lines_to_process = []
+	var should_uncomment = true
+
+	# We only uncomment if ALL non-empty selected lines are already commented.
+	for i in range(start_line, end_line + 1):
+		var line_text = get_line(i)
+		
+		# Skip empty lines
+		if line_text.strip_edges().empty():
+			continue
+		
+		lines_to_process.append(i)
+		var stripped_line = line_text.lstrip(" \t")
+		
+		if not stripped_line.begins_with(comment_prefix):
+			should_uncomment = false
+
+	if lines_to_process.empty():
+		return # Nothing to do
+
+	if should_uncomment:
+		# --- UNCOMMENT ---
+		for i in lines_to_process:
+			var line_text = get_line(i)
+			# Find the indentation
+			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+			var indent = line_text.substr(0, indent_len)
+			var content = line_text.lstrip(" \t")
+			
+			# Remove the prefix
+			var new_line = indent + content.substr(comment_prefix.length())
+			set_line(i, new_line)
+	else:
+		# --- COMMENT ---
+		for i in lines_to_process:
+			var line_text = get_line(i)
+			# Find the indentation
+			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
+			var indent = line_text.substr(0, indent_len)
+			var content = line_text.lstrip(" \t")
+			
+			# Add the prefix, preserving indentation
+			var new_line = indent + comment_prefix + content
+			set_line(i, new_line)
+
+	# Restore selection to cover the lines we just modified
+	deselect()
+	select(start_line, 0, end_line, get_line(end_line).length())
