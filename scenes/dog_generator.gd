@@ -184,9 +184,18 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
 	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create, lnz_info.no_texture_rotate)
+
+	if new_create:
+		call_deferred("_finish_dependent_geometry", new_create)
+	else:
+		apply_projections()
+		generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
+		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+
+func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
-	generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
-	generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
+	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -912,14 +921,25 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		var distance = (target_pos - start_pos).length()
 		var middle_point = lerp(start.global_transform.origin, end.global_transform.origin, 0.5)
 
+		# This check handles zero-length lines (start_pos == target_pos)
 		if target_pos == middle_point:
 			visual_line.global_transform.origin = middle_point
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
 		else:
-			visual_line.look_at_from_position(middle_point, target_pos, Vector3.UP)
+			# Check if the line is vertical to avoid error with Vector3.UP
+			var look_at_direction = (target_pos - middle_point).normalized()
+			var up_vector = Vector3.UP
+			var dot = look_at_direction.dot(Vector3.UP)
+
+			if abs(dot) > 0.9999:
+				up_vector = Vector3.FORWARD
+
+			visual_line.look_at_from_position(middle_point, target_pos, up_vector)
+			
 			visual_line.rotation_degrees.x += 90
 			visual_line.scale.y = distance
+
 		if new_create:
 			visual_line.texture = start.texture
 			visual_line.species = species
