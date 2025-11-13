@@ -32,10 +32,7 @@ onready var camera_holder = get_tree().root.get_node(
 ) as Spatial
 
 func _ready():
-	var menu = get_menu()
-	menu.add_item("Find/Replace", 100)
-	menu.add_item("Toggle Comment", 101)
-	menu.connect("id_pressed", self, "_on_menu_id_pressed")
+	_setup_context_menu()
 
 	wrap_enabled = false
 	r.compile("[-.\\d]+")
@@ -60,6 +57,18 @@ func _ready():
 	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):
 		file_tree.connect("example_file_selected", self, "_on_example_file_selected")
 
+func _setup_context_menu():
+    var menu = get_menu()
+    
+    if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
+        menu.connect("id_pressed", self, "_on_menu_id_pressed")
+
+    if menu.get_item_index(100) == -1:
+        menu.add_item("Find/Replace", 100)
+    
+    if menu.get_item_index(101) == -1:
+        menu.add_item("Toggle Comment", 101)
+
 func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
 	file.open(filepath, File.READ)
@@ -83,6 +92,7 @@ func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
 		find_panel.visible = !find_panel.visible
 		self.readonly = find_panel.visible
+		_setup_context_menu()
 
 func _set_text_preserve(new_text: String):
 	var old_v = get_v_scroll()
@@ -121,6 +131,7 @@ func _on_AutowrapButton_pressed():
 func _on_FindReplaceButton_pressed():
 	find_panel.visible = !find_panel.visible
 	self.readonly = find_panel.visible
+	_setup_context_menu()
 
 func save_backup():
 	if not is_user_file:
@@ -3191,6 +3202,7 @@ func _on_NotificationTimer_timeout():
 func _on_FindCloseButton_pressed():
 	find_panel.hide()
 	self.readonly = false
+	_setup_context_menu()
 
 func _on_FindNextButton_pressed():
 	_find_text(true)
