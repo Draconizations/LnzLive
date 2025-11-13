@@ -16,3 +16,6 @@ local/
 
 # Ignore engine (too big)
 engine/*.exe
+export/index.html
+export/index.js
+export/index.pck
