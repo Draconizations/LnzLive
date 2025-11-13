@@ -1125,6 +1125,17 @@ func remove_last_pending_paintball():
 			
 		_pending_paintballs_data.pop_back()
 
+func remove_specific_pending_paintball(paintball_node):
+	var index = _pending_paintball_nodes.find(paintball_node)
+	if index != -1:
+		_pending_paintball_nodes.remove(index)
+		_pending_paintballs_data.remove(index)
+		if is_instance_valid(paintball_node):
+			paintball_node.queue_free()
+
+func get_pending_paintball_nodes():
+	return _pending_paintball_nodes
+
 func clear_pending_paintballs():
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):

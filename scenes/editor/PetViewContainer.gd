@@ -48,6 +48,10 @@ var paintball_target_ball = null
 var ray_intersect_paintball = null
 var close_paintball_on_apply = false
 
+var freeline_active = false
+var freeline_path = []
+var last_freeline_point = Vector2()
+
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
@@ -151,18 +155,22 @@ func _process(_delta):
 		else:
 			text = "Line Mode: Left-click a 1st ball to start a line.\n"
 	elif paintball_mode:
-		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed
+		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
+		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
+		
 		if delete_mode:
-			text = "Paintball Mode: Left-click to delete last paintball"
+			text = "Paintball Mode: Left-click to erase nearest paintball."
+			# cursor is handled by _on_delete_mode_toggled
+		elif temp_eraser_active:
+			text = "Paintball Mode: Left-click to erase nearest paintball."
+			Input.set_custom_mouse_cursor(eraser)
 		else:
-			text = "Paintball Mode: Left-click to add next paintball"
-		
-		if Input.is_key_pressed(KEY_SHIFT):
-			text += "\nSHIFT+wheel to change paintball diameter"
-		
-		#if Input.is_key_pressed(KEY_CONTROL):
-		#	text += "\nCTRL+left-click to delete last paintball"
-		#	Input.set_custom_mouse_cursor(eraser)
+			var freeline_on = paintball_settings_instance.find_node("FreelineCheckBox").pressed or Input.is_key_pressed(KEY_SHIFT)
+			if freeline_on:
+				text = "Paintball Mode (Freeline): Left-click and drag to draw."
+			else:
+				text = "Paintball Mode: Left-click to add next paintball"
+			Input.set_custom_mouse_cursor(smallbrush) # Default for paintball mode
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
@@ -314,18 +322,69 @@ func _gui_input(event):
 		return
 
 	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-		var diameter_spinbox = paintball_settings_instance.find_node("Diameter")
+		var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
+		var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 		if event.button_index == BUTTON_WHEEL_UP:
-			diameter_spinbox.value -= 1
+			diameter_min_spinbox.value += 1
+			diameter_max_spinbox.value += 1
 		else:
-			diameter_spinbox.value += 1
+			diameter_min_spinbox.value -= 1
+			diameter_max_spinbox.value -= 1
+		return
+
+	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		var props = paintball_settings_instance.get_properties()
+		var freeline_mode = props.freeline or (event.shift and not (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN))
+		if freeline_mode:
+			if event.pressed:
+				freeline_active = true
+				freeline_path.clear()
+				last_freeline_point = event.position
+			else:
+				freeline_active = false
+				_finalize_freeline()
+			return
+
+	if paintball_mode and event is InputEventMouseMotion and freeline_active:
+		var props = paintball_settings_instance.get_properties()
+		var current_pos = event.position
+		if current_pos.distance_to(last_freeline_point) > props.spacing:
+			freeline_path.append(current_pos)
+			last_freeline_point = current_pos
 		return
 
 	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var delete_mode = paintball_settings_instance.find_node("DeleteModeCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
+		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
 			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-			pet_node.remove_last_pending_paintball()
+			var pending_paintballs = pet_node.get_pending_paintball_nodes()
+			if pending_paintballs.empty():
+				return
+
+			var closest_paintball = null
+			var min_dist_sq = INF
+			var click_pos = event.global_position # Use global mouse position
+
+			var viewport_global_offset = tex.get_global_transform().origin
+
+			for pb_node in pending_paintballs:
+				if not is_instance_valid(pb_node):
+					continue
+				
+				# Project world pos to 2D screen pos (local to viewport)
+				var projected_pos_local = camera.unproject_position(pb_node.global_transform.origin)
+				
+				# Apply ViewportContainer scale and global offset to get ball pos in raw global screen coords
+				var paintball_global_pos = viewport_global_offset + (projected_pos_local * tex.rect_scale)
+
+				var dist_sq = click_pos.distance_squared_to(paintball_global_pos)
+				
+				if dist_sq < min_dist_sq:
+					min_dist_sq = dist_sq
+					closest_paintball = pb_node
+			
+			if closest_paintball and min_dist_sq < 25*25: # 25px threshold
+				pet_node.remove_specific_pending_paintball(closest_paintball)
 			return
 
 		var target_ball
@@ -342,39 +401,7 @@ func _gui_input(event):
 
 		if target_ball:
 			var screen_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-			var from = camera.project_ray_origin(screen_pos)
-			var to = from + camera.project_ray_normal(screen_pos) * 10000
-			var space_state = camera.get_world().direct_space_state
-			var result = space_state.intersect_ray(from, to, [self], 1, true, true)
-
-			if result and result.collider and result.collider.get_parent() == target_ball:
-				var intersection_point = result.position
-
-				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-				var props = paintball_settings_instance.get_properties()
-
-				var local_relative_pos = target_ball.to_local(intersection_point)
-				var world_relative_pos = intersection_point - target_ball.global_transform.origin
-				var px_scale = pet_node.pixel_world_size
-				var lnz_scale = pet_node.lnz.scales.x / 255.0
-				var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
-				relative_pos_lnz.y *= -1
-
-				var paintball_info = {
-					"base_ball_no": target_ball.ball_no,
-					"relative_pos_local": local_relative_pos,
-					"relative_pos_lnz": relative_pos_lnz,
-					"diameter": props.diameter,
-					"color": props.color,
-					"outline_color": props.outline_color,
-					"outline_type": props.outline_type,
-					"fuzz": props.fuzz,
-					"texture": props.texture,
-					"group": props.group,
-					"anchored": props.anchored,
-				}
-
-				pet_node.add_pending_paintball(paintball_info)
+			_create_paintball_at_position(screen_pos, target_ball)
 		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
@@ -1122,3 +1149,62 @@ func _set_camera_view(view_name: String):
 
 func close_paintball_mode():
 	paintball_check_box.pressed = false
+
+func _finalize_freeline():
+	var props = paintball_settings_instance.get_properties()
+	var jitter = props.jitter
+
+	for point in freeline_path:
+		var jittered_point = point + Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
+		var screen_pos = (jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+		var target_ball = get_ball_under_mouse(screen_pos)
+		if target_ball:
+			_create_paintball_at_position(screen_pos, target_ball)
+
+func _create_paintball_at_position(screen_pos, target_ball):
+	var from = camera.project_ray_origin(screen_pos)
+	var to = from + camera.project_ray_normal(screen_pos) * 10000
+	var space_state = camera.get_world().direct_space_state
+	var result = space_state.intersect_ray(from, to, [self], 1, true, true)
+
+	if result and result.collider and result.collider.get_parent() == target_ball:
+		var intersection_point = result.position
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		var props = paintball_settings_instance.get_properties()
+
+		var color_list = paintball_settings_instance._parse_number_list(props.color)
+		if color_list.empty():
+			push_warning("Invalid color list format.")
+			return
+
+		var outline_color_list = paintball_settings_instance._parse_number_list(props.outline_color)
+		if outline_color_list.empty():
+			push_warning("Invalid outline color list format.")
+			return
+		
+		var texture_list = paintball_settings_instance._parse_number_list(props.texture, true)
+		if texture_list.empty():
+			texture_list.append(-1)
+
+		var local_relative_pos = target_ball.to_local(intersection_point)
+		var world_relative_pos = intersection_point - target_ball.global_transform.origin
+		var px_scale = pet_node.pixel_world_size
+		var lnz_scale = pet_node.lnz.scales.x / 255.0
+		var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
+		relative_pos_lnz.y *= -1
+
+		var paintball_info = {
+			"base_ball_no": target_ball.ball_no,
+			"relative_pos_local": local_relative_pos,
+			"relative_pos_lnz": relative_pos_lnz,
+			"diameter": rand_range(props.diameter_min, props.diameter_max),
+			"color": color_list[randi() % color_list.size()],
+			"outline_color": outline_color_list[randi() % outline_color_list.size()],
+			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),
+			"fuzz": floor(rand_range(props.fuzz_min, props.fuzz_max)),
+			"texture": texture_list[randi() % texture_list.size()],
+			"group": props.group,
+			"anchored": props.anchored,
+		}
+
+		pet_node.add_pending_paintball(paintball_info)

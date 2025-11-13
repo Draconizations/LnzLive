@@ -50,18 +50,27 @@ margin_bottom = 49.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 95.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Diameter"
 
-[node name="Diameter" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer"]
-margin_left = 148.0
+[node name="DiameterMin" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 99.0
+margin_right = 193.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = 1.0
+value = 10.0
+
+[node name="DiameterMax" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-value = 50.0
+min_value = 1.0
+value = 20.0
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 53.0
@@ -82,7 +91,7 @@ margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "35"
-placeholder_text = "color"
+placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 81.0
@@ -103,7 +112,7 @@ margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "15"
-placeholder_text = "outcol"
+placeholder_text = "e.g. 1,2,5-10"
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 109.0
@@ -112,18 +121,28 @@ margin_bottom = 133.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer4"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 95.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline Type"
 
-[node name="OutlineType" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer4"]
-margin_left = 148.0
+[node name="OutlineTypeMin" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer4"]
+margin_left = 99.0
+margin_right = 193.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -2.0
+max_value = 10.0
+value = -1.0
+
+[node name="OutlineTypeMax" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer4"]
+margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -2.0
+max_value = 10.0
 value = -1.0
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="Panel/VBoxContainer"]
@@ -133,17 +152,25 @@ margin_bottom = 161.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer5"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 95.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Fuzz"
 
-[node name="Fuzz" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer5"]
-margin_left = 148.0
+[node name="FuzzMin" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer5"]
+margin_left = 99.0
+margin_right = 193.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+max_value = 100.0
+
+[node name="FuzzMax" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer5"]
+margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+max_value = 100.0
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 165.0
@@ -158,12 +185,13 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Texture"
 
-[node name="Texture" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer6"]
+[node name="Texture" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer6"]
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-min_value = -1.0
+text = "0"
+placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 193.0
@@ -227,18 +255,71 @@ text = "Hovered Ball"
 items = [ "Hovered Ball", null, false, 0, null, "Selected Ball", null, false, 1, null ]
 selected = 0
 
-[node name="HBoxContainer10" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="FreelineContainer" type="VBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 280.0
 margin_right = 292.0
-margin_bottom = 309.0
+margin_bottom = 336.0
+
+[node name="FreelineCheckBox" type="CheckBox" parent="Panel/VBoxContainer/FreelineContainer"]
+margin_right = 292.0
+margin_bottom = 24.0
+custom_fonts/font = SubResource( 1 )
+text = "Freeline"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer/FreelineContainer"]
+margin_top = 28.0
+margin_right = 292.0
+margin_bottom = 52.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/FreelineContainer/HBoxContainer"]
+margin_top = 1.0
+margin_right = 144.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Spacing"
+
+[node name="Spacing" type="SpinBox" parent="Panel/VBoxContainer/FreelineContainer/HBoxContainer"]
+margin_left = 148.0
+margin_right = 292.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 100.0
+value = 10.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/FreelineContainer"]
+margin_top = 56.0
+margin_right = 292.0
+margin_bottom = 80.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/FreelineContainer/HBoxContainer2"]
+margin_top = 1.0
+margin_right = 144.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Jitter"
+
+[node name="Jitter" type="SpinBox" parent="Panel/VBoxContainer/FreelineContainer/HBoxContainer2"]
+margin_left = 148.0
+margin_right = 292.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+max_value = 100.0
+
+[node name="HBoxContainer10" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 368.0
+margin_right = 292.0
+margin_bottom = 397.0
 alignment = 1
 
-[node name="DeleteModeCheckBox" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer10"]
-margin_left = 6.0
+[node name="EraserCheckBox" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer10"]
+margin_left = 37.0
 margin_right = 133.0
 margin_bottom = 29.0
 custom_fonts/font = SubResource( 1 )
-text = "Delete Mode"
+text = "Eraser"
 
 [node name="ApplyButton" type="Button" parent="Panel/VBoxContainer/HBoxContainer10"]
 margin_left = 137.0
