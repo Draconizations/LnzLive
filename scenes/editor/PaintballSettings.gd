@@ -51,6 +51,7 @@ func get_properties():
 	properties["freeline"] = find_node("FreelineCheckBox").pressed
 	properties["spacing"] = find_node("Spacing").value
 	properties["jitter"] = find_node("Jitter").value
+	properties["ordered"] = find_node("Ordered").pressed
 	return properties
 
 func _parse_number_list(s, allow_negatives=false):

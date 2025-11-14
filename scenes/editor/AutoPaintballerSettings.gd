@@ -41,11 +41,17 @@ signal clear_auto_paintballz
 
 onready var params_container = find_node("ParamsContainer")
 
+var _ordered_color_index = 0
+var _ordered_outline_color_index = 0
+var _ordered_texture_index = 0
+var _ordered_ball_index = 0
+
 func _ready():
 	find_node("RandomizeButton").connect("pressed", self, "_on_RandomizeButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
+	find_node("UseSeed").connect("toggled", self, "_on_UseSeed_toggled")
 
 	find_node("FractalPreset").connect("item_selected", self, "_on_FractalPreset_item_selected")
 	find_node("FractalAxiom").connect("text_changed", self, "_on_FractalAxiom_text_changed")
@@ -57,6 +63,11 @@ func _ready():
 	_on_Distribution_item_selected(0)
 
 	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
+
+
+func _on_UseSeed_toggled(button_pressed):
+	var seed_edit = find_node("Seed")
+	seed_edit.editable = button_pressed
 
 func _on_RandomSystemButton_pressed():
 	var axiom_edit = find_node("FractalAxiom")
@@ -218,7 +229,7 @@ func _on_RandomizeButton_pressed():
 	var texture_list_str = properties.texture_list
 	var texture_list = _parse_number_list(texture_list_str, true) # Allow negatives
 	if texture_list.empty() and not texture_list_str.strip_edges().empty():
-		push_warning("Could not parse Texture List. Using default.")
+		push_warning("Could not parse [Texture List] so using default.")
 		texture_list.append(-1)
 	elif texture_list.empty():
 		texture_list.append(-1)
@@ -226,7 +237,22 @@ func _on_RandomizeButton_pressed():
 	var paintballz = []
 	var distribution_mode = properties.distribution
 
-	var seed_hash = OS.get_unix_time()
+	var seed_edit = find_node("Seed")
+	if properties.use_seed:
+		if properties.seed.is_valid_integer():
+			seed(int(properties.seed))
+		else:
+			push_warning("Invalid seed value. Using a random seed.")
+			seed(OS.get_ticks_usec())
+	else:
+		var new_seed = OS.get_ticks_usec()
+		seed(new_seed)
+		seed_edit.text = str(new_seed)
+
+	_ordered_color_index = 0
+	_ordered_outline_color_index = 0
+	_ordered_texture_index = 0
+	_ordered_ball_index = 0
 
 	match distribution_mode:
 		Distribution.FRACTAL: # 16
@@ -239,7 +265,6 @@ func _on_RandomizeButton_pressed():
 			paintballz = _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
 		Distribution.RANDOM_WALK: # 7
 			for ball_index in affected_ballz:
-				rand_seed(seed_hash + ball_index)
 
 				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
 				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
@@ -267,7 +292,6 @@ func _on_RandomizeButton_pressed():
 		Distribution.CLUSTERED: # 8
 			for ball_index in affected_ballz:
 				var cluster_center = Vector3()
-				rand_seed(seed_hash + ball_index)
 				
 				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
 				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
@@ -300,8 +324,16 @@ func _on_RandomizeButton_pressed():
 				return
 
 			for i in range(num_stars):
-				var star_color = color_list[randi() % color_list.size()]
-				var star_outline_color = outline_color_list[randi() % outline_color_list.size()]
+				var star_color
+				var star_outline_color
+				if properties.ordered:
+					star_color = color_list[_ordered_color_index % color_list.size()]
+					_ordered_color_index += 1
+					star_outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+					_ordered_outline_color_index += 1
+				else:
+					star_color = color_list[randi() % color_list.size()]
+					star_outline_color = outline_color_list[randi() % outline_color_list.size()]
 				
 				var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
 				
@@ -656,18 +688,37 @@ func _on_RandomizeButton_pressed():
 
 	emit_signal("randomize_auto_paintballz", paintballz)
 
-# --- Helper function to create a paintball (DRY) ---
 func _create_paintball(pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list):
+	var ball_no
+	var color
+	var outline_color
+	var texture
+
+	if properties.ordered:
+		ball_no = affected_ballz[_ordered_ball_index % affected_ballz.size()]
+		_ordered_ball_index += 1
+		color = color_list[_ordered_color_index % color_list.size()]
+		_ordered_color_index += 1
+		outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+		_ordered_outline_color_index += 1
+		texture = texture_list[_ordered_texture_index % texture_list.size()]
+		_ordered_texture_index += 1
+	else:
+		ball_no = affected_ballz[randi() % affected_ballz.size()]
+		color = color_list[randi() % color_list.size()]
+		outline_color = outline_color_list[randi() % outline_color_list.size()]
+		texture = texture_list[randi() % texture_list.size()]
+
 	return PaintBallData.new(
-		affected_ballz[randi() % affected_ballz.size()],
+		ball_no,
 		size,
 		pos,
-		color_list[randi() % color_list.size()],
-		outline_color_list[randi() % outline_color_list.size()],
+		color,
+		outline_color,
 		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
 		floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
 		0, # z_add
-		texture_list[randi() % texture_list.size()],
+		texture,
 		1 if properties.anchored else 0,
 		properties.group
 	)
@@ -1043,4 +1094,7 @@ func get_properties():
 	properties["texture_list"] = find_node("TextureList").text
 	properties["group"] = find_node("Group").value
 	properties["anchored"] = find_node("Anchored").pressed
+	properties["ordered"] = find_node("Ordered").pressed
+	properties["use_seed"] = find_node("UseSeed").pressed
+	properties["seed"] = find_node("Seed").text
 	return properties

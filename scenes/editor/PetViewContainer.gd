@@ -52,6 +52,10 @@ var freeline_active = false
 var freeline_path = []
 var last_freeline_point = Vector2()
 
+var _ordered_color_index = 0
+var _ordered_outline_color_index = 0
+var _ordered_texture_index = 0
+
 onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
@@ -932,6 +936,9 @@ func _on_paintball_mode_toggled(is_on):
 		paintball_target_ball = null
 		close_paintball_on_apply = false
 	else:
+		_ordered_color_index = 0
+		_ordered_outline_color_index = 0
+		_ordered_texture_index = 0
 		paintball_settings_instance.find_node("Target").selected = 0
 		if linez_mode:
 			linez_mode = false
@@ -1154,12 +1161,23 @@ func _finalize_freeline():
 	var props = paintball_settings_instance.get_properties()
 	var jitter = props.jitter
 
+	# Determine if there is a single target for the entire stroke
+	var stroke_target_ball = null
+	if paintball_target_ball and is_instance_valid(paintball_target_ball):
+		stroke_target_ball = paintball_target_ball
+	elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
+		stroke_target_ball = active_selected_ball
+
 	for point in freeline_path:
 		var jittered_point = point + Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
 		var screen_pos = (jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-		var target_ball = get_ball_under_mouse(screen_pos)
-		if target_ball:
-			_create_paintball_at_position(screen_pos, target_ball)
+
+		var point_target_ball = stroke_target_ball
+		if not point_target_ball: # If no stroke-wide target, use hover mode
+			point_target_ball = get_ball_under_mouse(screen_pos)
+
+		if point_target_ball:
+			_create_paintball_at_position(screen_pos, point_target_ball)
 
 func _create_paintball_at_position(screen_pos, target_ball):
 	var from = camera.project_ray_origin(screen_pos)
@@ -1193,16 +1211,31 @@ func _create_paintball_at_position(screen_pos, target_ball):
 		var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
 		relative_pos_lnz.y *= -1
 
+		var color
+		var outline_color
+		var texture
+		if props.ordered:
+			color = color_list[_ordered_color_index % color_list.size()]
+			_ordered_color_index += 1
+			outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+			_ordered_outline_color_index += 1
+			texture = texture_list[_ordered_texture_index % texture_list.size()]
+			_ordered_texture_index += 1
+		else:
+			color = color_list[randi() % color_list.size()]
+			outline_color = outline_color_list[randi() % outline_color_list.size()]
+			texture = texture_list[randi() % texture_list.size()]
+
 		var paintball_info = {
 			"base_ball_no": target_ball.ball_no,
 			"relative_pos_local": local_relative_pos,
 			"relative_pos_lnz": relative_pos_lnz,
 			"diameter": rand_range(props.diameter_min, props.diameter_max),
-			"color": color_list[randi() % color_list.size()],
-			"outline_color": outline_color_list[randi() % outline_color_list.size()],
+			"color": color,
+			"outline_color": outline_color,
 			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),
 			"fuzz": floor(rand_range(props.fuzz_min, props.fuzz_max)),
-			"texture": texture_list[randi() % texture_list.size()],
+			"texture": texture,
 			"group": props.group,
 			"anchored": props.anchored,
 		}

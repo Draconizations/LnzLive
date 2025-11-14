@@ -63,10 +63,38 @@ margin_bottom = 29.0
 custom_fonts/font = SubResource( 1 )
 text = "Clear"
 
-[node name="AutoPaintballerWarning" type="RichTextLabel" parent="Panel/VBoxContainer"]
+[node name="HBoxContainerOptions" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 58.0
 margin_right = 592.0
-margin_bottom = 91.0
+margin_bottom = 82.0
+
+[node name="Ordered" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+margin_right = 195.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Ordered"
+
+[node name="UseSeed" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+margin_left = 199.0
+margin_right = 394.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Use Seed"
+
+[node name="Seed" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+margin_left = 398.0
+margin_right = 592.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+editable = false
+placeholder_text = "Seed will appear here"
+
+[node name="AutoPaintballerWarning" type="RichTextLabel" parent="Panel/VBoxContainer"]
+margin_top = 86.0
+margin_right = 592.0
+margin_bottom = 119.0
 custom_fonts/normal_font = SubResource( 1 )
 bbcode_enabled = true
 text = "Warning: experimental tool! Depending on number of spots and distribution modes, randomize could take a long time to preview."
