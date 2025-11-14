@@ -11,7 +11,7 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 You can load LNZ data in several ways:
 
 *   **Examples:** Double-click a preset LNZ file under `Examples` in the file tree (left-hand panel). These are useful for getting started and experimenting with the editor's features.
-*   **Copy-and-Paste:** Paste LNZ data copied from a pet/baby file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the Text Editor (right-hand panel).
+*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
 *   **Import from File:** Click `File > Import LNZ / BMP / PNG` to load a `.lnz` text file from your computer.
 
 To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
@@ -40,7 +40,7 @@ Right-click on a file in `Local Storage` for more options:
 
 ### Viewport (Center Panel)
 
-The 3D Viewport displays the LNZ model.
+The 3D viewport displays the LNZ model.
 
 *   **Rotate:** Click and hold the left mouse button to rotate the model.
 *   **Zoom:** Use the mouse wheel to zoom in and out.
@@ -49,7 +49,7 @@ The 3D Viewport displays the LNZ model.
 
 ### Text Editor (Right Panel)
 
-The Text Editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
+The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
 
 
 ## Help! It crashes when I do X!
@@ -60,9 +60,9 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 
 ## Basic Viewport Navigation
 
-- Click and hold the left mouse button in the vietport (center panel) to rotate the model.
+- Click and hold the left mouse button in the vietport (center panel) to rotate the pet.
 - Use the mouse wheel to zoom in and out.
-- Press down on mouse wheel or hold space and drag to move model around viewport.
+- Press down on mouse wheel or hold space and drag to move pet around viewport.
 - Tap these numbers to perform a quick jump to various camera views:
     - 1: Front View
 	- 2: Top View
@@ -105,16 +105,16 @@ These settings are used by most distribution modes.
 
 This dropdown determines the algorithm used to place paintballs.
 
-- Uniform: Places paintballs randomly.
-- Spiral: Arranges paintballs in a spiral pattern.
+- Uniform: Places paintballs randomly across the entire surface.
+- Spiral: Arranges paintballs in a spiral pattern around the pet.
 - Star: Creates starburst patterns with configurable points and ray length.
 - Bands: Creates bands of spots. 'Bands' controls the number of bands. Use 'Direction' to choose horizontal or vertical alignment.
 - Noise: Places spots organically based on simplex noise.
 - Grid/Checkerboard: Arranges paintballs in a grid or checkerboard pattern.
 - Random Walk: Each new paintball is placed near the previous one, creating winding paths.
 - Clustered: Groups paintballs into tight, randomly placed clusters.
-- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle.
-- Halfie: Restricts paintballs to one half along a selected axis (X, Y, or Z) and size (positive or negative).
+- Pole/Equator-Focused: Concentrates paintballs at the top/bottom or the middle of the pet.
+- Halfie: Restricts paintballs to one half of the pet along a selected axis (X, Y, or Z) and size (positive or negative).
 - Bullseye: Creates concentric rings of different colors.
 - Leopard: Creates irregular, ringed spots. You can control the spot radius, irregularity, and how complete the rings are. Use "Paired Colors" to define ordered outer/inner colors from your color list (e.g., `155,45,185,45` will only sample 155 outer / 45 inner and 185 outer / 45 inner if "Paired Colors" is checked; otherwise, random pairs will be drawn).
 - Rainbow: Generates multi-color arcs of paintballz. You can control the angle, curvature, width, and length of the arcs.
@@ -152,9 +152,9 @@ This dropdown determines the algorithm used to place paintballs.
 
 Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
 
-#### Recolor Menu
+#### Color Swap
 
-The Recolor Menu can be used to quickly recolor ballz, paintballz, and linez. Enter the color mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the color swap.
+The "Color Swap" option opens a menu can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
 
 #### Capture Head Shot
 
@@ -164,7 +164,7 @@ Captures the current animation frame and camera angle and writes it to the `[Hea
 
 #### Select Mode
 
-In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ Text Editor.
+In `Select Mode`, hovering over ballz will report their index # and double clicking, or pressing the following keys, will jump you to relevant sections and entries in the LNZ text editor.
 
 - **Z** or **B**: go directly to the LNZ line defining ballz in `[Ball Info]` or `[Add Ball]`.
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
@@ -174,12 +174,6 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 #### Paintball Mode
 
 In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically repeats the LNZ entries five times with `;rep#` comments to improve their stability in-game.
-
-- Accessing via right-click on ballz restricts editing to that ballz.
-- Setting properties as comma-separated ranges (e.g., setting Color to 150-159,170-179) means that each paintball queued will randomly sample from those ranges (e.g., 15,155,156,15,15,171,...) as placed.
-= Checking Freeline will lock rotation view and allow you to trace paintballz from where you begin and end a left-click-and-drag operation, and placement is affected by Spacing and Jitter properties. Alternatively, holding SHIFT will temporarily activate Freeline for as long as held.
-- Checking Eraser means you can point-and-click to delete queued paintballz. Alternatively, holding CTRL will temporarily activate Eraser.
-- Holding SHIFT and using mouse scroll wheel will resize the min/max size properties.
 
 #### Project Mode
 
@@ -199,7 +193,7 @@ In `Line Mode`, you can click a series of start and end ballz to connect linez w
 
 ### Render
 
-Here, you will find toggles for what elements should be drawn in the 3D Viewport. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
 
 ### Export
 
@@ -212,7 +206,7 @@ This option offers links to several handy resources, including [Carolyn Horn's h
 
 ### Background Color Selector
 
-Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the 3D Viewport.
+Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
 
 ### Eyelid Toggle
 
@@ -228,7 +222,7 @@ Use these controls to preview and navigate animations:
 
 ## Visual editing
 
-Ballz can be moved and resized directly in the 3D Viewport.
+Ballz can be moved and resized directly in the pet view.
 
 ### Move a ball
 SHIFT + left-click and drag to move a ball in 3D space.
@@ -244,7 +238,7 @@ The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
 
 ## Tools menu
 
-Press CTRL + SPACE in the 3D Viewport to open the tools menu, or right-click on a ball in the 3D Viewport.
+Press CTRL + SPACE in the pet view to open the tools menu, or right-click on a ball in the pet view.
 
 ### Color...
 
@@ -252,7 +246,7 @@ The "Color..." option opens a menu of additional options for recoloring.
 
 For most of these, when you select what to recolor, two text entry boxes will appear at your cursor. The first is for the ball colour, the second is for outline color. Type a color number (e.g., 25) and hit Enter to apply. Leave a box blank if you don't want to affect the color/outline.
 
-The "Color Swap" option opens the Recolor Menu, which can be used to quickly recolor ballz, paintballz, and linez. Enter the color mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the color swap.
+The "Color Swap" option opens a menu can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
 
 ### Create Add Ballz (+ Linez)
 
@@ -268,9 +262,9 @@ While a ball is hovered or selected, use "Connect with Linez" line creation mode
 
 Click another ball to connect the two with a Linez entry in the LNZ.
 
-### Copy L to R
+### Copy-Mirror
 
-The Copy L to R tool will apply all changes on the left side of the model (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the model head-on, NOT the model's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
+The Copy-Mirror tool will apply all changes on the left side of the pet (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the pet head-on, NOT the pet's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
 
 ### Move Head
 
@@ -282,7 +276,7 @@ Useful for making Color Info Override sections in breeds. Not supported in all b
 
 ## Backups
 
-Destructive tools like `Color Swap` and `Copy L to R` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
+Destructive tools like `Color Swap` and `Copy-Mirror` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
 
 > Note: *Improved save states or file versioning is a **planned feature**.*
 
@@ -309,7 +303,6 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 
 While editing the LNZ:
 
-- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the 3D Viewport so you can locate it.
-
+- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
 
 - Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.

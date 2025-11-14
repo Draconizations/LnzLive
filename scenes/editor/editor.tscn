@@ -439,7 +439,7 @@ custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
-text = "Recolor Menu"
+text = "Color Swap"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1427,9 +1427,10 @@ margin_top = 131.0
 margin_right = 141.0
 margin_bottom = 515.0
 size_flags_horizontal = 3
-window_title = "Recolor"
-dialog_text = "Note that Recolor Menu always excludes eyes, tongue and nose from recoloring
+window_title = "Color Swap"
+dialog_text = "Note that Color Swap always excludes eyes, tongue and nose from recoloring
 "
+dialog_hide_on_ok = false
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1488,6 +1489,20 @@ margin_bottom = 29.0
 size_flags_horizontal = 0
 custom_fonts/font = ExtResource( 27 )
 text = "Clear"
+
+[node name="AutofillButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 539.0
+margin_right = 609.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+text = "Autofill"
+
+[node name="RandomizeButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 613.0
+margin_right = 700.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+text = "Randomize"
 
 [node name="RecolorLines" type="VBoxContainer" parent="SceneRoot/RecolorPopup/VBoxContainer"]
 margin_top = 33.0
@@ -1686,7 +1701,9 @@ __meta__ = {
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/ColorPopup/VBoxContainer/LineEdit2" to="SceneRoot/ToolsMenu" method="_on_LineEdit_gui_input"]
 [connection signal="confirmed" from="SceneRoot/RecolorPopup" to="SceneRoot/ToolsMenu" method="_on_RecolorPopup_confirmed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/AutofillButton" to="SceneRoot/ToolsMenu" method="_on_AutofillButton_pressed"]
 [connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/ClearButton" to="SceneRoot/ToolsMenu" method="_on_ClearButton_pressed"]
+[connection signal="pressed" from="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer/RandomizeButton" to="SceneRoot/ToolsMenu" method="_on_RandomizeButton_pressed"]
 [connection signal="confirmed" from="SceneRoot/WebFileUploadPopup" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_web_file_upload_popup_confirmed"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditY" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]

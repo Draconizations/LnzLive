@@ -6,7 +6,7 @@ extends PopupMenu
 ## 2. Contextual Update: Updates menu item text and disabled status before showing the menu based on the currently selected ball
 ## 3. Recoloring: Handles simple recoloring for entire pets or specific parts (e g legs tail head) by opening ColorPopup
 ## 4. Advanced Recolor: Manages the complex RecolorPopup for color swapping across all LNZ components
-## 5. Actions: Acts as a router to emit signals that perform LNZ modifications including Add/Delete Addballz Start Linez mode Copy L to R and Move Head Ballz
+## 5. Actions: Acts as a router to emit signals that perform LNZ modifications including Add/Delete Addballz Start Linez mode Copy-Mirror and Move Head Ballz
 
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
@@ -33,7 +33,7 @@ func _ready():
 	add_item("Create Addballz") # index 2
 	add_item("Delete Addballz / Omit Ballz") # index 3
 	add_item("Connect by Linez") # index 4
-	add_item("Copy L to R") # index 5
+	add_item("Copy-Mirror") # index 5
 	add_item("Paintball Mode") # index 6
 	add_item("Move Head Ballz") # index 7
 	add_item("Copy Ballz Colors to Clipboard") # index 8
@@ -141,7 +141,7 @@ func _on_ToolsMenu_index_pressed(index):
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 
-	if index == 5: # Copy L to R
+	if index == 5: # Copy-Mirror
 		emit_signal("copy_l_to_r", ball_no)
 	elif index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
@@ -206,8 +206,8 @@ func _on_ToolsMenu_about_to_show():
 		item_4_text += " (Start: #" + str(ball_no) + ")"
 	set_item_text(4, item_4_text)
 
-	# 5: Copy L to R
-	var item_5_text = "Copy L to R"
+	# 5: Copy-Mirror
+	var item_5_text = "Copy-Mirror"
 	if is_ball_selected:
 		item_5_text += " (#" + str(ball_no) + ")"
 	else:
@@ -272,6 +272,117 @@ func _on_ClearButton_pressed():
 		l.get_node("AfterTexture").text = ""
 	for cb in popup.get_node("CheckContainer").get_children():
 		cb.pressed = true
+
+func _sort_by_count(a, b):
+	return a.count > b.count
+
+func _on_AutofillButton_pressed():
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	if not is_instance_valid(lnz_text_edit):
+		print("LnzTextEdit not found")
+		return
+
+	var pair_counts = {}
+	_process_section_for_autofill(lnz_text_edit, "[Ballz Info]", 0, 7, pair_counts)
+	_process_section_for_autofill(lnz_text_edit, "[Add Ball]", 4, 13, pair_counts)
+	_process_section_for_autofill(lnz_text_edit, "[Paint Ballz]", 5, 10, pair_counts)
+
+	var sorted_pairs = []
+	for key in pair_counts:
+		sorted_pairs.append({"key": key, "count": pair_counts[key]})
+
+	sorted_pairs.sort_custom(self, "_sort_by_count")
+
+	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
+	var lines = popup.get_node("RecolorLines").get_children()
+
+	for i in range(lines.size()):
+		var line_node = lines[i]
+		if i < sorted_pairs.size():
+			var pair = sorted_pairs[i].key.split(",")
+			line_node.get_node("BeforeColor").text = pair[0]
+			line_node.get_node("BeforeTexture").text = pair[1]
+			line_node.get_node("AfterColor").text = ""
+			line_node.get_node("AfterTexture").text = ""
+		else:
+			line_node.get_node("BeforeColor").text = ""
+			line_node.get_node("BeforeTexture").text = ""
+			line_node.get_node("AfterColor").text = ""
+			line_node.get_node("AfterTexture").text = ""
+
+func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
+	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	if bounds.empty():
+		return
+
+	for i in range(bounds.start, bounds.end):
+		var line = lnz_text_edit.get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		var parts = lnz_text_edit._split_and_clean(line)
+		if parts.size() > max(color_idx, texture_idx):
+			var color = parts[color_idx]
+			var texture = parts[texture_idx]
+			var key = color + "," + texture
+			if not pair_counts.has(key):
+				pair_counts[key] = 0
+			pair_counts[key] += 1
+
+func _on_RandomizeButton_pressed():
+	randomize()
+
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	if not is_instance_valid(lnz_text_edit):
+		print("LnzTextEdit not found")
+		return
+
+	var max_texture_id = -1
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Ballz Info]", 7, max_texture_id)
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Add Ball]", 13, max_texture_id)
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Paint Ballz]", 10, max_texture_id)
+
+	if max_texture_id == -1:
+		max_texture_id = 0
+
+	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
+	var lines = popup.get_node("RecolorLines").get_children()
+
+	for l in lines:
+		var after_color_edit = l.get_node("AfterColor")
+		var after_texture_edit = l.get_node("AfterTexture")
+		var is_ramp = l.get_node("ColorRampCheck").pressed
+
+		var random_color
+		if is_ramp:
+			random_color = (randi() % 14 + 1) * 10
+		else:
+			random_color = randi() % (215 - 10 + 1) + 10
+
+		after_color_edit.text = str(random_color)
+
+		var random_texture = randi() % (max_texture_id + 1)
+		after_texture_edit.text = str(random_texture)
+
+func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
+	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	if bounds.empty():
+		return current_max
+
+	var new_max = current_max
+	for i in range(bounds.start, bounds.end):
+		var line = lnz_text_edit.get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
+
+		var parts = lnz_text_edit._split_and_clean(line)
+		if parts.size() > texture_idx:
+			var texture_str = parts[texture_idx]
+			if texture_str.is_valid_integer():
+				var texture_id = int(texture_str)
+				if texture_id > new_max:
+					new_max = texture_id
+	return new_max
 
 func _on_HeadMoveLineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
