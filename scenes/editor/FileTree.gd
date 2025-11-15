@@ -34,6 +34,7 @@ onready var file_dialog = get_node("./ItemPopupMenu/FileDialog")
 signal backup_file
 
 func _ready():
+	select_mode = SELECT_MULTI
 	root = create_item()
 	examples = create_item(root)
 	examples.set_text(0, "Examples")
@@ -301,22 +302,42 @@ func scan_local_palettes():
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 
+func get_all_selected() -> Array:
+	var selected_items = []
+	var current = get_next_selected(null)
+	while current:
+		selected_items.append(current)
+		current = get_next_selected(current)
+	return selected_items
+
 func _on_Tree_item_rmb_selected(position):
 	$ItemPopupMenu.rect_global_position = position
-	var item = get_selected() as TreeItem
-	$ItemPopupMenu.set_item_disabled(0, item.get_parent() != local_storage)
-	$ItemPopupMenu.set_item_disabled(1, item.get_parent() != local_storage)
-	$ItemPopupMenu.set_item_disabled(2, item.get_parent() != local_storage)
-	$ItemPopupMenu.set_item_disabled(3, false)
-	$ItemPopupMenu.set_item_disabled(4, item.get_parent() != local_storage)
+	var items = get_all_selected()
+
+	if items.size() > 1:
+		for i in range($ItemPopupMenu.get_item_count()):
+			if i == 0: # Delete
+				$ItemPopupMenu.set_item_disabled(i, false)
+			else:
+				$ItemPopupMenu.set_item_disabled(i, true)
+	else:
+		var item = get_selected()
+		$ItemPopupMenu.set_item_disabled(0, item.get_parent() != local_storage)
+		$ItemPopupMenu.set_item_disabled(1, item.get_parent() != local_storage)
+		$ItemPopupMenu.set_item_disabled(2, item.get_parent() != local_storage)
+		$ItemPopupMenu.set_item_disabled(3, false)
+		$ItemPopupMenu.set_item_disabled(4, item.get_parent() != local_storage)
+
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id):
 	if id == 0: # delete file
-		var item = get_selected() as TreeItem
-		var filepath = item.get_metadata(0)
+		var items = get_all_selected()
 		var dir = Directory.new()
-		dir.remove(filepath)
+		for item in items:
+			var filepath = item.get_metadata(0)
+			if filepath and dir.file_exists(filepath):
+				dir.remove(filepath)
 		rescan(null)
 	elif id == 1: # rename file
 		var item = get_selected() as TreeItem
@@ -388,6 +409,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		
 		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
 		save_dialog.mode = FileDialog.MODE_SAVE_FILE
+		save_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		save_dialog.window_title = "Save File As"
 		save_dialog.current_file = filename
 		
@@ -406,6 +428,10 @@ func _on_RenameDialog_confirmed():
 
 
 func _on_ItemPopupMenu_about_to_show():
+	var items = get_all_selected()
+	if items.size() > 1:
+		return
+
 	var clicked_item = get_selected() as TreeItem
 	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit") as TextEdit
 	var clicked_filepath = clicked_item.get_metadata(0)
