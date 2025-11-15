@@ -341,6 +341,10 @@ func _gui_input(event):
 		var freeline_mode = props.freeline or (event.shift and not (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN))
 		if freeline_mode:
 			if event.pressed:
+				if props.ordered and props.repeat:
+					_ordered_color_index = 0
+					_ordered_outline_color_index = 0
+					_ordered_texture_index = 0
 				freeline_active = true
 				freeline_path.clear()
 				last_freeline_point = event.position
@@ -1171,18 +1175,32 @@ func _finalize_freeline():
 	elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
 		stroke_target_ball = active_selected_ball
 
-	for point in freeline_path:
+	var path_len = freeline_path.size()
+	for i in range(path_len):
+		var point = freeline_path[i]
 		var jittered_point = point + Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
 		var screen_pos = (jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
 
 		var point_target_ball = stroke_target_ball
 		if not point_target_ball: # If no stroke-wide target, use hover mode
 			point_target_ball = get_ball_under_mouse(screen_pos)
+		
+		var current_diameter = -1 # default = random
+		if props.tapered:
+			var min_diam = props.diameter_min
+			var max_diam = props.diameter_max
+			
+			if path_len == 1:
+				current_diameter = min_diam
+			else:
+				var t = float(i) / (path_len - 1)
+				var pingpong_t = 1.0 - abs(t * 2.0 - 1.0) # 0 -> 1 -> 0
+				current_diameter = lerp(min_diam, max_diam, pingpong_t)
 
 		if point_target_ball:
-			_create_paintball_at_position(screen_pos, point_target_ball)
+			_create_paintball_at_position(screen_pos, point_target_ball, current_diameter)
 
-func _create_paintball_at_position(screen_pos, target_ball):
+func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 10000
 	var space_state = camera.get_world().direct_space_state
@@ -1229,11 +1247,17 @@ func _create_paintball_at_position(screen_pos, target_ball):
 			outline_color = outline_color_list[randi() % outline_color_list.size()]
 			texture = texture_list[randi() % texture_list.size()]
 
+		var diameter
+		if diameter_override != -1:
+			diameter = diameter_override
+		else:
+			diameter = rand_range(props.diameter_min, props.diameter_max)
+
 		var paintball_info = {
 			"base_ball_no": target_ball.ball_no,
 			"relative_pos_local": local_relative_pos,
 			"relative_pos_lnz": relative_pos_lnz,
-			"diameter": rand_range(props.diameter_min, props.diameter_max),
+			"diameter": diameter,
 			"color": color,
 			"outline_color": outline_color,
 			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),

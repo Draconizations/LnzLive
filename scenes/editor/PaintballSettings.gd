@@ -38,6 +38,7 @@ func get_properties():
 	var properties = {}
 	properties["diameter_min"] = find_node("DiameterMin").value
 	properties["diameter_max"] = find_node("DiameterMax").value
+	properties["tapered"] = find_node("Tapered").pressed
 	properties["color"] = find_node("Color").text
 	properties["outline_color"] = find_node("OutlineColor").text
 	properties["outline_type_min"] = find_node("OutlineTypeMin").value
@@ -52,6 +53,7 @@ func get_properties():
 	properties["spacing"] = find_node("Spacing").value
 	properties["jitter"] = find_node("Jitter").value
 	properties["ordered"] = find_node("Ordered").pressed
+	properties["repeat"] = find_node("Repeat").pressed
 	return properties
 
 func _parse_number_list(s, allow_negatives=false):
