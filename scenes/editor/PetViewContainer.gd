@@ -1197,7 +1197,8 @@ func _finalize_freeline():
 				var t = float(i) / (path_len - 1)
 				var pingpong_t = 1.0 - abs(t * 2.0 - 1.0) # 0 -> 1 -> 0
 				var calculated_diameter = lerp(min_diam, max_diam, pingpong_t)
-				current_diameter = round(current_diameter)
+	
+				current_diameter = int(round(calculated_diameter))
 
 		if point_target_ball:
 			_create_paintball_at_position(screen_pos, point_target_ball, current_diameter)
@@ -1253,13 +1254,13 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		if diameter_override != -1:
 			diameter = diameter_override
 		else:
-			diameter = rand_range(props.diameter_min, props.diameter_max)
+			diameter = int(round(rand_range(props.diameter_min, props.diameter_max)))
 
 		var paintball_info = {
 			"base_ball_no": target_ball.ball_no,
 			"relative_pos_local": local_relative_pos,
 			"relative_pos_lnz": relative_pos_lnz,
-			"diameter": diameter,
+			"diameter": int(diameter),
 			"color": color,
 			"outline_color": outline_color,
 			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),
@@ -1286,7 +1287,6 @@ func _isolate_target_ball(target_ball):
 		else: # is target ball
 			area.set_collision_layer_bit(0, true)  # Ensure target is on layer 1
 			area.set_collision_layer_bit(1, false) # Ensure target is not on layer 2
-
 
 func _restore_all_balls():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
