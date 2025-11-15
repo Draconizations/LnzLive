@@ -137,6 +137,9 @@ func get_species(file: File):
 		elif "cat" in lower_path:
 			print("[Default Linez File] path contained 'cat'. Setting species to Catz (Species = 1).")
 			species = 1
+		elif "baby" in lower_path:
+			print("[Default Linez File] path contained 'baby'. Setting species to Babyz (Species = 3).")
+			species = 3
 		else:
 			print("Could not determine species from file. Defaulting to Catz (Species = 1).")
 			species = 1
