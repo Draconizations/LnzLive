@@ -213,6 +213,8 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		save_dialog.window_title = "Save File As"
 		save_dialog.current_file = filename
 
+		save_dialog.rect_min_size = Vector2(400, 400)
+
 		add_child(save_dialog)
 		save_dialog.popup_centered()
 
