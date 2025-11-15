@@ -14,6 +14,7 @@ signal delete_mode_toggled(is_on)
 
 func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
+	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
 	var viewport_size = get_viewport().size
 	var panel = $Panel
