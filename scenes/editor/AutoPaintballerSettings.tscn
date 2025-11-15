@@ -89,7 +89,8 @@ margin_right = 592.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 editable = false
-placeholder_text = "Seed will appear here"
+custom_fonts/font = SubResource( 1 )
+placeholder_text = "Random Seed"
 
 [node name="AutoPaintballerWarning" type="RichTextLabel" parent="Panel/VBoxContainer"]
 margin_top = 86.0
@@ -1132,7 +1133,7 @@ margin_right = 195.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-text = "Size"
+text = "Diameter"
 
 [node name="SizeMin" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
 margin_left = 199.0
@@ -1168,8 +1169,28 @@ margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-text = "15"
 placeholder_text = "e.g. 1,2,5-10"
+
+[node name="HBoxContainer9" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 278.0
+margin_right = 592.0
+margin_bottom = 302.0
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
+margin_top = 1.0
+margin_right = 294.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Texture"
+
+[node name="TextureList" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
+margin_left = 298.0
+margin_right = 592.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+text = "0"
+placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 194.0
@@ -1249,27 +1270,6 @@ margin_right = 592.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 max_value = 100.0
-
-[node name="HBoxContainer9" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 278.0
-margin_right = 592.0
-margin_bottom = 302.0
-
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
-margin_top = 1.0
-margin_right = 294.0
-margin_bottom = 22.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 1 )
-text = "Texture"
-
-[node name="TextureList" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
-margin_left = 298.0
-margin_right = 592.0
-margin_bottom = 24.0
-size_flags_horizontal = 3
-text = "0"
-placeholder_text = "e.g. -1,1-2"
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 306.0
