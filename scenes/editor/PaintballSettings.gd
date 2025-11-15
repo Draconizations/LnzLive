@@ -9,6 +9,7 @@ extends CanvasLayer
 ## 5. Emit the `delete_mode_toggled(is_on)` signal when the checkbox is toggled
 
 signal apply_paintballz
+signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
 func _ready():
@@ -24,6 +25,9 @@ func _ready():
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_paintballz")
+
+func _on_ClearButton_pressed():
+	emit_signal("clear_paintballz")
 
 func _on_DeleteModeCheckBox_toggled(is_on):
 	emit_signal("delete_mode_toggled", is_on)

@@ -1186,6 +1186,10 @@ func add_pending_paintball(paintball_info):
 
 	_pending_paintball_nodes.append(pb_visual_ball)
 
+func _on_clear_paintballz():
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
+
 func _on_randomize_auto_paintballz(paintballz):
 	_on_clear_auto_paintballz()
 	_auto_paintballs_data = paintballz

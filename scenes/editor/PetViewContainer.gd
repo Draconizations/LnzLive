@@ -103,6 +103,7 @@ func _ready():
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
 	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
+	paintball_settings_instance.connect("clear_paintballz", dog_generator, "_on_clear_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
@@ -1195,7 +1196,8 @@ func _finalize_freeline():
 			else:
 				var t = float(i) / (path_len - 1)
 				var pingpong_t = 1.0 - abs(t * 2.0 - 1.0) # 0 -> 1 -> 0
-				current_diameter = lerp(min_diam, max_diam, pingpong_t)
+				var calculated_diameter = lerp(min_diam, max_diam, pingpong_t)
+				current_diameter = round(current_diameter)
 
 		if point_target_ball:
 			_create_paintball_at_position(screen_pos, point_target_ball, current_diameter)
