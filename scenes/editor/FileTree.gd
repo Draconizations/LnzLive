@@ -50,6 +50,7 @@ func _ready():
 	file_dialog.add_filter("*.png ; PNG Palettes")
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.mode = FileDialog.MODE_OPEN_FILES
+	file_dialog.rect_min_size = Vector2(400, 400)
 	
 	var dir = Directory.new()
 	dir.open(example_file_location)
@@ -412,6 +413,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		save_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		save_dialog.window_title = "Save File As"
 		save_dialog.current_file = filename
+		save_dialog.rect_min_size = Vector2(400, 400)
 		
 		add_child(save_dialog)
 		save_dialog.popup_centered()
