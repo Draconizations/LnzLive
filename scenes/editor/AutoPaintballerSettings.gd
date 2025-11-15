@@ -381,8 +381,10 @@ func _on_RandomizeButton_pressed():
 		Distribution.STRIPES: # 15
 			var feed_rate = properties.stripe_feed_rate
 			var kill_rate = properties.stripe_kill_rate
-			var diffusion_rate = properties.stripe_diffusion
 			var timestep = properties.stripe_timestep
+
+			var diffusion_a = properties.diffusion_a
+			var diffusion_b = properties.diffusion_b
 
 			var grid_size = 32
 			var grid = []
@@ -409,8 +411,8 @@ func _on_RandomizeButton_pressed():
 						var laplace_b = (grid[i-1].b + grid[i+1].b + grid[i-grid_size].b + grid[i+grid_size].b) - 4 * b
 
 						var reaction = a * b * b
-						var next_a = a + (diffusion_rate * laplace_a - reaction + feed_rate * (1.0 - a)) * timestep
-						var next_b = b + (0.5 * diffusion_rate * laplace_b + reaction - (kill_rate + feed_rate) * b) * timestep
+						var next_a = a + (diffusion_a * laplace_a - reaction + feed_rate * (1.0 - a)) * timestep
+						var next_b = b + (diffusion_b * laplace_b + reaction - (kill_rate + feed_rate) * b) * timestep
 
 						next_grid[i].a = clamp(next_a, 0, 1)
 						next_grid[i].b = clamp(next_b, 0, 1)
@@ -1064,7 +1066,8 @@ func get_properties():
 	properties["ray_length"] = find_node("RayLength").value
 	properties["stripe_feed_rate"] = find_node("StripeFeedRate").value
 	properties["stripe_kill_rate"] = find_node("StripeKillRate").value
-	properties["stripe_diffusion"] = find_node("StripeDiffusion").value
+	properties["diffusion_b"] = find_node("DiffusionActivator").value
+	properties["diffusion_a"] = find_node("DiffusionInhibitor").value
 	properties["stripe_timestep"] = find_node("StripeTimestep").value
 	properties["leopard_radius_min"] = find_node("LeopardRadiusMin").value
 	properties["leopard_radius_max"] = find_node("LeopardRadiusMax").value
