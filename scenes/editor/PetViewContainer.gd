@@ -929,13 +929,16 @@ func _on_paintball_mode_for_ball_toggled(ball):
 		paintball_check_box.pressed = true
 	else:
 		_update_paintball_mode_ui()
+	_isolate_target_ball(ball)
 
 func _on_paintball_mode_toggled(is_on):
 	paintball_mode = is_on
 	if not is_on:
 		paintball_target_ball = null
 		close_paintball_on_apply = false
+		_restore_all_balls()
 	else:
+		_restore_all_balls()
 		_ordered_color_index = 0
 		_ordered_outline_color_index = 0
 		_ordered_texture_index = 0
@@ -1241,3 +1244,32 @@ func _create_paintball_at_position(screen_pos, target_ball):
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
+
+func _isolate_target_ball(target_ball):
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		if ball != target_ball:
+			area.set_collision_layer_bit(0, false) # Remove from layer 1
+			area.set_collision_layer_bit(1, true)  # Add to layer 2
+		else: # is target ball
+			area.set_collision_layer_bit(0, true)  # Ensure target is on layer 1
+			area.set_collision_layer_bit(1, false) # Ensure target is not on layer 2
+
+
+func _restore_all_balls():
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		area.set_collision_layer_bit(0, true)  # Restore to layer 1
+		area.set_collision_layer_bit(1, false) # Remove from layer 2
