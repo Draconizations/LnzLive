@@ -10,23 +10,21 @@ func _ready():
 	connect("pressed", self, "_on_pressed")
 
 func _on_pressed():
-	var fd = FileDialog.new()
-	fd.mode = FileDialog.MODE_SAVE_FILE
-	fd.access = FileDialog.ACCESS_FILESYSTEM
-	fd.add_filter("*.obj ; Wavefront OBJ")
-	add_child(fd)
-	fd.popup_centered()
-	fd.connect("file_selected", self, "_export_current_model")
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var anim_idx = pet_node.current_animation
+	var start_idx = pet_node.bhd.animation_ranges[anim_idx].actual_start
+	var text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var filename = text_edit.filepath.get_file().get_basename() + "_" + str(anim_idx) + "_" + str(start_idx) + ".obj"
+	var content_bytes = _export_current_model()
 
-func _export_current_model(path: String) -> void:
-	var f = File.new()
-	if f.open(path, File.WRITE) != OK:
-		push_error("Cannot open '%s' for writing" % path)
-		return
+	_save_file_as(filename, content_bytes)
+
+func _export_current_model() -> PoolByteArray:
+	var obj_content = ""
 
 	# Set OBJ header
-	f.store_line("# Exported Petz Model")
-	f.store_line("o Petz\n")
+	obj_content += "# Exported Petz Model\n"
+	obj_content += "o Petz\n\n"
 
 	# Grab scene data from PetRoot
 	var dog = get_tree().root.get_node("Root/PetRoot/Node")
@@ -74,7 +72,7 @@ func _export_current_model(path: String) -> void:
 				var x = radius * sin(phi) * cos(theta)
 				var y = radius * cos(phi)
 				var z = radius * sin(phi) * sin(theta)
-				f.store_line("v %f %f %f" % [center.x + x, center.y + y, center.z + z])
+				obj_content += "v %f %f %f\n" % [center.x + x, center.y + y, center.z + z]
 		
 		# Write faces
 		for i in range(S_RNG):
@@ -83,8 +81,8 @@ func _export_current_model(path: String) -> void:
 				var b = vertex_offset + (i + 1) * S_SEG + j
 				var c = vertex_offset + (i + 1) * S_SEG + (j + 1) % S_SEG
 				var d = vertex_offset + i * S_SEG + (j + 1) % S_SEG
-				f.store_line("f %d %d %d" % [a, b, c])
-				f.store_line("f %d %d %d" % [a, c, d])
+				obj_content += "f %d %d %d\n" % [a, b, c]
+				obj_content += "f %d %d %d\n" % [a, c, d]
 		
 		# Track vertex index
 		vertex_offset += (S_RNG + 1) * S_SEG
@@ -145,7 +143,7 @@ func _export_current_model(path: String) -> void:
 		var offset = basis.xform(Vector3(0, -cyl.height * 0.5, 0))
 		for v in verts2:
 			var gv = basis.xform(v) + p1
-			f.store_line("v %f %f %f" % [gv.x, gv.y, gv.z])
+			obj_content += "v %f %f %f\n" % [gv.x, gv.y, gv.z]
 
 		# Write faces
 		var segs = cyl.radial_segments
@@ -155,7 +153,7 @@ func _export_current_model(path: String) -> void:
 			var a = int(idxs2[i    ]) + vertex_offset
 			var b = int(idxs2[i+1]) + vertex_offset
 			var c = int(idxs2[i+2]) + vertex_offset
-			f.store_line("f %d %d %d" % [a, b, c])
+			obj_content += "f %d %d %d\n" % [a, b, c]
 		
 		# Track vertex index
 		vertex_offset += verts2.size()
@@ -174,18 +172,64 @@ func _export_current_model(path: String) -> void:
 		if pts.size() == 4:
 			for p in pts:
 				# Write vertices
-				f.store_line("v %f %f %f" % [p.x, p.y, p.z])
+				obj_content += "v %f %f %f\n" % [p.x, p.y, p.z]
 
 			# Write faces
-			f.store_line("f %d %d %d" % [vertex_offset + 0, vertex_offset + 1, vertex_offset + 2])
-			f.store_line("f %d %d %d" % [vertex_offset + 0, vertex_offset + 2, vertex_offset + 3])
+			obj_content += "f %d %d %d\n" % [vertex_offset + 0, vertex_offset + 1, vertex_offset + 2]
+			obj_content += "f %d %d %d\n" % [vertex_offset + 0, vertex_offset + 2, vertex_offset + 3]
 
 			# Track vertex index
 			vertex_offset += 4
 
-	print("Current file position is:", f.get_position())
-	f.close()
-	print("Saved OBJ to", path)
+	return obj_content.to_utf8()
+
+func _save_file_as(filename: String, content_bytes: PoolByteArray):
+	if OS.has_feature("HTML5"):
+		var escaped_filename = filename.replace("'", "\\'")
+		var base64_content = Marshalls.raw_to_base64(content_bytes)
+
+		var mime_type = "application/octet-stream"
+
+		var js_code = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:""" + mime_type + """;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + escaped_filename + """');
+
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+
+	else:
+		var save_dialog = FileDialog.new()
+
+		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
+
+		save_dialog.add_filter("*.obj ; Wavefront OBJ")
+		save_dialog.mode = FileDialog.MODE_SAVE_FILE
+		save_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		save_dialog.window_title = "Save File As"
+		save_dialog.current_file = filename
+
+		add_child(save_dialog)
+		save_dialog.popup_centered()
+
+func _on_SaveDialog_file_selected(path, content_bytes):
+	var file = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_buffer(content_bytes)
+		file.close()
+		print("File saved successfully to: " + path)
+	else:
+		print("Error saving file to: " + path)
+
+	if is_instance_valid(self):
+		for child in get_children():
+			if child is FileDialog and child.window_title == "Save File As":
+				child.queue_free()
+				return
 
 # pose quick ref
 #catz
