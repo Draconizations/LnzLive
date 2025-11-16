@@ -209,6 +209,7 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		return {}
+	var header_line = sec[SEARCH_RESULT_LINE]
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var next_sec_search = search("[", 0, start_line, 0)
 	var end_line
@@ -216,7 +217,11 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 		end_line = get_line_count()
 	else:
 		end_line = next_sec_search[SEARCH_RESULT_LINE]
-	return {"start": start_line, "end": end_line}
+	var empty_count = 0
+	for i in range(start_line, end_line):
+		if get_line(i).strip_edges() == "":
+			empty_count += 1
+	return {"start": start_line, "end": end_line, "header": header_line, "empties": empty_count}
 
 func _split_line(line: String) -> PoolStringArray:
 	var regex = RegEx.new()
@@ -3008,9 +3013,21 @@ func update_lnz_section_two_values(section_name, val1, val2):
 		return
 
 	var start_line = bounds["start"]
-	var delim = _detect_delimiter(start_line, bounds.end)
-	var new_line = str(val1) + delim + str(val2)
-	set_line(start_line, new_line)
+	var end_line = bounds["end"]
+
+	var empty_cnt  = bounds.get("empty", 0)
+	var data_cnt   = (end_line - start_line) - empty_cnt
+
+	if data_cnt == 2:
+		set_line(start_line, str(val1))
+		set_line(start_line + 1, str(val2))
+		return
+
+	if data_cnt == 1:
+		var delim = _detect_delimiter(start_line, end_line)
+		var new_line = str(val1) + delim + str(val2)
+		set_line(start_line, new_line)
+		return
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
