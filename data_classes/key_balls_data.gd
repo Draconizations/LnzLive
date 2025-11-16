@@ -222,10 +222,9 @@ func _build_bodyarea_map_baby():
 		if not bodyarea_map.has(b):
 			bodyarea_map[b] = 1
 
-# // --- For CAT ---
+# // --- For CATZ ---
 
 var cat_body_part_symmetry = {
-    # // Symmetrical body parts for the Cat's head.
     "Head": {
         "Eyes": { "left": [14, 27], "right": [15, 28] }, 
         "Ears": { "left": [8, 9], "right": [10, 11] }, 
@@ -233,18 +232,15 @@ var cat_body_part_symmetry = {
         "Whiskers": { "left": [57, 58, 59], "right": [60, 61, 62] }, 
         "Head_Top_Sides": { "left": [87, 88], "right": [89] }
     },
-    # // Symmetrical body parts for the Cat's torso.
     "Torso": {
         "Shoulders": { "left": [38], "right": [39] },
         "Hips": { "left": [25], "right": [26] }
     },
-    # // Symmetrical body parts for the Cat's front paws/arms.
     "FrontPaws": {
         "Arms": { "left": [12, 63], "right": [13, 64] }, 
         "Hands": { "left": [22], "right": [23] },
         "Fingers_Knuckles": { "left": [16, 17, 18, 34], "right": [19, 20, 21, 35] }
     },
-    # // Symmetrical body parts for the Cat's back paws/legs.
     "BackPaws": {
         "Legs": { "left": [32, 0], "right": [33, 1] }, 
         "Feet": { "left": [41], "right": [42] }, 
@@ -252,10 +248,9 @@ var cat_body_part_symmetry = {
     }
 };
 
-# // --- For DOG ---
+# // --- For DOGZ ---
 
 var dog_body_part_symmetry = {
-    # // Symmetrical body parts for the Dog's head.
     "Head": {
         "Eyes": { "left": [8, 14], "right": [32, 38] }, 
         "Ears": { "left": [4, 5, 6], "right": [28, 29, 30] }, 
@@ -263,18 +258,15 @@ var dog_body_part_symmetry = {
         "Jowls": { "left": [15], "right": [39] },
         "Nostrils": { "left": [17], "right": [41] }
     },
-    # // Symmetrical body parts for the Dog's torso.
     "Torso": {
         "Shoulders": { "left": [18], "right": [42] },
         "Hips": { "left": [19], "right": [43] }
     },
-    # // Symmetrical body parts for the Dog's front paws/arms.
     "FrontPaws": {
         "Arms": { "left": [7, 23], "right": [31, 47] }, 
         "Hands": { "left": [13], "right": [37] },
         "Fingers": { "left": [9, 10, 11], "right": [33, 34, 35] }
     },
-    # // Symmetrical body parts for the Dog's back paws/legs.
     "BackPaws": {
         "Legs": { "left": [16, 0], "right": [40, 24] },
         "Feet": { "left": [12], "right": [36] },
@@ -282,10 +274,9 @@ var dog_body_part_symmetry = {
     }
 };
 
-# // --- For BABY ---
+# // --- For BABYZ ---
 
 var baby_body_part_symmetry = {
-    # // Symmetrical body parts for the Baby's head.
     "Head": {
         "Eyes": { "left": [35, 68], "right": [36, 69] }, 
         "Eyebrows": { "left": [37, 39, 41, 43, 45], "right": [38, 40, 42, 44, 46] }, 
@@ -293,19 +284,16 @@ var baby_body_part_symmetry = {
         "Face_Sides": { "left": [8, 96], "right": [9, 97] }, 
         "Mouth": { "left": [79, 85], "right": [80, 86] }
     },
-    # // Symmetrical body parts for the Baby's torso.
     "Torso": {
         "Chest": { "left": [10], "right": [11] },
         "Shoulders": { "left": [94], "right": [95] },
         "Hips": { "left": [66], "right": [67] }
     },
-    # // Symmetrical body parts for the Baby's hands.
     "Hands": {
         "Arms": { "left": [30, 116], "right": [31, 117] },
         "Palms": { "left": [88, 90, 92], "right": [89, 91, 93] },
         "Fingers_Thumbs": { "left": [47, 49, 51, 53, 55, 57, 98, 100], "right": [48, 50, 52, 54, 56, 58, 99, 101] }
     },
-    # // Symmetrical body parts for the Baby's feet.
     "Feet": {
         "Legs": { "left": [71, 0], "right": [72, 1] },
         "Soles": { "left": [2, 64], "right": [3, 65] },
