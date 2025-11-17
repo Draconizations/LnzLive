@@ -34,6 +34,10 @@ var current_animation = 0
 var current_frame = 0
 var current_bdt: BdtParser
 
+var t_pose_active = false
+var _saved_anim_index = 0
+var _saved_frame_index = 0
+
 var _pending_paintballs_data = []
 var _pending_paintball_nodes = []
 var _auto_paintballs_data = []
@@ -80,6 +84,40 @@ func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 
+func symmetrize_skeleton():
+	var symmetry_data = {}
+	if lnz.species == KeyBallsData.Species.DOG:
+		symmetry_data = KeyBallsData.dog_body_part_symmetry
+	elif lnz.species == KeyBallsData.Species.CAT:
+		symmetry_data = KeyBallsData.cat_body_part_symmetry
+	elif lnz.species == KeyBallsData.Species.BABY:
+		symmetry_data = KeyBallsData.baby_body_part_symmetry
+	else:
+		return
+
+	for section in symmetry_data.values():
+		for part in section.values():
+			if part.has("left") and part.has("right"):
+				var left_indices = part["left"]
+				var right_indices = part["right"]
+				
+				var pair_count = min(left_indices.size(), right_indices.size())
+				for i in range(pair_count):
+					var l_idx = left_indices[i]
+					var r_idx = right_indices[i]
+					
+					if l_idx < balls.size() and r_idx < balls.size():
+						var l_ball = balls[l_idx]
+						var r_ball = balls[r_idx]
+						
+						r_ball.position.x = -l_ball.position.x
+						r_ball.position.y = l_ball.position.y
+						r_ball.position.z = l_ball.position.z
+						
+						r_ball.rotation.x = l_ball.rotation.x
+						r_ball.rotation.y = -l_ball.rotation.y
+						r_ball.rotation.z = -l_ball.rotation.z
+
 func set_animation(anim_index: int):
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
 	bhd.get_frame_offsets_for(anim_index)
@@ -102,7 +140,30 @@ func set_frame(frame: int):
 	for n in bhd.num_balls:
 		var x = current_bdt.frames[frame][n]
 		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+	
+	if t_pose_active:
+		symmetrize_skeleton()
+
 	init_visual_balls(lnz, false)
+
+func _on_TPoseCheckBox_toggled(button_pressed):
+	t_pose_active = button_pressed
+	
+	if t_pose_active:
+		_saved_anim_index = current_animation
+		_saved_frame_index = current_frame
+		
+		# Stop playback if running
+		var play_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button")
+		if play_button.pressed:
+			play_button.pressed = false
+		
+		set_animation(0) 
+		set_frame(0)
+		
+	else:
+		set_animation(_saved_anim_index)
+		set_frame(_saved_frame_index)
 
 func clear_lnz_data():
 	for ball in balls:
