@@ -34,7 +34,7 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Tools** | to be added | Open/Close Color Swap |
 | **Tools** | to be added | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
-| **Text Editing** | `CTRL` + `Q` | Flash Ballz |
+| **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
 | **Text Editing** | `CTRL` + `F` | **Find/Replace**: Toggles Find and Replace panel |
 | **Visual Editing** | `SHIFT` + `left-click drag` | **Move** selected Ball |
 | **Visual Editing** | `SHIFT` + `ALT` + `left-click drag` | **Scale/Resize** selected Ball |
@@ -342,6 +342,4 @@ After adding your files directly to this folder, relaunch LnzLive to load it. If
 
 While editing the LNZ:
 
-- Place the editing cursor on any line in Ballz Info. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make that ball flash in the pet view so you can locate it.
-
-- Similarly, place the cursor on any line in the Add Ball section and hit Ctrl+Q to make the addball flash.
+- Place the editing cursor on any line in `[Ballz Info]`, `[Add Ball]`, `[Linez]`, `[Polygons]`, `[Paintballz]`, `[Move]`, or `[Project Ball]`. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make affected ballz and/or linez flash in the pet view so you can locate.
