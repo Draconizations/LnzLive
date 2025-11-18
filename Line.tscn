@@ -14,3 +14,8 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.001 )
 material_override = ExtResource( 1 )
 mesh = SubResource( 1 )
 material/0 = null
+
+[node name="FlashTimer" type="Timer" parent="."]
+wait_time = 0.2
+
+[connection signal="timeout" from="FlashTimer" to="." method="_on_FlashTimer_timeout"]
