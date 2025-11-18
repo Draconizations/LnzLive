@@ -83,6 +83,11 @@ signal line_created(start_ball, end_ball)
 
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
+	editor.connect("find_paintball", self, "_on_LnzTextEdit_find_paintball")
+	editor.connect("find_polygon", self, "_on_LnzTextEdit_find_polygon")
+	editor.connect("find_move", self, "_on_LnzTextEdit_find_move")
+	editor.connect("find_project_ball", self, "_on_LnzTextEdit_find_project_ball")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	t_pose_checkbox = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox")
 
@@ -412,15 +417,16 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 		b.outline_color_index = v.outline_color_index
 		b.outline = v.outline
 		b.fuzz = v.fuzz
-		var moves = lnz.moves.get(k, [])
+
 		var q = Quat()
-		for m in moves:
-			var move_base = b
-			var rot = move_base.rotation
-			if m.relative_to:
-				rot = base_ball_dict.get(m.relative_to).rotation
-			q.set_euler(Vector3(deg2rad(rot.x), deg2rad(rot.y), deg2rad(rot.z)))
-			b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
+		for m in lnz.moves:
+			if m.ball_no == k:
+				var move_base = b
+				var rot = move_base.rotation
+				if m.relative_to:
+					rot = base_ball_dict.get(m.relative_to).rotation
+				q.set_euler(Vector3(deg2rad(rot.x), deg2rad(rot.y), deg2rad(rot.z)))
+				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
 		b.texture_id = v.texture_id
 		b.color_index = v.color_index
 		base_ball_dict[k] = b
@@ -1154,6 +1160,60 @@ func signal_ball_deleted(ball_no):
 func _on_LnzTextEdit_find_ball(ball_no):
 	if ball_map.has(ball_no):
 		ball_map[ball_no].flash()
+
+func _on_LnzTextEdit_find_line(line_no):
+	if lines_map.has(line_no):
+		var line = lines_map[line_no]
+		line.flash()
+		var line_data = lnz.lines[line_no]
+		if ball_map.has(line_data.start):
+			ball_map[line_data.start].flash()
+		if ball_map.has(line_data.end):
+			ball_map[line_data.end].flash()
+
+func _on_LnzTextEdit_find_paintball(line_no):
+	var all_paintballs = []
+	for ball_no in lnz.paintballs:
+		for paintball in lnz.paintballs[ball_no]:
+			all_paintballs.append(paintball)
+	if line_no < all_paintballs.size():
+		var paintball_data = all_paintballs[line_no]
+		var base_ball_no = paintball_data.base
+		if paintball_map.has(base_ball_no):
+			var paintball_visuals = paintball_map[base_ball_no]
+			# This is tricky because the visual paintballs might not be in the same order
+			# For now, let's just flash the base ball
+			if ball_map.has(base_ball_no):
+				ball_map[base_ball_no].flash()
+
+
+func _on_LnzTextEdit_find_polygon(line_no):
+	if polygons_map.has(line_no):
+		var polygon = polygons_map[line_no]
+		polygon.flash()
+		var polygon_data = lnz.polygons[line_no]
+		if ball_map.has(polygon_data.ball1):
+			ball_map[polygon_data.ball1].flash()
+		if ball_map.has(polygon_data.ball2):
+			ball_map[polygon_data.ball2].flash()
+		if ball_map.has(polygon_data.ball3):
+			ball_map[polygon_data.ball3].flash()
+		if ball_map.has(polygon_data.ball4):
+			ball_map[polygon_data.ball4].flash()
+
+func _on_LnzTextEdit_find_move(line_no):
+	if line_no < lnz.moves.size():
+		var move_data = lnz.moves[line_no]
+		if ball_map.has(move_data.ball_no):
+			ball_map[move_data.ball_no].flash()
+
+func _on_LnzTextEdit_find_project_ball(line_no):
+	if line_no < lnz.project_ball.size():
+		var project_data = lnz.project_ball[line_no]
+		if ball_map.has(project_data.fixed_ball):
+			ball_map[project_data.fixed_ball].flash()
+		if ball_map.has(project_data.project_ball):
+			ball_map[project_data.project_ball].flash()
 	
 func _on_ToolsMenu_print_ball_colors():
 	var ball_map_string = ""
