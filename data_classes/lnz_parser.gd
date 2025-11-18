@@ -13,7 +13,7 @@ var face_extension = 0
 var ear_extension = 0
 var head_enlargement = Vector2(100, 0)
 var foot_enlargement = Vector2(100, 0)
-var moves = {}
+var moves = []
 var balls = {}
 var lines = []
 var polygons = []
@@ -238,9 +238,7 @@ func parse_moves(file: File):
 			int(split_line[3].get_string())
 		)
 		var relative_to = int(split_line[4].get_string()) if split_line.size() > 4 else base
-		var move_array = moves.get(base, [])
-		move_array.append({"position": position, "relative_to": relative_to})
-		moves[base] = move_array
+		moves.append({"ball_no": base, "position": position, "relative_to": relative_to})
 		
 func get_project_balls(file: File):
 	get_next_section(file, "Project Ball")
