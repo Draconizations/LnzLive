@@ -34,6 +34,7 @@ var current_animation = 0
 var current_frame = 0
 var current_bdt: BdtParser
 
+var t_pose_checkbox = null
 var t_pose_active = false
 var _saved_anim_index = 0
 var _saved_frame_index = 0
@@ -83,6 +84,7 @@ signal line_created(start_ball, end_ball)
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
+	t_pose_checkbox = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox")
 
 func symmetrize_skeleton():
 	var symmetry_data = {}
@@ -153,7 +155,6 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 		_saved_anim_index = current_animation
 		_saved_frame_index = current_frame
 		
-		# Stop playback if running
 		var play_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button")
 		if play_button.pressed:
 			play_button.pressed = false
@@ -176,40 +177,60 @@ func clear_lnz_data():
 	lines_map.clear()
 
 func init_ball_data(species):
-	# print("Species:", species)
+	if t_pose_checkbox:
+		t_pose_active = t_pose_checkbox.pressed
+
 	clear_lnz_data()
 	
+	var bhd_file = ""
+	var bdt_prefix = ""
+	
+	var anim_to_load = current_animation
+	var frame_to_use = current_frame
+	if t_pose_active:
+		anim_to_load = 0
+		frame_to_use = 0
+	
 	if species == KeyBallsData.Species.DOG:
+		bhd_file = "res://resources/animations/DOG.bhd"
+		bdt_prefix = "DOG"
 		bhd = BhdParser.new("res://resources/animations/DOG.bhd")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
-		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
-		var bdt = BdtParser.new("DOG" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
+		var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+		var bdt = BdtParser.new("DOG" + str(anim_to_load) + ".bdt", first_anim_frames, bhd.num_balls)
 		emit_signal("animation_loaded", first_anim_frames.size())
 		current_bdt = bdt
 		for n in bhd.num_balls:
-			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
+			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[frame_to_use][n].position, n, bdt.frames[frame_to_use][n].rotation)) 
 
 	elif species == KeyBallsData.Species.CAT:
+		bhd_file = "res://resources/animations/CAT.bhd"
+		bdt_prefix = "CAT"
 		bhd = BhdParser.new("res://resources/animations/CAT.bhd")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
-		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
-		var bdt = BdtParser.new("CAT" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
+		var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+		var bdt = BdtParser.new("CAT" + str(anim_to_load) + ".bdt", first_anim_frames, bhd.num_balls)
 		emit_signal("animation_loaded", first_anim_frames.size())
 		current_bdt = bdt
 		for n in bhd.num_balls:
-			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
+			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[frame_to_use][n].position, n, bdt.frames[frame_to_use][n].rotation)) 
 
 	elif species == KeyBallsData.Species.BABY:
+		bhd_file = "res://resources/animations/BABY.bhd"
+		bdt_prefix = "BABY"
 		bhd = BhdParser.new("res://resources/animations/BABY.bhd")
 		emit_signal("bhd_loaded", bhd.animation_ranges.size())
-		var first_anim_frames = bhd.get_frame_offsets_for(current_animation)
-		var bdt = BdtParser.new("BABY" + str(current_animation) + ".bdt", first_anim_frames, bhd.num_balls)
+		var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+		var bdt = BdtParser.new("BABY" + str(anim_to_load) + ".bdt", first_anim_frames, bhd.num_balls)
 		emit_signal("animation_loaded", first_anim_frames.size())
 		current_bdt = bdt
 		for n in bhd.num_balls:
-			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[current_frame][n].position, n, bdt.frames[current_frame][n].rotation))
+			balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[frame_to_use][n].position, n, bdt.frames[frame_to_use][n].rotation)) 
 
 	KeyBallsData.max_base_ball_num = bhd.num_balls
+
+	if t_pose_active:
+		symmetrize_skeleton()
 
 func is_special_baby_ball(species: int, ball_no: int) -> bool:
 	return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
