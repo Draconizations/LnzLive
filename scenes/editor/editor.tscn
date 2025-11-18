@@ -29,7 +29,7 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
-[ext_resource path="res://scenes/editor/ColorSelector.gd" type="Script" id=36]
+[ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=36]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -411,7 +411,7 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ViewPaletteButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
+[node name="ViewPaletteButton" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer"]
 margin_right = 84.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
@@ -420,6 +420,7 @@ custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
 custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "View Palette"
@@ -1346,56 +1347,6 @@ Tools Menu
 Press Ctrl+Space in the pet view to open the tools menu for more advanced operations like mass coloring, copying parts from left to right, and more."
 __meta__ = {
 "_edit_use_anchors_": true
-}
-
-[node name="PaletteViewerPopup" type="Panel" parent="SceneRoot"]
-visible = false
-margin_left = 187.263
-margin_top = 172.014
-margin_right = 687.263
-margin_bottom = 672.014
-rect_min_size = Vector2( 500, 500 )
-custom_styles/panel = ExtResource( 19 )
-script = ExtResource( 36 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="SceneRoot/PaletteViewerPopup"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 8.0
-margin_top = 8.0
-margin_right = -8.0
-margin_bottom = -38.0
-rect_min_size = Vector2( 450, 500 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="SceneRoot/PaletteViewerPopup/PaletteViewerScrollContainer"]
-margin_right = 450.0
-margin_bottom = 500.0
-rect_min_size = Vector2( 450, 500 )
-
-[node name="CloseButton" type="Button" parent="SceneRoot/PaletteViewerPopup"]
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-margin_left = -242.0
-margin_top = -34.0
-margin_right = 242.0
-margin_bottom = -14.0
-custom_styles/hover = ExtResource( 19 )
-custom_styles/pressed = ExtResource( 19 )
-custom_styles/focus = ExtResource( 19 )
-custom_styles/disabled = ExtResource( 19 )
-custom_styles/normal = ExtResource( 19 )
-custom_fonts/font = ExtResource( 27 )
-text = "Close"
-__meta__ = {
-"_edit_use_anchors_": false
 }
 
 [node name="ColorPopup" type="Popup" parent="SceneRoot"]

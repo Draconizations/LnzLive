@@ -1,5 +1,5 @@
 extends Panel
-## ColorSelector.gd
+## PaletteViewer.gd
 ## Manages a popup that displays the currently loaded pet color palette
 ## This script generates a visual grid of colors from the active palette file
 ## 1. Initialization: Connects the close button to hide the popup
@@ -78,7 +78,6 @@ func populate_colors():
 			label.align = Label.ALIGN_CENTER
 			label.valign = Label.VALIGN_CENTER
 
-			# Make label text readable
 			var luminance = color.r * 0.299 + color.g * 0.587 + color.b * 0.114
 			if luminance > 0.5:
 				label.add_color_override("font_color", Color.black)

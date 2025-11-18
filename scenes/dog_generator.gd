@@ -1249,9 +1249,6 @@ func _on_EyeLidButton_pressed():
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	update_eyelids(EYELID_TILTS[eyelid_mode])
 
-func _on_ViewPaletteButton_pressed():
-	$SceneRoot/ToolsMenu/PaletteViewerPopup.popup_centered_minsize()
-
 func emit_ball_translation(ball_no: int, new_position: Vector3):
 	emit_signal("ball_translation_changed", ball_no, new_position)
 

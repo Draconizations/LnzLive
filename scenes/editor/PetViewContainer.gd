@@ -60,18 +60,19 @@ onready var paintball_settings_instance = preload("res://scenes/editor/Paintball
 onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
 onready var auto_paintballer_settings_instance = preload("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
+onready var palette_viewer_instance = preload("res://scenes/editor/PaletteViewer.tscn").instance()
 
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
 onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
 onready var auto_paintballer_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox")
+onready var view_palette_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton")
 
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
 
-onready var palette_viewer = get_tree().root.get_node("Root/SceneRoot/PaletteViewerPopup") 
 onready var recolor_popup = get_tree().root.get_node("Root/SceneRoot/RecolorPopup")
 
 var preset_mode = false
@@ -99,6 +100,9 @@ func _ready():
 
 	auto_paintballer_check_box.connect("toggled", self, "_on_auto_paintballer_mode_toggled")
 
+	view_palette_check_box.connect("toggled", self, "_on_view_palette_check_box_toggled")
+	palette_viewer_instance.connect("visibility_changed", self, "_on_palette_visibility_changed")
+
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
@@ -121,6 +125,7 @@ func _ready():
 	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
 
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
 	Input.set_custom_mouse_cursor(hand_neutral)
@@ -672,9 +677,7 @@ func _unhandled_key_input(event):
 				get_tree().set_input_as_handled()
 				return
 			KEY_T:
-				palette_viewer.visible = !palette_viewer.visible
-				if palette_viewer.visible:
-					palette_viewer.populate_colors()
+				view_palette_check_box.pressed = !view_palette_check_box.pressed
 				get_tree().set_input_as_handled()
 				return
 			KEY_G:
@@ -1074,6 +1077,24 @@ func _on_project_mode_toggled(is_on):
 			_on_preset_mode_toggled(false)
 	else:
 		project_settings_instance.hide()
+
+func _on_view_palette_check_box_toggled(is_on):
+	palette_viewer_instance.visible = is_on
+	
+	if is_on:
+		if palette_viewer_instance is WindowDialog or palette_viewer_instance is Popup:
+			palette_viewer_instance.popup() 
+		palette_viewer_instance.populate_colors()
+	else:
+		palette_viewer_instance.hide()
+
+func _on_palette_popup_closed():
+	if view_palette_check_box.pressed:
+		view_palette_check_box.pressed = false
+
+func _on_palette_visibility_changed():
+	if view_palette_check_box.pressed != palette_viewer_instance.visible:
+		view_palette_check_box.pressed = palette_viewer_instance.visible
 
 func _flatten_symmetry_dict(dict: Dictionary) -> Array:
 	var flat_list = []
