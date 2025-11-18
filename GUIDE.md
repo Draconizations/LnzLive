@@ -29,17 +29,17 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Viewport** | `left-click drag` | Rotate Camera View |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
 | **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top |
-| **Tools** | to be added | Open/Close Auto Paintballer |
-| **Tools** | to be added | Open/Close Palette Viewer |
-| **Tools** | to be added | Open/Close Color Swap |
-| **Tools** | to be added | Capture `[Head Shot]` |
+| **Tools** | `A` | Open/Close Auto Paintballer |
+| **Tools** | `T` | Open/Close Palette Viewer |
+| **Tools** | `G` | Open/Close Color Swap |
+| **Tools** | `H` | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
 | **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
 | **Text Editing** | `CTRL` + `F` | **Find/Replace**: Toggles Find and Replace panel |
 | **Visual Editing** | `SHIFT` + `left-click drag` | **Move** selected Ball |
 | **Visual Editing** | `SHIFT` + `ALT` + `left-click drag` | **Scale/Resize** selected Ball |
 | **Visual Editing** | `X`, `Y`, or `Z` (hold during drag) | **Axis Lock** movement to specific axis |
-| **Select Mode** | to be added | **Open/Close Select Mode** |
+| **Select Mode** | `S` | **Open/Close Select Mode** |
 | **Select Mode** | `left-click` | Select Ball (or Deselect, if background clicked) |
 | **Select Mode** | `B` or `Z` or `Double left-click` | Jumps to the `[Ballz Info]` or `[Add Ball]` entry defining hovered ball |
 | **Select Mode** | `X` or `M` | Jumps to the `[Move]` entries involving hovered ball |
@@ -48,16 +48,16 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Select Mode** | `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
-| **Project Mode** | to be added | **Open/Close Paintball Mode** |
-| **Paintball Mode** | to be added | **Open/Close Paintball Mode** |
+| **Project Mode** | `D` | **Open/Close Paintball Mode** |
+| **Paintball Mode** | `W` | **Open/Close Paintball Mode** |
 | **Paintball Mode** | `left-click` | **Draw**: Add paintballz by point-and-click |
 | **Paintball Mode** | `CTRL` + `left-click` | **Eraser**: Delete nearest queued paintballz |
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `Down` | **Scale/Resize**: Resize diameter of paintballz |
-| **Preset Mode** | to be added | **Open/Close Preset Mode** |
+| **Preset Mode** | `R` | **Open/Close Preset Mode** |
 | **Preset Mode** | `left-click` | **Apply Preset**: Apply current Preset to ball |
 | **Preset Mode** | `ALT` + `left-click` | **Eyedropper**: Sample properties from ball |
-| **Line Mode** | to be added | **Open/Close Linez Mode** |
+| **Line Mode** | `E` | **Open/Close Linez Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 
 ### File Tree (Left Panel)

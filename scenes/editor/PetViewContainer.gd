@@ -71,6 +71,9 @@ onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeS
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
 
+onready var palette_viewer = get_tree().root.get_node("Root/SceneRoot/PaletteViewerPopup") 
+onready var recolor_popup = get_tree().root.get_node("Root/SceneRoot/RecolorPopup")
+
 var preset_mode = false
 
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
@@ -639,6 +642,52 @@ func _unhandled_key_input(event):
 		tools_menu.rect_global_position = get_viewport().get_mouse_position()
 		tools_menu.popup()
 		return
+
+	if event.pressed and not event.control and not event.alt and not event.shift:
+		match event.scancode:
+			KEY_S:
+				_select_check_box.pressed = !_select_check_box.pressed
+				_on_SelectCheckBox_pressed()
+				get_tree().set_input_as_handled()
+				return
+			KEY_W:
+				paintball_check_box.pressed = !paintball_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
+			KEY_E:
+				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
+			KEY_R:
+				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
+			KEY_D:
+				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
+
+			KEY_A:
+				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
+			KEY_T:
+				palette_viewer.visible = !palette_viewer.visible
+				if palette_viewer.visible:
+					palette_viewer.populate_colors()
+				get_tree().set_input_as_handled()
+				return
+			KEY_G:
+				if recolor_popup.visible:
+					recolor_popup.hide()
+				else:
+					recolor_popup.popup_centered()
+				get_tree().set_input_as_handled()
+				return
+			KEY_H:
+				lnz_text_edit._on_HeadShotButton_pressed()
+				get_tree().set_input_as_handled()
+				return
 
 	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
 		linez_mode = true
