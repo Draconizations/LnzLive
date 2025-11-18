@@ -38,6 +38,7 @@ uniform bool has_texture = false;
 varying flat float z_center_line;
 varying flat float z_center_pet;
 uniform vec3 z_center = vec3(0.0);
+uniform bool highlight = false;
 
 float random (float x) {
     return fract(sin(dot(vec2(x),
@@ -154,6 +155,10 @@ void fragment() {
 
     ALPHA = alpha_value;
     ALPHA_SCISSOR = 1.0;
+
+    if (highlight) {
+        ALBEDO = vec3(1.0, 1.0, 0.0);
+    }
 }
 
 void vertex() {

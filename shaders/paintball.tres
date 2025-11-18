@@ -29,6 +29,7 @@ uniform vec2 texture_size_raw;                    // actual texture image size f
 uniform bool has_texture = false;
 uniform sampler2D ball_texture: hint_white;
 uniform vec3 z_center_pet_world = vec3(0.0);
+uniform bool highlight = false;
 
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
@@ -233,6 +234,10 @@ void fragment() {
 
     ALPHA = alpha_value;
     ALPHA_SCISSOR = 1.0;
+
+    if (highlight) {
+        ALBEDO = vec3(1.0, 1.0, 0.0);
+    }
 }
 
 void vertex() {

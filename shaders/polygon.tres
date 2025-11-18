@@ -31,6 +31,7 @@ uniform vec3 ball_world_pos1 = vec3(0.0);
 uniform vec3 ball_world_pos2 = vec3(0.0);
 uniform vec3 ball_world_pos3 = vec3(0.0);
 uniform vec3 ball_world_pos4 = vec3(0.0);
+uniform bool highlight = false;
 
 float random(float x) {
     return fract(sin(dot(vec2(x), vec2(12.9898, 78.233))) * 43758.5453123);
@@ -130,6 +131,10 @@ void fragment() {
 
     ALBEDO = texture_color * (1.0 - fuzz_factor);
     ALPHA = 1.0;
+
+    if (highlight) {
+        ALBEDO = vec3(1.0, 1.0, 0.0);
+    }
 }
 
 void vertex() {

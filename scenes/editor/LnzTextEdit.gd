@@ -15,6 +15,11 @@ var r = RegEx.new()
 
 signal file_saved(filepath)
 signal find_ball(ball_no)
+signal find_line(line_no)
+signal find_paintball(line_no)
+signal find_polygon(line_no)
+signal find_move(line_no)
+signal find_project_ball(line_no)
 signal file_backed_up()
 
 var min_font_size = 16
@@ -2375,20 +2380,44 @@ func _on_LnzTextEdit_gui_input(event):
 		var nearest_section = get_line(nearest_section_line)
 		
 		var ball_no = -1
+		var line_no = -1
 		
 		if nearest_section == "[Ballz Info]":
-			ball_no = _get_ball_no_from_line_index(cursor_get_line(), "[Ballz Info]")
+			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
+			if ball_no != -1:
+				emit_signal("find_ball", ball_no)
 		elif nearest_section == "[Add Ball]":
-			ball_no = _get_ball_no_from_line_index(cursor_get_line(), "[Add Ball]")
+			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
+			if ball_no != -1:
+				emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
+		elif nearest_section == "[Linez]":
+			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
+			if line_no != -1:
+				emit_signal("find_line", line_no)
+		elif nearest_section == "[Paint Ballz]":
+			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Paint Ballz]")
+			if line_no != -1:
+				emit_signal("find_paintball", line_no)
+		elif nearest_section == "[Polygons]":
+			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Polygons]")
+			if line_no != -1:
+				emit_signal("find_polygon", line_no)
+		elif nearest_section == "[Move]":
+			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Move]")
+			if line_no != -1:
+				emit_signal("find_move", line_no)
+		elif nearest_section == "[Project Ball]":
+			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Project Ball]")
+			if line_no != -1:
+				emit_signal("find_project_ball", line_no)
 		else:
 			var word = get_word_under_cursor()
 			if word.is_valid_integer():
 				ball_no = int(word)
+				if ball_no != -1:
+					emit_signal("find_ball", ball_no)
 
-		if ball_no != -1:
-			emit_signal("find_ball", ball_no)
-
-func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -> int:
+func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
 	var section_find = search(section_tag, 0, 0, 0)
 	if section_find.empty():
 		return -1
@@ -2398,20 +2427,16 @@ func _get_ball_no_from_line_index(target_line_index: int, section_tag: String) -
 	if end_line == -1:
 		end_line = get_line_count()
 
-	var ball_counter = -1
+	var line_counter = -1
 	for i in range(start_line, end_line):
 		var line = get_line(i).lstrip(" ")
 		if line.begins_with(";") or line.empty() or line.begins_with("["):
 			continue
 		
-		ball_counter += 1
+		line_counter += 1
 		
 		if i == target_line_index:
-			if section_tag == "[Add Ball]":
-				# Offset addball numbers by max_base_ball_num
-				return ball_counter + KeyBallsData.max_base_ball_num
-			else:
-				return ball_counter
+			return line_counter
 				
 	return -1
 
