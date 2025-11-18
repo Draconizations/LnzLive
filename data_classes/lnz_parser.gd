@@ -1,5 +1,7 @@
 extends Node
 class_name LnzParser
+## lnz_parser.gd
+## A data class that parses entries from LNZ data
 
 var r = RegEx.new()
 var str_r = RegEx.new()
