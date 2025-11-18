@@ -26,6 +26,9 @@ const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_pale
 
 export var petz_palette           = DEFAULT_PALETTE
 
+var timer_count = 0
+var is_highlighted = false
+
 func _ready():
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
@@ -121,3 +124,23 @@ func set_transparent_color(new_value):
 func set_transparency(new_value):
 	transparency_on = new_value
 	$MeshInstance.material_override.set_shader_param("transparency_on", new_value)
+
+func flash():
+	if is_highlighted:
+		return
+	timer_count = 0
+	is_highlighted = true
+	$MeshInstance.material_override.set_shader_param("highlight", true)
+	$FlashTimer.start()
+
+func _on_FlashTimer_timeout():
+	timer_count += 1
+	if is_highlighted:
+		if timer_count % 2 == 1:
+			$MeshInstance.material_override.set_shader_param("highlight", false)
+		else:
+			$MeshInstance.material_override.set_shader_param("highlight", true)
+		if timer_count > 4:
+			$FlashTimer.stop()
+			is_highlighted = false
+			$MeshInstance.material_override.set_shader_param("highlight", false)
