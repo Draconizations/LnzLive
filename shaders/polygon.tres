@@ -166,3 +166,4 @@ shader_param/ball_world_pos1 = Vector3( 0, 0, 0 )
 shader_param/ball_world_pos2 = Vector3( 0, 0, 0 )
 shader_param/ball_world_pos3 = Vector3( 0, 0, 0 )
 shader_param/ball_world_pos4 = Vector3( 0, 0, 0 )
+shader_param/highlight = false

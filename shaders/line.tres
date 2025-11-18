@@ -256,3 +256,4 @@ shader_param/texture_size = Vector2( 256, 256 )
 shader_param/texture_size_raw = null
 shader_param/has_texture = false
 shader_param/z_center = Vector3( 0, 0, 0 )
+shader_param/highlight = false
