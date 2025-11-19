@@ -1665,6 +1665,13 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	bounds = _get_section_bounds("[Paint Ballz]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
+	var existing_paint_sigs = {}
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
+			var parts = _split_and_clean(line, delim)
+			existing_paint_sigs[_join_array(parts, delim)] = true
+	
 	var paint_content = []
 	for i in range(bounds.start, bounds.end):
 		paint_content.append(get_line(i))
@@ -1691,7 +1698,12 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				var mirror_parts = Array(parts)
 				mirror_parts[0] = str(m_base)
 				mirror_parts[2] = str(x * -1.0)
-				final_paint_lines_to_append.append(_join_array(mirror_parts, delim))
+				
+				var new_sig = _join_array(mirror_parts, delim)
+				
+				if !existing_paint_sigs.has(new_sig):
+					final_paint_lines_to_append.append(new_sig)
+					existing_paint_sigs[new_sig] = true
 
 	if !final_addball_lines_to_append.empty():
 		var bounds_ab = _get_section_bounds("[Add Ball]")
