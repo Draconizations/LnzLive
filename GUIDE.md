@@ -16,6 +16,12 @@ You can load LNZ data in several ways:
 
 To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
 
+### Help! It crashes when I do X!
+
+LnzLive is a work in progress! Please make regular backups of your LNZ files.
+
+If you encounter a bug or have a suggestion, please raise an issue in the GitHub repository so it can be tracked and resolved.
+
 ## User Interface Overview
 
 Helpful tips will appear at the top of the screen about visual and text editing tools.
@@ -86,20 +92,9 @@ The 3D viewport displays the LNZ model.
 *   **Pan:** Press the middle mouse button or hold `Space` and drag to move the model.
 *   **Quick Views:** Use the number keys `1-0` to jump to different camera angles (front, top, isometric, etc.).
 
-### Text Editor (Right Panel)
+#### Navigation
 
-The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
-
-
-## Help! It crashes when I do X!
-
-LnzLive is a work in progress! Please make regular backups of your LNZ files.
-
-If you encounter a bug or have a suggestion, please raise an issue in the GitHub repository so it can be tracked and resolved.
-
-## Basic Viewport Navigation
-
-- Click and hold the left mouse button in the vietport (center panel) to rotate the pet.
+- Click and hold the left mouse button in the viewport (center panel) to rotate the pet.
 - Use the mouse wheel to zoom in and out.
 - Press down on mouse wheel or hold space and drag to move pet around viewport.
 - Tap these numbers to perform a quick jump to various camera views:
@@ -113,6 +108,10 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 	- 8: Right-Top Isometric View
 	- 9: Left-Bottom Isometric View
 	- 0: Left-Top Isometric View
+
+### Text Editor (Right Panel)
+
+The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
 
 ## Menu Options
 
@@ -303,7 +302,7 @@ Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy-Mirror
 
-The Copy-Mirror tool will apply all changes on the left side of the pet (i.e. the side with ball number 0 - in LnzLive this is currently the left side when looking at the pet head-on, NOT the pet's left side) to the right side. This includes balls, addballs, paintballs, lines, etc.
+The Copy-Mirror tool on all ballz will apply all changes on the model's right (R) to the model's left (L) side (LnzLive is mirrored, so the left side of the viewport to the right side). This includes ballz, addballz, paintballz, linez, etc. Alternatively, if selected by right-clicking a specific ballz, then properties of that ball will be mirrored to its symmetrical equivalent. Or, if the ball is a center ball, applied to itself but mirrored on the X axis.
 
 ### Move Head
 
