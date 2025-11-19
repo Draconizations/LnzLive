@@ -241,6 +241,11 @@ Here, you will find toggles for what elements should be drawn in the pet view. T
 
 This option offers links to several handy resources, including [Carolyn Horn's hexing information](https://github.com/melissamcewen/carolyns-bible) and this [User Guide](https://github.com/tabbzi/LnzLive/blob/master/GUIDE.md)!
 
+### Axis Helper
+
+This XYZ axis indicates model's left (L) and right (R) and negative/positive directions for X, Y, and Z axes.
+
+> Note: *LnzLive camera view is actually mirrored over the X axis from the view in-game. This will get fixed, someday.*
 
 ### Background Color Selector
 
@@ -257,6 +262,10 @@ Use these controls to preview and navigate animations:
 - Jump through animations with the arrows or by entering an animation index in the box.
 - Click `Play` button or press `SPACE` to start or stop a playback.
 - Slide through animation frames by dragging the handle.
+
+### T-Pose Toggle
+
+Poses the model using perfect symmetry rather than game animation frames.
 
 ## Visual editing
 
@@ -306,7 +315,7 @@ The Copy-Mirror tool on all ballz will apply all changes on the model's right (R
 
 ### Move Head
 
-LNZ has no such thing as a 'neck extension', so this is a small util to move all head balls at once. The three text boxes are for x, y, z coordinates to move by. Hit Enter to apply. You can keep hitting Enter to continue moving.
+LNZ has no such thing as a 'neck extension', so this is a small util to move all head ballz at once. The three text boxes are for X, Y, Z coordinates to move by. Hit Enter to apply. You can keep hitting Enter to continue moving.
 
 ### Copy Ballz Colors to Clipboard
 
