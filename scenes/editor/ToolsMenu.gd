@@ -13,6 +13,7 @@ signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
 signal add_ball(selected_ball, connect_line)
 signal delete_ball(selected_ball)
 signal copy_l_to_r(ball_no)
+signal copy_r_to_l(ball_no)
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal print_ball_colors()
@@ -33,10 +34,11 @@ func _ready():
 	add_item("Create Addballz") # index 2
 	add_item("Delete Addballz / Omit Ballz") # index 3
 	add_item("Connect by Linez") # index 4
-	add_item("Copy-Mirror") # index 5
-	add_item("Paintball Mode") # index 6
-	add_item("Move Head Ballz") # index 7
-	add_item("Copy Ballz Colors to Clipboard") # index 8
+	add_item("Copy-Mirror (cam L-to-R)") # index 5
+	add_item("Copy-Mirror (cam R-to-L)") # index 6
+	add_item("Paintball Mode") # index 7
+	add_item("Move Head Ballz") # index 8
+	add_item("Copy Ballz Colors to Clipboard") # index 9
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -141,8 +143,10 @@ func _on_ToolsMenu_index_pressed(index):
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 
-	if index == 5: # Copy-Mirror
+	if index == 5: # Copy-Mirror (L-to-R)
 		emit_signal("copy_l_to_r", ball_no)
+	elif index == 6: # Copy-Mirror (R-to-L)
+		emit_signal("copy_r_to_l", ball_no)
 	elif index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, true)
@@ -159,13 +163,13 @@ func _on_ToolsMenu_index_pressed(index):
 			pet_view.line_mode_check_box.pressed = true
 			pet_view.linez_start_ball = selected_visual_ball
 			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 6: # Paintball Mode
+	elif index == 7: # Paintball Mode
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	elif index == 7: # Move Head
+	elif index == 8: # Move Head
 		var options = get_parent().get_node("HeadMovePopup")
 		options.popup_centered()
-	elif index == 8: # Print Ballz Colors
+	elif index == 9: # Print Ballz Colors
 		emit_signal("print_ball_colors")
 
 # func _on_ToolsMenu_about_to_show():
@@ -206,27 +210,35 @@ func _on_ToolsMenu_about_to_show():
 		item_4_text += " (Start: #" + str(ball_no) + ")"
 	set_item_text(4, item_4_text)
 
-	# 5: Copy-Mirror
+	# 5: Copy-Mirror (L-to-R)
 	var item_5_text = "Copy-Mirror"
 	if is_ball_selected:
 		item_5_text += " (#" + str(ball_no) + ")"
 	else:
-		item_5_text += " (all ballz)"
+		item_5_text += " (cam L-to-R, all ballz)"
 	set_item_text(5, item_5_text)
 
-	# 6: Paintball Mode
-	var item_6_text = "Paintball Mode"
+	# 6: Copy-Mirror (R-to-L)
+	var item_6_text = "Copy-Mirror"
+	set_item_disabled(6, is_ball_selected)
 	if is_ball_selected:
-		item_6_text += " (#" + str(ball_no) + ")"
-	else:
 		item_6_text += " (all ballz)"
+	else:
+		item_6_text += " (cam R-to-L, all ballz)"
 	set_item_text(6, item_6_text)
+	# 7: Paintball Mode
+	var item_7_text = "Paintball Mode"
+	if is_ball_selected:
+		item_7_text += " (#" + str(ball_no) + ")"
+	else:
+		item_7_text += " (all ballz)"
+	set_item_text(7, item_7_text)
 
-	# 7: Move Head Ballz
-	set_item_text(7, "Move Head Ballz")
+	# 8: Move Head Ballz
+	set_item_text(8, "Move Head Ballz")
 	
-	# 8: Copy Ballz Colors to Clipboard
-	set_item_text(8, "Copy Ballz Colors to Clipboard")
+	# 9: Copy Ballz Colors to Clipboard
+	set_item_text(9, "Copy Ballz Colors to Clipboard")
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
