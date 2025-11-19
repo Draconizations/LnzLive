@@ -165,7 +165,7 @@ func _on_Distribution_item_selected(index):
 		Distribution.BULLSEYE: # 12
 			description = "Creates bullseye patterns. 'Spots' is the number of bullseyes. 'Rings' controls the number of rings in each."
 		Distribution.LEOPARD: # 13
-			description = "Creates leopard-like spots. 'Spots' is the number of leopard spots. Parameters control the shape and completeness of the spots."
+			description = "Creates leopard-like spots. 'Spots' is the number of leopard spots. Requires at least 2 colors (outer and inner). Parameters control the shape and completeness of the spots."
 		Distribution.RAINBOW: # 14
 			description = "Creates rainbow arcs. 'Spots' is the number of rainbows. Parameters control the shape of the arcs."
 		Distribution.STRIPES: # 15
