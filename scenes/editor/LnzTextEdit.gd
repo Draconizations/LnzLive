@@ -327,7 +327,6 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
 
-# TODO: replace smart_split calls with split_line calls
 func _smart_split(line: String) -> PoolStringArray:
 	return _split_line(line)
 
@@ -366,15 +365,22 @@ func find_line_in_move_section(ball_no):
 	var i = 0
 	while true:
 		var looped = start_point + i
-		var line = get_line(looped).lstrip(" ")
-		if line.begins_with("["):
+		var line = get_line(looped)
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["):
 			if start_point == start_of_section:
 				return start_of_section - 1
 			else:
 				start_point = start_of_section
 				i = 0
 				continue
-		if line.begins_with(str(ball_no) + " "):
+		
+		if stripped.empty() or stripped.begins_with(";"):
+			i += 1
+			continue
+
+		var parts = _split_and_clean(line)
+		if parts.size() > 0 and parts[0] == str(ball_no):
 			break
 		i += 1
 	return start_point + i
@@ -392,16 +398,23 @@ func find_line_in_project_section(ball_no):
 	var i = 0
 	while true:
 		var looped = start_point + i
-		var line = get_line(looped).lstrip(" ")
-		var parsed_line = r.search_all(line)
-		if line.begins_with("["):
+		var line = get_line(looped)
+		var stripped = line.strip_edges()
+
+		if stripped.begins_with("["):
 			if start_point == start_of_section:
 				return start_of_section - 1
 			else:
 				start_point = start_of_section
 				i = 0
 				continue
-		if parsed_line.size() > 1 and parsed_line[1].get_string() == str(ball_no):
+		
+		if stripped.empty() or stripped.begins_with(";"):
+			i += 1
+			continue
+			
+		var parts = _split_and_clean(line)
+		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
 			break
 		
 		i += 1
@@ -420,15 +433,10 @@ func find_line_in_linez_section(ball_no):
 	var i = 0
 	while true:
 		var looped = start_point + i
-		var line = get_line(looped).lstrip(" ")
+		var line = get_line(looped)
+		var stripped = line.strip_edges()
 
-		if line.begins_with(";"):
-			i += 1
-			continue
-			
-		var parsed_line = _split_line(line)
-
-		if line.begins_with("["):
+		if stripped.begins_with("["):
 			if start_point == start_of_section:
 				return start_of_section - 1
 			else:
@@ -436,7 +444,12 @@ func find_line_in_linez_section(ball_no):
 				i = 0
 				continue
 		
-		# Check if parsed_line is empty to avoid index error
+		if stripped.empty() or stripped.begins_with(";"):
+			i += 1
+			continue
+			
+		var parsed_line = _split_and_clean(line)
+		
 		if parsed_line.empty():
 			i += 1
 			continue
