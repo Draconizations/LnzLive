@@ -1,0 +1,246 @@
+extends WindowDialog
+
+onready var species_label = $VBoxContainer/SettingsGrid/SpeciesValue
+onready var kind_option = $VBoxContainer/SettingsGrid/KindOption
+onready var base_container = $VBoxContainer/SettingsGrid/BaseContainer
+onready var dog_base_input = $VBoxContainer/SettingsGrid/BaseContainer/DogBaseInput
+onready var cat_base_input = $VBoxContainer/SettingsGrid/BaseContainer/CatBaseInput
+onready var baby_base_input = $VBoxContainer/SettingsGrid/BaseContainer/BabyBaseInput
+onready var dog_label = $VBoxContainer/SettingsGrid/BaseContainer/DogLabel
+onready var cat_label = $VBoxContainer/SettingsGrid/BaseContainer/CatLabel
+onready var baby_label = $VBoxContainer/SettingsGrid/BaseContainer/BabyLabel
+
+onready var text_edit = $VBoxContainer/TextEdit
+
+var dog_generator
+var current_species
+
+const KIND_PETZ = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_BackL", "Sock_BackR", "Tail", "Hat", "Hat2", "EarringL", "EarringR", "NoseThing", "NoseThing2", "Glasses"]
+const KIND_BABYZ = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses"]
+
+func _ready():
+	dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
+
+func open(target_ball_no = -1):
+	popup_centered()
+	initialize_data(target_ball_no)
+
+func initialize_data(target_ball_no):
+	var lnz = dog_generator.lnz
+	if !lnz:
+		return
+
+	current_species = lnz.species
+
+	var species_text = "Petz"
+	if current_species == KeyBallsData.Species.BABY:
+		species_text = "Babyz"
+	species_label.text = species_text
+
+	kind_option.clear()
+	var options = KIND_PETZ
+	if current_species == KeyBallsData.Species.BABY:
+		options = KIND_BABYZ
+
+	for opt in options:
+		kind_option.add_item(opt)
+
+	_setup_base_inputs(target_ball_no)
+
+func _setup_base_inputs(target_ball_no):
+	dog_label.visible = false
+	dog_base_input.visible = false
+	cat_label.visible = false
+	cat_base_input.visible = false
+	baby_label.visible = false
+	baby_base_input.visible = false
+
+	dog_base_input.text = ""
+	cat_base_input.text = ""
+	baby_base_input.text = ""
+
+	if current_species == KeyBallsData.Species.BABY:
+		baby_label.visible = true
+		baby_base_input.visible = true
+		if target_ball_no != -1:
+			baby_base_input.text = str(target_ball_no)
+			if KeyBallsData.bab_ball_definitions.has(target_ball_no):
+				baby_label.text = "Base (" + KeyBallsData.bab_ball_definitions[target_ball_no].name + "):"
+	else:
+		# Petz (Dogz/Catz)
+		dog_label.visible = true
+		dog_base_input.visible = true
+		cat_label.visible = true
+		cat_base_input.visible = true
+
+		if target_ball_no != -1:
+			var dog_ball = -1
+			var cat_ball = -1
+
+			if current_species == KeyBallsData.Species.DOG:
+				dog_ball = target_ball_no
+				# Find equivalent cat ball
+				cat_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.dog_ball_definitions, KeyBallsData.cat_ball_definitions)
+			elif current_species == KeyBallsData.Species.CAT:
+				cat_ball = target_ball_no
+				# Find equivalent dog ball
+				dog_ball = _find_equivalent_ball(target_ball_no, KeyBallsData.cat_ball_definitions, KeyBallsData.dog_ball_definitions)
+
+			if dog_ball != -1:
+				dog_base_input.text = str(dog_ball)
+			if cat_ball != -1:
+				cat_base_input.text = str(cat_ball)
+
+func _find_equivalent_ball(src_ball, src_defs, dest_defs):
+	if src_defs.has(src_ball):
+		var name = src_defs[src_ball].name
+		for k in dest_defs:
+			if dest_defs[k].name == name:
+				return k
+	return -1
+
+func _on_GenerateButton_pressed():
+	generate_clz()
+
+func _on_CopyButton_pressed():
+	OS.set_clipboard(text_edit.text)
+
+func generate_clz():
+	var lnz = dog_generator.lnz
+
+	var dog_base = -1
+	var cat_base = -1
+	var baby_base = -1
+	var target_base = -1
+
+	if current_species == KeyBallsData.Species.BABY:
+		if baby_base_input.text.is_valid_integer():
+			baby_base = int(baby_base_input.text)
+			target_base = baby_base
+	else:
+		if dog_base_input.text.is_valid_integer():
+			dog_base = int(dog_base_input.text)
+		if cat_base_input.text.is_valid_integer():
+			cat_base = int(cat_base_input.text)
+
+		if current_species == KeyBallsData.Species.DOG:
+			target_base = dog_base
+		else:
+			target_base = cat_base
+
+	if target_base == -1:
+		text_edit.text = "Error: Invalid Base Ball"
+		return
+
+	# 1. Collect [Add Ball] entries
+	# Filter for addballs based on target_base
+	var relevant_addballs = []
+	var old_to_new_idx = {} # original ball_no -> new index (1, 2, 3...)
+	var next_idx = 1
+
+	# Iterate all addballs in LNZ
+	var sorted_keys = lnz.addballs.keys()
+	sorted_keys.sort()
+
+	for k in sorted_keys:
+		if lnz.omissions.has(k):
+			continue
+		var ab = lnz.addballs[k]
+		if ab.base == target_base:
+			relevant_addballs.append(ab)
+			old_to_new_idx[k] = next_idx
+			next_idx += 1
+
+	# 2. Collect [Linez] entries
+	var relevant_lines = []
+	for line in lnz.lines:
+		# Check if start/end are in our relevant addballs
+		# The prompt says: "involving those Addballz (NOT involving the base ball)"
+		# So both start and end must be in old_to_new_idx
+		if old_to_new_idx.has(line.start) and old_to_new_idx.has(line.end):
+			relevant_lines.append(line)
+
+	# 3. [Default Scalez]
+	var pet_scale = lnz.scales.x
+	var ball_scale = lnz.scales.y
+
+	# 4. [Texture List]
+	var texture_entries = []
+	for tex in lnz.texture_list:
+		# Format: filename \t transparent_color (if present)
+		var line = tex.filename
+		if tex.transparent_color != null: # Assuming explicit null check if missing
+			# Actually LnzParser defaults?
+			# LnzParser stores transparent_color string.
+			if tex.transparent_color != "":
+				line += "\t" + str(tex.transparent_color)
+				if tex.texture_size != null:
+					line += "\t" + str(int(tex.texture_size.x)) + "\t" + str(int(tex.texture_size.y))
+		texture_entries.append(line)
+
+	# 5. BaseBallSize
+	var base_ball_size = 60
+	#if dog_generator.bhd and target_base < dog_generator.bhd.ball_sizes.size():
+	#	base_ball_size = dog_generator.bhd.ball_sizes[target_base]
+
+	# Construct Output
+	var output = ""
+
+	# Header
+	output += "[Add Clothing]\n"
+	output += kind_option.text + "\n"
+	for t in texture_entries:
+		output += t + "\n"
+	output += "end\n"
+
+	# Scales line
+	output += "; petScale\tballScale\tbaseBallSize\tnumPetBalls\tnumPetLines\n"
+	output += str(pet_scale) + "\t" + str(ball_scale) + "\t" + str(base_ball_size) + "\n"
+
+	# Anchor Block
+	output += ";bBall\tx\ty\tz\tcolor\toutCol\tfuzz\tcolGroup\toutType\tsize\ttexture\n"
+
+	if current_species == KeyBallsData.Species.BABY:
+		output += str(baby_base) + "\t0,0,0\t83\t83\t0\t0\t-1\t0\t0\n"
+	else:
+		output += "#2.A ; Dog\n"
+		output += "-" + str(dog_base) + "\t0,0,0\t71\t35\t1\t0\t-1\t0\t0\n"
+		output += "#1 ; Cat\n"
+		output += "-" + str(cat_base) + "\t0,0,0\t71\t35\t1\t0\t-1\t0\t0\n"
+		output += "##\n"
+
+	# [Add Ball]
+	for ab in relevant_addballs:
+		var new_base = 0 # all attached to base ball 0 in CLZ
+		var line_str = str(new_base) + "\t"
+		line_str += str(int(ab.position.x)) + "," + str(int(ab.position.y)) + "," + str(int(ab.position.z)) + "\t"
+		line_str += str(ab.color_index) + "\t"
+		line_str += str(ab.outline_color_index) + "\t"
+		line_str += str(ab.fuzz) + "\t"
+		line_str += str(ab.group) + "\t"
+		line_str += str(ab.outline) + "\t"
+		line_str += str(ab.size) + "\t"
+		line_str += str(ab.texture_id)
+		output += line_str + "\n"
+
+	output += "end\n"
+
+	# [Linez]
+	output += ";start\tend\tfuzz\tcol\tlfCol\trtCol\tsThck\teThick\tfulloutline\tdrawOrder\n"
+	for l in relevant_lines:
+		var new_start = old_to_new_idx[l.start]
+		var new_end = old_to_new_idx[l.end]
+
+		var line_str = str(new_start) + "\t" + str(new_end) + "\t"
+		line_str += str(l.fuzz) + "\t"
+		line_str += str(l.color_index) + "\t"
+		line_str += str(l.l_color_index) + "\t"
+		line_str += str(l.r_color_index) + "\t"
+		line_str += str(l.s_thick) + "\t"
+		line_str += str(l.e_thick)
+		# handle fullOutline and lineOrder when we eventually add to Linez data and rendering
+		output += line_str + "\n"
+
+	output += "end"
+
+	text_edit.text = output

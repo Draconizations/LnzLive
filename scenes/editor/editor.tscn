@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=2]
+[gd_scene load_steps=39 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -30,6 +30,8 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
 [ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=36]
+[ext_resource path="res://scenes/editor/ExportClothes.tscn" type="PackedScene" id=37]
+[ext_resource path="res://scenes/editor/ExportButtonClothes.gd" type="Script" id=38]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -748,6 +750,20 @@ custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
+
+[node name="ExportButtonClothes" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
+margin_top = 34.0
+margin_right = 129.0
+margin_bottom = 64.0
+rect_min_size = Vector2( 0, 30 )
+custom_styles/hover = ExtResource( 20 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Export to Clothes CLZ"
+script = ExtResource( 38 )
 
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 489.0
@@ -1612,6 +1628,8 @@ items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", nu
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="ExportClothes" parent="SceneRoot" instance=ExtResource( 37 )]
 
 [connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]

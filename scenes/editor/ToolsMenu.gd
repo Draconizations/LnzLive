@@ -39,6 +39,7 @@ func _ready():
 	add_item("Paintball Mode") # index 7
 	add_item("Move Head Ballz") # index 8
 	add_item("Copy Ballz Colors to Clipboard") # index 9
+	add_item("Export to Clothes CLZ") # index 10
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -171,6 +172,8 @@ func _on_ToolsMenu_index_pressed(index):
 		options.popup_centered()
 	elif index == 9: # Print Ballz Colors
 		emit_signal("print_ball_colors")
+	elif index == 10: # Export to Clothes CLZ
+		get_parent().get_node("ExportClothes").open(ball_no)
 
 # func _on_ToolsMenu_about_to_show():
 # 	var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
@@ -239,6 +242,12 @@ func _on_ToolsMenu_about_to_show():
 	
 	# 9: Copy Ballz Colors to Clipboard
 	set_item_text(9, "Copy Ballz Colors to Clipboard")
+
+	# 10: Export to Clothes CLZ
+	var item_10_text = "Export to Clothes CLZ"
+	if is_ball_selected:
+		item_10_text += " (#" + str(ball_no) + ")"
+	set_item_text(10, item_10_text)
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
