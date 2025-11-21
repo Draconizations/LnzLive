@@ -10,13 +10,25 @@ extends Panel
 var dragging = false
 var drag_start = Vector2()
 
+var dog_generator = null
+
 onready var vbox = $PaletteViewerScrollContainer/PaletteViewerVBoxContainer
-onready var dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
 onready var pixel_font = load("res://resources/fonts/font_pixel_code_14.tres")
 onready var close_button = $CloseButton
 
 func _ready():
-	close_button.connect("pressed", self, "hide")
+	if close_button:
+		close_button.connect("pressed", self, "_on_close_button_pressed")
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")
+		populate_colors()
+	else:
+		print("PaletteViewer Error: Could not find dog_generator node.")
 
 func _gui_input(event):
 	if event is InputEventMouseButton:
@@ -114,3 +126,9 @@ func _on_palette_selected(filename_no_ext: String):
 		
 	dog_generator.lnz.palette = filename_no_ext + ".png"
 	populate_colors()
+
+func _on_pet_palette_changed(palette_name):
+	populate_colors()
+
+func _on_close_button_pressed():
+    self.hide()

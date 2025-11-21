@@ -81,6 +81,8 @@ signal ball_resized(ball_no, size_dif)
 signal addball_created(reference_ball)
 signal line_created(start_ball, end_ball)
 
+signal palette_changed(palette_name)
+
 func _ready():
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
@@ -247,6 +249,7 @@ func generate_pet(file_path):
 	KeyBallsData.build_bodyarea_map()
 	init_ball_data(lnz_info.species)
 	init_visual_balls(lnz_info, true)
+	emit_signal("palette_changed", lnz.palette)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()

@@ -18,6 +18,18 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -38.0
+rect_min_size = Vector2( 450, 500 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="CloseButton" type="Button" parent="."]
 anchor_left = 0.5
 anchor_top = 1.0
@@ -34,18 +46,6 @@ custom_styles/disabled = ExtResource( 2)
 custom_styles/normal = ExtResource( 2)
 custom_fonts/font = ExtResource( 3)
 text = "Close"
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 8.0
-margin_top = 8.0
-margin_right = -8.0
-margin_bottom = -38.0
-rect_min_size = Vector2( 450, 500 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
