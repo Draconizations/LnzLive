@@ -634,3 +634,4 @@ var bab_ball_definitions = {
 	117: { "name": "wristR" },
 	118: { "name": "zorient" },
 	119: { "name": "ztrans" }
+}
