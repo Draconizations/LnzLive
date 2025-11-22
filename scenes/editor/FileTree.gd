@@ -18,6 +18,7 @@ var examples: TreeItem
 var local_storage: TreeItem
 var root: TreeItem
 var local_storage_textures: TreeItem
+var res_textures: TreeItem
 var local_storage_palettes: TreeItem
 
 export var example_file_location = "res://resources/"
@@ -66,6 +67,7 @@ func _ready():
 
 	rescan(null)
 	rescan_textures()
+	rescan_res_textures()
 	rescan_palettes()
 
 func _on_FileDialog_popup_hide():
@@ -215,13 +217,23 @@ func rescan_textures():
 	local_storage_textures.collapsed = was_collapsed
 	local_storage_textures.set_text(0, "Local Textures")
 	scan_local_textures()
+
+func rescan_res_textures():
+	var was_collapsed = true
+	if res_textures != null:
+		was_collapsed = res_textures.collapsed
+		root.remove_child(res_textures)
+	res_textures = create_item(root, 3)
+	res_textures.collapsed = was_collapsed
+	res_textures.set_text(0, "Base Textures")
+	scan_res_textures()
 	
 func rescan_palettes():
 	var was_collapsed = true
 	if local_storage_palettes != null:
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
-	local_storage_palettes = create_item(root, 3)
+	local_storage_palettes = create_item(root, 4)
 	local_storage_palettes.collapsed = was_collapsed
 	local_storage_palettes.set_text(0, "Local Palettes")
 	scan_local_palettes()
@@ -281,6 +293,49 @@ func scan_local_textures():
 				var icon_tex = ImageTexture.new()
 				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 				new_item.set_icon(0, icon_tex)
+		filename = dir.get_next()
+	dir.list_dir_end()
+
+func scan_res_textures():
+	var dir = Directory.new()
+	var textures_dir = "res://resources/textures"
+	if dir.open(textures_dir) != OK:
+		return
+	dir.list_dir_begin()
+	var filename = dir.get_next()
+
+	var processed = []
+
+	while filename != "":
+		var final_filename = ""
+		if filename.to_lower().ends_with(".bmp"):
+			final_filename = filename
+		elif filename.to_lower().ends_with(".bmp.import"):
+			final_filename = filename.get_basename()
+
+		if final_filename != "" and not final_filename in processed:
+			processed.append(final_filename)
+			var full_path = textures_dir.plus_file(final_filename)
+
+			var new_item = create_item(res_textures)
+			new_item.set_text(0, final_filename)
+			new_item.set_metadata(0, full_path)
+
+			# Load image for preview
+			var file = File.new()
+			if file.open(full_path, File.READ) == OK:
+				var buf = file.get_buffer(file.get_len())
+				file.close()
+
+				var icon_img = Image.new()
+				icon_img.load_bmp_from_buffer(buf)
+				icon_img.convert(Image.FORMAT_RGBA8)
+				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+
+				var icon_tex = ImageTexture.new()
+				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
+				new_item.set_icon(0, icon_tex)
+
 		filename = dir.get_next()
 	dir.list_dir_end()
 
