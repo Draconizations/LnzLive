@@ -24,8 +24,10 @@ var file_dialog
 var http_api
 var http_download
 var local_version = ""
+var local_asset_name = ""
 var target_remote_version = ""
 var target_download_url = ""
+var target_asset_name = ""
 var install_dir = "" 
 var game_install_path = "" 
 var version_file_path = "" 
@@ -72,6 +74,7 @@ func setup_dynamic_ui():
 	btn_change_path.add_stylebox_override("normal", btn_install.get_stylebox("normal"))
 	btn_change_path.add_stylebox_override("hover", btn_install.get_stylebox("hover"))
 	btn_change_path.add_stylebox_override("pressed", btn_install.get_stylebox("pressed"))
+	btn_change_path.add_stylebox_override("disabled", btn_install.get_stylebox("disabled"))
 	btn_change_path.add_stylebox_override("focus", btn_install.get_stylebox("focus"))
 	btn_change_path.add_font_override("font", btn_install.get_font("font"))
 	
@@ -85,9 +88,8 @@ func setup_dynamic_ui():
 	lbl_path_display.align = Label.ALIGN_CENTER
 	lbl_path_display.valign = Label.VALIGN_CENTER
 	lbl_path_display.autowrap = true
-	
-	lbl_path_display.size_flags_horizontal = SIZE_FILL # Fill available space, don't expand it
-	lbl_path_display.rect_min_size = Vector2(100, 0) # Allow it to shrink if needed
+	lbl_path_display.size_flags_horizontal = SIZE_FILL 
+	lbl_path_display.rect_min_size = Vector2(100, 0)
 	
 	lbl_path_display.add_color_override("font_color", Color(0.5, 0.8, 0.8))
 	if status_label.has_font_override("font"):
@@ -180,10 +182,19 @@ func _process(_delta):
 
 func check_local_version():
 	var file = File.new()
+	local_asset_name = ""
+	
 	if file.file_exists(version_file_path):
 		file.open(version_file_path, File.READ)
-		local_version = file.get_as_text().strip_edges()
+		var content = file.get_as_text().strip_edges()
 		file.close()
+		
+		var json_res = JSON.parse(content)
+		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+			local_version = json_res.result.get("tag", "Unknown")
+			local_asset_name = json_res.result.get("asset", "")
+		else:
+			local_version = content
 	else:
 		local_version = "None"
 
@@ -279,27 +290,28 @@ func update_target_from_selection():
 	var selected_release = all_releases_data[index]
 	target_remote_version = selected_release["tag_name"]
 	target_download_url = ""
+	target_asset_name = "" # Reset target asset
 	
 	var assets = selected_release["assets"]
-	var latest_asset = null
-
+	var best_asset = null
+	
 	for asset in assets:
 		if not asset["name"].ends_with(".exe"):
 			continue
 		
-		if latest_asset == null:
-			latest_asset = asset
+		if best_asset == null:
+			best_asset = asset
 			continue
 			
-		if asset["updated_at"] > latest_asset["updated_at"]:
-			latest_asset = asset
+		if asset["updated_at"] > best_asset["updated_at"]:
+			best_asset = asset
 	
-	if latest_asset:
-		target_download_url = latest_asset["browser_download_url"]
-		print("Selected Asset: ", latest_asset["name"], " | Updated: ", latest_asset["updated_at"])
+	if best_asset:
+		target_download_url = best_asset["browser_download_url"]
+		target_asset_name = best_asset["name"] # Track the actual file name
+		print("Selected Asset: ", best_asset["name"], " | Updated: ", best_asset["updated_at"])
 	
 	update_ui_state()
-
 
 func update_ui_state():
 	status_label.text = "Local: %s | Target: %s" % [local_version, target_remote_version]
@@ -316,8 +328,12 @@ func update_ui_state():
 	if not game_exists:
 		btn_install.disabled = false
 		btn_install.visible = true
-	elif local_version != target_remote_version:
+	elif local_version != target_remote_version or (target_asset_name != "" and local_asset_name != target_asset_name):
 		btn_update.text = "Install " + target_remote_version
+		
+		if local_version == target_remote_version:
+			btn_update.text = "Update " + target_remote_version + " (Patch)"
+			
 		btn_update.disabled = false
 		btn_update.visible = true
 		btn_launch.disabled = false
@@ -330,6 +346,7 @@ func start_download():
 		status_label.text = "Error: No download URL for this version."
 		return
 		
+	# Ensure directory exists before downloading
 	var dir = Directory.new()
 	if not dir.dir_exists(install_dir):
 		var err = dir.make_dir_recursive(install_dir)
@@ -399,10 +416,16 @@ func _on_download_request_completed(result, response_code, _headers, _body):
 	
 	var file = File.new()
 	file.open(version_file_path, File.WRITE)
-	file.store_string(target_remote_version)
+	
+	var save_data = {
+		"tag": target_remote_version,
+		"asset": target_asset_name
+	}
+	file.store_string(to_json(save_data))
 	file.close()
 	
 	local_version = target_remote_version
+	local_asset_name = target_asset_name
 	update_ui_state()
 	status_label.text = "Ready!"
 
