@@ -101,7 +101,10 @@ func _on_api_request_completed(result, response_code, _headers, body):
 		return
 		
 	if typeof(json_result.result) == TYPE_ARRAY:
-		all_releases_data = json_result.result
+		all_releases_data = []
+		for release in json_result.result:
+			if release.has("tag_name") and not release["tag_name"].begins_with("launcher"):
+				all_releases_data.append(release)
 		all_releases_data.sort_custom(self, "_sort_releases_desc")
 		populate_version_list()
 	else:
