@@ -11,7 +11,10 @@ config_version=4
 [application]
 
 config/name="LnzLiveLauncher"
-run/main_scene="res://scenes/Launcher.tscn"
+run/main_scene="res://scenes/bootscreen.tscn"
+boot_splash/image="res://images/launcher_roll_still2.png"
+boot_splash/use_filter=false
+boot_splash/bg_color=Color( 0.168627, 0.45098, 0.45098, 1 )
 config/icon="res://LnzLiveLauncherIcon.png"
 config/windows_native_icon="res://LnzLiveLauncherIcon.ico"
 
