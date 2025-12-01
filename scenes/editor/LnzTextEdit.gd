@@ -938,10 +938,10 @@ func _count_section_entries(section_name: String) -> int:
 	return entry_count
 
 func _find_insertion_line(start_line: int, end_line: int) -> int:
-	var i = end_line
-	while i > start_line and get_line(i - 1).strip_edges() == "":
-		i -= 1
-	return i
+	for i in range(end_line - 1, start_line - 1, -1):
+		if get_line(i).strip_edges() == "":
+			return i
+	return end_line
 
 # Deletes an addball and references, or marks a base ball for omission
 func _on_ToolsMenu_delete_ball(ball_no: int):
@@ -3149,8 +3149,18 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 		section_tag = "[Add Ball]"
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
-		print("[LNZ EDIT] No %s section found" % section_tag)
-		return
+		if section_tag == "[Move]":
+			print("[LNZ EDIT] [Move] section missing, creating it.")
+			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+			var all_lines = get_text().split("\n")
+			all_lines.insert(first_section_line, "[Move]")
+			all_lines.insert(first_section_line + 1, "")
+			_set_text_preserve(all_lines.join("\n"))
+			sec = search(section_tag, 0, 0, 0)
+		else:
+			print("[LNZ EDIT] No %s section found" % section_tag)
+			return
+
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
 	if end_line == -1:
@@ -3207,9 +3217,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 				new_pos.y, sep,
 				new_pos.z
 			]
-			var insert_at = end_line
-			while insert_at > start_line and get_line(insert_at - 1).strip_edges() == "":
-				insert_at -= 1
+			var insert_at = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
