@@ -1,9 +1,8 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=3]
-
 
 [node name="PaletteViewerPopup" type="Panel"]
 visible = false
@@ -12,7 +11,7 @@ margin_top = 172.014
 margin_right = 687.263
 margin_bottom = 672.014
 rect_min_size = Vector2( 500, 500 )
-custom_styles/panel = ExtResource( 2)
+custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -30,6 +29,11 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="PaletteViewerScrollContainer"]
+margin_right = 450.0
+margin_bottom = 500.0
+rect_min_size = Vector2( 450, 500 )
+
 [node name="CloseButton" type="Button" parent="."]
 anchor_left = 0.5
 anchor_top = 1.0
@@ -39,18 +43,13 @@ margin_left = -242.0
 margin_top = -34.0
 margin_right = 242.0
 margin_bottom = -14.0
-custom_styles/hover = ExtResource( 2)
-custom_styles/pressed = ExtResource( 2)
-custom_styles/focus = ExtResource( 2)
-custom_styles/disabled = ExtResource( 2)
-custom_styles/normal = ExtResource( 2)
-custom_fonts/font = ExtResource( 3)
+custom_styles/hover = ExtResource( 2 )
+custom_styles/pressed = ExtResource( 2 )
+custom_styles/focus = ExtResource( 2 )
+custom_styles/disabled = ExtResource( 2 )
+custom_styles/normal = ExtResource( 2 )
+custom_fonts/font = ExtResource( 3 )
 text = "Close"
 __meta__ = {
 "_edit_use_anchors_": false
 }
-
-[node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="PaletteViewerScrollContainer"]
-margin_right = 450.0
-margin_bottom = 500.0
-rect_min_size = Vector2( 450, 500 )
