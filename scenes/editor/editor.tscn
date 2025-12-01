@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=2]
+[gd_scene load_steps=37 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -29,7 +29,6 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
-[ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=36]
 [ext_resource path="res://scenes/editor/ExportClothes.tscn" type="PackedScene" id=37]
 [ext_resource path="res://scenes/editor/ExportButtonClothes.gd" type="Script" id=38]
 
@@ -488,8 +487,8 @@ margin_right = 119.0
 margin_bottom = 111.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_right = 120.0
-margin_bottom = 24.0
+margin_right = 119.0
+margin_bottom = 19.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -503,9 +502,9 @@ __meta__ = {
 }
 
 [node name="PaintballModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_top = 28.0
-margin_right = 120.0
-margin_bottom = 52.0
+margin_top = 23.0
+margin_right = 119.0
+margin_bottom = 42.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -519,9 +518,9 @@ __meta__ = {
 }
 
 [node name="ProjectModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_top = 84.0
-margin_right = 120.0
-margin_bottom = 108.0
+margin_top = 46.0
+margin_right = 119.0
+margin_bottom = 65.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -535,9 +534,9 @@ __meta__ = {
 }
 
 [node name="PresetModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_top = 112.0
-margin_right = 120.0
-margin_bottom = 136.0
+margin_top = 69.0
+margin_right = 119.0
+margin_bottom = 88.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -551,9 +550,9 @@ __meta__ = {
 }
 
 [node name="LineModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_top = 140.0
-margin_right = 120.0
-margin_bottom = 164.0
+margin_top = 92.0
+margin_right = 119.0
+margin_bottom = 111.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -601,13 +600,13 @@ __meta__ = {
 }
 
 [node name="DrawToggleContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer"]
-margin_right = 126.0
-margin_bottom = 136.0
+margin_right = 127.0
+margin_bottom = 142.0
 mouse_filter = 0
 
 [node name="PolygonCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
-margin_right = 126.0
-margin_bottom = 24.0
+margin_right = 127.0
+margin_bottom = 19.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -620,9 +619,9 @@ pressed = true
 text = "Draw polygons"
 
 [node name="LineCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
-margin_top = 28.0
-margin_right = 126.0
-margin_bottom = 52.0
+margin_top = 23.0
+margin_right = 127.0
+margin_bottom = 42.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -635,9 +634,9 @@ pressed = true
 text = "Draw lines"
 
 [node name="PaintballCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
-margin_top = 56.0
-margin_right = 126.0
-margin_bottom = 80.0
+margin_top = 46.0
+margin_right = 127.0
+margin_bottom = 65.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -650,9 +649,9 @@ pressed = true
 text = "Draw paintballs"
 
 [node name="AddballCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
-margin_top = 84.0
-margin_right = 126.0
-margin_bottom = 108.0
+margin_top = 69.0
+margin_right = 127.0
+margin_bottom = 88.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -665,9 +664,9 @@ pressed = true
 text = "Draw addballs"
 
 [node name="BallCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer"]
-margin_top = 112.0
-margin_right = 126.0
-margin_bottom = 136.0
+margin_top = 92.0
+margin_right = 127.0
+margin_bottom = 111.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -683,17 +682,17 @@ __meta__ = {
 }
 
 [node name="VisualToggleContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer"]
-margin_left = 130.0
-margin_right = 278.0
-margin_bottom = 136.0
+margin_left = 131.0
+margin_right = 283.0
+margin_bottom = 142.0
 mouse_filter = 0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ToggleSpecialBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
-margin_right = 148.0
-margin_bottom = 24.0
+margin_right = 152.0
+margin_bottom = 19.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -705,9 +704,9 @@ pressed = true
 text = "Show special balls"
 
 [node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
-margin_top = 28.0
-margin_right = 148.0
-margin_bottom = 52.0
+margin_top = 23.0
+margin_right = 152.0
+margin_bottom = 42.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -737,9 +736,16 @@ script = ExtResource( 12 )
 margin_right = 8.0
 margin_bottom = 8.0
 custom_styles/panel = ExtResource( 24 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="ExportButtonOBJ" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
-margin_right = 129.0
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
+margin_right = 137.0
+margin_bottom = 64.0
+
+[node name="ExportButtonOBJ" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel/VBoxContainer"]
+margin_right = 137.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
@@ -751,9 +757,9 @@ custom_fonts/font = ExtResource( 28 )
 text = "Export OBJ 3D Model"
 script = ExtResource( 9 )
 
-[node name="ExportButtonClothes" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel"]
+[node name="ExportButtonClothes" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ExportOptionButton/PopupPanel/VBoxContainer"]
 margin_top = 34.0
-margin_right = 129.0
+margin_right = 137.0
 margin_bottom = 64.0
 rect_min_size = Vector2( 0, 30 )
 custom_styles/hover = ExtResource( 20 )
@@ -1676,8 +1682,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
