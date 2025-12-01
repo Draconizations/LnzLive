@@ -22,7 +22,7 @@ signal find_move(line_no)
 signal find_project_ball(line_no)
 signal file_backed_up()
 
-var min_font_size = 16
+var min_font_size = 4
 
 onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 
@@ -114,7 +114,6 @@ func _on_IncreaseFontButton_pressed():
 	var font = get_font("font")
 	if font:
 		font.size += 2
-		# Rerender to apply font changes
 		_set_text_preserve(get_text())
 
 func _on_DecreaseFontButton_pressed():
@@ -3332,7 +3331,7 @@ func _on_ReplaceAllButton_pressed():
 	# compile() only takes 1 argument
 	var error = regex.compile(pattern) 
 	if error != OK:
-		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2))
 		return
 	else:
 		find_line_edit.add_color_override("font_color", Color(1, 1, 1, 1))
