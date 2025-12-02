@@ -13,6 +13,10 @@ var is_user_file = false
 var filepath: String
 var r = RegEx.new()
 
+var using_alt_font = false
+var default_font: DynamicFont
+var cascadia_font: DynamicFont
+
 signal file_saved(filepath)
 signal find_ball(ball_no)
 signal find_line(line_no)
@@ -61,6 +65,15 @@ func _ready():
 		file_tree.connect("palette_selected", self, "_on_palette_selected")
 	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):
 		file_tree.connect("example_file_selected", self, "_on_example_file_selected")
+
+	default_font = get_font("font")
+	cascadia_font = DynamicFont.new()
+	var font_data = load("res://resources/fonts/CascadiaCode.ttf")
+	if font_data:
+		cascadia_font.font_data = font_data
+		cascadia_font.use_filter = true
+	else:
+		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
 
 func _setup_context_menu():
     var menu = get_menu()
@@ -121,6 +134,28 @@ func _on_DecreaseFontButton_pressed():
 	if font:
 		font.size = max(min_font_size, font.size - 2)
 		_set_text_preserve(get_text())
+
+func _on_FontToggleButton_pressed():
+	var current_font = get_font("font")
+	var current_size = current_font.size
+	
+	using_alt_font = !using_alt_font
+	
+	var new_font
+	var btn = get_node("../HBoxContainer/FontToggleButton")
+	
+	if using_alt_font and cascadia_font.font_data:
+		new_font = cascadia_font
+		if btn: btn.text = "Font: Cascadia"
+	else:
+		new_font = default_font
+		if btn: btn.text = "Font: Pixel"
+		
+	new_font.size = current_size
+	
+	add_font_override("font", new_font)
+	
+	update()
 
 func _on_AutowrapButton_pressed():
 	self.wrap_enabled = !self.wrap_enabled
