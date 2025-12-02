@@ -131,4 +131,4 @@ func _on_pet_palette_changed(palette_name):
 	populate_colors()
 
 func _on_close_button_pressed():
-    self.hide()
+	self.hide()
