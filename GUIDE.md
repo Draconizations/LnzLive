@@ -4,7 +4,11 @@ LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk y
 
 ## Quickstart
 
-### Loading LNZ into the Editor
+### Launcher for auto-updates
+
+Keep up-to-date on new beta versions of LnzLive by downloading the [**LnzLive Launcher**](https://github.com/tabbzi/LnzLive/releases/tag/launcher-v1.0) which automatically checks for new releases and allows you to change your installed version of LnzLive to any release or preview version. 
+
+### Loading LNZ into the Text Editor
 
 > Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in LnzPro or another editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
 
