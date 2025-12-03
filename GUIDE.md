@@ -340,11 +340,11 @@ Similar to textures, custom palettes can be loaded from local storage, but need 
 - [Petz Palette Converter](https://draconizations.github.io/petz-palette-converter/)
 - [Petz Paletteiare](https://tabbzi.github.io/petz-paletteiare/)
 
-To load your palette image, use the "Import LNZ / BMP / PNG" button. These should now appear under `Local Palettes` in the file tree. You can now apply the palettes as normal in the LNZ data, make sure to omit the `.png` at the end. Or, double-click the palette file name to apply automatically.
+To load your palette image, use the "Import LNZ / Texture / Palette" buttons. These should appear under the file tree or under File at the top options menu. You can now apply the palettes as normal in the LNZ data, make sure to omit the `.png` at the end. Or, double-click the palette file name to apply automatically.
 
 You can also add files directly for LnzLive to access from your file system:
 
-Go to `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures` (you may have to create this folder).
+Click the "Open User Folder" button below the file tree or go to `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures` (you may have to create this folder).
 
 After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree.
 
