@@ -43,6 +43,7 @@ var line_mode_close = false
 var paintball_mode = false
 var project_mode = false
 var auto_paintballer_mode = false
+var move_mode = false
 
 var paintball_target_ball = null
 var ray_intersect_paintball = null
@@ -61,6 +62,7 @@ onready var project_settings_instance = preload("res://scenes/editor/ProjectSett
 onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
 onready var auto_paintballer_settings_instance = preload("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
 onready var palette_viewer_instance = preload("res://scenes/editor/PaletteViewer.tscn").instance()
+onready var move_mode_settings_instance = preload("res://scenes/editor/MoveModeSettings.tscn").instance()
 
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
@@ -69,6 +71,8 @@ onready var auto_paintballer_check_box = get_tree().root.get_node("Root/SceneRoo
 onready var view_palette_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton")
 
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
+onready var move_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/MoveModeCheckBox")
+
 onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
@@ -90,6 +94,9 @@ var eraser = load("res://resources/icons/ico_eraser_2x.png")
 
 const ZOOM_STEP := 1.2
 
+var selected_balls = []
+var pending_moves = {} # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
+
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
@@ -104,6 +111,7 @@ func _ready():
 	palette_viewer_instance.connect("visibility_changed", self, "_on_palette_visibility_changed")
 
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
+	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
@@ -125,6 +133,14 @@ func _ready():
 	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
 
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
+	move_mode_settings_instance.connect("apply_moves", self, "_on_move_mode_apply")
+	move_mode_settings_instance.connect("clear_moves", self, "_on_move_mode_clear")
+	move_mode_settings_instance.connect("unselect_all", self, "_on_unselect_all")
+	move_mode_settings_instance.connect("align_selection", self, "_on_align_selection")
+	move_mode_settings_instance.connect("drop_to_floor", self, "_on_drop_to_floor")
+	move_mode_settings_instance.connect("nudge_selection", self, "_on_nudge_selection")
+
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
@@ -144,7 +160,8 @@ func _ready():
 
 func _reset_tab_state():
 	if is_instance_valid(_last_selected_by_tab):
-		_last_selected_by_tab.apply_outline_state(get_visual_state_for_ball(_last_selected_by_tab))
+		if not move_mode:
+			_last_selected_by_tab.apply_outline_state(get_visual_state_for_ball(_last_selected_by_tab))
 	_last_selected_by_tab = null
 	_current_tab_index = -1
 	_nearby_balls_cache.clear()
@@ -153,7 +170,7 @@ func _reset_tab_state():
 func _process(_delta):
 	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
 
-	if is_instance_valid(_last_selected_by_tab):
+	if is_instance_valid(_last_selected_by_tab) and not move_mode:
 		var target_ball = _last_selected_by_tab
 		var total_count = _nearby_balls_cache.size()
 		var current_idx = max(0, _current_tab_index) + 1
@@ -191,6 +208,11 @@ func _process(_delta):
 		text = "Auto Paintballer: Use the panel to generate random paintballs.\nClick 'Apply' to save changes."
 	elif project_mode:
 		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
+	elif move_mode:
+		text = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group."
+		var queued_count = pending_moves.size()
+		if queued_count > 0:
+			text += "\nQueued Moves: " + str(queued_count)
 	elif preset_mode:
 		preset_settings_instance.sync_camera(camera.global_transform)
 
@@ -239,9 +261,16 @@ func clear_active_selected_ball():
 	active_selected_ball = null
 
 func get_visual_state_for_ball(b):
-	if b == active_selected_ball:
-		return b.OutlineState.ACTIVE_SELECTED
-	return b.OutlineState.NONE
+	if move_mode:
+		if b in selected_balls:
+			return b.OutlineState.ACTIVE_SELECTED
+		elif pending_moves.has(b.ball_no):
+			return b.OutlineState.MODIFIED
+		return b.OutlineState.NONE
+	else:
+		if b == active_selected_ball:
+			return b.OutlineState.ACTIVE_SELECTED
+		return b.OutlineState.NONE
 
 func flip_camera_view():
 	var camera_transform = camera.transform
@@ -252,14 +281,152 @@ func _gui_input(event):
 	if input_is_paused:
 		return
 
-	if event is InputEventMouseButton and event.pressed and not Input.is_key_pressed(KEY_SHIFT):
+	if event is InputEventMouseButton and event.pressed and not Input.is_key_pressed(KEY_SHIFT) and not move_mode:
 		_reset_tab_state()
+
+	if move_mode:
+		# Check for Nudge hotkey via Scroll
+		if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+			var nudge_axis = ""
+			if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+			elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+			elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+			
+			if nudge_axis != "":
+				var delta = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
+				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+				get_tree().set_input_as_handled()
+				return
+
+		if event is InputEventMouseButton:
+			if event.button_index == BUTTON_LEFT:
+				if event.pressed:
+					var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+					
+					if hover:
+						if Input.is_key_pressed(KEY_CONTROL):
+							# Toggle selection
+							if hover in selected_balls:
+								selected_balls.erase(hover)
+								hover.apply_outline_state(get_visual_state_for_ball(hover))
+							else:
+								selected_balls.append(hover)
+								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+						else:
+							# If not holding CTRL, and ball is not already selected, select only this one
+							# If ball IS selected, we might be starting a drag, so don't clear others yet
+							if not (hover in selected_balls):
+								_on_unselect_all()
+								selected_balls.append(hover)
+								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+						
+						# Prepare for dragging if we have a selection
+						if selected_balls.size() > 0:
+							is_dragging = true
+							drag_ball = hover # Just as a reference for plane intersection
+							drag_start_pos = event.position
+							
+							# Record original positions for this drag session
+							var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+							for b in selected_balls:
+								if not pet_node._orig_world_pos.has(b.ball_no):
+									pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+									
+							Input.set_custom_mouse_cursor(hand_move)
+							return # Consume click on ball
+
+					else:
+						# Clicked empty space
+						_on_unselect_all()
+						# Do NOT return here, allow pass-through to rotation logic
+				else:
+					# Mouse release
+					if is_dragging: # Only commit if we were actually dragging
+						is_dragging = false
+						Input.set_custom_mouse_cursor(hand_neutral)
+						drag_ball = null
+						
+						# Commit pending moves for visual feedback (gray outline)
+						for b in selected_balls:
+							if is_instance_valid(b):
+								if not pending_moves.has(b.ball_no):
+									var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+									if pet_node._orig_world_pos.has(b.ball_no):
+										pending_moves[b.ball_no] = {
+											"orig_pos": pet_node._orig_world_pos[b.ball_no], 
+											"new_pos": b.global_transform.origin
+										}
+								else:
+									pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
+						
+						move_mode_settings_instance.set_queued_count(pending_moves.size())
+						return # Consume drag release
+
+		elif event is InputEventMouseMotion and is_dragging and drag_ball:
+			var real_center = rect_position + rect_size / 2.0
+			var offset = event.position - real_center
+			offset /= tex.rect_scale
+			var screen_pos = Vector2(500, 500) + offset
+			var ray_o = camera.project_ray_origin(screen_pos)
+			var ray_d = camera.project_ray_normal(screen_pos)
+			
+			# Drag plane based on the reference ball's position
+			var plane_n = camera.global_transform.basis.z.normalized()
+			var plane_p = drag_ball.global_transform.origin
+			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+			
+			if intersect:
+				var drag_current_pos = intersect
+				
+				# Get the previous intersection point to calculate delta
+				var prev_offset = (event.position - event.relative) - real_center
+				prev_offset /= tex.rect_scale
+				var prev_screen_pos = Vector2(500, 500) + prev_offset
+				var prev_ray_o = camera.project_ray_origin(prev_screen_pos)
+				var prev_ray_d = camera.project_ray_normal(prev_screen_pos)
+				var prev_intersect = intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
+				
+				if prev_intersect:
+					var delta = drag_current_pos - prev_intersect
+					
+					# Apply constraints
+					var constraints = move_mode_settings_instance.get_constraints()
+					
+					var constrain_x = Input.is_key_pressed(KEY_X)
+					var constrain_y = Input.is_key_pressed(KEY_Y)
+					var constrain_z = Input.is_key_pressed(KEY_Z)
+					
+					var final_lock_x = constraints.x
+					var final_lock_y = constraints.y
+					var final_lock_z = constraints.z
+					
+					# If ANY hotkey is pressed, we interpret it as "Constraint Mode"
+					# Meaning, only allow movement on pressed axes.
+					if constrain_x or constrain_y or constrain_z:
+						if not constrain_x: final_lock_x = true
+						if not constrain_y: final_lock_y = true
+						if not constrain_z: final_lock_z = true
+					
+					if final_lock_x: delta.x = 0
+					if final_lock_y: delta.y = 0
+					if final_lock_z: delta.z = 0
+					
+					# Apply to all selected balls
+					for b in selected_balls:
+						if is_instance_valid(b):
+							b.global_transform.origin += delta
+							_track_pending_move(b)
+					
+					# Handle Mirroring
+					if move_mode_settings_instance.is_mirror_x_active():
+						_apply_mirror_move(selected_balls, delta)
+
+			return
 
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
-			var is_eyedropper_active = preset_settings_instance.is_eyedropper_active() or Input.is_key_pressed(KEY_ALT)
-
+			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
 			if is_eyedropper_active:
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
@@ -508,7 +675,7 @@ func _gui_input(event):
 		return
 	
 	# Update ball position or scale during moving or resizing:
-	if event is InputEventMouseMotion and is_dragging and drag_ball:
+	if event is InputEventMouseMotion and is_dragging and drag_ball and not move_mode:
 		if is_resizing:
 			var delta = event.position - drag_start_pos
 			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
@@ -532,21 +699,25 @@ func _gui_input(event):
 			if intersect:
 				var new_pos = intersect
 				var original_pos = drag_ball.global_transform.origin
-				if Input.is_key_pressed(KEY_X):
-					new_pos.y = original_pos.y
-					new_pos.z = original_pos.z
-				elif Input.is_key_pressed(KEY_Y):
-					new_pos.x = original_pos.x
-					new_pos.z = original_pos.z
-				elif Input.is_key_pressed(KEY_Z):
-					new_pos.x = original_pos.x
-					new_pos.y = original_pos.y
+				
+				var press_x = Input.is_key_pressed(KEY_X)
+				var press_y = Input.is_key_pressed(KEY_Y)
+				var press_z = Input.is_key_pressed(KEY_Z)
+				
+				if press_x or press_y or press_z:
+					if not press_x: 
+						new_pos.x = original_pos.x
+					if not press_y: 
+						new_pos.y = original_pos.y
+					if not press_z: 
+						new_pos.z = original_pos.z
+
 				drag_ball.global_transform.origin = new_pos
 				#print("Set drag_ball position to: ", new_pos)
 		return
 
 	# Finalize drag or resize operation on mouse release:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball and not move_mode:
 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if is_resizing:
 			var size_dif = get_lnz_size_difference(original_scale, drag_ball, pet_node)
@@ -564,7 +735,7 @@ func _gui_input(event):
 		return
 
 	# Select ballz via double-click in Select Mode:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.doubleclick and not move_mode:
 		if selecting_on and last_selected_is_valid():
 			last_selected.selected()
 		return
@@ -574,7 +745,7 @@ func _gui_input(event):
 			return
 
 	# Select ballz via single-click or clear selected ballz:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on and not move_mode:
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			set_active_selected_ball(hover)
@@ -613,11 +784,11 @@ func _gui_input(event):
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball:
 				hover.apply_outline_state(hover.OutlineState.HOVER)
-		elif not preset_mode and not paintball_mode and not project_mode:
+		elif not preset_mode and not paintball_mode and not project_mode and not move_mode:
 			Input.set_custom_mouse_cursor(hand_neutral)
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab):
+	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab) and not move_mode:
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -637,7 +808,7 @@ func _gui_input(event):
 			ball_label.hide()
 
 	# Commit move for auto‑started drags on press, or for manual SHIFT‑drags on release
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and is_dragging and drag_ball:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and is_dragging and drag_ball and not move_mode:
 		var commit_now: bool = (drag_started_via_code and event.pressed) or (not drag_started_via_code and not event.pressed)
 		if commit_now:
 			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
@@ -657,8 +828,24 @@ func _gui_input(event):
 func _unhandled_key_input(event):
 	if input_is_paused:
 		return
+		
+	if move_mode and event.pressed:
+		var nudge_axis = ""
+		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+		
+		if nudge_axis != "":
+			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
+				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				get_tree().set_input_as_handled()
+				return
+			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
+				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				get_tree().set_input_as_handled()
+				return
 
-	if event.is_pressed() and event.scancode == KEY_TAB:
+	if event.is_pressed() and event.scancode == KEY_TAB and not move_mode:
 		get_tree().set_input_as_handled()
 		_cycle_nearby_ballz()
 		return
@@ -673,6 +860,11 @@ func _unhandled_key_input(event):
 			tools_menu.selected_visual_ball = null
 		tools_menu.rect_global_position = get_viewport().get_mouse_position()
 		tools_menu.popup()
+		return
+	
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_M:
+		move_mode_check_box.pressed = !move_mode_check_box.pressed
+		get_tree().set_input_as_handled()
 		return
 
 	if event.pressed and not event.control and not event.alt and not event.shift:
@@ -1039,6 +1231,10 @@ func _on_paintball_mode_toggled(is_on):
 			project_mode = false
 			project_mode_check_box.pressed = false
 			_on_project_mode_toggled(false)
+		if move_mode:
+			move_mode = false
+			move_mode_check_box.pressed = false
+			_on_move_mode_toggled(false)
 	_update_paintball_mode_ui()
 
 func _on_auto_paintballer_mode_toggled(is_on):
@@ -1061,6 +1257,10 @@ func _on_auto_paintballer_mode_toggled(is_on):
 			project_mode = false
 			project_mode_check_box.pressed = false
 			_on_project_mode_toggled(false)
+		if move_mode:
+			move_mode = false
+			move_mode_check_box.pressed = false
+			_on_move_mode_toggled(false)
 	else:
 		auto_paintballer_settings_instance.hide()
 		dog_generator._on_clear_auto_paintballz()
@@ -1078,6 +1278,10 @@ func _on_line_mode_toggled(is_on):
 			preset_mode = false
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
+		if move_mode:
+			move_mode = false
+			move_mode_check_box.pressed = false
+			_on_move_mode_toggled(false)
 	else:
 		line_mode_close = false
 		line_mode_settings_instance.hide()
@@ -1085,6 +1289,41 @@ func _on_line_mode_toggled(is_on):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
 		Input.set_custom_mouse_cursor(hand_neutral)
+
+func _on_move_mode_toggled(is_on):
+	move_mode = is_on
+	if is_on:
+		move_mode_settings_instance.show()
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
+		Input.set_custom_mouse_cursor(hand_neutral)
+		
+		# Disable other modes
+		if paintball_mode:
+			paintball_mode = false
+			paintball_check_box.pressed = false
+			_on_paintball_mode_toggled(false)
+		if linez_mode:
+			linez_mode = false
+			line_mode_check_box.pressed = false
+			_on_line_mode_toggled(false)
+		if preset_mode:
+			preset_mode = false
+			preset_mode_check_box.pressed = false
+			_on_preset_mode_toggled(false)
+		if project_mode:
+			project_mode = false
+			project_mode_check_box.pressed = false
+			_on_project_mode_toggled(false)
+			
+		# Hide ball label and clear tab selection
+		ball_label.hide()
+		_reset_tab_state()
+		
+	else:
+		move_mode_settings_instance.hide()
+		# Clear visual state of selected balls
+		_on_unselect_all()
+		_on_move_mode_clear() # Revert any pending moves visuals
 
 func _on_project_mode_toggled(is_on):
 	project_mode = is_on
@@ -1102,6 +1341,10 @@ func _on_project_mode_toggled(is_on):
 			preset_mode = false
 			preset_mode_check_box.pressed = false
 			_on_preset_mode_toggled(false)
+		if move_mode:
+			move_mode = false
+			move_mode_check_box.pressed = false
+			_on_move_mode_toggled(false)
 	else:
 		project_settings_instance.hide()
 
@@ -1230,6 +1473,10 @@ func _on_preset_mode_toggled(is_on):
 		if project_mode:
 			project_mode = false
 			project_mode_check_box.pressed = false
+		if move_mode:
+			move_mode = false
+			move_mode_check_box.pressed = false
+			_on_move_mode_toggled(false)
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
 		preset_settings_instance.hide()
@@ -1404,3 +1651,123 @@ func _restore_all_balls():
 
 		area.set_collision_layer_bit(0, true)  # Restore to layer 1
 		area.set_collision_layer_bit(1, false) # Remove from layer 2
+
+func _track_pending_move(ball):
+	if not pending_moves.has(ball.ball_no):
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if pet_node._orig_world_pos.has(ball.ball_no):
+			pending_moves[ball.ball_no] = {
+				"orig_pos": pet_node._orig_world_pos[ball.ball_no], 
+				"new_pos": ball.global_transform.origin
+			}
+	else:
+		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
+	
+	ball.apply_outline_state(get_visual_state_for_ball(ball))
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
+
+func _on_unselect_all():
+	var to_update = selected_balls.duplicate()
+	selected_balls.clear()
+	for b in to_update:
+		if is_instance_valid(b):
+			b.apply_outline_state(get_visual_state_for_ball(b)) # Will revert to MODIFIED if pending, or NONE
+
+func _on_move_mode_clear():
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if pending_moves.has(b.ball_no):
+			b.global_transform.origin = pending_moves[b.ball_no].orig_pos
+	
+	pending_moves.clear()
+	move_mode_settings_instance.set_queued_count(0)
+	
+	for b in all_balls:
+		b.apply_outline_state(get_visual_state_for_ball(b))
+
+func _on_move_mode_apply():
+	if pending_moves.empty():
+		return
+		
+	lnz_text_edit.apply_batch_moves(pending_moves)
+	
+	# Clear pending after apply
+	pending_moves.clear()
+	move_mode_settings_instance.set_queued_count(0)
+	
+	# Update original positions to new ones
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+		b.apply_outline_state(get_visual_state_for_ball(b))
+
+func _on_align_selection(axis):
+	if selected_balls.empty():
+		return
+		
+	var sum = 0.0
+	for b in selected_balls:
+		if axis == "x": sum += b.global_transform.origin.x
+		elif axis == "y": sum += b.global_transform.origin.y
+		elif axis == "z": sum += b.global_transform.origin.z
+		
+	var avg = sum / selected_balls.size()
+	
+	for b in selected_balls:
+		if axis == "x": b.global_transform.origin.x = avg
+		elif axis == "y": b.global_transform.origin.y = avg
+		elif axis == "z": b.global_transform.origin.z = avg
+		_track_pending_move(b)
+
+func _on_drop_to_floor():
+	if selected_balls.empty():
+		return
+		
+	var min_y = INF
+	for b in selected_balls:
+		if b.global_transform.origin.y < min_y:
+			min_y = b.global_transform.origin.y
+			
+	if min_y == INF: return
+	var offset = -min_y
+	
+	for b in selected_balls:
+		b.global_transform.origin.y += offset
+		_track_pending_move(b)
+
+func _on_nudge_selection(vector: Vector3):
+	if selected_balls.empty():
+		return
+		
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	var px_scale = pet_node.pixel_world_size
+	var lnz_scale = pet_node.lnz.scales.x / 255.0
+	
+	var world_delta = vector
+	world_delta.y *= -1
+	world_delta = world_delta * (px_scale * lnz_scale)
+	
+	for b in selected_balls:
+		b.global_transform.origin += world_delta
+		_track_pending_move(b)
+
+func _apply_mirror_move(balls_moved, delta):
+	for b in balls_moved:
+		var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
+		if partner_id != -1 and partner_id != b.ball_no:
+			# Find visual ball for partner
+			var partner_visual = _find_visual_ball_by_no(partner_id)
+			if partner_visual and not (partner_visual in selected_balls):
+				var mirrored_delta = delta
+				mirrored_delta.x *= -1 # Mirror X movement
+				
+				partner_visual.global_transform.origin += mirrored_delta
+				_track_pending_move(partner_visual)
+
+func _find_visual_ball_by_no(no: int) -> Spatial:
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if b.ball_no == no:
+			return b
+	return null

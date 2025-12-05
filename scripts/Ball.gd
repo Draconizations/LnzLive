@@ -42,7 +42,8 @@ enum OutlineState {
 	ACTIVE_SELECTED,
 	LINEZ_START,
 	LINEZ_TARGET,
-	HOVER
+	HOVER,
+	MODIFIED
 }
 
 var current_outline_state         = OutlineState.NONE  setget , get_outline_state
@@ -221,6 +222,9 @@ func apply_outline_state(state: int):
 		OutlineState.LINEZ_TARGET:
 			set_outline(3)
 			set_outline_color_index(4)  # BLUE
+		OutlineState.MODIFIED:
+			set_outline(3)
+			set_outline_color_index(248) # GRAY
 		OutlineState.NONE:
 			set_outline(old_outline)
 			set_outline_color_index(old_outline_color)

@@ -1329,7 +1329,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		i += 1
 	save_file()
 
-func _find_mirrored_ball(ball_no: int) -> int:
+func find_mirrored_ball(ball_no: int) -> int:
 	if ball_no >= KeyBallsData.max_base_ball_num:
 		return ball_no
 		
@@ -1433,7 +1433,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		
 		if ball_no in source_list:
 			var target_base = -1
-			var candidate = _find_mirrored_ball(ball_no)
+			var candidate = find_mirrored_ball(ball_no)
 			
 			if candidate == ball_no:
 				if reverse: target_base = get_corresponding_left_ball(ball_no)
@@ -1804,7 +1804,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		print("[LNZ EDIT] Copy-Mirror is only supported for base balls (0-%d)." % (KeyBallsData.max_base_ball_num - 1))
 		return
 
-	var mirrored_ball_no = _find_mirrored_ball(target_ball_no)
+	var mirrored_ball_no = find_mirrored_ball(target_ball_no)
 	var is_mirrored = mirrored_ball_no != target_ball_no
 	if !is_mirrored:
 		print("[LNZ EDIT] Ball #%d is a middle ball or non-symmetrical. Mirroring Addballz/Linez/Paintballz to the ball itself." % target_ball_no)
@@ -1935,7 +1935,7 @@ func _process_linez_line_for_mirror(parts: PoolStringArray, target_ball_no: int,
 func _get_mirrored_counterpart(ball: int, target: int, mirrored: int, temp_map: Dictionary) -> int:
 	if ball == target: return mirrored
 	if temp_map.has(ball): return temp_map[ball]
-	if ball < KeyBallsData.max_base_ball_num: return _find_mirrored_ball(ball)
+	if ball < KeyBallsData.max_base_ball_num: return find_mirrored_ball(ball)
 	return ball
 
 func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int):
@@ -1957,7 +1957,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 			mirrored_parts[0] = str(mirrored_ball_no)
 			mirrored_parts[1] = str(mirrored_parts[1].to_float() * -1.0)
 			if parts.size() > 4:
-				mirrored_parts[4] = str(_find_mirrored_ball(parts[4].to_int()))
+				mirrored_parts[4] = str(find_mirrored_ball(parts[4].to_int()))
 			new_mirrored_line = _join_array(mirrored_parts, delim)
 			break
 
@@ -2806,7 +2806,7 @@ func _mirror_move_processor(parts: PoolStringArray, left_balls_list: Array, midd
 		mirrored_parts[0] = str(get_corresponding_right_ball(move_ball))
 		mirrored_parts[1] = str(parts[1].to_float() * -1.0)
 		if parts.size() > 4:
-			mirrored_parts[4] = str(_find_mirrored_ball(parts[4].to_int()))
+			mirrored_parts[4] = str(find_mirrored_ball(parts[4].to_int()))
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
 	elif move_ball in middle_balls_list:
@@ -2827,8 +2827,8 @@ func _mirror_projection_processor(parts: PoolStringArray, left_balls_list: Array
 
 	if move_ball in left_balls_list:
 		var mirrored_parts = Array(parts)
-		mirrored_parts[0] = str(_find_mirrored_ball(base_ball))
-		mirrored_parts[1] = str(_find_mirrored_ball(move_ball))
+		mirrored_parts[0] = str(find_mirrored_ball(base_ball))
+		mirrored_parts[1] = str(find_mirrored_ball(move_ball))
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
 	return processed_lines
@@ -2849,7 +2849,7 @@ func _mirror_paintball_processor(parts: PoolStringArray, left_balls_list: Array,
 	if base_ball in left_balls_list or (base_ball in middle_balls_list and x_pos > 0):
 		# Create mirrored line
 		var mirrored_parts = Array(parts)
-		mirrored_parts[0] = str(_find_mirrored_ball(base_ball))
+		mirrored_parts[0] = str(find_mirrored_ball(base_ball))
 		mirrored_parts[2] = str(x_pos * -1.0)
 		processed_lines.append(_join_array(mirrored_parts, delim))
 
@@ -3254,6 +3254,123 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			var insert_at = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
+	save_file()
+
+func apply_batch_moves(pending_moves: Dictionary):
+	if pending_moves.empty():
+		return
+	
+	save_backup()
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	
+	# Group by Add Ball vs Move
+	var move_section_tag = "[Move]"
+	var add_ball_section_tag = "[Add Ball]"
+	
+	var move_sec = search(move_section_tag, 0, 0, 0)
+	if move_sec.empty():
+		print("[LNZ EDIT] [Move] section missing, creating it.")
+		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section_line, "[Move]")
+		all_lines.insert(first_section_line + 1, "")
+		text = all_lines.join("\n")
+		_set_text_preserve(text)
+		move_sec = search(move_section_tag, 0, 0, 0)
+	
+	var move_start = move_sec[SEARCH_RESULT_LINE] + 1
+	var move_end = search("[", 0, move_start, 0)[SEARCH_RESULT_LINE]
+	if move_end == -1: move_end = get_line_count()
+	
+	var add_sec = search(add_ball_section_tag, 0, 0, 0)
+	var add_start = -1
+	var add_end = -1
+	if !add_sec.empty():
+		add_start = add_sec[SEARCH_RESULT_LINE] + 1
+		add_end = search("[", 0, add_start, 0)[SEARCH_RESULT_LINE]
+		if add_end == -1: add_end = get_line_count()
+	
+	for ball_no in pending_moves.keys():
+		var data = pending_moves[ball_no]
+		var orig_pos = data.orig_pos
+		var final_pos = data.new_pos
+		
+		# Calculate LNZ delta
+		var world_delta = final_pos - orig_pos
+		
+		# Undo pixel_world_size scale then LNZ scales
+		var px_scale = pet_node.pixel_world_size
+		var lnz_scale = pet_node.lnz.scales.x / 255.0
+		var lnz_delta_raw = world_delta / (px_scale * lnz_scale)
+		lnz_delta_raw.y *= -1
+		
+		var lnz_delta = Vector3(round(lnz_delta_raw.x), round(lnz_delta_raw.y), round(lnz_delta_raw.z))
+		
+		# Hierarchy fix: If ball is an Addball, check if its Base Ball is also being moved.
+		# If so, subtract the base ball's move delta from the addball's delta.
+		if ball_no >= KeyBallsData.max_base_ball_num:
+			# Find base ball for this addball
+			# We can use lnz.addballs or pet_node.ball_map to find the base.
+			# pet_node.lnz is accessible here.
+			if pet_node.lnz.addballs.has(ball_no):
+				var addball_data = pet_node.lnz.addballs[ball_no]
+				var base_ball_no = -1
+				if typeof(addball_data) == TYPE_OBJECT: # AddBallData
+					base_ball_no = addball_data.base
+				elif typeof(addball_data) == TYPE_DICTIONARY:
+					base_ball_no = addball_data.base
+				
+				if base_ball_no != -1 and pending_moves.has(base_ball_no):
+					# Calculate base ball's delta
+					var base_data = pending_moves[base_ball_no]
+					var base_world_delta = base_data.new_pos - base_data.orig_pos
+					var base_lnz_delta_raw = base_world_delta / (px_scale * lnz_scale)
+					base_lnz_delta_raw.y *= -1
+					var base_lnz_delta = Vector3(round(base_lnz_delta_raw.x), round(base_lnz_delta_raw.y), round(base_lnz_delta_raw.z))
+					
+					lnz_delta -= base_lnz_delta
+
+		if ball_no < KeyBallsData.max_base_ball_num:
+			# Base ball: Update [Move]
+			var updated = false
+			for i in range(move_start, move_end):
+				var raw = get_line(i).strip_edges()
+				if raw == "" or raw.begins_with(";"): continue
+				var parts = _split_and_clean(raw)
+				if parts.size() >= 4 and parts[0].to_int() == ball_no:
+					parts[1] = str(parts[1].to_int() + lnz_delta.x)
+					parts[2] = str(parts[2].to_int() + lnz_delta.y)
+					parts[3] = str(parts[3].to_int() + lnz_delta.z)
+					set_line(i, _join_array(parts, " "))
+					updated = true
+					break
+			if !updated:
+				var sep = " "
+				var line_txt = "%d%s%d%s%d%s%d" % [ball_no, sep, lnz_delta.x, sep, lnz_delta.y, sep, lnz_delta.z]
+				var insert_at = _find_insertion_line(move_start, move_end)
+				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
+				move_end += 1 # shift bounds
+				if add_start != -1 and add_start > move_start:
+					add_start += 1
+					add_end += 1
+		else:
+			# Add ball: Update [Add Ball]
+			if add_start != -1:
+				var idx = ball_no - KeyBallsData.max_base_ball_num
+				var count = 0
+				for i in range(add_start, add_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					if count == idx:
+						var parts = _split_and_clean(raw)
+						if parts.size() >= 4:
+							parts[1] = str(parts[1].to_int() + lnz_delta.x)
+							parts[2] = str(parts[2].to_int() + lnz_delta.y)
+							parts[3] = str(parts[3].to_int() + lnz_delta.z)
+							set_line(i, _join_array(parts, " "))
+						break
+					count += 1
+	
 	save_file()
 
 func _escape_regex(pattern_str: String) -> String:
