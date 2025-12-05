@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://scenes/editor/LineModeSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
@@ -9,6 +9,10 @@
 size = 30
 font_data = ExtResource( 3 )
 
+[sub_resource type="DynamicFont" id=2]
+size = 24
+font_data = ExtResource( 3 )
+
 [node name="LineModeSettings" type="CanvasLayer"]
 script = ExtResource( 1 )
 
@@ -17,8 +21,8 @@ visible = false
 margin_left = 10.0
 margin_top = 10.0
 margin_right = 310.0
-margin_bottom = 335.0
-rect_min_size = Vector2( 300, 325 )
+margin_bottom = 285.0
+rect_min_size = Vector2( 300, 275 )
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 4 )
 __meta__ = {
@@ -50,17 +54,24 @@ margin_bottom = 49.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Fuzz"
 
 [node name="Fuzz" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+
+[node name="ReplaceFuzz" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 53.0
@@ -69,18 +80,25 @@ margin_bottom = 77.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer2"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Color"
 
 [node name="Color" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer2"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "-1"
+
+[node name="ReplaceColor" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer2"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 81.0
@@ -89,18 +107,25 @@ margin_bottom = 105.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer3"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-text = "Left Outline"
+text = "Left Outline Col"
 
 [node name="LeftOutlineColor" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer3"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "-1"
+
+[node name="ReplaceLeftOutlineColor" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer3"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 109.0
@@ -109,18 +134,25 @@ margin_bottom = 133.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer4"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-text = "Right Outline"
+text = "Right Outline Col"
 
 [node name="RightOutlineColor" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainer4"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 text = "-1"
+
+[node name="ReplaceRightOutlineColor" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer4"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 137.0
@@ -129,18 +161,25 @@ margin_bottom = 161.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer5"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Start Thickness"
 
 [node name="StartThickness" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer5"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-value = 100
+value = 100.0
+
+[node name="IncludStartThickness" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer5"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 165.0
@@ -149,18 +188,25 @@ margin_bottom = 189.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer6"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "End Thickness"
 
 [node name="EndThickness" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer6"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-value = 100
+value = 100.0
+
+[node name="ReplaceEndThickness" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer6"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 193.0
@@ -169,17 +215,24 @@ margin_bottom = 217.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer7"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline Type"
 
 [node name="OutlineType" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer7"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+
+[node name="ReplaceOutlineType" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer7"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 221.0
@@ -188,15 +241,31 @@ margin_bottom = 245.0
 
 [node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer8"]
 margin_top = 1.0
-margin_right = 144.0
+margin_right = 145.0
 margin_bottom = 22.0
+rect_min_size = Vector2( 145, 0 )
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Draw Order"
 
 [node name="DrawOrder" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer8"]
-margin_left = 148.0
-margin_right = 292.0
+margin_left = 149.0
+margin_right = 264.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 max_value = 1.0
+
+[node name="ReplaceDrawOrder" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainer8"]
+margin_left = 268.0
+margin_right = 292.0
+margin_bottom = 24.0
+pressed = true
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer"]
+margin_top = 249.0
+margin_right = 292.0
+margin_bottom = 266.0
+custom_fonts/font = SubResource( 2 )
+text = "Toggle to replace existing Linez properties"
+align = 1
+autowrap = true
