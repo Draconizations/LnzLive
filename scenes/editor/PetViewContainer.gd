@@ -1706,15 +1706,33 @@ func _on_align_selection(axis):
 	if selected_balls.empty():
 		return
 		
+	_align_ball_list(selected_balls, axis)
+
+	if move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group = []
+		
+		for b in selected_balls:
+			var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
+			
+			if partner_id != -1 and partner_id != b.ball_no:
+				var partner_visual = _find_visual_ball_by_no(partner_id)
+				
+				if partner_visual and not (partner_visual in selected_balls) and not (partner_visual in mirrored_group):
+					mirrored_group.append(partner_visual)
+		
+		if not mirrored_group.empty():
+			_align_ball_list(mirrored_group, axis)
+
+func _align_ball_list(ball_list, axis):
 	var sum = 0.0
-	for b in selected_balls:
+	for b in ball_list:
 		if axis == "x": sum += b.global_transform.origin.x
 		elif axis == "y": sum += b.global_transform.origin.y
 		elif axis == "z": sum += b.global_transform.origin.z
 		
-	var avg = sum / selected_balls.size()
+	var avg = sum / ball_list.size()
 	
-	for b in selected_balls:
+	for b in ball_list:
 		if axis == "x": b.global_transform.origin.x = avg
 		elif axis == "y": b.global_transform.origin.y = avg
 		elif axis == "z": b.global_transform.origin.z = avg
