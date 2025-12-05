@@ -239,7 +239,7 @@ custom_styles/focus = SubResource( 4 )
 custom_styles/disabled = SubResource( 4 )
 custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
-text = "Drop to Floor (min Y)"
+text = "Drop to Floor (max Y)"
 
 [node name="HSeparator4" type="HSeparator" parent="Panel/VBoxContainer"]
 margin_top = 257.0
