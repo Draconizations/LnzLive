@@ -47,6 +47,16 @@ var _ordered_texture_index = 0
 var _ordered_ball_index = 0
 
 func _ready():
+	var viewport_size = get_viewport().size
+	var panel = $Panel
+	var panel_size = panel.rect_size
+	
+	var default_x = (viewport_size.x - panel_size.x) / 2
+	var default_y = viewport_size.y - panel_size.y - 10
+	var default_pos = Vector2(default_x, default_y)
+	
+	panel.restore_position(default_pos)
+	
 	find_node("RandomizeButton").connect("pressed", self, "_on_RandomizeButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")

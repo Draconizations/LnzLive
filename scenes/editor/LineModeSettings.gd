@@ -10,10 +10,19 @@ func _ready():
 	var viewport_size = get_viewport().size
 	var panel = $Panel
 	var panel_size = panel.rect_size
-	panel.margin_left = (viewport_size.x - panel_size.x) / 2
-	panel.margin_right = panel.margin_left + panel_size.x
-	panel.margin_top = viewport_size.y - panel_size.y - 10
-	panel.margin_bottom = panel.margin_top + panel_size.y
+	
+	var default_x = (viewport_size.x - panel_size.x) / 2
+	var default_y = viewport_size.y - panel_size.y - 10
+	var default_pos = Vector2(default_x, default_y)
+	
+	panel.restore_position(default_pos)
+	# var viewport_size = get_viewport().size
+	# var panel = $Panel
+	# var panel_size = panel.rect_size
+	# panel.margin_left = (viewport_size.x - panel_size.x) / 2
+	# panel.margin_right = panel.margin_left + panel_size.x
+	# panel.margin_top = viewport_size.y - panel_size.y - 10
+	# panel.margin_bottom = panel.margin_top + panel_size.y
 
 func show():
 	$Panel.show()

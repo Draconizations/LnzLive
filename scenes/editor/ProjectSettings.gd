@@ -49,6 +49,16 @@ func _ready():
 	# Hide by default
 	hide()
 
+	var viewport_size = get_viewport().size
+	var panel = $Panel
+	var panel_size = panel.rect_size
+	
+	var default_x = (viewport_size.x - panel_size.x) / 2
+	var default_y = viewport_size.y - panel_size.y - 10
+	var default_pos = Vector2(default_x, default_y)
+	
+	panel.restore_position(default_pos)
+
 func _populate_projections_tree():
 	projections_tree.clear()
 	var root = projections_tree.create_item()
