@@ -1742,15 +1742,35 @@ func _on_drop_to_floor():
 	if selected_balls.empty():
 		return
 		
+	_drop_ball_list_to_floor(selected_balls)
+
+	if move_mode_settings_instance.is_mirror_x_active():
+		var mirrored_group = []
+		
+		for b in selected_balls:
+			var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
+			
+			if partner_id != -1 and partner_id != b.ball_no:
+				var partner_visual = _find_visual_ball_by_no(partner_id)
+				
+				if partner_visual and not (partner_visual in selected_balls) and not (partner_visual in mirrored_group):
+					mirrored_group.append(partner_visual)
+		
+		if not mirrored_group.empty():
+			_drop_ball_list_to_floor(mirrored_group)
+
+func _drop_ball_list_to_floor(ball_list):
 	var min_y = INF
-	for b in selected_balls:
+	for b in ball_list:
 		if b.global_transform.origin.y < min_y:
 			min_y = b.global_transform.origin.y
 			
-	if min_y == INF: return
+	if min_y == INF: 
+		return
+	
 	var offset = -min_y
 	
-	for b in selected_balls:
+	for b in ball_list:
 		b.global_transform.origin.y += offset
 		_track_pending_move(b)
 
