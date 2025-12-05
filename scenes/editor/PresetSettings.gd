@@ -361,7 +361,7 @@ func _load_texture(texture_filename: String) -> Texture:
 func update_preview():
 	for child in preview_world.get_children():
 		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
-			child.queue_free()
+			child.free()
 
 	var base_visual_ball = ball_scene.instance()
 	base_visual_ball.add_to_group("preview_objects")
