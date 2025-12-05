@@ -29,9 +29,9 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
 
-[sub_resource type="CubeMesh" id=1]
+[sub_resource type="CubeMesh" id=6]
 
-[sub_resource type="StyleBoxFlat" id=2]
+[sub_resource type="StyleBoxFlat" id=4]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -43,27 +43,27 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=3]
+[sub_resource type="StyleBoxFlat" id=5]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
 content_margin_bottom = 2.0
-bg_color = Color( 0.196078, 0.294118, 0.294118, 1 )
+bg_color = Color( 0.294118, 0.403922, 0.403922, 1 )
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="DynamicFontData" id=4]
+[sub_resource type="DynamicFontData" id=7]
 font_path = "res://resources/fonts/PixelCode.ttf"
 
-[sub_resource type="DynamicFont" id=5]
+[sub_resource type="DynamicFont" id=8]
 size = 14
 extra_spacing_top = -8
-font_data = SubResource( 4 )
+font_data = SubResource( 7 )
 
-[sub_resource type="StyleBoxFlat" id=6]
+[sub_resource type="StyleBoxFlat" id=9]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -75,7 +75,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=7]
+[sub_resource type="StyleBoxFlat" id=10]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -111,7 +111,7 @@ script = ExtResource( 3 )
 [node name="MeshInstance" type="MeshInstance" parent="PetRoot"]
 transform = Transform( 0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0, 0, 0 )
 visible = false
-mesh = SubResource( 1 )
+mesh = SubResource( 6 )
 material/0 = null
 
 [node name="SceneRoot" type="Control" parent="."]
@@ -185,7 +185,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer"]
 margin_right = 378.0
-margin_bottom = 1070.0
+margin_bottom = 1080.0
 grow_horizontal = 0
 mouse_filter = 0
 size_flags_horizontal = 3
@@ -197,7 +197,7 @@ __meta__ = {
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 margin_right = 378.0
-margin_bottom = 982.0
+margin_bottom = 1022.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/bg = ExtResource( 23 )
@@ -228,20 +228,20 @@ __meta__ = {
 }
 
 [node name="FileNavHBox1" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer"]
-margin_top = 1016.0
+margin_top = 1026.0
 margin_right = 378.0
-margin_bottom = 1041.0
+margin_bottom = 1051.0
 alignment = 1
 
 [node name="ImportButtonPalPNG" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/FileNavHBox1"]
 margin_left = 50.0
 margin_right = 188.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import Palette "
 
@@ -249,29 +249,29 @@ text = "Import Palette "
 margin_left = 192.0
 margin_right = 328.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import Texture"
 
 [node name="FileNavHBox2" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer"]
-margin_top = 1045.0
+margin_top = 1055.0
 margin_right = 378.0
-margin_bottom = 1070.0
+margin_bottom = 1080.0
 alignment = 1
 
 [node name="ImportButtonLNZ" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/FileNavHBox2"]
 margin_left = 63.0
 margin_right = 161.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import LNZ"
 
@@ -279,11 +279,11 @@ text = "Import LNZ"
 margin_left = 165.0
 margin_right = 314.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Open User Folder"
 
@@ -344,8 +344,8 @@ __meta__ = {
 }
 
 [node name="FileOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel"]
-margin_right = 150.0
-margin_bottom = 30.0
+margin_right = 114.0
+margin_bottom = 132.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1096,7 +1096,7 @@ margin_top = 30.0
 margin_right = 655.0
 margin_bottom = 90.0
 rect_min_size = Vector2( 475, 60 )
-custom_fonts/font = SubResource( 5 )
+custom_fonts/font = SubResource( 8 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."
 align = 1
@@ -1131,11 +1131,11 @@ size_flags_horizontal = 3
 [node name="FontToggleButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
 margin_right = 91.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Font: Pixel"
 
@@ -1144,11 +1144,11 @@ margin_left = 95.0
 margin_right = 115.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 20, 20 )
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "-"
 
@@ -1157,11 +1157,11 @@ margin_left = 119.0
 margin_right = 141.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 22, 20 )
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "+"
 
@@ -1169,11 +1169,11 @@ text = "+"
 margin_left = 145.0
 margin_right = 231.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Wrap: Off"
 
@@ -1181,11 +1181,11 @@ text = "Wrap: Off"
 margin_left = 235.0
 margin_right = 351.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find/Replace"
 
@@ -1193,11 +1193,11 @@ text = "Find/Replace"
 margin_left = 355.0
 margin_right = 452.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Text Editor"
 
@@ -1206,11 +1206,11 @@ visible = false
 margin_left = 349.0
 margin_right = 447.0
 margin_bottom = 21.0
-custom_styles/hover = SubResource( 2 )
-custom_styles/pressed = SubResource( 2 )
-custom_styles/focus = SubResource( 3 )
-custom_styles/disabled = SubResource( 3 )
-custom_styles/normal = SubResource( 3 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 5 )
+custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
@@ -1261,9 +1261,9 @@ margin_bottom = 95.0
 [node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_right = 81.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Next"
 
@@ -1271,9 +1271,9 @@ text = "Find Next"
 margin_left = 85.0
 margin_right = 168.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Prev"
 
@@ -1281,9 +1281,9 @@ text = "Find Prev"
 margin_left = 172.0
 margin_right = 247.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace"
 
@@ -1291,9 +1291,9 @@ text = "Replace"
 margin_left = 251.0
 margin_right = 352.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace All"
 
@@ -1301,9 +1301,9 @@ text = "Replace All"
 margin_left = 356.0
 margin_right = 475.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Match Case"
 
@@ -1311,9 +1311,9 @@ text = "Match Case"
 margin_left = 479.0
 margin_right = 609.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Whole Words"
 
@@ -1322,9 +1322,9 @@ margin_left = 613.0
 margin_right = 743.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
-custom_styles/normal = SubResource( 7 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/normal = SubResource( 10 )
 custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
@@ -1735,12 +1735,12 @@ __meta__ = {
 [connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
 [connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_rmb_selected"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="resized" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_resized"]
@@ -1774,8 +1774,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]

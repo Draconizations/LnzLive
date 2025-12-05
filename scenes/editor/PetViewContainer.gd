@@ -192,9 +192,13 @@ func _process(_delta):
 	elif project_mode:
 		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
 	elif preset_mode:
-		if Input.is_key_pressed(KEY_ALT):
+		preset_settings_instance.sync_camera(camera.global_transform)
+
+		var is_eyedropper = Input.is_key_pressed(KEY_ALT) or preset_settings_instance.is_eyedropper_active()
+
+		if is_eyedropper:
 			text = "Eyedropper Mode: Left-click a ball to sample its properties."
-			Input.set_custom_mouse_cursor(eyedropper)
+			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(0,30))
 		else:
 			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
@@ -254,7 +258,8 @@ func _gui_input(event):
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
-			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
+			var is_eyedropper_active = preset_settings_instance.is_eyedropper_active() or Input.is_key_pressed(KEY_ALT)
+
 			if is_eyedropper_active:
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
@@ -293,45 +298,68 @@ func _gui_input(event):
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
 				var size_mode = properties.get("size_mode", preset_settings_instance.SizeMode.TRUE)
+				var ref_size = int(round(preset_settings_instance.size_spinbox.value))
+				var size_mode = preset_settings_instance.size_mode_option.selected
 
 				match size_mode:
 					preset_settings_instance.SizeMode.SET:
-						pass # Size is already set in properties
+						pass
+					
 					preset_settings_instance.SizeMode.SUM:
-						var original_size = 0
-						if pet_node.lnz.balls.has(ball_no):
-							original_size = pet_node.lnz.balls[ball_no].size
-						elif pet_node.lnz.addballs.has(ball_no):
-							original_size = pet_node.lnz.addballs[ball_no].size
-						properties["size"] = original_size + properties.size
+						if properties.has("size"):
+							var original_size = 0
+							if pet_node.lnz.balls.has(ball_no):
+								original_size = pet_node.lnz.balls[ball_no].size
+							elif pet_node.lnz.addballs.has(ball_no):
+								original_size = pet_node.lnz.addballs[ball_no].size
+							properties["size"] = original_size + properties.size
+					
 					preset_settings_instance.SizeMode.TRUE:
-						if pet_node.lnz.balls.has(ball_no): # Only for base ballz
-							var bhd_size = pet_node.bhd.ball_sizes[ball_no]
-							var scale = pet_node.lnz.scales[1]
-							var desired_final_size = properties.size
+						if properties.has("size"):
+							if pet_node.lnz.balls.has(ball_no): # Only for base ballz
+								var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+								var scale = pet_node.lnz.scales[1]
+								var desired_final_size = properties.size
 
-							# Iterative approach to find the correct lnz_size
-							var new_lnz_size = 0
-							var calculated_size = 0
+								var new_lnz_size = 0
+								var calculated_size = 0
+								var required_base_size = (desired_final_size / (scale / 255.0)) + 2
+								new_lnz_size = required_base_size - bhd_size
 
-							# Initial guess for new_lnz_size
-							var required_base_size = (desired_final_size / (scale / 255.0)) + 2
-							new_lnz_size = required_base_size - bhd_size
+								for i in range(3): 
+									var current_base_size = bhd_size + new_lnz_size
+									calculated_size = round((current_base_size - 2) * (scale / 255.0))
+									calculated_size -= 1 - fmod(calculated_size, 2)
+									if calculated_size == desired_final_size:
+										break
+									var diff = desired_final_size - calculated_size
+									new_lnz_size += diff 
 
-							for i in range(3): # Iterate a few times to settle on the correct value
-								var current_base_size = bhd_size + new_lnz_size
-								calculated_size = round((current_base_size - 2) * (scale / 255.0))
-								calculated_size -= 1 - fmod(calculated_size, 2)
+								properties["size"] = int(round(new_lnz_size))
+					
+				if properties["scale_paintballz"]:
+					var target_lnz_size = 0
+					if pet_node.lnz.balls.has(ball_no):
+						var bhd_size = pet_node.bhd.ball_sizes[ball_no]
+						var scale = pet_node.lnz.scales[1]
+						var current_base_size = bhd_size + pet_node.lnz.balls[ball_no].size
+						target_lnz_size = round((current_base_size - 2) * (scale / 255.0))
+					elif pet_node.lnz.addballs.has(ball_no):
+						target_lnz_size = pet_node.lnz.addballs[ball_no].size
 
-								if calculated_size == desired_final_size:
-									break
+					var scale_ratio = float(target_lnz_size) / float(ref_size) if ref_size > 0 else 1.0
 
-								var diff = desired_final_size - calculated_size
-								new_lnz_size += diff # Adjust lnz_size based on the difference
-
-							properties["size"] = int(round(new_lnz_size))
+					if properties.has("paintballz"):
+						var scaled_paintballz = []
+						for pb in properties.paintballz:
+							var new_pb = pb.duplicate()
+							new_pb.position *= scale_ratio
+							new_pb.size = int(round(new_pb.size * scale_ratio))
+							scaled_paintballz.append(new_pb)
+						properties["paintballz"] = scaled_paintballz
 
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
+
 		return
 
 	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
@@ -1185,6 +1213,14 @@ func _on_preset_mode_toggled(is_on):
 	preset_mode = is_on
 	if is_on:
 		preset_settings_instance.show()
+
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
+			preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+		
+		if pet_node and pet_node.lnz and pet_node.lnz.palette:
+			preset_settings_instance.set_palette(pet_node.lnz.palette)
+
 		Input.set_custom_mouse_cursor(smallbrush)
 		if paintball_mode:
 			paintball_mode = false
