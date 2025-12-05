@@ -1,0 +1,197 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://scenes/editor/ExportClothes.gd" type="Script" id=1]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=19]
+[ext_resource path="res://resources/styles/stylebox_tree_bg.tres" type="StyleBox" id=23]
+[ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="DynamicFont" id=28]
+[ext_resource path="res://resources/fonts/font_pixel_code_14_spacing.tres" type="DynamicFont" id=31]
+
+[sub_resource type="DynamicFont" id=3]
+size = 36
+font_data = ExtResource( 2 )
+
+[sub_resource type="StyleBoxFlat" id=1]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color( 0.219608, 0.360784, 0.360784, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=2]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 5.0
+content_margin_bottom = 5.0
+bg_color = Color( 0.196078, 0.294118, 0.294118, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[node name="ExportClothes" type="WindowDialog"]
+margin_right = 500.0
+margin_bottom = 600.0
+custom_styles/panel = ExtResource( 19 )
+custom_fonts/title_font = SubResource( 3 )
+custom_colors/title_color = Color( 1, 1, 1, 1 )
+window_title = "Export LNZ to Clothes CLZ"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 10.0
+margin_top = 10.0
+margin_right = -10.0
+margin_bottom = -10.0
+custom_constants/separation = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SettingsGrid" type="VBoxContainer" parent="VBoxContainer"]
+margin_right = 480.0
+margin_bottom = 145.0
+custom_constants/separation = 10
+
+[node name="SpeciesLabel" type="Label" parent="VBoxContainer/SettingsGrid"]
+margin_right = 480.0
+margin_bottom = 17.0
+custom_fonts/font = ExtResource( 28 )
+text = "Species:"
+
+[node name="SpeciesValue" type="Label" parent="VBoxContainer/SettingsGrid"]
+margin_top = 27.0
+margin_right = 480.0
+margin_bottom = 44.0
+custom_fonts/font = ExtResource( 28 )
+text = "Petz"
+
+[node name="KindLabel" type="Label" parent="VBoxContainer/SettingsGrid"]
+margin_top = 54.0
+margin_right = 480.0
+margin_bottom = 71.0
+custom_fonts/font = ExtResource( 28 )
+text = "Kind:"
+
+[node name="KindOption" type="OptionButton" parent="VBoxContainer/SettingsGrid"]
+margin_top = 81.0
+margin_right = 480.0
+margin_bottom = 108.0
+custom_styles/hover = SubResource( 1 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 28 )
+
+[node name="BaseContainer" type="HBoxContainer" parent="VBoxContainer/SettingsGrid"]
+margin_top = 118.0
+margin_right = 480.0
+margin_bottom = 145.0
+custom_constants/separation = 10
+
+[node name="DogLabel" type="Label" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+margin_top = 5.0
+margin_right = 62.0
+margin_bottom = 22.0
+custom_fonts/font = ExtResource( 28 )
+text = "Dog Base:"
+
+[node name="DogBaseInput" type="LineEdit" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+margin_left = 72.0
+margin_right = 236.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 28 )
+
+[node name="CatLabel" type="Label" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+margin_left = 246.0
+margin_top = 5.0
+margin_right = 306.0
+margin_bottom = 22.0
+custom_fonts/font = ExtResource( 28 )
+text = "Cat Base:"
+
+[node name="CatBaseInput" type="LineEdit" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+margin_left = 316.0
+margin_right = 480.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 28 )
+
+[node name="BabyLabel" type="Label" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+visible = false
+margin_left = 281.0
+margin_top = 5.0
+margin_right = 351.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 28 )
+text = "Base Ball:"
+
+[node name="BabyBaseInput" type="LineEdit" parent="VBoxContainer/SettingsGrid/BaseContainer"]
+visible = false
+margin_left = 361.0
+margin_right = 480.0
+margin_bottom = 34.0
+size_flags_horizontal = 3
+
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer"]
+margin_top = 155.0
+margin_right = 480.0
+margin_bottom = 543.0
+size_flags_vertical = 3
+custom_styles/normal = ExtResource( 23 )
+custom_fonts/font = ExtResource( 31 )
+readonly = true
+show_line_numbers = true
+
+[node name="Buttons" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 553.0
+margin_right = 480.0
+margin_bottom = 580.0
+alignment = 1
+
+[node name="GenerateButton" type="Button" parent="VBoxContainer/Buttons"]
+margin_left = 139.0
+margin_right = 212.0
+margin_bottom = 27.0
+custom_styles/hover = SubResource( 1 )
+custom_styles/pressed = SubResource( 1 )
+custom_styles/focus = SubResource( 1 )
+custom_styles/disabled = SubResource( 1 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 28 )
+text = "Generate"
+
+[node name="CopyButton" type="Button" parent="VBoxContainer/Buttons"]
+margin_left = 216.0
+margin_right = 341.0
+margin_bottom = 27.0
+custom_styles/hover = SubResource( 1 )
+custom_styles/pressed = SubResource( 1 )
+custom_styles/focus = SubResource( 1 )
+custom_styles/disabled = SubResource( 1 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 28 )
+text = "Copy to Clipboard"
+
+[connection signal="pressed" from="VBoxContainer/Buttons/GenerateButton" to="." method="_on_GenerateButton_pressed"]
+[connection signal="pressed" from="VBoxContainer/Buttons/CopyButton" to="." method="_on_CopyButton_pressed"]
