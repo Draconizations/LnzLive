@@ -297,7 +297,6 @@ func _gui_input(event):
 				var properties = preset_settings_instance.get_properties()
 				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
-				var size_mode = properties.get("size_mode", preset_settings_instance.SizeMode.TRUE)
 				var ref_size = int(round(preset_settings_instance.size_spinbox.value))
 				var size_mode = preset_settings_instance.size_mode_option.selected
 
