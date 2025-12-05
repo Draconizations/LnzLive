@@ -759,8 +759,6 @@ func _on_Node_line_created(start_ball, end_ball):
 
 	if start_line == -1:
 		print("[LNZ EDIT] No [Linez] section found")
-		# You might want to create the section if it doesn't exist.
-		# For now, just returning.
 		return
 
 	var delim = _detect_delimiter(start_line, end_line)
@@ -769,7 +767,6 @@ func _on_Node_line_created(start_ball, end_ball):
 	var line_mode_settings = get_tree().root.get_node("Root/SceneRoot/LineModeSettings")
 	var props = line_mode_settings.get_properties()
 
-	# Search for an existing line
 	var line_updated = false
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -786,14 +783,20 @@ func _on_Node_line_created(start_ball, end_ball):
 		if (b1 == start_ball and b2 == end_ball) or (b1 == end_ball and b2 == start_ball):
 			if parts.size() < 10:
 				parts.resize(10)
-			parts[2] = str(props.fuzz)
-			parts[3] = str(props.color)
-			parts[4] = str(props.left_outline_color)
-			parts[5] = str(props.right_outline_color)
-			parts[6] = str(props.start_thickness)
-			parts[7] = str(props.end_thickness)
-			parts[8] = str(props.outline_type)
-			parts[9] = str(props.draw_order)
+				for k in range(parts.size()):
+					if parts[k] == null: parts[k] = "-1"
+
+			parts[0] = str(start_ball)
+			parts[1] = str(end_ball)
+
+			if props.apply_fuzz: parts[2] = str(props.fuzz)
+			if props.apply_color: parts[3] = str(props.color)
+			if props.apply_left_outline: parts[4] = str(props.left_outline_color)
+			if props.apply_right_outline: parts[5] = str(props.right_outline_color)
+			if props.apply_start_thick: parts[6] = str(props.start_thickness)
+			if props.apply_end_thick: parts[7] = str(props.end_thickness)
+			if props.apply_outline_type: parts[8] = str(props.outline_type)
+			if props.apply_draw_order: parts[9] = str(props.draw_order)
 
 			set_line(i, parts.join(sep))
 			line_updated = true

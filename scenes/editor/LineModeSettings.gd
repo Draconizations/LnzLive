@@ -40,4 +40,13 @@ func get_properties():
 	properties["end_thickness"] = find_node("EndThickness").value
 	properties["outline_type"] = find_node("OutlineType").value
 	properties["draw_order"] = find_node("DrawOrder").value
+
+	properties["apply_fuzz"] = find_node("ReplaceFuzz").pressed
+	properties["apply_color"] = find_node("ReplaceColor").pressed
+	properties["apply_left_outline"] = find_node("ReplaceLeftOutlineColor").pressed
+	properties["apply_right_outline"] = find_node("ReplaceRightOutlineColor").pressed
+	properties["apply_start_thick"] = find_node("ReplaceStartThickness").pressed
+	properties["apply_end_thick"] = find_node("ReplaceEndThickness").pressed
+	properties["apply_outline_type"] = find_node("ReplaceOutlineType").pressed
+	properties["apply_draw_order"] = find_node("ReplaceDrawOrder").pressed
 	return properties
