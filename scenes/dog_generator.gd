@@ -728,7 +728,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				ball_map[ball.ball_no].visible_override = true
 			else:
 				ball_map[ball.ball_no].visible_override = false	
-				ball_map[ball.ball_no].visible = false
+				#ball_map[ball.ball_no].visible = false
 		else:
 			# Respect user toggles
 			if !draw_balls:
@@ -1161,7 +1161,9 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 					node.visible = draw_addballs
 			else:
 				node.visible_override = false
-				node.visible = false
+				
+				if not node.is_in_group("balls"):
+					node.visible = false
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)

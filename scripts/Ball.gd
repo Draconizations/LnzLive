@@ -86,13 +86,9 @@ func _ready():
 
 func set_visible(new_value):
 	visible_override = new_value
-	if !omitted:
-		$MeshInstance.visible = new_value
-		$Area/CollisionShape.disabled = !new_value
-		$Area/CollisionShape.visible = new_value
-	else:
-		$Area/CollisionShape.disabled = true
-		$Area/CollisionShape.visible = false
+	$MeshInstance.visible = new_value
+	$Area/CollisionShape.disabled = !new_value
+	$Area/CollisionShape.visible = new_value
 
 func set_tile_texture(new_value):
 	tile_texture = new_value
