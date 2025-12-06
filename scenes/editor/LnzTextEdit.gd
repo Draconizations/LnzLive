@@ -991,9 +991,46 @@ func _on_ToolsMenu_delete_ball(ball_no: int):
 			cut()
 		_update_all_references(ball_no)
 	else:
-		_mark_base_ball_omitted(ball_no)
-
+		pass 
 	save_file()
+
+
+func _on_ToolsMenu_omit_ball(ball_no: int):
+	save_backup()
+	var section = search("[Omissions]", 0, 0, 0)
+	if section.empty():
+		cursor_set_line(get_line_count())
+		insert_text_at_cursor("\n[Omissions]\n" + str(ball_no))
+	else:
+		var line_idx = section[SEARCH_RESULT_LINE] + 1
+		cursor_set_line(line_idx)
+		cursor_set_column(0)
+		insert_text_at_cursor(str(ball_no) + "\n")
+	save_file()
+
+func _on_ToolsMenu_unomit_ball(ball_no: int):
+	save_backup()
+	var section = search("[Omissions]", 0, 0, 0)
+	if section.empty():
+		return
+
+	var start = section[SEARCH_RESULT_LINE] + 1
+	var i = 0
+	
+	while true:
+		var line_idx = start + i
+		if line_idx >= get_line_count(): break
+		
+		var line = get_line(line_idx).strip_edges()
+		if line.begins_with("["): break 
+		
+		if line == str(ball_no):
+			select(line_idx, 0, line_idx + 1, 0)
+			cut()
+			save_file()
+			return
+		
+		i += 1
 
 # Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
 func _update_all_references(ball_no: int):

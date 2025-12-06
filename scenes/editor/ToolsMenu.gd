@@ -19,6 +19,9 @@ signal move_head(x,y,z)
 signal print_ball_colors()
 signal paintball_mode_for_ball_toggled(ball)
 
+signal omit_ball(ball_no)
+signal unomit_ball(ball_no)
+
 var selected_visual_ball = null
 
 var current_action
@@ -29,17 +32,17 @@ enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
 
 func _ready():
 	add_submenu_item("Color...", "RecolorMenu")
-	add_item("Create Addballz + Linez") # index 1
-	#add_separator()
-	add_item("Create Addballz") # index 2
-	add_item("Delete Addballz / Omit Ballz") # index 3
-	add_item("Connect by Linez") # index 4
-	add_item("Copy-Mirror (cam L-to-R)") # index 5
-	add_item("Copy-Mirror (cam R-to-L)") # index 6
-	add_item("Paintball Mode") # index 7
-	add_item("Move Head Ballz") # index 8
-	add_item("Copy Ballz Colors to Clipboard") # index 9
-	add_item("Export to Clothes CLZ") # index 10
+	add_item("Create Addballz + Linez")         # index 1
+	add_item("Create Addballz")                 # index 2
+	add_item("Delete Addballz")                 # index 3
+	add_item("Omit/Unomit Ballz")               # index 4
+	add_item("Connect by Linez")                # index 5
+	add_item("Copy-Mirror (cam L-to-R)")        # index 6
+	add_item("Copy-Mirror (cam R-to-L)")        # index 7
+	add_item("Paintball Mode")                  # index 8
+	add_item("Move Head Ballz")                 # index 9
+	add_item("Copy Ballz Colors to Clipboard")  # index 10
+	add_item("Export to Clothes CLZ")           # index 11
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -138,116 +141,159 @@ func _on_RecolorMenu_id_pressed(id):
 func _on_RecolorMenuButton_pressed():
 	get_parent().get_node("RecolorPopup").popup_centered()
 
+	# add_submenu_item("Color...", "RecolorMenu")
+	# add_item("Create Addballz + Linez")         # index 1
+	# add_item("Create Addballz")                 # index 2
+	# add_item("Delete Addballz")                 # index 3
+	# add_item("Omit/Unomit Ballz")               # index 4
+	# add_item("Connect by Linez")                # index 5
+	# add_item("Copy-Mirror (cam L-to-R)")        # index 6
+	# add_item("Copy-Mirror (cam R-to-L)")        # index 7
+	# add_item("Paintball Mode")                  # index 8
+	# add_item("Move Head Ballz")                 # index 9
+	# add_item("Copy Ballz Colors to Clipboard")  # index 10
+	# add_item("Export to Clothes CLZ")           # index 11
+
 func _on_ToolsMenu_index_pressed(index):
+	var is_ball_selected = is_instance_valid(selected_visual_ball)
 	var ball_no = -1
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 
-	if index == 5: # Copy-Mirror (L-to-R)
-		emit_signal("copy_l_to_r", ball_no)
-	elif index == 6: # Copy-Mirror (R-to-L)
-		emit_signal("copy_r_to_l", ball_no)
-	elif index == 1: # Create Addballz + Linez
+	var is_addball = selected_visual_ball.is_in_group("addballs")
+	var is_omitted = selected_visual_ball.get("omitted") == true
+
+	if index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, true)
 	elif index == 2: # Create Addballz
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("add_ball", selected_visual_ball, false)
-	elif index == 3: # Delete Addballz or Omit Base Ball
+	elif index == 3: # Delete Addballz
 		if is_instance_valid(selected_visual_ball):
-			emit_signal("delete_ball", selected_visual_ball.ball_no)
-	elif index == 4: # Connect by Linez
+			if is_omitted:
+				emit_signal("unomit_ball", ball_no)
+			elif is_addball:
+				emit_signal("delete_ball", ball_no)
+			else:
+				emit_signal("omit_ball", ball_no)
+	elif index == 4: # Omit/Unomit Ballz
+		if is_instance_valid(selected_visual_ball):
+			if is_omitted:
+				emit_signal("unomit_ball", ball_no)
+			else:
+				emit_signal("omit_ball", ball_no)
+	elif index == 5: # Connect by Linez
 		if is_instance_valid(selected_visual_ball):
 			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 			pet_view.line_mode_close = true
 			pet_view.line_mode_check_box.pressed = true
 			pet_view.linez_start_ball = selected_visual_ball
 			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 7: # Paintball Mode
+	elif index == 6: # Copy-Mirror (L-to-R)
+		emit_signal("copy_l_to_r", ball_no)
+	elif index == 7: # Copy-Mirror (R-to-L)
+		emit_signal("copy_r_to_l", ball_no)
+	elif index == 8: # Paintball Mode
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	elif index == 8: # Move Head
+	elif index == 9: # Move Head
 		var options = get_parent().get_node("HeadMovePopup")
 		options.popup_centered()
-	elif index == 9: # Print Ballz Colors
+	elif index == 10: # Print Ballz Colors
 		emit_signal("print_ball_colors")
-	elif index == 10: # Export to Clothes CLZ
+	elif index == 11: # Export to Clothes CLZ
 		get_parent().get_node("ExportClothes").open(ball_no)
 
-# func _on_ToolsMenu_about_to_show():
-# 	var view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-# 	#set_item_disabled(1, !view_container.last_selected_is_valid())
-
 func _on_ToolsMenu_about_to_show():
-	var is_ball_selected = is_instance_valid(selected_visual_ball)
 	var ball_no = -1
-	if is_ball_selected:
+
+	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 
+	var is_ball_selected = is_instance_valid(selected_visual_ball)
+	var is_addball = selected_visual_ball.is_in_group("addballs")
+	var is_omitted = selected_visual_ball.get("omitted") == true
+
+	var option_text = ""
+
 	# 1: Create Addballz + Linez
-	var item_1_text = "Create Addballz + Linez"
+	option_text = "Create Addballz + Linez"
 	set_item_disabled(1, !is_ball_selected)
 	if is_ball_selected:
-		item_1_text += " (#" + str(ball_no) + ")"
-	set_item_text(1, item_1_text)
+		option_text += " (#" + str(ball_no) + ")"
+	set_item_text(1, option_text)
 
 	# 2: Create Addballz
-	var item_2_text = "Create Addballz"
+	option_text = "Create Addballz"
 	set_item_disabled(2, !is_ball_selected)
 	if is_ball_selected:
-		item_2_text += " (#" + str(ball_no) + ")"
-	set_item_text(2, item_2_text)
+		option_text += " (#" + str(ball_no) + ")"
+	set_item_text(2, option_text)
 
-	# 3: Delete Addballz / Omit Ballz
-	var item_3_text = "Delete Addballz / Omit Ballz"
-	set_item_disabled(3, !is_ball_selected)
-	if is_ball_selected:
-		item_3_text += " (#" + str(ball_no) + ")"
-	set_item_text(3, item_3_text)
+	# 3: Delete Addballz
+	option_text = "Delete Addballz"
+	set_item_disabled(3, !is_ball_selected or !is_addball)
+	if is_ball_selected and is_addball:
+		option_text += " (#" + str(ball_no) + ")"
+	set_item_text(3, option_text)
 
-	# 4: Connect by Linez
-	var item_4_text = "Connect by Linez"
+	# 4: Omit/Unomit Ballz
 	set_item_disabled(4, !is_ball_selected)
 	if is_ball_selected:
-		item_4_text += " (Start: #" + str(ball_no) + ")"
-	set_item_text(4, item_4_text)
+		var type_str = "Addballz" if is_addball else "Ballz"
+		if is_omitted:
+			set_item_text(4, "Unomit " + type_str + " (#" + str(ball_no) + ")")
+		else:
+			set_item_text(4, "Omit " + type_str + " (#" + str(ball_no) + ")")
+	else:
+		set_item_text(4, "Omit / Unomit Ballz")
+		set_item_disabled(4, !is_ball_selected)
+
+	# 4: Connect by Linez
+	option_text = "Connect by Linez"
+	set_item_disabled(4, !is_ball_selected)
+	if is_ball_selected:
+		option_text += " (Start: #" + str(ball_no) + ")"
+	set_item_text(5, option_text)
 
 	# 5: Copy-Mirror (L-to-R)
-	var item_5_text = "Copy-Mirror"
+	option_text = "Copy-Mirror"
 	if is_ball_selected:
-		item_5_text += " (#" + str(ball_no) + ")"
+		option_text += " (#" + str(ball_no) + ")"
 	else:
-		item_5_text += " (cam L-to-R, all ballz)"
-	set_item_text(5, item_5_text)
+		option_text += " (cam L-to-R, all ballz)"
+	set_item_text(6, option_text)
 
 	# 6: Copy-Mirror (R-to-L)
-	var item_6_text = "Copy-Mirror"
+	option_text = "Copy-Mirror"
 	set_item_disabled(6, is_ball_selected)
 	if is_ball_selected:
-		item_6_text += " (all ballz)"
+		option_text += " (all ballz)"
 	else:
-		item_6_text += " (cam R-to-L, all ballz)"
-	set_item_text(6, item_6_text)
+		option_text += " (cam R-to-L, all ballz)"
+	set_item_text(7, option_text)
+
 	# 7: Paintball Mode
-	var item_7_text = "Paintball Mode"
+	option_text = "Paintball Mode"
 	if is_ball_selected:
-		item_7_text += " (#" + str(ball_no) + ")"
+		option_text += " (#" + str(ball_no) + ")"
 	else:
-		item_7_text += " (all ballz)"
-	set_item_text(7, item_7_text)
+		option_text += " (all ballz)"
+	set_item_text(8, option_text)
 
 	# 8: Move Head Ballz
-	set_item_text(8, "Move Head Ballz")
+	set_item_text(9, "Move Head Ballz")
 	
 	# 9: Copy Ballz Colors to Clipboard
-	set_item_text(9, "Copy Ballz Colors to Clipboard")
+	set_item_text(10, "Copy Ballz Colors to Clipboard")
 
 	# 10: Export to Clothes CLZ
-	var item_10_text = "Export to Clothes CLZ"
+	option_text = "Export to Clothes CLZ"
 	if is_ball_selected:
-		item_10_text += " (#" + str(ball_no) + ")"
-	set_item_text(10, item_10_text)
+		option_text += " (#" + str(ball_no) + ")"
+	set_item_text(11, option_text)
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
