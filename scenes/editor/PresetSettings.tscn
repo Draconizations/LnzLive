@@ -355,7 +355,7 @@ margin_right = 408.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-text = "Scale Paintballz"
+text = "Scale Paintballz to Ballz"
 
 [node name="MirrorGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 546.0
@@ -456,12 +456,67 @@ size_flags_horizontal = 3
 min_value = -360.0
 max_value = 360.0
 
-[node name="RotateButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/CustomRotationContainer"]
-visible = false
-margin_left = 342.0
-margin_right = 420.0
-margin_bottom = 27.0
-text = "Rot"
+[node name="ScaleSettingsGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 575.0
+margin_right = 408.0
+margin_bottom = 600.0
+columns = 3
+
+[node name="ScaleSizeLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_top = 3.0
+margin_right = 133.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Scale Diameter"
+
+[node name="ScalePosLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_left = 137.0
+margin_top = 3.0
+margin_right = 270.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Scale Spacing"
+
+[node name="LinkScaleLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_left = 274.0
+margin_top = 3.0
+margin_right = 407.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Link"
+align = 1
+
+[node name="SizeScaleSpinBox" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_top = 28.0
+margin_right = 133.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+min_value = 0.1
+max_value = 5.0
+step = 0.05
+value = 1.0
+
+[node name="PosScaleSpinBox" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_left = 137.0
+margin_top = 28.0
+margin_right = 270.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+min_value = 0.1
+max_value = 5.0
+step = 0.05
+value = 1.0
+
+[node name="LinkScaleCheckBox" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ScaleSettingsGrid"]
+margin_left = 274.0
+margin_top = 28.0
+margin_right = 407.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+align = 1
 
 [node name="PaintballzTree" type="Tree" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 603.0
@@ -500,6 +555,12 @@ margin_top = 104.0
 margin_right = 420.0
 margin_bottom = 131.0
 custom_fonts/font = SubResource( 1 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = ExtResource( 5 )
 text = "Apply PB LNZ to Preset"
 
 [connection signal="pressed" from="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ShowRawButton" to="Panel" method="_on_ShowRawButton_pressed"]

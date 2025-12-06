@@ -54,6 +54,10 @@ onready var roll_spinbox = scroll_vbox.get_node("CustomRotationContainer/RollSpi
 onready var pitch_spinbox = scroll_vbox.get_node("CustomRotationContainer/PitchSpinBox")
 onready var yaw_spinbox = scroll_vbox.get_node("CustomRotationContainer/YawSpinBox")
 
+onready var size_scale_spin = scroll_vbox.get_node("ScaleSettingsGrid/SizeScaleSpinBox")
+onready var pos_scale_spin = scroll_vbox.get_node("ScaleSettingsGrid/PosScaleSpinBox")
+onready var link_scale_chk = scroll_vbox.get_node("ScaleSettingsGrid/LinkScaleCheckBox")
+
 onready var mirror_x_btn = scroll_vbox.get_node("MirrorGrid/MirrorXButton")
 onready var mirror_y_btn = scroll_vbox.get_node("MirrorGrid/MirrorYButton")
 onready var mirror_z_btn = scroll_vbox.get_node("MirrorGrid/MirrorZButton")
@@ -96,6 +100,10 @@ func _ready():
 	roll_spinbox.connect("value_changed", self, "_on_rotation_changed")
 	pitch_spinbox.connect("value_changed", self, "_on_rotation_changed")
 	yaw_spinbox.connect("value_changed", self, "_on_rotation_changed")
+
+	size_scale_spin.connect("value_changed", self, "_on_scale_changed", [true])
+	pos_scale_spin.connect("value_changed", self, "_on_scale_changed", [false])
+	link_scale_chk.connect("toggled", self, "_on_property_changed") 
 
 	paintballz_tree.columns = 11
 	paintballz_tree.set_column_titles_visible(true)
@@ -220,6 +228,19 @@ func _read_item_data(item: TreeItem) -> Dictionary:
 		"anchored": item.get_text(10).to_int()
 	}
 
+func _on_scale_changed(value, is_size_control):
+	if _ignore_ui_changes: return
+	
+	if link_scale_chk.pressed:
+		_ignore_ui_changes = true
+		if is_size_control:
+			pos_scale_spin.value = value
+		else:
+			size_scale_spin.value = value
+		_ignore_ui_changes = false
+		
+	update_preview()
+
 func _on_rotation_changed(_val):
 	if _ignore_ui_changes: return
 	_apply_rotation_to_tree()
@@ -290,8 +311,14 @@ func _on_SetPaintballzButton_pressed():
 			continue
 
 		var parts = _split_and_clean_paintball(line)
-		if parts.empty():
+		
+		if parts.size() < 9:
 			continue
+
+		var has_group_column = parts.size() >= 12
+		
+		var tex_index = 10 if has_group_column else 9
+		var anchor_index = 11 if has_group_column else 10
 
 		var p_data = {
 			"base": parts[0].to_int(),
@@ -301,8 +328,8 @@ func _on_SetPaintballzButton_pressed():
 			"outline_color_index": parts[6].to_int(),
 			"fuzz": parts[7].to_int(),
 			"outline": parts[8].to_int(),
-			"texture_id": parts[9].to_int(),
-			"anchored": (parts[11].to_int() if parts.size() > 11 else 0)
+			"texture_id": parts[tex_index].to_int() if parts.size() > tex_index else -1,
+			"anchored": parts[anchor_index].to_int() if parts.size() > anchor_index else 0
 		}
 		_base_paintballz_data.append(p_data)
 
@@ -314,15 +341,16 @@ func _split_and_clean_paintball(line: String) -> Array:
 	var line_parts = line.split(";", false, 1)
 	var data_part = line_parts[0].strip_edges()
 
-	var delimiters = [", ", ",", "\t", " "]
-	for delim in delimiters:
-		var parts = data_part.split(delim, false)
-		if parts.size() >= 11:
-			var cleaned_parts = []
-			for part in parts:
-				cleaned_parts.append(part.strip_edges())
-			return cleaned_parts
-	return []
+	data_part = data_part.replace(",", " ")
+	data_part = data_part.replace("\t", " ")
+
+	var parts = data_part.split(" ", false)
+	
+	var cleaned_parts = []
+	for part in parts:
+		cleaned_parts.append(part.strip_edges())
+		
+	return cleaned_parts
 
 func _load_texture(texture_filename: String) -> Texture:
 	var texture = null
@@ -454,7 +482,10 @@ func update_preview():
 				var pb_visual = paintball_scene.instance()
 				base_visual_ball.add_child(pb_visual)
 
-				var final_size = float(base_size) * (float(size) / 100.0)
+				var s_scale = size_scale_spin.value
+				var p_scale = pos_scale_spin.value
+
+				var final_size = float(base_size) * (float(size) / 100.0) * s_scale
 				final_size -= 1.0 - fmod(final_size, 2.0)
 
 				pb_visual.ball_size = final_size
@@ -486,7 +517,7 @@ func update_preview():
 								pb_visual.texture_size = tex_info.texture_size
 
 				var pixel_world_size = 0.002
-				var pb_pos = pos * Vector3(1, -1, 1) * (float(base_size) / 2.0) * pixel_world_size
+				var pb_pos = pos * Vector3(1, -1, 1) * (float(base_size) / 2.0) * pixel_world_size * p_scale
 
 				pb_visual.transform.origin = pb_pos
 
@@ -514,6 +545,9 @@ func get_properties():
 	properties["apply_ballz"] = true
 	properties["apply_paintballz"] = include_paintballz_chk.pressed
 	properties["scale_paintballz"] = scale_paintballz_chk.pressed
+
+	properties["paintball_size_scale"] = size_scale_spin.value
+	properties["paintball_pos_scale"] = pos_scale_spin.value
 
 	if include_paintballz_chk.pressed:
 		var paintballz = []
@@ -549,6 +583,16 @@ func set_properties(properties):
 	roll_spinbox.value = 0
 	pitch_spinbox.value = 0
 	yaw_spinbox.value = 0
+
+	if properties.has("paintball_size_scale"):
+		size_scale_spin.value = properties.paintball_size_scale
+	else:
+		size_scale_spin.value = 1.0
+
+	if properties.has("paintball_pos_scale"):
+		pos_scale_spin.value = properties.paintball_pos_scale
+	else:
+		pos_scale_spin.value = 1.0
 
 	_base_paintballz_data.clear()
 
