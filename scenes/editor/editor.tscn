@@ -620,7 +620,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
 margin_right = 119.0
-margin_bottom = 111.0
+margin_bottom = 134.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_right = 119.0
@@ -840,9 +840,8 @@ __meta__ = {
 }
 
 [node name="OmittedBallCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
-margin_top = 140.0
-margin_right = 126.0
-margin_bottom = 164.0
+margin_right = 152.0
+margin_bottom = 19.0
 mouse_filter = 1
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -851,11 +850,12 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
-text = "Draw omitted"
+text = "Show omitted ballz"
 
 [node name="ToggleSpecialBalls" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
+margin_top = 23.0
 margin_right = 152.0
-margin_bottom = 19.0
+margin_bottom = 42.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -867,9 +867,9 @@ pressed = true
 text = "Show special balls"
 
 [node name="TransparencyCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
-margin_top = 23.0
+margin_top = 46.0
 margin_right = 152.0
-margin_bottom = 42.0
+margin_bottom = 65.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )

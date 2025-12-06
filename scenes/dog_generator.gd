@@ -22,7 +22,7 @@ export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
 export var draw_polygons = true
-export var draw_omitted_balls = false # not used yet
+export var draw_omitted_balls = false
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
@@ -722,8 +722,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 		# Handle omissions
 		if omissions.has(key):
-			ball_map[ball.ball_no].visible_override = false
 			ball_map[ball.ball_no].omitted = true
+			
+			if draw_omitted_balls:
+				ball_map[ball.ball_no].visible_override = true
+			else:
+				ball_map[ball.ball_no].visible_override = false	
+				ball_map[ball.ball_no].visible = false
 		else:
 			# Respect user toggles
 			if !draw_balls:
@@ -789,8 +794,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if !draw_addballs:
 			add_visual_ball.visible_override = false
 		if omissions.has(key):
-			add_visual_ball.visible_override = false
 			add_visual_ball.omitted = true
+			if draw_omitted_balls:
+				add_visual_ball.visible_override = true
+			else:
+				add_visual_ball.visible_override = false
+				add_visual_ball.visible = false
 
 	# Generate paintballz
 	for key in paintball_data:
@@ -1136,16 +1145,23 @@ func _on_PolygonCheckBox_toggled(button_pressed):
 	set_visibility_for_group("polygons", button_pressed)
 	draw_polygons = button_pressed
 
-# func _on_OmittedBallCheckBox_toggled(button_pressed):
-# 	draw_omitted_balls = button_pressed
-# 	var balls = get_tree().get_nodes_in_group("balls")
-# 	for ball in balls:
-# 		if ball is Spatial:
-# 			ball.render_if_omitted = button_pressed
-# 	var addballs = get_tree().get_nodes_in_group("addballs")
-# 	for addball in addballs:
-# 		if addball is Spatial:
-# 			addball.render_if_omitted = button_pressed
+func _on_OmittedBallCheckBox_toggled(button_pressed):
+	draw_omitted_balls = button_pressed
+	
+	for ball_no in ball_map:
+		var node = ball_map[ball_no]
+		
+		if node.get("omitted") == true:
+			if draw_omitted_balls:
+				node.visible_override = true
+				
+				if node.is_in_group("balls"):
+					node.visible = draw_balls
+				elif node.is_in_group("addballs"):
+					node.visible = draw_addballs
+			else:
+				node.visible_override = false
+				node.visible = false
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)
