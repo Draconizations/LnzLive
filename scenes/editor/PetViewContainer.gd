@@ -878,8 +878,28 @@ func _unhandled_key_input(event):
 		tools_menu.popup()
 		return
 	
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_B:
+		paintball_check_box.pressed = !paintball_check_box.pressed
+		get_tree().set_input_as_handled()
+		return
+
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_L:
+		line_mode_check_box.pressed = !line_mode_check_box.pressed
+		get_tree().set_input_as_handled()
+		return
+
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_G:
+		preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+		get_tree().set_input_as_handled()
+		return
+
 	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_M:
 		move_mode_check_box.pressed = !move_mode_check_box.pressed
+		get_tree().set_input_as_handled()
+		return
+
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_P:
+		project_mode_check_box.pressed = !project_mode_check_box.pressed
 		get_tree().set_input_as_handled()
 		return
 
@@ -902,11 +922,14 @@ func _unhandled_key_input(event):
 				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return
+			KEY_U:
+				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return
 			KEY_D:
 				project_mode_check_box.pressed = !project_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return
-
 			KEY_A:
 				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
 				get_tree().set_input_as_handled()
