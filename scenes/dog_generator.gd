@@ -803,7 +803,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	# Generate paintballz
 	for key in paintball_data:
-		if !ball_map.has(key) or ball_map[key].omitted:
+		if !ball_map.has(key):
 			continue
 
 		# Merge base ball + addball data so we can locate the base size
