@@ -260,16 +260,16 @@ func _input(event):
 	if event is InputEventKey and event.pressed and is_over:
 		if event.scancode == KEY_SPACE and event.control:
 			return
-		if event.scancode == KEY_B or event.scancode == KEY_Z:
+		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.BALL)
-		elif event.scancode == KEY_M or event.scancode == KEY_X:
+		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.MOVE)
-		elif event.scancode == KEY_P or event.scancode == KEY_C:
+		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
-		elif event.scancode == KEY_L or event.scancode == KEY_V:
+		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.LINE)
 		elif event.scancode == KEY_DELETE:
