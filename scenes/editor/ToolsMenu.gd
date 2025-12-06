@@ -155,14 +155,16 @@ func _on_RecolorMenuButton_pressed():
 	# add_item("Export to Clothes CLZ")           # index 11
 
 func _on_ToolsMenu_index_pressed(index):
-	var is_ball_selected = is_instance_valid(selected_visual_ball)
 	var ball_no = -1
+	var is_addball = false
+	var is_omitted = false
+	var is_ball_selected = false
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
-
-	var is_addball = selected_visual_ball.is_in_group("addballs")
-	var is_omitted = selected_visual_ball.get("omitted") == true
+		is_ball_selected = is_instance_valid(selected_visual_ball)
+		is_addball = ball_no > KeyBallsData.max_base_ball_num
+		is_omitted = selected_visual_ball.get("omitted") == true
 
 	if index == 1: # Create Addballz + Linez
 		if is_instance_valid(selected_visual_ball):
@@ -208,13 +210,15 @@ func _on_ToolsMenu_index_pressed(index):
 
 func _on_ToolsMenu_about_to_show():
 	var ball_no = -1
+	var is_addball = false
+	var is_omitted = false
+	var is_ball_selected = false
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
-
-	var is_ball_selected = is_instance_valid(selected_visual_ball)
-	var is_addball = selected_visual_ball.is_in_group("addballs")
-	var is_omitted = selected_visual_ball.get("omitted") == true
+		is_ball_selected = is_instance_valid(selected_visual_ball)
+		is_addball = ball_no > KeyBallsData.max_base_ball_num
+		is_omitted = selected_visual_ball.get("omitted") == true
 
 	var option_text = ""
 
@@ -251,14 +255,14 @@ func _on_ToolsMenu_about_to_show():
 		set_item_text(4, "Omit / Unomit Ballz")
 		set_item_disabled(4, !is_ball_selected)
 
-	# 4: Connect by Linez
+	# 5: Connect by Linez
 	option_text = "Connect by Linez"
 	set_item_disabled(4, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (Start: #" + str(ball_no) + ")"
 	set_item_text(5, option_text)
 
-	# 5: Copy-Mirror (L-to-R)
+	# 6: Copy-Mirror (L-to-R)
 	option_text = "Copy-Mirror"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
@@ -266,16 +270,16 @@ func _on_ToolsMenu_about_to_show():
 		option_text += " (cam L-to-R, all ballz)"
 	set_item_text(6, option_text)
 
-	# 6: Copy-Mirror (R-to-L)
+	# 7: Copy-Mirror (R-to-L)
 	option_text = "Copy-Mirror"
-	set_item_disabled(6, is_ball_selected)
+	set_item_disabled(7, is_ball_selected)
 	if is_ball_selected:
 		option_text += " (all ballz)"
 	else:
 		option_text += " (cam R-to-L, all ballz)"
 	set_item_text(7, option_text)
 
-	# 7: Paintball Mode
+	# 8: Paintball Mode
 	option_text = "Paintball Mode"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
@@ -283,13 +287,13 @@ func _on_ToolsMenu_about_to_show():
 		option_text += " (all ballz)"
 	set_item_text(8, option_text)
 
-	# 8: Move Head Ballz
+	# 89: Move Head Ballz
 	set_item_text(9, "Move Head Ballz")
 	
-	# 9: Copy Ballz Colors to Clipboard
+	# 10: Copy Ballz Colors to Clipboard
 	set_item_text(10, "Copy Ballz Colors to Clipboard")
 
-	# 10: Export to Clothes CLZ
+	# 11: Export to Clothes CLZ
 	option_text = "Export to Clothes CLZ"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
