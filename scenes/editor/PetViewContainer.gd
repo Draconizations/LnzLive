@@ -9,6 +9,8 @@ onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") a
 onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
 onready var dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
 
+var _auto_paint_affected_cache: Array = []
+
 var _nearby_balls_cache: Array = []
 var _current_tab_index: int = -1
 var _last_selected_by_tab: Spatial = null
@@ -132,6 +134,7 @@ func _ready():
 	auto_paintballer_settings_instance.connect("randomize_auto_paintballz", dog_generator, "_on_randomize_auto_paintballz")
 	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
+	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 	move_mode_settings_instance.connect("apply_moves", self, "_on_move_mode_apply")
@@ -205,9 +208,9 @@ func _process(_delta):
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
 	elif auto_paintballer_mode:
-		text = "Auto Paintballer: Use the panel to generate random paintballs.\nClick 'Apply' to save changes."
+		text = "Auto Paintballer: Use the panel to generate random paintballz patterns. Click ballz to affect. Hit 'Apply' to save changes."
 	elif project_mode:
-		text = "Project Mode: Use the panel to add or randomize projections.\nClick 'Apply to LNZ' to save changes."
+		text = "Project Mode: Use the panel to add or randomize projections.\nHit 'Apply to LNZ' to save changes."
 	elif move_mode:
 		text = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group."
 		var queued_count = pending_moves.size()
@@ -267,6 +270,8 @@ func get_visual_state_for_ball(b):
 		elif pending_moves.has(b.ball_no):
 			return b.OutlineState.MODIFIED
 		return b.OutlineState.NONE
+	elif auto_paintballer_mode and b.ball_no in _auto_paint_affected_cache:
+			return b.OutlineState.MODIFIED
 	else:
 		if b == active_selected_ball:
 			return b.OutlineState.ACTIVE_SELECTED
@@ -825,6 +830,16 @@ func _gui_input(event):
 			Input.set_custom_mouse_cursor(hand_neutral)
 			drag_ball = null
 			return
+	
+	if auto_paintballer_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if target_ball:
+			auto_paintballer_settings_instance.add_affected_ball(target_ball.ball_no)
+			target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+			yield(get_tree().create_timer(0.1), "timeout")
+			if is_instance_valid(target_ball):
+				target_ball.apply_outline_state(get_visual_state_for_ball(target_ball))
+		return
 
 func _unhandled_key_input(event):
 	if input_is_paused:
@@ -1174,6 +1189,13 @@ func _find_visual_addball_by_no(no: int) -> Spatial:
 				return b
 	return null
 
+func _on_affected_list_changed(ids: Array):
+	_auto_paint_affected_cache = ids
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if is_instance_valid(b):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
 func _update_paintball_mode_ui():
 	if paintball_mode:
 		paintball_settings_instance.show()
@@ -1266,6 +1288,11 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	else:
 		auto_paintballer_settings_instance.hide()
 		dog_generator._on_clear_auto_paintballz()
+		_auto_paint_affected_cache.clear()
+		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+		for b in all_balls:
+			if is_instance_valid(b):
+				b.apply_outline_state(b.OutlineState.NONE)
 
 func _on_line_mode_toggled(is_on):
 	linez_mode = is_on

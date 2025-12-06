@@ -34,10 +34,9 @@ enum FractalPreset { CUSTOM, DRAGON_CURVE, SIERPINSKI, BARNSLEY_FERN }
 const ALLOWED_FRACTAL_CHARS = "FGABX+-[]"
 
 signal randomize_auto_paintballz(paintballz)
-
 signal apply_auto_paintballz
-
 signal clear_auto_paintballz
+signal affected_list_changed(ball_ids)
 
 onready var params_container = find_node("ParamsContainer")
 
@@ -58,6 +57,7 @@ func _ready():
 	panel.restore_position(default_pos)
 	
 	find_node("RandomizeButton").connect("pressed", self, "_on_RandomizeButton_pressed")
+	find_node("AffectedBallz").connect("text_changed", self, "_on_AffectedBallz_text_changed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
@@ -139,6 +139,10 @@ func _on_viewport_size_changed():
 	panel.margin_right = panel.margin_left + panel_size.x
 	panel.margin_top = viewport_size.y - panel_size.y - 10
 	panel.margin_bottom = panel.margin_top + panel_size.y
+
+func _on_AffectedBallz_text_changed(new_text):
+	var ids = _parse_number_list(new_text)
+	emit_signal("affected_list_changed", ids)
 
 func _on_Distribution_item_selected(index):
 	for child in params_container.get_children():
@@ -1111,3 +1115,18 @@ func get_properties():
 	properties["use_seed"] = find_node("UseSeed").pressed
 	properties["seed"] = find_node("Seed").text
 	return properties
+
+func add_affected_ball(ball_no: int):
+	var line_edit = find_node("AffectedBallz")
+	var current_text = line_edit.text
+	var current_list = _parse_number_list(current_text)
+
+	if ball_no in current_list:
+		return
+
+	if current_text.strip_edges() == "":
+		line_edit.text = str(ball_no)
+	else:
+		line_edit.text += "," + str(ball_no)
+		
+	_on_AffectedBallz_text_changed(line_edit.text)
