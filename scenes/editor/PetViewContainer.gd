@@ -138,7 +138,7 @@ func _ready():
 	move_mode_settings_instance.connect("clear_moves", self, "_on_move_mode_clear")
 	move_mode_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 	move_mode_settings_instance.connect("align_selection", self, "_on_align_selection")
-	move_mode_settings_instance.connect("drop_to_floor", self, "_on_drop_to_floor")
+	move_mode_settings_instance.connect("snap_selection", self, "_on_snap_selection")
 	move_mode_settings_instance.connect("nudge_selection", self, "_on_nudge_selection")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
@@ -400,12 +400,13 @@ func _gui_input(event):
 					var final_lock_y = constraints.y
 					var final_lock_z = constraints.z
 					
-					# If ANY hotkey is pressed, we interpret it as "Constraint Mode"
-					# Meaning, only allow movement on pressed axes.
+					# Override UI with Hotkeys if pressed
 					if constrain_x or constrain_y or constrain_z:
-						if not constrain_x: final_lock_x = true
-						if not constrain_y: final_lock_y = true
-						if not constrain_z: final_lock_z = true
+						# If using hotkeys, treat them as "Allow movement on Axis"
+						# So if X is pressed, we Lock Y and Z.
+						final_lock_x = not constrain_x
+						final_lock_y = not constrain_y
+						final_lock_z = not constrain_z
 					
 					if final_lock_x: delta.x = 0
 					if final_lock_y: delta.y = 0
@@ -1634,11 +1635,11 @@ func _isolate_target_ball(target_ball):
 			continue
 
 		if ball != target_ball:
-			area.set_collision_layer_bit(0, false) # Remove from layer 1
-			area.set_collision_layer_bit(1, true)  # Add to layer 2
-		else: # is target ball
-			area.set_collision_layer_bit(0, true)  # Ensure target is on layer 1
-			area.set_collision_layer_bit(1, false) # Ensure target is not on layer 2
+			area.set_collision_layer_bit(0, false)
+			area.set_collision_layer_bit(1, true)
+		else:
+			area.set_collision_layer_bit(0, true)
+			area.set_collision_layer_bit(1, false)
 
 func _restore_all_balls():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -1649,8 +1650,8 @@ func _restore_all_balls():
 		if not area:
 			continue
 
-		area.set_collision_layer_bit(0, true)  # Restore to layer 1
-		area.set_collision_layer_bit(1, false) # Remove from layer 2
+		area.set_collision_layer_bit(0, true)
+		area.set_collision_layer_bit(1, false)
 
 func _track_pending_move(ball):
 	if not pending_moves.has(ball.ball_no):
@@ -1671,7 +1672,7 @@ func _on_unselect_all():
 	selected_balls.clear()
 	for b in to_update:
 		if is_instance_valid(b):
-			b.apply_outline_state(get_visual_state_for_ball(b)) # Will revert to MODIFIED if pending, or NONE
+			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func _on_move_mode_clear():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -1691,22 +1692,20 @@ func _on_move_mode_apply():
 		
 	lnz_text_edit.apply_batch_moves(pending_moves)
 	
-	# Clear pending after apply
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
 	
-	# Update original positions to new ones
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
 		pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
-func _on_align_selection(axis):
+func _on_align_selection(axis, mode):
 	if selected_balls.empty():
 		return
 		
-	_align_ball_list(selected_balls, axis)
+	_align_ball_list(selected_balls, axis, mode)
 
 	if move_mode_settings_instance.is_mirror_x_active():
 		var mirrored_group = []
@@ -1721,57 +1720,106 @@ func _on_align_selection(axis):
 					mirrored_group.append(partner_visual)
 		
 		if not mirrored_group.empty():
-			_align_ball_list(mirrored_group, axis)
+			var target_mode = mode
+			if axis == "x":
+				if mode == 0: target_mode = 2
+				elif mode == 2: target_mode = 0
+				
+			_align_ball_list(mirrored_group, axis, target_mode)
 
-func _align_ball_list(ball_list, axis):
-	var sum = 0.0
-	for b in ball_list:
-		if axis == "x": sum += b.global_transform.origin.x
-		elif axis == "y": sum += b.global_transform.origin.y
-		elif axis == "z": sum += b.global_transform.origin.z
-		
-	var avg = sum / ball_list.size()
+func _align_ball_list(ball_list, axis, mode):
+	var reference_val = 0.0
+	var first = true
+	
+	if mode == 1:
+		var sum = 0.0
+		for b in ball_list:
+			sum += _get_axis_val(b, axis)
+		reference_val = sum / ball_list.size()
+	else:
+		for b in ball_list:
+			var val = _get_axis_val(b, axis)
+			if first:
+				reference_val = val
+				first = false
+			else:
+				if mode == 0:
+					if val < reference_val: reference_val = val
+				elif mode == 2:
+					if val > reference_val: reference_val = val
 	
 	for b in ball_list:
-		if axis == "x": b.global_transform.origin.x = avg
-		elif axis == "y": b.global_transform.origin.y = avg
-		elif axis == "z": b.global_transform.origin.z = avg
+		if axis == "x": b.global_transform.origin.x = reference_val
+		elif axis == "y": b.global_transform.origin.y = reference_val
+		elif axis == "z": b.global_transform.origin.z = reference_val
 		_track_pending_move(b)
 
-func _on_drop_to_floor():
+func _get_axis_val(ball, axis):
+	if axis == "x": return ball.global_transform.origin.x
+	if axis == "y": return ball.global_transform.origin.y
+	if axis == "z": return ball.global_transform.origin.z
+	return 0.0
+
+func _on_snap_selection(axis, direction):
+	
 	if selected_balls.empty():
 		return
+
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var target_val = 0.0
+	var first = true
+	
+	for b in all_balls:
+		if not is_instance_valid(b): continue
 		
-	_drop_ball_list_to_floor(selected_balls)
+		var val = _get_axis_val(b, axis)
+		
+		if first:
+			target_val = val
+			first = false
+		else:
+			if direction == -1:
+				if val < target_val: target_val = val
+			else:
+				if val > target_val: target_val = val
+
+	_snap_ball_list_to_target(selected_balls, axis, direction, target_val)
 
 	if move_mode_settings_instance.is_mirror_x_active():
 		var mirrored_group = []
-		
 		for b in selected_balls:
 			var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
-			
 			if partner_id != -1 and partner_id != b.ball_no:
 				var partner_visual = _find_visual_ball_by_no(partner_id)
-				
 				if partner_visual and not (partner_visual in selected_balls) and not (partner_visual in mirrored_group):
 					mirrored_group.append(partner_visual)
 		
 		if not mirrored_group.empty():
-			_drop_ball_list_to_floor(mirrored_group)
+			_snap_ball_list_to_target(mirrored_group, axis, direction, target_val)
 
-func _drop_ball_list_to_floor(ball_list):
-	var min_y = INF
-	for b in ball_list:
-		if b.global_transform.origin.y < min_y:
-			min_y = b.global_transform.origin.y
-			
-	if min_y == INF: 
-		return
-	
-	var offset = -min_y
+func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
+	var selection_extreme = 0.0
+	var first = true
 	
 	for b in ball_list:
-		b.global_transform.origin.y += offset
+		var val = _get_axis_val(b, axis)
+		
+		if first:
+			selection_extreme = val
+			first = false
+		else:
+			if direction == -1:
+				if val < selection_extreme: selection_extreme = val
+			else:
+				if val > selection_extreme: selection_extreme = val
+	
+	if first: return
+	
+	var offset = target_val - selection_extreme
+	
+	for b in ball_list:
+		if axis == "y": b.global_transform.origin.y += offset
+		elif axis == "z": b.global_transform.origin.z += offset
 		_track_pending_move(b)
 
 func _on_nudge_selection(vector: Vector3):
