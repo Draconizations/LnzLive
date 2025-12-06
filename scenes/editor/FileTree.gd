@@ -78,7 +78,7 @@ func _ready():
 				if subdir.open(subdir_path) == OK:
 					var sub_item = create_item(examples)
 					sub_item.set_text(0, file_name)
-					
+					sub_item.set_collapsed(true)
 					subdir.list_dir_begin(true, true)
 					var sub_file = subdir.get_next()
 					while sub_file != "":
@@ -601,7 +601,6 @@ func _on_RenameDialog_confirmed():
 
 	if new_filepath.ends_with(".lnz"):
 		emit_signal("user_file_selected", new_filepath)
-
 
 func _on_ItemPopupMenu_about_to_show():
 	var items = get_all_selected()
