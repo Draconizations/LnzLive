@@ -22,6 +22,7 @@ export var draw_addballs = true
 export var draw_lines = true
 export var draw_paintballs = true
 export var draw_polygons = true
+export var draw_omitted_balls = false # not used yet
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
@@ -781,8 +782,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if is_special_ball:
 			add_visual_ball.add_to_group("special_balls")
 			add_visual_ball.visible = draw_special_balls
-		else:
-			add_visual_ball.visible = draw_addballs
+		# else:
+		# 	add_visual_ball.visible = draw_addballs
 
 		# If user hid addballs globally or if omitted
 		if !draw_addballs:
@@ -1134,6 +1135,17 @@ func _on_LineCheckBox_toggled(button_pressed):
 func _on_PolygonCheckBox_toggled(button_pressed):
 	set_visibility_for_group("polygons", button_pressed)
 	draw_polygons = button_pressed
+
+# func _on_OmittedBallCheckBox_toggled(button_pressed):
+# 	draw_omitted_balls = button_pressed
+# 	var balls = get_tree().get_nodes_in_group("balls")
+# 	for ball in balls:
+# 		if ball is Spatial:
+# 			ball.render_if_omitted = button_pressed
+# 	var addballs = get_tree().get_nodes_in_group("addballs")
+# 	for addball in addballs:
+# 		if addball is Spatial:
+# 			addball.render_if_omitted = button_pressed
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)
