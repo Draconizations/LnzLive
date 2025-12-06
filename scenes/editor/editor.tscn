@@ -544,6 +544,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Auto Paintballer"
+hint_tooltip = "Hotkey A to toggle Auto Paintballer"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -561,6 +562,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "View Palette"
+hint_tooltip = "Hotkey T to toggle Palette Viewer"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -578,6 +580,7 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Color Swap"
+hint_tooltip = "Hotkey G to toggle Color Swap"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -594,6 +597,7 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Capture Head Shot"
+hint_tooltip = "Hotkey H to capture [Head Shot]"
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 277.0
@@ -619,11 +623,11 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 134.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 19.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -633,13 +637,14 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Select Mode"
+hint_tooltip = "Hotkey S to activate Select Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PaintballModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_top = 23.0
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 42.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -649,13 +654,14 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Paintball Mode"
+hint_tooltip = "Hotkey W or ALT+B to activate Paintball Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ProjectModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_top = 46.0
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 65.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -665,13 +671,14 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Project Mode"
+hint_tooltip = "Hotkey D or ALT+P to activate Line Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PresetModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_top = 69.0
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 88.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -681,13 +688,14 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Preset Mode"
+hint_tooltip = "Hotkey R or ALT+G to activate Preset Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="LineModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_top = 92.0
-margin_right = 119.0
+margin_right = 185.0
 margin_bottom = 111.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -697,14 +705,15 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Line Mode"
+hint_tooltip = "Hotkey E or ALT+L to activate Line Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="MoveModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
-margin_top = 168.0
-margin_right = 120.0
-margin_bottom = 192.0
+margin_top = 115.0
+margin_right = 185.0
+margin_bottom = 134.0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -713,6 +722,7 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Move Mode"
+hint_tooltip = "Hotkey U or ALT+G to activate Move Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
