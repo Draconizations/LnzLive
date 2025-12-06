@@ -45,19 +45,19 @@ func _ready():
 	align_opt.selected = 1
 	
 	var btn_drop_floor = find_node("DropFloor")
-	btn_drop_floor.text = "Drop to Floor (max Y)"
+	btn_drop_floor.text = "Floor (max Y)"
 	btn_drop_floor.connect("pressed", self, "_on_Snap_pressed", ["y", -1])
 
 	var btn_raise_roof = find_node("RaiseRoof")
-	btn_raise_roof.text = "Raise to Ceiling (min Y)"
+	btn_raise_roof.text = "Roof (min Y)"
 	btn_raise_roof.connect("pressed", self, "_on_Snap_pressed", ["y", 1])
 
 	var btn_front = find_node("ShoveFront")
-	btn_front.text = "Shove to Front (min Z)"
+	btn_front.text = "Front (min Z)"
 	btn_front.connect("pressed", self, "_on_Snap_pressed", ["z", -1])
 	
 	var btn_back = find_node("PushBack")
-	btn_back.text = "Push to Back (max Z)"
+	btn_back.text = "Back (max Z)"
 	btn_back.connect("pressed", self, "_on_Snap_pressed", ["z", 1])
 	
 	find_node("ApplyNudge").connect("pressed", self, "_on_ApplyNudge_pressed")
