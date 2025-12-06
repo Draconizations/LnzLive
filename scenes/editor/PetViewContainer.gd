@@ -957,9 +957,10 @@ func deal_with_last_selected():
 		last_selected._on_Area_mouse_exited()
 				
 func _on_Node_ball_mouse_enter(ball_info):
-	ball_label.text = str(ball_info.ball_no)
-	ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
-	ball_label.show()
+	if selecting_on:
+		ball_label.text = str(ball_info.ball_no)
+		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
+		ball_label.show()
 
 func _on_SelectCheckBox_toggled(button_pressed):
 	pass
