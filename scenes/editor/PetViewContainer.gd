@@ -265,18 +265,21 @@ func clear_active_selected_ball():
 	active_selected_ball = null
 
 func get_visual_state_for_ball(b):
-	if move_mode:
-		if b in selected_balls:
-			return b.OutlineState.ACTIVE_SELECTED
-		elif pending_moves.has(b.ball_no):
-			return b.OutlineState.MODIFIED
-		return b.OutlineState.NONE
-	elif auto_paintballer_mode and b.ball_no in _auto_paint_affected_cache:
-			return b.OutlineState.MODIFIED
+	if not "ball_no" in b:
+			return
 	else:
-		if b == active_selected_ball:
-			return b.OutlineState.ACTIVE_SELECTED
-		return b.OutlineState.NONE
+		if move_mode:
+			if b in selected_balls:
+				return b.OutlineState.ACTIVE_SELECTED
+			elif pending_moves.has(b.ball_no):
+				return b.OutlineState.MODIFIED
+			return b.OutlineState.NONE
+		elif auto_paintballer_mode and b.ball_no in _auto_paint_affected_cache:
+				return b.OutlineState.MODIFIED
+		else:
+			if b == active_selected_ball:
+				return b.OutlineState.ACTIVE_SELECTED
+			return b.OutlineState.NONE
 
 func flip_camera_view():
 	var camera_transform = camera.transform
@@ -1733,6 +1736,8 @@ func _on_unselect_all():
 func _on_move_mode_clear():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
+		if not "ball_no" in b:
+			continue
 		if pending_moves.has(b.ball_no):
 			b.global_transform.origin = pending_moves[b.ball_no].orig_pos
 	
@@ -1740,6 +1745,8 @@ func _on_move_mode_clear():
 	move_mode_settings_instance.set_queued_count(0)
 	
 	for b in all_balls:
+		if not "ball_no" in b:
+			continue
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
 func _on_move_mode_apply():
@@ -1754,6 +1761,8 @@ func _on_move_mode_apply():
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
+		if not "ball_no" in b:
+			continue
 		pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
@@ -1790,10 +1799,14 @@ func _align_ball_list(ball_list, axis, mode):
 	if mode == 1:
 		var sum = 0.0
 		for b in ball_list:
+			if not "ball_no" in b:
+				continue
 			sum += _get_axis_val(b, axis)
 		reference_val = sum / ball_list.size()
 	else:
 		for b in ball_list:
+			if not "ball_no" in b:
+				continue
 			var val = _get_axis_val(b, axis)
 			if first:
 				reference_val = val
@@ -1805,6 +1818,8 @@ func _align_ball_list(ball_list, axis, mode):
 					if val > reference_val: reference_val = val
 	
 	for b in ball_list:
+		if not "ball_no" in b:
+			continue
 		if axis == "x": b.global_transform.origin.x = reference_val
 		elif axis == "y": b.global_transform.origin.y = reference_val
 		elif axis == "z": b.global_transform.origin.z = reference_val
@@ -1858,6 +1873,8 @@ func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
 	var first = true
 	
 	for b in ball_list:
+		if not "ball_no" in b:
+			continue
 		var val = _get_axis_val(b, axis)
 		
 		if first:
@@ -1874,6 +1891,8 @@ func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
 	var offset = target_val - selection_extreme
 	
 	for b in ball_list:
+		if not "ball_no" in b:
+			continue
 		if axis == "y": b.global_transform.origin.y += offset
 		elif axis == "z": b.global_transform.origin.z += offset
 		_track_pending_move(b)
@@ -1910,6 +1929,8 @@ func _on_move_mode_select_group(group_name: String):
 
 func _apply_mirror_move(balls_moved, delta):
 	for b in balls_moved:
+		if not "ball_no" in b:
+			continue
 		var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 		if partner_id != -1 and partner_id != b.ball_no:
 			# Find visual ball for partner
