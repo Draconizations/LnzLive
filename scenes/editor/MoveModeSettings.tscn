@@ -56,8 +56,9 @@ visible = false
 margin_left = 10.0
 margin_top = 10.0
 margin_right = 285.0
-margin_bottom = 570.0
-rect_min_size = Vector2( 275, 560 )
+margin_bottom = 635.0
+rect_min_size = Vector2( 275, 625 )
+rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 4 )
 __meta__ = {
@@ -133,23 +134,90 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Unselect All"
 
-[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
+[node name="GroupSelectionContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
 margin_top = 81.0
 margin_right = 268.0
-margin_bottom = 85.0
+margin_bottom = 106.0
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Head" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
+margin_left = 10.0
+margin_right = 61.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Head"
+
+[node name="Body" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
+margin_left = 65.0
+margin_right = 115.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Body"
+
+[node name="Legs" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
+margin_left = 119.0
+margin_right = 164.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Legs"
+
+[node name="Tail" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
+margin_left = 168.0
+margin_right = 207.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Tail"
+
+[node name="Ears" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
+margin_left = 211.0
+margin_right = 257.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Ears"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
+margin_top = 112.0
+margin_right = 268.0
+margin_bottom = 116.0
 
 [node name="ConstraintsLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 91.0
+margin_top = 122.0
 margin_right = 268.0
-margin_bottom = 112.0
+margin_bottom = 143.0
 custom_fonts/font = SubResource( 1 )
-text = "Movement Constraints"
+text = "Constraints"
 align = 1
 
 [node name="ConstraintsGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 118.0
+margin_top = 149.0
 margin_right = 268.0
-margin_bottom = 172.0
+margin_bottom = 203.0
 columns = 4
 
 [node name="Free" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
@@ -210,9 +278,9 @@ custom_fonts/font = SubResource( 2 )
 text = "YZ"
 
 [node name="MirrorContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 178.0
+margin_top = 209.0
 margin_right = 268.0
-margin_bottom = 203.0
+margin_bottom = 234.0
 alignment = 1
 
 [node name="MirrorX" type="CheckBox" parent="Panel/VBoxContainer/MirrorContainer"]
@@ -223,22 +291,22 @@ custom_fonts/font = SubResource( 2 )
 text = "Mirror X"
 
 [node name="HSeparator3" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 209.0
+margin_top = 240.0
 margin_right = 268.0
-margin_bottom = 213.0
+margin_bottom = 244.0
 
 [node name="AlignLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 219.0
+margin_top = 250.0
 margin_right = 268.0
-margin_bottom = 240.0
+margin_bottom = 271.0
 custom_fonts/font = SubResource( 1 )
 text = "Alignment"
 align = 1
 
 [node name="AlignModeOption" type="OptionButton" parent="Panel/VBoxContainer"]
-margin_top = 246.0
+margin_top = 277.0
 margin_right = 268.0
-margin_bottom = 263.0
+margin_bottom = 294.0
 theme = SubResource( 5 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -249,9 +317,9 @@ text = "Center"
 align = 1
 
 [node name="AlignButtons" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 269.0
+margin_top = 300.0
 margin_right = 268.0
-margin_bottom = 294.0
+margin_bottom = 325.0
 alignment = 1
 
 [node name="AlignX" type="Button" parent="Panel/VBoxContainer/AlignButtons"]
@@ -291,22 +359,22 @@ custom_fonts/font = SubResource( 1 )
 text = "Align Z"
 
 [node name="HSeparator5" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 300.0
+margin_top = 331.0
 margin_right = 268.0
-margin_bottom = 304.0
+margin_bottom = 335.0
 
 [node name="SnapLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 310.0
+margin_top = 341.0
 margin_right = 268.0
-margin_bottom = 331.0
+margin_bottom = 362.0
 custom_fonts/font = SubResource( 1 )
 text = "Snap"
 align = 1
 
 [node name="SnapButtonsGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 337.0
+margin_top = 368.0
 margin_right = 268.0
-margin_bottom = 391.0
+margin_bottom = 422.0
 columns = 2
 
 [node name="DropFloor" type="Button" parent="Panel/VBoxContainer/SnapButtonsGrid"]
@@ -362,22 +430,22 @@ custom_fonts/font = SubResource( 1 )
 text = "Back (max Z)"
 
 [node name="HSeparator4" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 397.0
+margin_top = 428.0
 margin_right = 268.0
-margin_bottom = 401.0
+margin_bottom = 432.0
 
 [node name="NudgeLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 407.0
+margin_top = 438.0
 margin_right = 268.0
-margin_bottom = 428.0
+margin_bottom = 459.0
 custom_fonts/font = SubResource( 1 )
 text = "Nudge"
 align = 1
 
 [node name="NudgeGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 434.0
+margin_top = 465.0
 margin_right = 268.0
-margin_bottom = 514.0
+margin_bottom = 545.0
 columns = 2
 
 [node name="LabelX" type="Label" parent="Panel/VBoxContainer/NudgeGrid"]
@@ -428,9 +496,9 @@ min_value = -1000.0
 max_value = 1000.0
 
 [node name="ApplyNudge" type="Button" parent="Panel/VBoxContainer"]
-margin_top = 520.0
+margin_top = 551.0
 margin_right = 268.0
-margin_bottom = 545.0
+margin_bottom = 576.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
 custom_styles/focus = SubResource( 4 )

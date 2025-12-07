@@ -7,6 +7,7 @@ signal align_selection(axis, mode) # mode: 0=min, 1=center, 2=max
 signal snap_selection(axis, direction) # direction: -1=min, 1=max
 signal nudge_selection(vector)
 signal mirror_toggled(is_on)
+signal select_group(group_name)
 
 var current_constraint_mode = "free" # free, x, y, z, xy, xz, yz
 
@@ -24,6 +25,8 @@ func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("UnselectButton").connect("pressed", self, "_on_UnselectButton_pressed")
+
+	_setup_group_buttons()
 	
 	var constraints = ["Free", "LockX", "LockY", "LockZ", "LockXY", "LockXZ", "LockYZ"]
 	for c in constraints:
@@ -97,6 +100,17 @@ func get_constraints():
 
 func is_mirror_x_active():
 	return find_node("MirrorX").pressed
+
+func _setup_group_buttons():
+	var groups = ["Head", "Body", "Legs", "Tail", "Ears"]
+	for g in groups:
+		var btn = find_node(g)
+		if btn:
+			if not btn.is_connected("pressed", self, "_on_group_btn_pressed"):
+				btn.connect("pressed", self, "_on_group_btn_pressed", [g])
+
+func _on_group_btn_pressed(group_name):
+	emit_signal("select_group", group_name)
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_moves")

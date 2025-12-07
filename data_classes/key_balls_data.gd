@@ -127,6 +127,8 @@ func _ready():
 		symmetry_mode_hide_balls_dog.append(n)
 	for n in range(24, 48):
 		symmetry_mode_right_balls_dog.append(n)
+
+	build_move_groups()
 	
 	# bodyarea values
 	# 8 = head-related
@@ -635,3 +637,69 @@ var bab_ball_definitions = {
 	118: { "name": "zorient" },
 	119: { "name": "ztrans" }
 }
+
+# Move Groups
+# (can't just use the ext groups cuz that is for extension sections and missing some ballz; can't use the symmetry def b/c that misses center ballz)
+var move_groups_dog = {}
+var move_groups_cat = {}
+var move_groups_bab = {}
+
+func build_move_groups():
+	var dog_torso = [18, 42, 19, 43, 50, 48, 49, 54]
+	
+	move_groups_dog = {
+		"Head": head_ext_dog.duplicate(),
+		"Body": dog_torso, 
+		"Legs": _flatten(legs_dog),
+		"Tail": tail_dog.duplicate(),
+		"Ears": _flatten_dict(ear_ext_dog)
+	}
+
+	var cat_torso = [38, 39, 25, 26, 6, 2, 3, 36]
+	
+	move_groups_cat = {
+		"Head": head_ext_cat.duplicate(),
+		"Body": cat_torso,
+		"Legs": _flatten(legs_cat),
+		"Tail": tail_cat.duplicate(),
+		"Ears": _flatten_dict(ear_ext_cat)
+	}
+
+	var bab_torso = [94, 95, 66, 67, 10, 11, 4, 70, 81]
+	
+	move_groups_bab = {
+		"Head": head_ext_bab.duplicate(),
+		"Body": bab_torso,
+		"Legs": _flatten(legs_bab),
+		"Tail": [],
+		"Ears": _flatten_dict(ear_ext_bab)
+	}
+
+func _flatten(array_of_arrays):
+	var flat = []
+	for group in array_of_arrays:
+		flat.append_array(group)
+	return flat
+
+func _flatten_dict(dict_of_arrays):
+	var flat = []
+	for key in dict_of_arrays:
+		flat.append(key)
+		flat.append_array(dict_of_arrays[key])
+	return flat
+
+func get_group_balls(group_name: String):
+	var result = []
+	
+	match species:
+		Species.DOG:
+			if move_groups_dog.has(group_name):
+				result = move_groups_dog[group_name]
+		Species.CAT:
+			if move_groups_cat.has(group_name):
+				result = move_groups_cat[group_name]
+		Species.BABY:
+			if move_groups_bab.has(group_name):
+				result = move_groups_bab[group_name]
+				
+	return result

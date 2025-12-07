@@ -143,6 +143,7 @@ func _ready():
 	move_mode_settings_instance.connect("align_selection", self, "_on_align_selection")
 	move_mode_settings_instance.connect("snap_selection", self, "_on_snap_selection")
 	move_mode_settings_instance.connect("nudge_selection", self, "_on_nudge_selection")
+	move_mode_settings_instance.connect("select_group", self, "_on_move_mode_select_group")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
@@ -342,7 +343,8 @@ func _gui_input(event):
 
 					else:
 						# Clicked empty space
-						_on_unselect_all()
+						if not move_mode:
+							_on_unselect_all()
 						# Do NOT return here, allow pass-through to rotation logic
 				else:
 					# Mouse release
@@ -1888,6 +1890,20 @@ func _on_nudge_selection(vector: Vector3):
 	for b in selected_balls:
 		b.global_transform.origin += world_delta
 		_track_pending_move(b)
+
+func _on_move_mode_select_group(group_name: String):
+	if not Input.is_key_pressed(KEY_CONTROL):
+		_on_unselect_all()
+
+	var balls_to_select = KeyBallsData.get_group_balls(group_name)
+	
+	for b_no in balls_to_select:
+		var b = _find_visual_ball_by_no(b_no)
+		
+		if b and is_instance_valid(b):
+			if not (b in selected_balls):
+				selected_balls.append(b)
+				b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
 
 func _apply_mirror_move(balls_moved, delta):
 	for b in balls_moved:
