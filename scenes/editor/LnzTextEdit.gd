@@ -888,6 +888,16 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	elif ball_data != null:
 		texture_id = ball_data.texture_id
 
+	var raw_color = reference_ball.color_index
+	var raw_outline_color = reference_ball.outline_color_index
+
+	if addball_data != null:
+		if "color" in addball_data: raw_color = addball_data.color
+		if "outline_color" in addball_data: raw_outline_color = addball_data.outline_color
+	elif ball_data != null:
+		if "color" in ball_data: raw_color = ball_data.color
+		if "outline_color" in ball_data: raw_outline_color = ball_data.outline_color
+
 	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
 		real_base_ball = reference_ball.base_ball_no
@@ -916,12 +926,12 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 		str(int(new_pos.x)),
 		str(int(new_pos.y)),
 		str(int(new_pos.z)),
-		str(reference_ball.color_index),
-		str(reference_ball.outline_color_index),
+		str(raw_color),
+		str(raw_outline_color),
 		"0",
 		str(fuzz_amount),
 		"0",
-		str(reference_ball.old_outline),
+		"0",
 		str(lnz_size),
 		str(bodyarea),
 		"0",
