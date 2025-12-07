@@ -1308,6 +1308,7 @@ custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
 [node name="FindPanel" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+visible = false
 margin_top = 29.0
 margin_right = 757.0
 margin_bottom = 138.0
@@ -1423,7 +1424,7 @@ custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
-margin_top = 142.0
+margin_top = 29.0
 margin_right = 757.0
 margin_bottom = 1078.0
 size_flags_horizontal = 3

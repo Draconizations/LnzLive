@@ -76,16 +76,16 @@ func _ready():
 		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
 
 func _setup_context_menu():
-    var menu = get_menu()
-    
-    if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
-        menu.connect("id_pressed", self, "_on_menu_id_pressed")
+	var menu = get_menu()
+	
+	if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
+		menu.connect("id_pressed", self, "_on_menu_id_pressed")
 
-    if menu.get_item_index(100) == -1:
-        menu.add_item("Find/Replace", 100)
-    
-    if menu.get_item_index(101) == -1:
-        menu.add_item("Toggle Comment", 101)
+	if menu.get_item_index(100) == -1:
+		menu.add_item("Find/Replace", 100)
+	
+	if menu.get_item_index(101) == -1:
+		menu.add_item("Toggle Comment", 101)
 
 func _load_file(filepath: String, user_flag: bool):
 	var file = File.new()
