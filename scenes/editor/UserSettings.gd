@@ -12,10 +12,21 @@ onready var color_rect = get_node("BackgroundColorRect")
 onready var view_palette_button = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton")
 
 onready var file_tree = get_tree().get_root().get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+var _cached_window_size = Vector2(1024, 600)
+var _cached_window_pos = Vector2()
 
 func _ready():
+	_cached_window_size = OS.window_size
+	_cached_window_pos = OS.window_position
+	
 	load_settings()
+	
 	color_picker.connect("color_changed", self, "_on_color_changed")
+
+func _process(_delta):
+	if not OS.window_fullscreen and not OS.window_maximized:
+		_cached_window_size = OS.window_size
+		_cached_window_pos = OS.window_position
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -23,13 +34,14 @@ func _notification(what):
 
 func save_settings():
 	var config = ConfigFile.new()
-
 	var err = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		print("Error loading settings for save: ", err)
 
-	config.set_value("Display", "window_position", OS.window_position)
-	config.set_value("Display", "window_size", OS.window_size)
+	config.set_value("Display", "fullscreen", OS.window_fullscreen)
+	config.set_value("Display", "maximized", OS.window_maximized)
+	config.set_value("Display", "window_size", _cached_window_size)
+	config.set_value("Display", "window_position", _cached_window_pos)
 	config.set_value("Display", "background_color", color_rect.color)
 	
 	var save_err = config.save(SETTINGS_PATH)
@@ -43,29 +55,33 @@ func load_settings():
 	var default_color = Color( 0.168627, 0.45098, 0.45098, 1 )
 	
 	if err == OK:
-		var screen_pos = config.get_value("Display", "window_position", null)
-		var screen_size = config.get_value("Display", "window_size", null)
 		var bg_color = config.get_value("Display", "background_color", default_color)
-		
-		if screen_pos:
-			OS.window_position = screen_pos
-		else:
-			OS.center_window()
-			
-		if screen_size:
-			OS.window_size = screen_size
-		
 		color_rect.color = bg_color
 		color_picker.color = bg_color
+		
+		var saved_size = config.get_value("Display", "window_size", null)
+		var saved_pos = config.get_value("Display", "window_position", null)
+		
+		if saved_size:
+			OS.window_size = saved_size
+			_cached_window_size = saved_size
+		
+		if saved_pos:
+			OS.window_position = saved_pos
+			_cached_window_pos = saved_pos
+		else:
+			OS.center_window()
 
-	elif err == ERR_FILE_NOT_FOUND:
-		OS.center_window()
-		color_rect.color = default_color
-		color_picker.color = default_color
-	
+		var is_maximized = config.get_value("Display", "maximized", false)
+		var is_fullscreen = config.get_value("Display", "fullscreen", false)
+		
+		if is_fullscreen:
+			OS.window_fullscreen = true
+		elif is_maximized:
+			OS.window_maximized = true
+
 	else:
-		print("Error loading window settings: ", err)
-		OS.center_window() 
+		OS.center_window()
 		color_rect.color = default_color
 		color_picker.color = default_color
 
