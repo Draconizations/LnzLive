@@ -535,6 +535,7 @@ grow_vertical = 0
 margin_right = 84.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
+hint_tooltip = "Hotkey A to toggle Auto Paintballer"
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -544,7 +545,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Auto Paintballer"
-hint_tooltip = "Hotkey A to toggle Auto Paintballer"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -553,6 +553,7 @@ __meta__ = {
 margin_right = 84.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
+hint_tooltip = "Hotkey T to toggle Palette Viewer"
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -562,7 +563,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "View Palette"
-hint_tooltip = "Hotkey T to toggle Palette Viewer"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -572,6 +572,7 @@ margin_top = 68.0
 margin_right = 91.0
 margin_bottom = 98.0
 rect_min_size = Vector2( 0, 30 )
+hint_tooltip = "Hotkey G to toggle Color Swap"
 size_flags_horizontal = 0
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
@@ -580,7 +581,6 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Color Swap"
-hint_tooltip = "Hotkey G to toggle Color Swap"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -590,6 +590,7 @@ margin_left = -64.0
 margin_right = 62.0
 margin_bottom = 30.0
 rect_min_size = Vector2( 0, 30 )
+hint_tooltip = "Hotkey H to capture [Head Shot]"
 custom_styles/hover = ExtResource( 20 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -597,7 +598,6 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Capture Head Shot"
-hint_tooltip = "Hotkey H to capture [Head Shot]"
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 277.0
@@ -623,12 +623,13 @@ __meta__ = {
 }
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
-margin_right = 185.0
+margin_right = 119.0
 margin_bottom = 134.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_right = 185.0
 margin_bottom = 19.0
+hint_tooltip = "Hotkey S to activate Select Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -637,7 +638,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Select Mode"
-hint_tooltip = "Hotkey S to activate Select Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -646,6 +646,7 @@ __meta__ = {
 margin_top = 23.0
 margin_right = 185.0
 margin_bottom = 42.0
+hint_tooltip = "Hotkey W or ALT+B to activate Paintball Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -654,7 +655,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Paintball Mode"
-hint_tooltip = "Hotkey W or ALT+B to activate Paintball Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -663,6 +663,7 @@ __meta__ = {
 margin_top = 46.0
 margin_right = 185.0
 margin_bottom = 65.0
+hint_tooltip = "Hotkey D or ALT+P to activate Line Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -671,7 +672,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Project Mode"
-hint_tooltip = "Hotkey D or ALT+P to activate Line Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -680,6 +680,7 @@ __meta__ = {
 margin_top = 69.0
 margin_right = 185.0
 margin_bottom = 88.0
+hint_tooltip = "Hotkey R or ALT+G to activate Preset Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -688,7 +689,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Preset Mode"
-hint_tooltip = "Hotkey R or ALT+G to activate Preset Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -697,6 +697,7 @@ __meta__ = {
 margin_top = 92.0
 margin_right = 185.0
 margin_bottom = 111.0
+hint_tooltip = "Hotkey E or ALT+L to activate Line Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -705,7 +706,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Line Mode"
-hint_tooltip = "Hotkey E or ALT+L to activate Line Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -714,6 +714,7 @@ __meta__ = {
 margin_top = 115.0
 margin_right = 185.0
 margin_bottom = 134.0
+hint_tooltip = "Hotkey U or ALT+M to activate Move Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -722,7 +723,6 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Move Mode"
-hint_tooltip = "Hotkey U or ALT+G to activate Move Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1218,6 +1218,7 @@ margin_bottom = 1079.0
 [node name="HBoxContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_right = 757.0
 margin_bottom = 25.0
+rect_clip_content = true
 size_flags_horizontal = 3
 
 [node name="FontToggleButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
@@ -1307,10 +1308,10 @@ custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
 [node name="FindPanel" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
-visible = false
-margin_top = 25.0
+margin_top = 29.0
 margin_right = 757.0
-margin_bottom = 134.0
+margin_bottom = 138.0
+size_flags_horizontal = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1349,6 +1350,7 @@ align = 1
 margin_top = 70.0
 margin_right = 743.0
 margin_bottom = 95.0
+rect_clip_content = true
 
 [node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_right = 81.0
@@ -1421,7 +1423,7 @@ custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
-margin_top = 29.0
+margin_top = 142.0
 margin_right = 757.0
 margin_bottom = 1078.0
 size_flags_horizontal = 3
@@ -1829,12 +1831,12 @@ __meta__ = {
 [connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
 [connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_Tree_item_rmb_selected"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="PetRoot/Node" method="generate_pet"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="resized" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_resized"]
@@ -1869,8 +1871,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
