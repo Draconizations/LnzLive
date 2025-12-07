@@ -35,11 +35,6 @@ _global_script_classes=[ {
 "path": "res://data_classes/line_data.gd"
 }, {
 "base": "Node",
-"class": "LnzDocument",
-"language": "GDScript",
-"path": "res://scenes/editor/wip/LnzDocument.gd"
-}, {
-"base": "Node",
 "class": "LnzParser",
 "language": "GDScript",
 "path": "res://data_classes/lnz_parser.gd"
@@ -65,7 +60,6 @@ _global_script_class_icons={
 "BdtParser": "",
 "BhdParser": "",
 "LineData": "",
-"LnzDocument": "",
 "LnzParser": "",
 "PaintBallData": "",
 "PolyData": "",
@@ -96,6 +90,7 @@ window/size/width=1920
 window/size/height=1080
 window/dpi/allow_hidpi=true
 window/energy_saving/keep_screen_on=false
+window/stretch/mode="viewport"
 window/stretch/aspect="expand"
 
 [global]
