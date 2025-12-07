@@ -604,7 +604,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		if key in eyes:
 			if new_create:
 				visual_ball = paintball_scene.instance()
-				visual_ball.add_to_group("paintballs")
+				visual_ball.add_to_group("balls")
 				visual_ball.override_ball_no = ball.ball_no
 				visual_ball.z_add = 10
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
@@ -1123,7 +1123,10 @@ func set_visibility_for_group(group_name: String, is_visible: bool):
 	var nodes = get_tree().get_nodes_in_group(group_name)
 	for node in nodes:
 		if node is Spatial:
-			node.set_visible(is_visible)
+			if is_visible and node.get("omitted") and not draw_omitted_balls:
+				node.set_visible(false)
+			else:
+				node.set_visible(is_visible)
 
 func _on_AddballCheckBox_toggled(button_pressed):
 	set_visibility_for_group("addballs", button_pressed)
