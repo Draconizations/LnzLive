@@ -585,7 +585,7 @@ func _gui_input(event):
 			var viewport_global_offset = tex.get_global_transform().origin
 
 			for pb_node in pending_paintballs:
-				if not is_instance_valid(pb_node):
+				if not is_instance_valid(pb_node) or not pb_node.is_inside_tree():
 					continue
 				
 				# Project world pos to 2D screen pos (local to viewport)
