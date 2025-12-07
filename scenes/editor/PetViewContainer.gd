@@ -511,6 +511,7 @@ func _gui_input(event):
 
 								properties["size"] = int(round(new_lnz_size))
 					
+				var scale_ratio = 1.0
 				if properties["scale_paintballz"]:
 					var target_lnz_size = 0
 					if pet_node.lnz.balls.has(ball_no):
@@ -521,19 +522,21 @@ func _gui_input(event):
 					elif pet_node.lnz.addballs.has(ball_no):
 						target_lnz_size = pet_node.lnz.addballs[ball_no].size
 
-					var scale_ratio = float(target_lnz_size) / float(ref_size) if ref_size > 0 else 1.0
+					scale_ratio = float(target_lnz_size) / float(ref_size) if ref_size > 0 else 1.0
 
+				var p_size_mod = properties.get("paintball_size_scale", 1.0)
+				var p_pos_mod = properties.get("paintball_pos_scale", 1.0)
+
+				if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
 					if properties.has("paintballz"):
 						var scaled_paintballz = []
 						for pb in properties.paintballz:
 							var new_pb = pb.duplicate()
-							new_pb.position *= scale_ratio
-							new_pb.size = int(round(new_pb.size * scale_ratio))
+							new_pb.position *= (scale_ratio * p_pos_mod)
+							new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
-
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
-
 		return
 
 	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
