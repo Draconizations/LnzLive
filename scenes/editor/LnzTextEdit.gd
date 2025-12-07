@@ -891,12 +891,24 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var raw_color = reference_ball.color_index
 	var raw_outline_color = reference_ball.outline_color_index
 
+	if reference_ball.get("current_outline_state") != 0: 
+		raw_outline_color = reference_ball.old_outline_color
+
 	if addball_data != null:
-		if "color" in addball_data: raw_color = addball_data.color
-		if "outline_color" in addball_data: raw_outline_color = addball_data.outline_color
+		if "color" in addball_data: 
+			raw_color = addball_data.color
+	
+		if "outline_color" in addball_data: 
+			raw_outline_color = addball_data.outline_color
+		elif "outline_color_index" in addball_data: 
+			raw_outline_color = addball_data.outline_color_index
 	elif ball_data != null:
 		if "color" in ball_data: raw_color = ball_data.color
-		if "outline_color" in ball_data: raw_outline_color = ball_data.outline_color
+		
+		if "outline_color" in ball_data: 
+			raw_outline_color = ball_data.outline_color
+		elif "outline_color_index" in ball_data: 
+			raw_outline_color = ball_data.outline_color_index
 
 	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
