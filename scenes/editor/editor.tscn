@@ -355,8 +355,8 @@ rect_min_size = Vector2( 0, 25 )
 alignment = 1
 
 [node name="FileOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 149.0
-margin_right = 209.0
+margin_left = 47.0
+margin_right = 107.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -506,8 +506,8 @@ margin_right = 20.0
 margin_bottom = 20.0
 
 [node name="ToolOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 213.0
-margin_right = 273.0
+margin_left = 111.0
+margin_right = 171.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -600,8 +600,8 @@ custom_fonts/font = ExtResource( 28 )
 text = "Capture Head Shot"
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 277.0
-margin_right = 337.0
+margin_left = 175.0
+margin_right = 235.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -728,8 +728,8 @@ __meta__ = {
 }
 
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 341.0
-margin_right = 411.0
+margin_left = 239.0
+margin_right = 309.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
@@ -891,8 +891,8 @@ pressed = true
 text = "Transparency (253)"
 
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 415.0
-margin_right = 485.0
+margin_left = 313.0
+margin_right = 383.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
@@ -945,8 +945,8 @@ text = "Export to Clothes CLZ"
 script = ExtResource( 38 )
 
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 489.0
-margin_right = 549.0
+margin_left = 387.0
+margin_right = 447.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -1012,8 +1012,8 @@ script = ExtResource( 13 )
 url = "https://tabbzi.github.io/petz-paletteiare/"
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 553.0
-margin_right = 578.0
+margin_left = 451.0
+margin_right = 476.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Change viewer background color"
@@ -1028,11 +1028,29 @@ color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
 
 [node name="EyeLidButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 582.0
-margin_right = 610.0
+margin_left = 480.0
+margin_right = 508.0
 margin_bottom = 25.0
 icon = ExtResource( 15 )
 flat = true
+
+[node name="ShrinkLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
+margin_left = 512.0
+margin_top = 2.0
+margin_right = 634.0
+margin_bottom = 23.0
+custom_fonts/font = ExtResource( 27 )
+text = "Expand Screen:"
+align = 2
+
+[node name="ShrinkSpinBox" type="SpinBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
+margin_left = 638.0
+margin_right = 712.0
+margin_bottom = 25.0
+min_value = 1.0
+max_value = 2.0
+step = 0.1
+value = 1.0
 
 [node name="AnimationContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 29.0
