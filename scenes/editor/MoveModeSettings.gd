@@ -8,6 +8,10 @@ signal snap_selection(axis, direction) # direction: -1=min, 1=max
 signal nudge_selection(vector)
 signal mirror_toggled(is_on)
 signal select_group(group_name)
+signal rotate_selection(rotation_degrees, pivot_id)
+signal select_balls_by_ids(ids)
+signal flip_selection(axis_vector, pivot_id)
+signal pivot_changed
 
 var current_constraint_mode = "free" # free, x, y, z, xy, xz, yz
 
@@ -34,7 +38,7 @@ func _ready():
 		if node:
 			node.connect("pressed", self, "_on_constraint_selected", [c])
 	
-	find_node("MirrorX").connect("toggled", self, "_on_MirrorX_toggled")
+	#find_node("MirrorX").connect("toggled", self, "_on_MirrorX_toggled")
 	
 	find_node("AlignX").connect("pressed", self, "_on_Align_pressed", ["x"])
 	find_node("AlignY").connect("pressed", self, "_on_Align_pressed", ["y"])
@@ -64,6 +68,27 @@ func _ready():
 	btn_back.connect("pressed", self, "_on_Snap_pressed", ["z", 1])
 	
 	find_node("ApplyNudge").connect("pressed", self, "_on_ApplyNudge_pressed")
+
+	var pivot_ball = find_node("PivotBall")
+	if pivot_ball:
+		pivot_ball.min_value = 0
+		pivot_ball.value = 0 # Default to 0
+		pivot_ball.connect("value_changed", self, "_on_pivot_ui_changed")
+
+	var use_pivot_cb = find_node("UsePivotCheckBox")
+	if use_pivot_cb:
+		use_pivot_cb.connect("toggled", self, "_on_pivot_ui_changed")
+
+	find_node("ApplyRotate").connect("pressed", self, "_on_ApplyRotate_pressed")
+	
+	var affected_ballz_input = find_node("AffectedBallz")
+	if affected_ballz_input:
+		affected_ballz_input.connect("text_entered", self, "_on_AffectedBallz_text_entered")
+		affected_ballz_input.connect("text_changed", self, "_on_AffectedBallz_text_changed")
+
+	find_node("FlipX").connect("pressed", self, "_on_Flip_pressed", ["x"])
+	find_node("FlipY").connect("pressed", self, "_on_Flip_pressed", ["y"])
+	find_node("FlipZ").connect("pressed", self, "_on_Flip_pressed", ["z"])
 
 func show():
 	$Panel.show()
@@ -98,6 +123,17 @@ func get_constraints():
 			
 	return res
 
+func get_mirror_vector():
+	var mx = find_node("MirrorX").pressed
+	var my = find_node("MirrorY").pressed
+	var mz = find_node("MirrorZ").pressed
+	
+	return Vector3(
+		-1.0 if mx else 1.0,
+		-1.0 if my else 1.0,
+		-1.0 if mz else 1.0
+	)
+
 func is_mirror_x_active():
 	return find_node("MirrorX").pressed
 
@@ -130,8 +166,8 @@ func _on_constraint_selected(selected_name):
 		if node:
 			node.pressed = (c == selected_name)
 
-func _on_MirrorX_toggled(pressed):
-	emit_signal("mirror_toggled", pressed)
+# func _on_MirrorX_toggled(pressed):
+# 	emit_signal("mirror_toggled", pressed)
 
 func _on_Align_pressed(axis):
 	var mode = find_node("AlignModeOption").selected
@@ -156,3 +192,80 @@ func change_nudge_value(axis, delta):
 		var sb = find_node(node_name)
 		if sb:
 			sb.value += delta
+
+func _on_ApplyRotate_pressed():
+	var roll = find_node("RotateRoll").value
+	var pitch = find_node("RotatePitch").value
+	var yaw = find_node("RotateYaw").value
+	
+	var pivot_id = -1
+	if find_node("UsePivotCheckBox").pressed:
+		pivot_id = int(find_node("PivotBall").value)
+	
+	emit_signal("rotate_selection", Vector3(pitch, yaw, roll), pivot_id)
+
+func _on_Flip_pressed(axis):
+	var vec = Vector3.ONE
+	if axis == "x": vec.x = -1.0
+	elif axis == "y": vec.y = -1.0
+	elif axis == "z": vec.z = -1.0
+	
+	var pivot_id = -1
+	if find_node("UsePivotCheckBox").pressed:
+		pivot_id = int(find_node("PivotBall").value)
+	
+	emit_signal("flip_selection", vec, pivot_id)
+
+func set_pivot_ball(id):
+	var pivot_ball = find_node("PivotBall")
+	var use_pivot_cb = find_node("UsePivotCheckBox")
+	if pivot_ball and use_pivot_cb:
+		pivot_ball.value = id
+		use_pivot_cb.pressed = true
+		emit_signal("pivot_changed")
+
+func update_selected_balls_text(ball_ids: Array):
+	if find_node("AffectedBallz").has_focus():
+		return
+
+	ball_ids.sort()
+	var text = ""
+	
+	if ball_ids.empty():
+		find_node("AffectedBallz").text = ""
+		return
+		
+	var start = ball_ids[0]
+	var prev = start
+	var ranges = []
+	
+	for i in range(1, ball_ids.size()):
+		var curr = ball_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+			
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+		
+	find_node("AffectedBallz").text = PoolStringArray(ranges).join(",")
+
+func _on_AffectedBallz_text_entered(new_text):
+	var ids = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+	find_node("AffectedBallz").release_focus()
+
+func _on_AffectedBallz_text_changed(new_text):
+	var ids = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+
+func _on_pivot_ui_changed(_arg = null):
+	emit_signal("pivot_changed")

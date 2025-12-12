@@ -144,6 +144,10 @@ func _ready():
 	move_mode_settings_instance.connect("snap_selection", self, "_on_snap_selection")
 	move_mode_settings_instance.connect("nudge_selection", self, "_on_nudge_selection")
 	move_mode_settings_instance.connect("select_group", self, "_on_move_mode_select_group")
+	move_mode_settings_instance.connect("rotate_selection", self, "_on_rotate_selection")
+	move_mode_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
+	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
+	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
@@ -258,17 +262,23 @@ func set_active_selected_ball(ball):
 		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
 	active_selected_ball = ball
 	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
 
 func clear_active_selected_ball():
 	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
 		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
 	active_selected_ball = null
+	_update_selected_ballz_in_settings()
 
 func get_visual_state_for_ball(b):
 	if not "ball_no" in b:
 			return
 	else:
 		if move_mode:
+			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
+				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+				if b.ball_no == pivot_id:
+					return b.OutlineState.PIVOT
 			if b in selected_balls:
 				return b.OutlineState.ACTIVE_SELECTED
 			elif pending_moves.has(b.ball_no):
@@ -310,6 +320,17 @@ func _gui_input(event):
 		if event is InputEventMouseButton:
 			if event.button_index == BUTTON_LEFT:
 				if event.pressed:
+					if Input.is_key_pressed(KEY_ALT):
+						var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+						var hover_ball = get_ball_under_mouse(hover_pos)
+						if hover_ball:
+							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
+							var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+							for b in all_balls:
+								if is_instance_valid(b) and b.has_method("apply_outline_state"):
+									b.apply_outline_state(get_visual_state_for_ball(b))
+							return
+
 					var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 					
 					if hover:
@@ -328,6 +349,8 @@ func _gui_input(event):
 								_on_unselect_all()
 								selected_balls.append(hover)
 								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+
+						_update_selected_ballz_in_settings()
 						
 						# Prepare for dragging if we have a selection
 						if selected_balls.size() > 0:
@@ -1735,6 +1758,7 @@ func _on_unselect_all():
 			if not "ball_no" in b:
 				continue
 			b.apply_outline_state(get_visual_state_for_ball(b))
+	_update_selected_ballz_in_settings()
 
 func _on_move_mode_clear():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -1931,8 +1955,11 @@ func _on_move_mode_select_group(group_name: String):
 				if not "ball_no" in b:
 					continue
 				b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
 
 func _apply_mirror_move(balls_moved, delta):
+	var mirror_mult = move_mode_settings_instance.get_mirror_vector()
+	
 	for b in balls_moved:
 		if not "ball_no" in b:
 			continue
@@ -1941,8 +1968,7 @@ func _apply_mirror_move(balls_moved, delta):
 			# Find visual ball for partner
 			var partner_visual = _find_visual_ball_by_no(partner_id)
 			if partner_visual and not (partner_visual in selected_balls):
-				var mirrored_delta = delta
-				mirrored_delta.x *= -1 # Mirror X movement
+				var mirrored_delta = delta * mirror_mult
 				
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
@@ -1953,3 +1979,94 @@ func _find_visual_ball_by_no(no: int) -> Spatial:
 		if b.ball_no == no:
 			return b
 	return null
+
+func _get_rotation_pivot_origin(pivot_id):
+	var pivot_origin = Vector3.ZERO
+	var pivot_visual = null
+	
+	if pivot_id != -1:
+		pivot_visual = _find_visual_ball_by_no(pivot_id)
+	
+	if pivot_visual and is_instance_valid(pivot_visual):
+		pivot_origin = pivot_visual.global_transform.origin
+	else:
+		var sum_pos = Vector3.ZERO
+		var count = 0
+		for b in selected_balls:
+			if is_instance_valid(b):
+				sum_pos += b.global_transform.origin
+				count += 1
+		if count > 0:
+			pivot_origin = sum_pos / count
+	return pivot_origin
+
+func _on_rotate_selection(rotation_degrees, pivot_id):
+	if selected_balls.empty():
+		return
+
+	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
+	
+	var rot_rad = Vector3(deg2rad(rotation_degrees.x), deg2rad(rotation_degrees.y), deg2rad(rotation_degrees.z))
+	
+	var basis = Basis(Quat(rot_rad))
+	
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	
+	for b in selected_balls:
+		if is_instance_valid(b):
+			var current_pos = b.global_transform.origin
+			var rel_pos = current_pos - pivot_origin
+			
+			var rotated_rel = basis.xform(rel_pos)
+			var new_pos = pivot_origin + rotated_rel
+			
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos 
+			
+			b.global_transform.origin = new_pos
+			
+			b.global_transform.basis = basis * b.global_transform.basis
+			
+			_track_pending_move(b)
+
+func _on_flip_selection(axis_vector, pivot_id):
+	if selected_balls.empty():
+		return
+
+	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	
+	for b in selected_balls:
+		if is_instance_valid(b):
+			var current_pos = b.global_transform.origin
+			var rel_pos = current_pos - pivot_origin
+			var flipped_rel = rel_pos * axis_vector
+			var new_pos = pivot_origin + flipped_rel
+			
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = current_pos 
+			
+			b.global_transform.origin = new_pos
+			_track_pending_move(b)
+
+func _update_selected_ballz_in_settings():
+	var ids = []
+	for b in selected_balls:
+		if is_instance_valid(b):
+			ids.append(b.ball_no)
+	move_mode_settings_instance.update_selected_balls_text(ids)
+
+func _on_select_balls_by_ids(ids: Array):
+	_on_unselect_all()
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			selected_balls.append(ball)
+			ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
+
+func _on_pivot_changed():
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))

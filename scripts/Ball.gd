@@ -43,7 +43,8 @@ enum OutlineState {
 	LINEZ_START,
 	LINEZ_TARGET,
 	HOVER,
-	MODIFIED
+	MODIFIED,
+	PIVOT
 }
 
 var current_outline_state         = OutlineState.NONE  setget , get_outline_state
@@ -221,6 +222,9 @@ func apply_outline_state(state: int):
 		OutlineState.MODIFIED:
 			set_outline(3)
 			set_outline_color_index(248) # GRAY
+		OutlineState.PIVOT:
+			set_outline(3)
+			set_outline_color_index(1) # RED
 		OutlineState.NONE:
 			set_outline(old_outline)
 			set_outline_color_index(old_outline_color)

@@ -84,23 +84,49 @@ custom_fonts/font = SubResource( 1 )
 text = "Move Mode"
 align = 1
 
-[node name="QueuedLabel" type="Label" parent="Panel/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer"]
 margin_top = 27.0
 margin_right = 268.0
-margin_bottom = 44.0
+margin_bottom = 616.0
+size_flags_vertical = 3
+scroll_horizontal_enabled = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer"]
+margin_right = 247.0
+margin_bottom = 708.0
+
+[node name="LabelAffected" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_right = 247.0
+margin_bottom = 17.0
+custom_fonts/font = SubResource( 2 )
+text = "Selected Ballz"
+align = 1
+
+[node name="AffectedBallz" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 21.0
+margin_right = 247.0
+margin_bottom = 48.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 2 )
+placeholder_text = "e.g. 1,2,5-10"
+
+[node name="QueuedLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 52.0
+margin_right = 247.0
+margin_bottom = 69.0
 custom_fonts/font = SubResource( 2 )
 text = "Queued Moves: 0"
 align = 1
 
-[node name="ActionButtons" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 50.0
-margin_right = 268.0
-margin_bottom = 75.0
+[node name="ActionButtons" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 73.0
+margin_right = 247.0
+margin_bottom = 98.0
 alignment = 1
 
-[node name="ApplyButton" type="Button" parent="Panel/VBoxContainer/ActionButtons"]
-margin_left = 21.0
-margin_right = 77.0
+[node name="ApplyButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
+margin_left = 11.0
+margin_right = 67.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -110,9 +136,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Apply"
 
-[node name="ClearButton" type="Button" parent="Panel/VBoxContainer/ActionButtons"]
-margin_left = 81.0
-margin_right = 136.0
+[node name="ClearButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
+margin_left = 71.0
+margin_right = 126.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -122,9 +148,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Clear"
 
-[node name="UnselectButton" type="Button" parent="Panel/VBoxContainer/ActionButtons"]
-margin_left = 140.0
-margin_right = 246.0
+[node name="UnselectButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ActionButtons"]
+margin_left = 130.0
+margin_right = 236.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -134,16 +160,15 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Unselect All"
 
-[node name="GroupSelectionContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 81.0
-margin_right = 268.0
-margin_bottom = 106.0
+[node name="GroupSelectionContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 102.0
+margin_right = 247.0
+margin_bottom = 127.0
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Head" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
-margin_left = 10.0
-margin_right = 61.0
+[node name="Head" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+margin_right = 51.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -153,9 +178,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Head"
 
-[node name="Body" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
-margin_left = 65.0
-margin_right = 115.0
+[node name="Body" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+margin_left = 55.0
+margin_right = 105.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -165,9 +190,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Body"
 
-[node name="Legs" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
-margin_left = 119.0
-margin_right = 164.0
+[node name="Legs" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+margin_left = 109.0
+margin_right = 154.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -177,9 +202,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Legs"
 
-[node name="Tail" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
-margin_left = 168.0
-margin_right = 207.0
+[node name="Tail" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+margin_left = 158.0
+margin_right = 197.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -189,9 +214,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Tail"
 
-[node name="Ears" type="Button" parent="Panel/VBoxContainer/GroupSelectionContainer"]
-margin_left = 211.0
-margin_right = 257.0
+[node name="Ears" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+margin_left = 201.0
+margin_right = 247.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -201,59 +226,59 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Ears"
 
-[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 112.0
-margin_right = 268.0
-margin_bottom = 116.0
+[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 131.0
+margin_right = 247.0
+margin_bottom = 135.0
 
-[node name="ConstraintsLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 122.0
-margin_right = 268.0
-margin_bottom = 143.0
+[node name="ConstraintsLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 139.0
+margin_right = 247.0
+margin_bottom = 160.0
 custom_fonts/font = SubResource( 1 )
 text = "Constraints"
 align = 1
 
-[node name="ConstraintsGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 149.0
-margin_right = 268.0
-margin_bottom = 203.0
+[node name="ConstraintsGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 164.0
+margin_right = 247.0
+margin_bottom = 218.0
 columns = 4
 
-[node name="Free" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="Free" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_right = 58.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 pressed = true
 text = "Free"
 
-[node name="LockX" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockX" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 62.0
 margin_right = 108.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "X"
 
-[node name="LockY" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockY" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 112.0
 margin_right = 157.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "Y"
 
-[node name="LockZ" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockZ" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 161.0
 margin_right = 206.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "Z"
 
-[node name="Spacer" type="Control" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="Spacer" type="Control" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_top = 29.0
 margin_right = 58.0
 margin_bottom = 54.0
 
-[node name="LockXY" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockXY" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 62.0
 margin_top = 29.0
 margin_right = 108.0
@@ -261,7 +286,7 @@ margin_bottom = 54.0
 custom_fonts/font = SubResource( 2 )
 text = "XY"
 
-[node name="LockXZ" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockXZ" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 112.0
 margin_top = 29.0
 margin_right = 157.0
@@ -269,7 +294,7 @@ margin_bottom = 54.0
 custom_fonts/font = SubResource( 2 )
 text = "XZ"
 
-[node name="LockYZ" type="CheckBox" parent="Panel/VBoxContainer/ConstraintsGrid"]
+[node name="LockYZ" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ConstraintsGrid"]
 margin_left = 161.0
 margin_top = 29.0
 margin_right = 206.0
@@ -277,36 +302,49 @@ margin_bottom = 54.0
 custom_fonts/font = SubResource( 2 )
 text = "YZ"
 
-[node name="MirrorContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 209.0
-margin_right = 268.0
-margin_bottom = 234.0
+[node name="MirrorContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 222.0
+margin_right = 247.0
+margin_bottom = 247.0
 alignment = 1
 
-[node name="MirrorX" type="CheckBox" parent="Panel/VBoxContainer/MirrorContainer"]
-margin_left = 92.0
-margin_right = 176.0
+[node name="MirrorX" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/MirrorContainer"]
+margin_right = 84.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
-text = "Mirror X"
+text = "Mir X"
 
-[node name="HSeparator3" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 240.0
-margin_right = 268.0
-margin_bottom = 244.0
+[node name="MirrorY" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/MirrorContainer"]
+margin_left = 88.0
+margin_right = 171.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 2 )
+text = "Mir Y"
 
-[node name="AlignLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 250.0
-margin_right = 268.0
-margin_bottom = 271.0
+[node name="MirrorZ" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/MirrorContainer"]
+margin_left = 175.0
+margin_right = 259.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 2 )
+text = "Mir Z"
+
+[node name="HSeparator3" type="HSeparator" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 251.0
+margin_right = 247.0
+margin_bottom = 255.0
+
+[node name="AlignLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 259.0
+margin_right = 247.0
+margin_bottom = 280.0
 custom_fonts/font = SubResource( 1 )
 text = "Alignment"
 align = 1
 
-[node name="AlignModeOption" type="OptionButton" parent="Panel/VBoxContainer"]
-margin_top = 277.0
-margin_right = 268.0
-margin_bottom = 294.0
+[node name="AlignModeOption" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 284.0
+margin_right = 247.0
+margin_bottom = 301.0
 theme = SubResource( 5 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -316,15 +354,15 @@ custom_styles/normal = SubResource( 6 )
 text = "Center"
 align = 1
 
-[node name="AlignButtons" type="HBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 300.0
-margin_right = 268.0
-margin_bottom = 325.0
+[node name="AlignButtons" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 305.0
+margin_right = 247.0
+margin_bottom = 330.0
 alignment = 1
 
-[node name="AlignX" type="Button" parent="Panel/VBoxContainer/AlignButtons"]
-margin_left = 33.0
-margin_right = 98.0
+[node name="AlignX" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/AlignButtons"]
+margin_left = 22.0
+margin_right = 87.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -334,9 +372,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Align X"
 
-[node name="AlignY" type="Button" parent="Panel/VBoxContainer/AlignButtons"]
-margin_left = 102.0
-margin_right = 167.0
+[node name="AlignY" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/AlignButtons"]
+margin_left = 91.0
+margin_right = 156.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -346,9 +384,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Align Y"
 
-[node name="AlignZ" type="Button" parent="Panel/VBoxContainer/AlignButtons"]
-margin_left = 171.0
-margin_right = 235.0
+[node name="AlignZ" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/AlignButtons"]
+margin_left = 160.0
+margin_right = 224.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
@@ -358,27 +396,27 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Align Z"
 
-[node name="HSeparator5" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 331.0
-margin_right = 268.0
-margin_bottom = 335.0
+[node name="HSeparator5" type="HSeparator" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 334.0
+margin_right = 247.0
+margin_bottom = 338.0
 
-[node name="SnapLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 341.0
-margin_right = 268.0
-margin_bottom = 362.0
+[node name="SnapLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 342.0
+margin_right = 247.0
+margin_bottom = 363.0
 custom_fonts/font = SubResource( 1 )
 text = "Snap"
 align = 1
 
-[node name="SnapButtonsGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 368.0
-margin_right = 268.0
-margin_bottom = 422.0
+[node name="SnapButtonsGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 367.0
+margin_right = 247.0
+margin_bottom = 421.0
 columns = 2
 
-[node name="DropFloor" type="Button" parent="Panel/VBoxContainer/SnapButtonsGrid"]
-margin_right = 132.0
+[node name="DropFloor" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/SnapButtonsGrid"]
+margin_right = 121.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 3 )
@@ -389,9 +427,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Floor (max Y)"
 
-[node name="RaiseRoof" type="Button" parent="Panel/VBoxContainer/SnapButtonsGrid"]
-margin_left = 136.0
-margin_right = 268.0
+[node name="RaiseRoof" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/SnapButtonsGrid"]
+margin_left = 125.0
+margin_right = 246.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 3 )
@@ -402,9 +440,9 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Ceiling (min Y)"
 
-[node name="ShoveFront" type="Button" parent="Panel/VBoxContainer/SnapButtonsGrid"]
+[node name="ShoveFront" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/SnapButtonsGrid"]
 margin_top = 29.0
-margin_right = 132.0
+margin_right = 121.0
 margin_bottom = 54.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 3 )
@@ -415,10 +453,10 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Front (min Z)"
 
-[node name="PushBack" type="Button" parent="Panel/VBoxContainer/SnapButtonsGrid"]
-margin_left = 136.0
+[node name="PushBack" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/SnapButtonsGrid"]
+margin_left = 125.0
 margin_top = 29.0
-margin_right = 268.0
+margin_right = 246.0
 margin_bottom = 54.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 3 )
@@ -429,76 +467,76 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Back (max Z)"
 
-[node name="HSeparator4" type="HSeparator" parent="Panel/VBoxContainer"]
-margin_top = 428.0
-margin_right = 268.0
-margin_bottom = 432.0
+[node name="HSeparator4" type="HSeparator" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 425.0
+margin_right = 247.0
+margin_bottom = 429.0
 
-[node name="NudgeLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 438.0
-margin_right = 268.0
-margin_bottom = 459.0
+[node name="NudgeLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 433.0
+margin_right = 247.0
+margin_bottom = 454.0
 custom_fonts/font = SubResource( 1 )
 text = "Nudge"
 align = 1
 
-[node name="NudgeGrid" type="GridContainer" parent="Panel/VBoxContainer"]
-margin_top = 465.0
-margin_right = 268.0
-margin_bottom = 545.0
+[node name="NudgeGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 458.0
+margin_right = 247.0
+margin_bottom = 538.0
 columns = 2
 
-[node name="LabelX" type="Label" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="LabelX" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_top = 3.0
 margin_right = 51.0
 margin_bottom = 20.0
 custom_fonts/font = SubResource( 2 )
 text = "Delta X:"
 
-[node name="NudgeX" type="SpinBox" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="NudgeX" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_left = 55.0
-margin_right = 268.0
+margin_right = 247.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
 
-[node name="LabelY" type="Label" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="LabelY" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_top = 31.0
 margin_right = 51.0
 margin_bottom = 48.0
 custom_fonts/font = SubResource( 2 )
 text = "Delta Y:"
 
-[node name="NudgeY" type="SpinBox" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="NudgeY" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_left = 55.0
 margin_top = 28.0
-margin_right = 268.0
+margin_right = 247.0
 margin_bottom = 52.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
 
-[node name="LabelZ" type="Label" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="LabelZ" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_top = 59.0
 margin_right = 51.0
 margin_bottom = 76.0
 custom_fonts/font = SubResource( 2 )
 text = "Delta Z:"
 
-[node name="NudgeZ" type="SpinBox" parent="Panel/VBoxContainer/NudgeGrid"]
+[node name="NudgeZ" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_left = 55.0
 margin_top = 56.0
-margin_right = 268.0
+margin_right = 247.0
 margin_bottom = 80.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
 
-[node name="ApplyNudge" type="Button" parent="Panel/VBoxContainer"]
-margin_top = 551.0
-margin_right = 268.0
-margin_bottom = 576.0
+[node name="ApplyNudge" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 542.0
+margin_right = 247.0
+margin_bottom = 567.0
 custom_styles/hover = SubResource( 3 )
 custom_styles/pressed = SubResource( 3 )
 custom_styles/focus = SubResource( 4 )
@@ -506,3 +544,132 @@ custom_styles/disabled = SubResource( 4 )
 custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Apply Nudge"
+
+[node name="RotateGrid" type="GridContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 571.0
+margin_right = 247.0
+margin_bottom = 679.0
+columns = 2
+
+[node name="LabelRoll" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_top = 3.0
+margin_right = 64.0
+margin_bottom = 20.0
+custom_fonts/font = SubResource( 2 )
+text = "Roll:"
+
+[node name="RotateRoll" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_left = 68.0
+margin_right = 247.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+
+[node name="LabelPitch" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_top = 31.0
+margin_right = 64.0
+margin_bottom = 48.0
+custom_fonts/font = SubResource( 2 )
+text = "Pitch:"
+
+[node name="RotatePitch" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_left = 68.0
+margin_top = 28.0
+margin_right = 247.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+
+[node name="LabelYaw" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_top = 59.0
+margin_right = 64.0
+margin_bottom = 76.0
+custom_fonts/font = SubResource( 2 )
+text = "Yaw:"
+
+[node name="RotateYaw" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_left = 68.0
+margin_top = 56.0
+margin_right = 247.0
+margin_bottom = 80.0
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+
+[node name="LabelPivot" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_top = 87.0
+margin_right = 64.0
+margin_bottom = 104.0
+custom_fonts/font = SubResource( 2 )
+text = "Pivot:"
+
+[node name="PivotContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
+margin_left = 68.0
+margin_top = 84.0
+margin_right = 247.0
+margin_bottom = 108.0
+
+[node name="UsePivotCheckBox" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid/PivotContainer"]
+margin_right = 24.0
+margin_bottom = 24.0
+
+[node name="PivotBall" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid/PivotContainer"]
+margin_left = 28.0
+margin_right = 179.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="FlipContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 683.0
+margin_right = 247.0
+margin_bottom = 708.0
+alignment = 1
+
+[node name="FlipX" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FlipContainer"]
+margin_right = 53.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Flip X"
+
+[node name="FlipY" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FlipContainer"]
+margin_left = 57.0
+margin_right = 110.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Flip Y"
+
+[node name="FlipZ" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FlipContainer"]
+margin_left = 114.0
+margin_right = 167.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Flip Z"
+
+[node name="ApplyRotate" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 712.0
+margin_right = 247.0
+margin_bottom = 737.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 4 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 4 )
+custom_fonts/font = SubResource( 1 )
+text = "Apply Rotation"
