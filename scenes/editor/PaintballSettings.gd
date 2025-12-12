@@ -71,22 +71,3 @@ func get_properties():
 	properties["ordered"] = find_node("Ordered").pressed
 	properties["repeat"] = find_node("Repeat").pressed
 	return properties
-
-func _parse_number_list(s, allow_negatives=false):
-	var list = []
-	var parts = s.split(",", false)
-	for part in parts:
-		part = part.strip_edges()
-		if "-" in part:
-			if part.rfind("-") > 0:
-				var range_parts = part.split("-")
-				if range_parts.size() == 2:
-					var start = range_parts[0].to_int()
-					var end = range_parts[1].to_int()
-					for i in range(start, end + 1):
-						list.append(i)
-			elif allow_negatives and part.is_valid_integer():
-				list.append(part.to_int())
-		elif part.is_valid_integer():
-			list.append(part.to_int())
-	return list

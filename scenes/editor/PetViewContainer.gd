@@ -254,13 +254,13 @@ func _process(_delta):
 
 
 func set_active_selected_ball(ball):
-	if active_selected_ball and is_instance_valid(active_selected_ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
 		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
 	active_selected_ball = ball
 	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
 
 func clear_active_selected_ball():
-	if active_selected_ball and is_instance_valid(active_selected_ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
 		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
 	active_selected_ball = null
 
@@ -843,9 +843,10 @@ func _gui_input(event):
 		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
 			auto_paintballer_settings_instance.add_affected_ball(target_ball.ball_no)
-			target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+			if is_instance_valid(target_ball) and "ball_no" in target_ball:
+				target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
 			yield(get_tree().create_timer(0.1), "timeout")
-			if is_instance_valid(target_ball):
+			if is_instance_valid(target_ball) and "ball_no" in target_ball:
 				target_ball.apply_outline_state(get_visual_state_for_ball(target_ball))
 		return
 
@@ -1224,7 +1225,7 @@ func _on_affected_list_changed(ids: Array):
 	_auto_paint_affected_cache = ids
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
-		if is_instance_valid(b):
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func _update_paintball_mode_ui():
@@ -1626,17 +1627,17 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		var props = paintball_settings_instance.get_properties()
 
-		var color_list = paintball_settings_instance._parse_number_list(props.color)
+		var color_list = LnzLiveUtils.parse_number_list(props.color)
 		if color_list.empty():
 			push_warning("Invalid color list format.")
 			return
 
-		var outline_color_list = paintball_settings_instance._parse_number_list(props.outline_color)
+		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color)
 		if outline_color_list.empty():
 			push_warning("Invalid outline color list format.")
 			return
 		
-		var texture_list = paintball_settings_instance._parse_number_list(props.texture, true)
+		var texture_list = LnzLiveUtils.parse_number_list(props.texture, true)
 		if texture_list.empty():
 			texture_list.append(-1)
 
@@ -1731,6 +1732,8 @@ func _on_unselect_all():
 	selected_balls.clear()
 	for b in to_update:
 		if is_instance_valid(b):
+			if not "ball_no" in b:
+				continue
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func _on_move_mode_clear():
@@ -1925,6 +1928,8 @@ func _on_move_mode_select_group(group_name: String):
 		if b and is_instance_valid(b):
 			if not (b in selected_balls):
 				selected_balls.append(b)
+				if not "ball_no" in b:
+					continue
 				b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
 
 func _apply_mirror_move(balls_moved, delta):

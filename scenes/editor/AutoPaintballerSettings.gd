@@ -141,7 +141,7 @@ func _on_viewport_size_changed():
 	panel.margin_bottom = panel.margin_top + panel_size.y
 
 func _on_AffectedBallz_text_changed(new_text):
-	var ids = _parse_number_list(new_text)
+	var ids = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("affected_list_changed", ids)
 
 func _on_Distribution_item_selected(index):
@@ -228,20 +228,20 @@ func _on_Distribution_item_selected(index):
 
 func _on_RandomizeButton_pressed():
 	var properties = get_properties()
-	var affected_ballz = _parse_number_list(properties.affected_ballz)
+	var affected_ballz = LnzLiveUtils.parse_number_list(properties.affected_ballz)
 	if affected_ballz.empty():
 		return
 
-	var color_list = _parse_number_list(properties.color_list)
+	var color_list = LnzLiveUtils.parse_number_list(properties.color_list)
 	if color_list.empty():
 		return
 
-	var outline_color_list = _parse_number_list(properties.outline_color_list)
+	var outline_color_list = LnzLiveUtils.parse_number_list(properties.outline_color_list)
 	if outline_color_list.empty():
 		return
 
 	var texture_list_str = properties.texture_list
-	var texture_list = _parse_number_list(texture_list_str, true) # Allow negatives
+	var texture_list = LnzLiveUtils.parse_number_list(texture_list_str, true) # Allow negatives
 	if texture_list.empty() and not texture_list_str.strip_edges().empty():
 		push_warning("Could not parse [Texture List] so using default.")
 		texture_list.append(-1)
@@ -275,7 +275,7 @@ func _on_RandomizeButton_pressed():
 			paintballz = _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
 		Distribution.VORONOI: # 17: Voronoi
 			paintballz = _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
-		Distribution.WAVE: # 18: New Wave (Spherical Harmonics)
+		Distribution.WAVE: # 18: Wave (Spherical Harmonics)
 			paintballz = _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
 		Distribution.RANDOM_WALK: # 7
 			for ball_index in affected_ballz:
@@ -754,7 +754,7 @@ func _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_c
 	for i in range(properties.num_spots * 2): # Try twice as many random points to find spots on edges
 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
 		
-		# 1. Find the two closest cell centers to 'pos'
+		# Find the two closest cell centers to 'pos'
 		var closest_centers = []
 		for center in cell_centers:
 			closest_centers.append({"center": center, "dist_sq": pos.distance_squared_to(center)})
@@ -811,9 +811,9 @@ func _generate_wave_pattern(properties, affected_ballz, color_list, outline_colo
 		var sin_theta = sqrt(max(0.0, 1.0 - cos_theta * cos_theta))
 		var phi = atan2(z, x) # Azimuthal angle (longitude)
 		
-		var P_lm = 0.0 # Associated Legendre Polynomial P_l^m(cos(theta))
+		var P_lm = 0.0 
 		
-		# --- Associated Legendre Polynomial P_l^m(x) (Limited to L=3 for practical implementation) ---
+		# --- Associated Legendre Polynomial P_l^m(x) (max L=3) ---
 		if L == 0:
 			P_lm = 1.0
 		elif L == 1:
@@ -856,13 +856,12 @@ func _generate_noise_pattern(properties, affected_ballz, color_list, outline_col
 	var paintballz = []
 	var noise = OpenSimplexNoise.new()
 	
-	# Use parameters from UI
 	noise.seed = randi()
 	noise.period = properties.noise_scale
 	noise.octaves = int(properties.noise_octaves)
 	var threshold = properties.noise_threshold
 	
-	for i in range(properties.num_spots * 2): # Try twice as many random points to find spots above threshold
+	for i in range(properties.num_spots * 2):
 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
 		
 		# Get 3D noise value
@@ -884,27 +883,6 @@ func _generate_noise_pattern(properties, affected_ballz, color_list, outline_col
 				
 	return paintballz
 
-
-# --- Existing Helper Functions (Trimmed) ---
-
-func _parse_number_list(s, allow_negatives=false):
-	var list = []
-	var parts = s.split(",", false)
-	for part in parts:
-		part = part.strip_edges()
-		if "-" in part:
-			if part.rfind("-") > 0:
-				var range_parts = part.split("-")
-				if range_parts.size() == 2:
-					var start = range_parts[0].to_int()
-					var end = range_parts[1].to_int()
-					for i in range(start, end + 1):
-						list.append(i)
-			elif allow_negatives and part.is_valid_integer():
-				list.append(part.to_int())
-		elif part.is_valid_integer():
-			list.append(part.to_int())
-	return list
 func _on_ApplyButton_pressed():
 	emit_signal("apply_auto_paintballz")
 
@@ -1059,13 +1037,11 @@ func get_properties():
 	properties["spiral_turns"] = find_node("SpiralTurns").value
 	properties["star_points"] = find_node("StarPoints").value
 	properties["star_point_size"] = find_node("StarPointSize").value
-	# Consolidated Bands
 	properties["num_bands"] = find_node("NumBands").value
 	properties["band_spacing"] = find_node("BandSpacing").value
 	properties["band_offset"] = find_node("BandOffset").value
 	properties["band_angle"] = find_node("BandAngle").value
 	properties["band_direction"] = find_node("BandDirection").selected # New for Bands
-	# New Modes
 	properties["noise_scale"] = find_node("NoiseScale").value
 	properties["noise_threshold"] = find_node("NoiseThreshold").value
 	properties["noise_octaves"] = find_node("NoiseOctaves").value
@@ -1119,7 +1095,7 @@ func get_properties():
 func add_affected_ball(ball_no: int):
 	var line_edit = find_node("AffectedBallz")
 	var current_text = line_edit.text
-	var current_list = _parse_number_list(current_text)
+	var current_list = LnzLiveUtils.parse_number_list(current_text)
 
 	if ball_no in current_list:
 		return
