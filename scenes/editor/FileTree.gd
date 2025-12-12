@@ -414,6 +414,7 @@ func scan_res_textures():
 
 	while filename != "":
 		var final_filename = ""
+		
 		if filename.to_lower().ends_with(".bmp"):
 			final_filename = filename
 		elif filename.to_lower().ends_with(".bmp.import"):
@@ -427,20 +428,11 @@ func scan_res_textures():
 			new_item.set_text(0, final_filename)
 			new_item.set_metadata(0, full_path)
 
-			# Load image for preview
-			var file = File.new()
-			if file.open(full_path, File.READ) == OK:
-				var buf = file.get_buffer(file.get_len())
-				file.close()
-
-				var icon_img = Image.new()
-				icon_img.load_bmp_from_buffer(buf)
-				icon_img.convert(Image.FORMAT_RGBA8)
-				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
-
-				var icon_tex = ImageTexture.new()
-				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
-				new_item.set_icon(0, icon_tex)
+			var thumb_path = full_path.get_basename() + "_thumb.png"
+			
+			var thumb_tex = load(thumb_path)
+			if thumb_tex:
+				new_item.set_icon(0, thumb_tex)
 
 		filename = dir.get_next()
 	dir.list_dir_end()
