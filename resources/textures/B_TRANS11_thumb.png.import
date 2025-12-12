@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/ICON_DESKTOP.bmp-991342e30bb4b85dc27d07ac4979c95d.stex"
+path="res://.import/B_TRANS11_thumb.png-0d80d5b589c8bcb351c8781c21506e58.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/textures/ICON_DESKTOP.bmp"
-dest_files=[ "res://.import/ICON_DESKTOP.bmp-991342e30bb4b85dc27d07ac4979c95d.stex" ]
+source_file="res://resources/textures/B_TRANS11_thumb.png"
+dest_files=[ "res://.import/B_TRANS11_thumb.png-0d80d5b589c8bcb351c8781c21506e58.stex" ]
 
 [params]
 
@@ -18,17 +18,17 @@ compress/mode=0
 compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
-compress/normal_map=0
+compress/normal_map=2
 flags/repeat=0
-flags/filter=true
+flags/filter=false
 flags/mipmaps=false
 flags/anisotropic=false
-flags/srgb=2
-process/fix_alpha_border=true
+flags/srgb=0
+process/fix_alpha_border=false
 process/premult_alpha=false
 process/HDR_as_SRGB=false
 process/invert_color=false
 stream=false
 size_limit=0
-detect_3d=true
+detect_3d=false
 svg/scale=1.0
