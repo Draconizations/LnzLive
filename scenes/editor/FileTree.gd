@@ -439,20 +439,45 @@ func scan_res_textures():
 
 func scan_local_palettes():
 	var dir2 = Directory.new()
+	if not dir2.dir_exists(user_file_location + "/palettes"):
+		return
+
 	dir2.open(user_file_location + "/palettes")
 	dir2.list_dir_begin()
 	var filename = dir2.get_next()
+	
 	while(!filename.empty()):
 		if filename.ends_with(".png"):
+			var full_path = user_file_location + "/palettes/" + filename
+			
 			var new_item = create_item(local_storage_palettes)
 			new_item.set_text(0, filename)
-			new_item.set_metadata(0, user_file_location + "/palettes/" + filename)
+			new_item.set_metadata(0, full_path)
+			
 			var img = Image.new()
-			img.load(user_file_location + "/palettes/" + filename, true, true)
-			var tex = ImageTexture.new()
-			tex.create_from_image((img))
-			tex.flags = 0
-			preloader.add_resource("palette_" + filename.to_lower(), tex)
+
+			var err = img.load(full_path, true, true)
+			
+			if err == OK:
+				var tex = ImageTexture.new()
+				tex.create_from_image(img, 0)
+				preloader.add_resource("palette_" + filename.to_lower(), tex)
+				
+				if img.get_height() >= 200:
+					var cropped = img.get_rect(Rect2(0, 10, 1, 190))
+					
+					cropped.resize(32, 32, Image.INTERPOLATE_NEAREST)
+					
+					var icon_tex = ImageTexture.new()
+					icon_tex.create_from_image(cropped, 0)
+					new_item.set_icon(0, icon_tex)
+				else:
+					var fallback = img.duplicate()
+					fallback.resize(32, 32, Image.INTERPOLATE_NEAREST)
+					var icon_tex = ImageTexture.new()
+					icon_tex.create_from_image(fallback, 0)
+					new_item.set_icon(0, icon_tex)
+				
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 
