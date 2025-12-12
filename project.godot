@@ -34,6 +34,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/line_data.gd"
 }, {
+"base": "Reference",
+"class": "LnzLiveUtils",
+"language": "GDScript",
+"path": "res://data_classes/lnzlive_utils.gd"
+}, {
 "base": "Node",
 "class": "LnzParser",
 "language": "GDScript",
@@ -60,6 +65,7 @@ _global_script_class_icons={
 "BdtParser": "",
 "BhdParser": "",
 "LineData": "",
+"LnzLiveUtils": "",
 "LnzParser": "",
 "PaintBallData": "",
 "PolyData": "",
