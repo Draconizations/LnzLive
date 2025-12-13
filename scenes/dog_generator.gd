@@ -46,12 +46,15 @@ var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
 var _hidden_balls = []
+var _texture_cache = {}
 
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
 var eyelid_dir_map := {}
 var eyelid_mode := 0
+
+var _skip_next_rebuild = false
 
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
@@ -95,6 +98,9 @@ func _ready():
 	editor.connect("find_project_ball", self, "_on_LnzTextEdit_find_project_ball")
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	t_pose_checkbox = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox")
+
+func set_skip_next_rebuild(val: bool):
+	_skip_next_rebuild = val
 
 func symmetrize_skeleton():
 	var symmetry_data = {}
@@ -176,21 +182,23 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 		set_animation(_saved_anim_index)
 		set_frame(_saved_frame_index)
 
-func clear_lnz_data():
+func clear_lnz_data(keep_visuals: bool = false):
 	for ball in balls:
 		if ball != null:
 			ball.queue_free()
 	balls.clear()
-	ball_map.clear()
-	paintball_map.clear()
-	polygons_map.clear()
-	lines_map.clear()
+	
+	if not keep_visuals:
+		ball_map.clear()
+		paintball_map.clear()
+		polygons_map.clear()
+		lines_map.clear()
 
-func init_ball_data(species):
+func init_ball_data(species, keep_visuals: bool = false):
 	if t_pose_checkbox:
 		t_pose_active = t_pose_checkbox.pressed
 
-	clear_lnz_data()
+	clear_lnz_data(keep_visuals)
 	
 	var bhd_file = ""
 	var bdt_prefix = ""
@@ -246,12 +254,17 @@ func is_special_baby_ball(species: int, ball_no: int) -> bool:
 	return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
 
 func generate_pet(file_path):
+	var full_rebuild = !_skip_next_rebuild
+	_skip_next_rebuild = false
+	
 	var lnz_info = LnzParser.new(file_path)
 	lnz = lnz_info
 	KeyBallsData.species = lnz_info.species
 	KeyBallsData.build_bodyarea_map()
-	init_ball_data(lnz_info.species)
-	init_visual_balls(lnz_info, true)
+	
+	init_ball_data(lnz_info.species, !full_rebuild)
+	
+	init_visual_balls(lnz_info, full_rebuild)
 	emit_signal("palette_changed", lnz.palette)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
@@ -487,6 +500,9 @@ func get_root():
 		return get_tree().root.get_node("Root/PetRoot")
 
 func load_texture(texture_filename: String, preloader: ResourcePreloader):
+	if _texture_cache.has(texture_filename):
+		return _texture_cache[texture_filename]
+
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()
@@ -522,6 +538,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
+	_texture_cache[texture_filename] = texture
 	return texture
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
@@ -1287,9 +1304,11 @@ func _on_EyeLidButton_pressed():
 	update_eyelids(EYELID_TILTS[eyelid_mode])
 
 func emit_ball_translation(ball_no: int, new_position: Vector3):
+	_skip_next_rebuild = true
 	emit_signal("ball_translation_changed", ball_no, new_position)
 
 func emit_ball_resize(ball_no: int, size_dif: int):
+	_skip_next_rebuild = true
 	emit_signal("ball_resized", ball_no, size_dif)
 
 func remove_last_pending_paintball():
