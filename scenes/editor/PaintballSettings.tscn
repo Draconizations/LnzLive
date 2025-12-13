@@ -60,6 +60,7 @@ text = "Diameter"
 margin_left = 99.0
 margin_right = 193.0
 margin_bottom = 24.0
+hint_tooltip = "Minimum random size (0-255)"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 10.0
@@ -68,6 +69,7 @@ value = 10.0
 margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Maximum random size (0-255)"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 20.0
@@ -80,6 +82,7 @@ margin_bottom = 304.0
 [node name="Tapered" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerDiameterOptions"]
 margin_right = 144.0
 margin_bottom = 24.0
+hint_tooltip = "Gradually decrease size along the stroke"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Tapered"
@@ -101,6 +104,7 @@ text = "Color"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Comma-separated color indices (e.g. 1,2,5-10)"
 size_flags_horizontal = 3
 placeholder_text = "e.g. 1,2,5-10"
 
@@ -121,6 +125,7 @@ text = "Texture"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Texture ID (e.g. 0 for none)"
 size_flags_horizontal = 3
 text = "0"
 placeholder_text = "e.g. -1,1-2"
@@ -133,6 +138,7 @@ margin_bottom = 304.0
 [node name="Ordered" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerOptions"]
 margin_right = 144.0
 margin_bottom = 24.0
+hint_tooltip = "Cycle through colors/sizes in order instead of random"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Ordered"
@@ -141,6 +147,7 @@ text = "Ordered"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Repeat the sequence when ordered cycle ends"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Repeated"
@@ -162,6 +169,7 @@ text = "Outline Color"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Color index for outline"
 size_flags_horizontal = 3
 text = "244"
 placeholder_text = "e.g. 1,2,5-10"
@@ -178,11 +186,14 @@ margin_bottom = 22.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline Type"
+mouse_filter = 0
+hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 
 [node name="OutlineTypeMin" type="SpinBox" parent="Panel/VBoxContainer/HBoxContainer4"]
 margin_left = 99.0
 margin_right = 193.0
 margin_bottom = 24.0
+hint_tooltip = "Minimum Outline Type ID (-1=None, 0=Black, 1=Color, etc.)"
 size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
@@ -192,6 +203,7 @@ value = -1.0
 margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Maximum Outline Type ID"
 size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
@@ -214,6 +226,7 @@ text = "Fuzz"
 margin_left = 99.0
 margin_right = 193.0
 margin_bottom = 24.0
+hint_tooltip = "Minimum surface fuzziness (0-100)"
 size_flags_horizontal = 3
 max_value = 100.0
 
@@ -221,6 +234,7 @@ max_value = 100.0
 margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Maximum surface fuzziness (0-100)"
 size_flags_horizontal = 3
 max_value = 100.0
 
@@ -241,6 +255,7 @@ text = "Group"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "LNZ Add Group ID"
 size_flags_horizontal = 3
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="Panel/VBoxContainer"]
@@ -260,6 +275,7 @@ text = "Anchored"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Attach Paintballz to the parent ball (moves with it)"
 size_flags_horizontal = 3
 pressed = true
 
@@ -280,6 +296,7 @@ text = "Target"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 27.0
+hint_tooltip = "Ballz where Paintballz can be placed (Hovered vs Selected)"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Hovered Ball"
@@ -294,6 +311,7 @@ margin_bottom = 364.0
 [node name="FreelineCheckBox" type="CheckBox" parent="Panel/VBoxContainer/FreelineContainer"]
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Draw continuous lines (Hold Shift)"
 custom_fonts/font = SubResource( 1 )
 text = "Freeline"
 
@@ -314,6 +332,7 @@ text = "Spacing"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Distance between Paintballz in freeline mode"
 size_flags_horizontal = 3
 min_value = 1.0
 max_value = 100.0
@@ -336,6 +355,7 @@ text = "Jitter"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
+hint_tooltip = "Random position offset range"
 size_flags_horizontal = 3
 max_value = 100.0
 
@@ -349,6 +369,7 @@ alignment = 1
 margin_left = 37.0
 margin_right = 133.0
 margin_bottom = 29.0
+hint_tooltip = "Enable Eraser Mode (Ctrl + Click to delete)"
 custom_fonts/font = SubResource( 1 )
 text = "Eraser"
 
@@ -356,6 +377,8 @@ text = "Eraser"
 margin_left = 137.0
 margin_right = 285.0
 margin_bottom = 29.0
+hint_tooltip = "Apply pending Paintballz to the model"
+mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Apply"
 
@@ -363,5 +386,7 @@ text = "Apply"
 margin_left = 300.0
 margin_right = 449.0
 margin_bottom = 29.0
+hint_tooltip = "Clear all pending Paintballz"
+mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Clear"
