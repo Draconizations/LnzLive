@@ -49,7 +49,13 @@ signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
 
 func _ready():
+	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+
+	# Set the initial species, which will configure the shader
+	set_species(species)
+
+	# Set initial shader parameters
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
 
@@ -60,12 +66,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_hidden(is_hidden):
-	if is_hidden:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 0.5)
-		$Area/CollisionShape.disabled = true
-	else:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 1.0)
-		$Area/CollisionShape.disabled = !visible_override
+	$MeshInstance.visible = !is_hidden
 
 func _on_palette_change(new_palette):
 	set_palette(new_palette)

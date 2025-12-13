@@ -88,6 +88,10 @@ func _setup_context_menu():
 		menu.add_item("Toggle Comment", 101)
 
 func _load_file(filepath: String, user_flag: bool):
+	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	if pet_node and pet_node.has_method("unhide_all_balls"):
+		pet_node.unhide_all_balls()
+
 	var file = File.new()
 	file.open(filepath, File.READ)
 	var contents = file.get_as_text()

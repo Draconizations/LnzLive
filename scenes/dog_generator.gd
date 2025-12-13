@@ -11,10 +11,16 @@ export var pixel_world_size = 0.002
 var balls = []
 var lines = []
 var polygons = []
+
 var ball_map = {}
 var paintball_map = {}
 var lines_map = {}
 var polygons_map = {}
+
+var _hidden_balls = []
+var _hidden_lines = []
+var _hidden_polygons = []
+var _hidden_paintballs = []
 
 export var draw_balls = true
 export var draw_special_balls = false
@@ -45,7 +51,6 @@ var _pending_paintball_nodes = []
 var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
-var _hidden_balls = []
 var _texture_cache = {}
 
 var _orig_lnz_pos := {}
@@ -297,11 +302,29 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		apply_projections()
 		generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
 		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+		_restore_hidden_states()
 
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
 	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
 	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
+	_restore_hidden_states()
+
+func _restore_hidden_states():
+	for ball_no in _hidden_balls:
+		_apply_hidden_state_to_visuals(ball_no)
+
+	for line_idx in _hidden_lines:
+		if lines_map.has(line_idx):
+			lines_map[line_idx].set_hidden(true)
+
+	for poly_idx in _hidden_polygons:
+		if polygons_map.has(poly_idx):
+			polygons_map[poly_idx].set_hidden(true)
+
+	for pb in _hidden_paintballs:
+		if is_instance_valid(pb) and pb.has_method("set_hidden"):
+			pb.set_hidden(true)
 
 func collate_base_ball_data():
 	var ball_data_map = {}
@@ -1494,10 +1517,12 @@ func _on_apply_auto_paintballz():
 	_on_clear_auto_paintballz()
 
 func hide_ball(ball_no):
-	if _hidden_balls.has(ball_no):
-		return
-	_hidden_balls.append(ball_no)
+	if not _hidden_balls.has(ball_no):
+		_hidden_balls.append(ball_no)
 	
+	_apply_hidden_state_to_visuals(ball_no)
+
+func _apply_hidden_state_to_visuals(ball_no):
 	if ball_map.has(ball_no):
 		var node = ball_map[ball_no]
 		if node.has_method("set_hidden"):
@@ -1507,20 +1532,30 @@ func hide_ball(ball_no):
 		for pb in paintball_map[ball_no]:
 			if pb.has_method("set_hidden"):
 				pb.set_hidden(true)
+				if not _hidden_paintballs.has(pb): 
+					_hidden_paintballs.append(pb)
 				
 	for line_idx in lines_map.keys():
 		var ld = lnz.lines[line_idx]
+		
 		if ld.start == ball_no or ld.end == ball_no:
 			var line = lines_map[line_idx]
 			if line.has_method("set_hidden"):
 				line.set_hidden(true)
 				
+			if not _hidden_lines.has(line_idx):
+				_hidden_lines.append(line_idx)
+				
 	for poly_idx in polygons_map.keys():
 		var pd = lnz.polygons[poly_idx]
+		
 		if pd.ball1 == ball_no or pd.ball2 == ball_no or pd.ball3 == ball_no or pd.ball4 == ball_no:
 			var poly = polygons_map[poly_idx]
 			if poly.has_method("set_hidden"):
 				poly.set_hidden(true)
+			
+			if not _hidden_polygons.has(poly_idx):
+				_hidden_polygons.append(poly_idx)
 
 func unhide_all_balls():
 	for ball_no in _hidden_balls:
@@ -1533,18 +1568,21 @@ func unhide_all_balls():
 			for pb in paintball_map[ball_no]:
 				if pb.has_method("set_hidden"):
 					pb.set_hidden(false)
-					
-	# Since lines and polys might be hidden by multiple balls, we just unhide everything that was touched
-	# Or simpler: iterate all lines/polys and unhide? 
-	# Correct way: check if connected to any remaining hidden ball. But since we unhide ALL, we can just unhide all connected to these.
 	
-	# To be safe and complete, let's just reset all lines and polys if we are unhiding all
 	for line in lines_map.values():
 		line.set_hidden(false)
+		
 	for poly in polygons_map.values():
 		poly.set_hidden(false)
+	
+	for pb in _hidden_paintballs:
+		if is_instance_valid(pb) and pb.has_method("set_hidden"):
+			pb.set_hidden(false)
 		
 	_hidden_balls.clear()
+	_hidden_lines.clear()
+	_hidden_polygons.clear()
+	_hidden_paintballs.clear()
 
 func is_ball_hidden(ball_no):
 	return _hidden_balls.has(ball_no)

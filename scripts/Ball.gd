@@ -54,7 +54,6 @@ var old_outline_color             = outline_color_index
 
 var is_over                       = false
 
-
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
@@ -66,7 +65,7 @@ func _ready():
 
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
-	
+
 	# Set the initial species, which will configure the shader
 	set_species(species)
 
@@ -86,12 +85,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_hidden(is_hidden):
-	if is_hidden:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 0.5)
-		$Area/CollisionShape.disabled = true
-	else:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 1.0)
-		$Area/CollisionShape.disabled = !visible_override
+	$MeshInstance.visible = !is_hidden
 
 func set_visible(new_value):
 	visible_override = new_value

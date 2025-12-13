@@ -31,6 +31,9 @@ var timer_count = 0
 var is_highlighted = false
 
 func _ready():
+	# Duplicate material so each ball can have unique shader params
+	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+
 	# Pass the original texture to the shader
 	set_texture(texture)
 
@@ -38,10 +41,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
 func set_hidden(is_hidden):
-	if is_hidden:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 0.5)
-	else:
-		$MeshInstance.material_override.set_shader_param("opacity_mod", 1.0)
+	$MeshInstance.visible = !is_hidden
 
 func update_palette_after_added(new_palette):
 	call_deferred("set_palette", new_palette)
