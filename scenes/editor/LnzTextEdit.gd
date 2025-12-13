@@ -2039,6 +2039,8 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 			cut()
 
 		if !new_mirrored_line.empty():
+			move_bounds = _get_section_bounds("[Move]")
+			
 			var insert_line = _find_insertion_line(move_bounds.start, move_bounds.end)
 			_insert_text_at_cursor_at_line(insert_line, new_mirrored_line + "\n")
 
