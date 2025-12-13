@@ -583,6 +583,18 @@ func _on_apply_paintballz():
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
 		var new_paintball_lines = ""
 
+
+		if is_babyz and _count_section_entries("[Paint Ballz]") < 17:
+			for k in range(17):
+				# invisible paintballz to fill where the pox would go!
+				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
+				new_paintball_lines += filler_line + " ; chickenpox\n"
+
+			# OLD solution: duping paintballz
+			# for rep in range(1, 6):
+			# 	for line in paintball_lines_list:
+			# 		new_paintball_lines += line + " ;rep" + str(rep) + "\n"
+
 		var paintball_lines_list = []
 		for i in range(pending_paintballs.size() - 1, -1, -1):
 			var paintball_info = pending_paintballs[i]
@@ -602,17 +614,12 @@ func _on_apply_paintballz():
 			paintball_line += str(int(!paintball_info.anchored))
 			paintball_lines_list.append(paintball_line)
 
-		if is_babyz:
-			for rep in range(1, 6):
-				for line in paintball_lines_list:
-					new_paintball_lines += line + " ;rep" + str(rep) + "\n"
-		else:
-			for line in paintball_lines_list:
-				new_paintball_lines += line + "\n"
+		for line in paintball_lines_list:
+			new_paintball_lines += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
 		pet_node.clear_pending_paintballs()
-	
+
 	save_backup()
 
 	save_file()
