@@ -448,7 +448,17 @@ func _gui_input(event):
 					# Apply to all selected balls
 					for b in selected_balls:
 						if is_instance_valid(b):
-							b.global_transform.origin += delta
+							var addballz_base_selected = false
+							var p = b.get_parent()
+							while is_instance_valid(p) and p != get_tree().root:
+								if p in selected_balls:
+									addballz_base_selected = true
+									break
+								p = p.get_parent()
+							
+							if not addballz_base_selected:
+								b.global_transform.origin += delta
+
 							_track_pending_move(b)
 					
 					# Handle Mirroring
@@ -1937,7 +1947,17 @@ func _on_nudge_selection(vector: Vector3):
 	world_delta = world_delta * (px_scale * lnz_scale)
 	
 	for b in selected_balls:
-		b.global_transform.origin += world_delta
+		var addballz_base_selected = false
+		var p = b.get_parent()
+		while is_instance_valid(p) and p != get_tree().root:
+			if p in selected_balls:
+				addballz_base_selected = true
+				break
+			p = p.get_parent()
+			
+		if not addballz_base_selected:
+			b.global_transform.origin += world_delta
+
 		_track_pending_move(b)
 
 func _on_move_mode_select_group(group_name: String):
@@ -1963,6 +1983,23 @@ func _apply_mirror_move(balls_moved, delta):
 	for b in balls_moved:
 		if not "ball_no" in b:
 			continue
+		
+		var addballz_base_selected = false
+		var p = b.get_parent()
+		while is_instance_valid(p) and p != get_tree().root:
+			if p in balls_moved:
+				addballz_base_selected = true
+				break
+			p = p.get_parent()
+			
+		if addballz_base_selected:
+			var partner_id_check = lnz_text_edit.find_mirrored_ball(b.ball_no)
+			if partner_id_check != -1 and partner_id_check != b.ball_no:
+				var partner_visual = _find_visual_ball_by_no(partner_id_check)
+				if partner_visual:
+					_track_pending_move(partner_visual)
+			continue
+
 		var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 		if partner_id != -1 and partner_id != b.ball_no:
 			# Find visual ball for partner
@@ -2014,6 +2051,17 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 	
 	for b in selected_balls:
 		if is_instance_valid(b):
+			var addballz_base_selected = false
+			var p = b.get_parent()
+			while is_instance_valid(p) and p != get_tree().root:
+				if p in selected_balls:
+					addballz_base_selected = true
+					break
+				p = p.get_parent()
+			
+			if addballz_base_selected:
+				continue
+
 			var current_pos = b.global_transform.origin
 			var rel_pos = current_pos - pivot_origin
 			
@@ -2024,9 +2072,10 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 				pet_node._orig_world_pos[b.ball_no] = current_pos 
 			
 			b.global_transform.origin = new_pos
-			
 			b.global_transform.basis = basis * b.global_transform.basis
-			
+
+	for b in selected_balls:
+		if is_instance_valid(b):
 			_track_pending_move(b)
 
 func _on_flip_selection(axis_vector, pivot_id):
@@ -2038,6 +2087,17 @@ func _on_flip_selection(axis_vector, pivot_id):
 	
 	for b in selected_balls:
 		if is_instance_valid(b):
+			var addballz_base_selected = false
+			var p = b.get_parent()
+			while is_instance_valid(p) and p != get_tree().root:
+				if p in selected_balls:
+					addballz_base_selected = true
+					break
+				p = p.get_parent()
+				
+			if addballz_base_selected:
+				continue
+
 			var current_pos = b.global_transform.origin
 			var rel_pos = current_pos - pivot_origin
 			var flipped_rel = rel_pos * axis_vector
@@ -2047,6 +2107,9 @@ func _on_flip_selection(axis_vector, pivot_id):
 				pet_node._orig_world_pos[b.ball_no] = current_pos 
 			
 			b.global_transform.origin = new_pos
+
+	for b in selected_balls:
+		if is_instance_valid(b):
 			_track_pending_move(b)
 
 func _update_selected_ballz_in_settings():
