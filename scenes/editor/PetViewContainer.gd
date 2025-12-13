@@ -1790,6 +1790,7 @@ func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
 		
+	dog_generator.set_skip_next_rebuild(true)
 	lnz_text_edit.apply_batch_moves(pending_moves)
 	
 	pending_moves.clear()
