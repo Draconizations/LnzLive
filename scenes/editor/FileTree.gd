@@ -127,7 +127,7 @@ func _on_ImportPalette_pressed():
 	if (!OS.has_feature("HTML5")):
 		pet_view_container.input_is_paused = true
 		file_dialog.clear_filters()
-		file_dialog.add_filter("*.png ; PNG Palettes")
+		file_dialog.add_filter("*.png, *.bmp ; Palette Files")
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
@@ -154,6 +154,12 @@ func _on_FileDialog_file_selected(selected_path):
 	else:
 		print("Unknown import type")
 		return
+
+	if current_import_type == ImportType.PALETTE and file_extension == "bmp":
+		var success = convert_bmp_to_palette_png(selected_path, dest_dir)
+		if success:
+			rescan_palettes()
+			return
 
 	if current_import_type == ImportType.PALETTE:
 		var img = Image.new()
@@ -455,7 +461,6 @@ func scan_local_palettes():
 			new_item.set_metadata(0, full_path)
 			
 			var img = Image.new()
-
 			var err = img.load(full_path, true, true)
 			
 			if err == OK:
@@ -463,23 +468,120 @@ func scan_local_palettes():
 				tex.create_from_image(img, 0)
 				preloader.add_resource("palette_" + filename.to_lower(), tex)
 				
-				if img.get_height() >= 200:
-					var cropped = img.get_rect(Rect2(0, 10, 1, 190))
+				if img.get_format() != Image.FORMAT_RGBA8:
+					img.convert(Image.FORMAT_RGBA8)
+				
+				var w = img.get_width()
+				var h = img.get_height()
+				
+				if w >= 200:
+					img.lock()
 					
-					cropped.resize(32, 32, Image.INTERPOLATE_NEAREST)
+					# Create the thumbnail 32 x 20 thumbnail
+					var preview_img = Image.new()
+					preview_img.create(32, 20, false, Image.FORMAT_RGBA8)
+					preview_img.lock()
+					
+					# 38 colors total (19 ranges * 2 samples)
+					var color_index = 0
+					
+					for i in range(10, 200, 10):
+						var pos_start = Vector2(0, i) if h > w else Vector2(i, 0)
+						var pos_end = Vector2(0, i + 8) if h > w else Vector2(i + 8, 0)
+						
+						var c1 = img.get_pixel(pos_start.x, pos_start.y)
+						var c2 = img.get_pixel(pos_end.x, pos_end.y)
+						
+						var row = color_index / 8
+						var col = color_index % 8
+						var x_base = col * 4
+						var y_base = row * 4
+
+						for y in range(4):
+							for x in range(4):
+								if x_base + x < 32 and y_base + y < 20:
+									preview_img.set_pixel(x_base + x, y_base + y, c1)
+						color_index += 1
+						
+						row = color_index / 8
+						col = color_index % 8
+						x_base = col * 4
+						y_base = row * 4
+						for y in range(4):
+							for x in range(4):
+								if x_base + x < 32 and y_base + y < 20:
+									preview_img.set_pixel(x_base + x, y_base + y, c2)
+						color_index += 1
+					
+					preview_img.unlock()
+					img.unlock()
 					
 					var icon_tex = ImageTexture.new()
-					icon_tex.create_from_image(cropped, 0)
+					icon_tex.create_from_image(preview_img, 0)
 					new_item.set_icon(0, icon_tex)
+					
 				else:
 					var fallback = img.duplicate()
 					fallback.resize(32, 32, Image.INTERPOLATE_NEAREST)
 					var icon_tex = ImageTexture.new()
 					icon_tex.create_from_image(fallback, 0)
 					new_item.set_icon(0, icon_tex)
-				
+
 		filename = dir2.get_next()
 	dir2.list_dir_end()
+
+func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
+	var f = File.new()
+	if f.open(source_path, File.READ) != OK:
+		print("Error: Could not read BMP file.")
+		return false
+	
+	f.seek(10)
+	var pixel_offset = f.get_32()
+	
+	f.seek(14)
+	var header_size = f.get_32()
+	
+	f.seek(28)
+	var bpp = f.get_16()
+	
+	if bpp != 8:
+		print("Error: This BMP is " + str(bpp) + "-bit. Only 8-bit BMPs have palettes.")
+		f.close()
+		return false
+	
+	var palette_offset = 14 + header_size
+	
+	f.seek(palette_offset)
+	
+	var img = Image.new()
+	img.create(256, 1, false, Image.FORMAT_RGBA8)
+	img.lock()
+	
+	for i in range(256):
+		if f.get_position() >= pixel_offset:
+			break
+			
+		var b = f.get_8() / 255.0
+		var g = f.get_8() / 255.0
+		var r = f.get_8() / 255.0
+		var _reserved = f.get_8()
+		
+		img.set_pixel(i, 0, Color(r, g, b, 1.0))
+		
+	img.unlock()
+	f.close()
+	
+	var dest_filename = source_path.get_file().get_basename() + ".png"
+	var dest_path = dest_dir.plus_file(dest_filename)
+	
+	var err = img.save_png(dest_path)
+	if err == OK:
+		print("Converted BMP palette to: " + dest_path)
+		return true
+	else:
+		print("Error saving PNG palette.")
+		return false
 
 func get_all_selected() -> Array:
 	var selected_items = []
