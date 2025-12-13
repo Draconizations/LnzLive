@@ -45,6 +45,8 @@ var _pending_paintball_nodes = []
 var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
+var _texture_cache = {}
+
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
 
@@ -183,6 +185,7 @@ func clear_lnz_data():
 	paintball_map.clear()
 	polygons_map.clear()
 	lines_map.clear()
+	_texture_cache.clear()
 
 func init_ball_data(species):
 	if t_pose_checkbox:
@@ -485,6 +488,9 @@ func get_root():
 		return get_tree().root.get_node("Root/PetRoot")
 
 func load_texture(texture_filename: String, preloader: ResourcePreloader):
+	if _texture_cache.has(texture_filename):
+		return _texture_cache[texture_filename]
+
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()
@@ -520,6 +526,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
+	_texture_cache[texture_filename] = texture
 	return texture
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
