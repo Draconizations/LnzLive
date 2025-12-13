@@ -264,6 +264,7 @@ func _on_ToolsMenu_about_to_show():
 
 	# 6: Copy-Mirror (L-to-R)
 	option_text = "Copy-Mirror"
+	set_item_disabled(6, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
 	else:
