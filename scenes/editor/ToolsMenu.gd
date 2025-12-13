@@ -21,6 +21,7 @@ signal paintball_mode_for_ball_toggled(ball)
 
 signal omit_ball(ball_no)
 signal unomit_ball(ball_no)
+signal hide_ball(ball_no)
 
 var selected_visual_ball = null
 
@@ -43,6 +44,7 @@ func _ready():
 	add_item("Move Head Ballz")                 # index 9
 	add_item("Copy Ballz Colors to Clipboard")  # index 10
 	add_item("Export to Clothes CLZ")           # index 11
+	add_item("Hide Ballz")                      # index 12
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -207,6 +209,9 @@ func _on_ToolsMenu_index_pressed(index):
 		emit_signal("print_ball_colors")
 	elif index == 11: # Export to Clothes CLZ
 		get_parent().get_node("ExportClothes").open(ball_no)
+	elif index == 12: # Hide Ballz
+		if is_instance_valid(selected_visual_ball):
+			emit_signal("hide_ball", ball_no)
 
 func _on_ToolsMenu_about_to_show():
 	var ball_no = -1
@@ -299,6 +304,13 @@ func _on_ToolsMenu_about_to_show():
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
 	set_item_text(11, option_text)
+
+	# 12: Hide Ballz
+	option_text = "Hide Ballz"
+	set_item_disabled(12, !is_ball_selected)
+	if is_ball_selected:
+		option_text += " (#" + str(ball_no) + ")"
+	set_item_text(12, option_text)
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")

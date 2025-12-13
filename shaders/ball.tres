@@ -3,7 +3,7 @@
 [sub_resource type="Shader" id=1]
 code = "shader_type spatial;
 
-render_mode unshaded, skip_vertex_transform;
+render_mode unshaded, skip_vertex_transform, depth_draw_opaque, depth_test_disable;
 
 uniform bool debug_mode = true;
 
@@ -35,6 +35,7 @@ uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
+uniform float opacity_mod = 1.0;
 
 varying flat vec2 center_fragcoord;               // coordinate of ball center
 varying flat vec4 center_view;                    // view angle for billboarding textures
@@ -260,8 +261,12 @@ void fragment() {
         }
     }
 
-    ALPHA = alpha_value;
-    ALPHA_SCISSOR = 1.0;
+    ALPHA = alpha_value * opacity_mod;
+    if (opacity_mod < 0.99) {
+        ALPHA_SCISSOR = 0.01;
+    } else {
+        ALPHA_SCISSOR = 1.0;
+    }
 }
 
 void vertex() {

@@ -890,6 +890,19 @@ custom_fonts/font = ExtResource( 28 )
 pressed = true
 text = "Transparency (253)"
 
+[node name="UnhideBallsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer"]
+margin_top = 69.0
+margin_right = 152.0
+margin_bottom = 99.0
+rect_min_size = Vector2( 0, 30 )
+custom_styles/hover = ExtResource( 20 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Unhide Ballz"
+
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 313.0
 margin_right = 383.0
@@ -1869,6 +1882,7 @@ __meta__ = {
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/OmittedBallCheckBox" to="PetRoot/Node" method="_on_OmittedBallCheckBox_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls" to="PetRoot/Node" method="_on_ToggleSpecialBalls_toggled"]
 [connection signal="toggled" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox" to="PetRoot/Node" method="_on_TransparencyCheckBox_toggled"]
+[connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/UnhideBallsButton" to="PetRoot/Node" method="unhide_all_balls"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/HelpOptionButton/PopupPanel/VBoxContainer/HelpPopupButton" to="SceneRoot/HelpPopupDialog" method="popup_centered"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/EyeLidButton" to="PetRoot/Node" method="_on_EyeLidButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/PrevAnim" to="PetRoot/Node" method="_on_PrevAnim_pressed"]
@@ -1913,6 +1927,7 @@ __meta__ = {
 [connection signal="copy_l_to_r" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_copy_l_to_r"]
 [connection signal="copy_r_to_l" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_copy_r_to_l"]
 [connection signal="delete_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_delete_ball"]
+[connection signal="hide_ball" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="hide_ball"]
 [connection signal="index_pressed" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_index_pressed"]
 [connection signal="move_head" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_move_head"]
 [connection signal="omit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_omit_ball"]

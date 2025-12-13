@@ -59,6 +59,14 @@ func _ready():
 	# Pass the default Petz palette to the shader
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
+func set_hidden(is_hidden):
+	if is_hidden:
+		$MeshInstance.material_override.set_shader_param("opacity_mod", 0.5)
+		$Area/CollisionShape.disabled = true
+	else:
+		$MeshInstance.material_override.set_shader_param("opacity_mod", 1.0)
+		$Area/CollisionShape.disabled = !visible_override
+
 func _on_palette_change(new_palette):
 	set_palette(new_palette)
 	
