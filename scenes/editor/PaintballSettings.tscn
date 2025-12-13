@@ -60,7 +60,7 @@ text = "Diameter"
 margin_left = 99.0
 margin_right = 193.0
 margin_bottom = 24.0
-hint_tooltip = "Minimum random size (0-255)"
+hint_tooltip = "Minimum random size"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 10.0
@@ -69,7 +69,7 @@ value = 10.0
 margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "Maximum random size (0-255)"
+hint_tooltip = "Maximum random size"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 20.0
@@ -82,7 +82,7 @@ margin_bottom = 304.0
 [node name="Tapered" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerDiameterOptions"]
 margin_right = 144.0
 margin_bottom = 24.0
-hint_tooltip = "Gradually decrease size along the stroke"
+hint_tooltip = "Gradually decrease size at start and end of stroke"
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Tapered"
@@ -125,7 +125,7 @@ text = "Texture"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "Texture ID (e.g. 0 for none)"
+hint_tooltip = "Comma-separated texture indices (e.g. -1,1-2,4)"
 size_flags_horizontal = 3
 text = "0"
 placeholder_text = "e.g. -1,1-2"
@@ -193,7 +193,7 @@ hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 margin_left = 99.0
 margin_right = 193.0
 margin_bottom = 24.0
-hint_tooltip = "Minimum Outline Type ID (-1=None, 0=Black, 1=Color, etc.)"
+hint_tooltip = "Minimum outline type index"
 size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
@@ -203,7 +203,7 @@ value = -1.0
 margin_left = 197.0
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "Maximum Outline Type ID"
+hint_tooltip = "Maximum outline type index"
 size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
@@ -255,7 +255,7 @@ text = "Group"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "LNZ Add Group ID"
+hint_tooltip = "Add Group index"
 size_flags_horizontal = 3
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="Panel/VBoxContainer"]
@@ -275,7 +275,7 @@ text = "Anchored"
 margin_left = 148.0
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "Attach Paintballz to the parent ball (moves with it)"
+hint_tooltip = "Anchor Paintballz to not rotate over parent ball"
 size_flags_horizontal = 3
 pressed = true
 
@@ -311,7 +311,7 @@ margin_bottom = 364.0
 [node name="FreelineCheckBox" type="CheckBox" parent="Panel/VBoxContainer/FreelineContainer"]
 margin_right = 292.0
 margin_bottom = 24.0
-hint_tooltip = "Draw continuous lines (Hold Shift)"
+hint_tooltip = "Draw continuous lines (hold SHIFT key)"
 custom_fonts/font = SubResource( 1 )
 text = "Freeline"
 
@@ -369,7 +369,7 @@ alignment = 1
 margin_left = 37.0
 margin_right = 133.0
 margin_bottom = 29.0
-hint_tooltip = "Enable Eraser Mode (Ctrl + Click to delete)"
+hint_tooltip = "Enable Eraser Mode (hold CTRL and left-click to delete)"
 custom_fonts/font = SubResource( 1 )
 text = "Eraser"
 
