@@ -2667,6 +2667,105 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 				i += 1
 
+	if all_recolor_info.polygons_on:
+		var section_find = search('[Polygons]', 0, 0, 0)
+		if section_find:
+			var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+			var i = 0
+			while true:
+				var current_line_num = start_of_section + i
+				if current_line_num >= get_line_count(): break
+				
+				var line = get_line(current_line_num)
+				if line.begins_with("["): break
+				
+				if line.lstrip(" ").begins_with(";") or line.strip_edges().empty():
+					i += 1
+					continue
+
+				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_and_clean(line, delimiter)
+				
+				# FIX: Polygons must have at least 5 columns (4 balls + 1 color)
+				if parsed_line.size() < 5:
+					i += 1
+					continue
+				
+				# FIX: Correct indices for LNZ format: ball1, ball2, ball3, ball4, color...
+				var mainColor = parsed_line[4]
+				
+				# Optional fields: safely get them or set to null if missing
+				var lColor = parsed_line[5] if parsed_line.size() > 5 else null
+				var rColor = parsed_line[6] if parsed_line.size() > 6 else null
+				
+				var texture = ""
+				if parsed_line.size() > 8:
+					texture = parsed_line[8]
+				
+				var updates = {}
+				
+				# 1. Check Main Color (Index 4)
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not texture_match: continue
+
+					var new_color = null
+					if rule.is_ramp:
+						new_color = _get_ramp_color(mainColor, rule)
+					else:
+						var color_match = rule.before_color.empty() or rule.before_color == mainColor
+						if color_match and not rule.after_color.empty():
+							new_color = rule.after_color
+					
+					if new_color != null:
+						updates[4] = new_color
+						if not rule.after_texture.empty() and parsed_line.size() > 8:
+							# Only update texture if the column exists to avoid index errors
+							updates[8] = rule.after_texture
+						break
+
+				# 2. Check Left Edge Color (Index 5) - Only if it exists
+				if lColor != null:
+					for rule in recolor_rules:
+						var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+						if not texture_match: continue
+						
+						var new_color = null
+						if rule.is_ramp:
+							new_color = _get_ramp_color(lColor, rule)
+						else:
+							var color_match = rule.before_color.empty() or rule.before_color == lColor
+							if color_match and not rule.after_color.empty():
+								new_color = rule.after_color
+						
+						if new_color != null:
+							updates[5] = new_color
+							break
+
+				# 3. Check Right Edge Color (Index 6) - Only if it exists
+				if rColor != null:
+					for rule in recolor_rules:
+						var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+						if not texture_match: continue
+						
+						var new_color = null
+						if rule.is_ramp:
+							new_color = _get_ramp_color(rColor, rule)
+						else:
+							var color_match = rule.before_color.empty() or rule.before_color == rColor
+							if color_match and not rule.after_color.empty():
+								new_color = rule.after_color
+						
+						if new_color != null:
+							updates[6] = new_color
+							break
+				
+				if not updates.empty():
+					var final_line = _update_fields(parsed_line, updates, delimiter)
+					set_line(current_line_num, final_line)
+
+				i += 1
+
 	var section_find = search('[256 Eyelid Color]', 0, 0, 0)
 	if section_find:
 		var start_of_section = section_find[SEARCH_RESULT_LINE] + 1

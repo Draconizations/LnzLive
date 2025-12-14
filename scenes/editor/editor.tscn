@@ -1688,6 +1688,14 @@ custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Lines"
 
+[node name="Polygons" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 407.0
+margin_right = 474.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Polygons"
+
 [node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
 margin_left = 478.0
 margin_right = 535.0

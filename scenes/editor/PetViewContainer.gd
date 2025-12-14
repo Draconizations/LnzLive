@@ -678,6 +678,7 @@ func _gui_input(event):
 		else:
 			tools_menu.selected_visual_ball = null
 		tools_menu.rect_global_position = get_viewport().get_mouse_position()
+		tools_menu.rect_size = Vector2(150, 350)
 		tools_menu.popup()
 		return
 
