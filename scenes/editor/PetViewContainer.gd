@@ -1356,7 +1356,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 		_auto_paint_affected_cache.clear()
 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 		for b in all_balls:
-			if is_instance_valid(b):
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
 
 func _on_line_mode_toggled(is_on):
