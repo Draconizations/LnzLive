@@ -13,6 +13,12 @@ var is_user_file = false
 var filepath: String
 var r = RegEx.new()
 
+var history_stack: Array = []
+var history_index: int = -1
+var max_history_size: int = 50
+var last_commit_time: int = 0
+var last_commit_action: String = ""
+
 var using_alt_font = false
 var default_font: DynamicFont
 var cascadia_font: DynamicFont
@@ -94,11 +100,16 @@ func _load_file(filepath: String, user_flag: bool):
 
 	var file = File.new()
 	file.open(filepath, File.READ)
+
 	var contents = file.get_as_text()
 	file.close()
+
 	self.filepath = filepath
 	is_user_file = user_flag
+
 	_set_text_preserve(contents)
+
+	initialize_history()
 
 func _on_example_file_selected(filepath):
 	_load_file(filepath, false)
@@ -111,6 +122,16 @@ func _on_user_file_selected(filepath):
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file()
+
+	if Input.is_key_pressed(KEY_CONTROL) and event.pressed:
+		if event.scancode == KEY_Z:
+			if Input.is_key_pressed(KEY_SHIFT):
+				redo_visual_edit() # Ctrl+Shift+Z
+			else:
+				undo_visual_edit() # Ctrl+Z
+		elif event.scancode == KEY_Y:
+			redo_visual_edit() # Ctrl+Y
+
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
 		find_panel.visible = !find_panel.visible
 		self.readonly = find_panel.visible
@@ -246,6 +267,78 @@ func save_file():
 	emit_signal("file_saved", filepath)
 	_set_text_preserve(get_text())
 	print("Saved LNZ and Applied Changes!")
+
+func initialize_history():
+	history_stack.clear()
+	var initial_snapshot = _create_snapshot_data("Initial Load")
+	history_stack.append(initial_snapshot)
+	history_index = 0
+
+func commit_visual_change(action_name: String, squash_recent: bool = false):
+	var current_time = OS.get_ticks_msec()
+	
+	if squash_recent and history_index > 0:
+		if action_name == last_commit_action and (current_time - last_commit_time) < 1000:
+			history_stack[history_index] = _create_snapshot_data(action_name)
+			last_commit_time = current_time
+			return
+
+	if history_index < history_stack.size() - 1:
+		history_stack = history_stack.slice(0, history_index)
+	
+	history_stack.append(_create_snapshot_data(action_name))
+	history_index += 1
+	
+	if history_stack.size() > max_history_size:
+		history_stack.pop_front()
+		history_index -= 1
+	
+	last_commit_time = current_time
+	last_commit_action = action_name
+	
+	print("[HISTORY] Committed: %s (Stack Size: %d)" % [action_name, history_stack.size()])
+
+func undo_visual_edit():
+	if history_index <= 0:
+		print("[HISTORY] Nothing to undo.")
+		return
+	
+	history_index -= 1
+	_restore_snapshot(history_stack[history_index])
+	print("[HISTORY] Undid to: %s" % history_stack[history_index].action)
+	
+	save_file() 
+
+func redo_visual_edit():
+	if history_index >= history_stack.size() - 1:
+		print("[HISTORY] Nothing to redo.")
+		return
+
+	history_index += 1
+	_restore_snapshot(history_stack[history_index])
+	print("[HISTORY] Redid: %s" % history_stack[history_index].action)
+	
+	save_file()
+
+func _create_snapshot_data(action: String) -> Dictionary:
+	return {
+		"action": action,
+		"text": self.text,
+		"cursor_line": cursor_get_line(),
+		"cursor_col": cursor_get_column(),
+		"v_scroll": get_v_scroll(),
+		"h_scroll": get_h_scroll()
+	}
+
+func _restore_snapshot(snapshot: Dictionary):
+	text = snapshot.text
+	
+	cursor_set_line(snapshot.cursor_line)
+	cursor_set_column(snapshot.cursor_col)
+	set_v_scroll(snapshot.v_scroll)
+	set_h_scroll(snapshot.h_scroll)
+	
+	update()
 
 # TBD fix all delimiter handling...
 
@@ -649,9 +742,9 @@ func _on_apply_paintballz():
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
 		pet_node.clear_pending_paintballs()
-	
-	save_backup()
+
 	save_file()
+	commit_visual_change("Commited Paintballz")
 
 	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 	if pet_view_container.close_paintball_on_apply:
@@ -694,6 +787,7 @@ func _on_palette_selected(filename_without_extension):
 			_insert_text_at_cursor_at_line(insert_line, new_line)
 	
 	save_file()
+	commit_visual_change("Applied Palette")
 
 func _on_HeadShotButton_pressed():
 	save_backup()
@@ -790,6 +884,7 @@ func _on_HeadShotButton_pressed():
 
 	_set_text_preserve(new_text)
 	save_file()
+	commit_visual_change("Captured Head Shot")
 
 # Connect by Linez
 func _on_Node_line_created(start_ball, end_ball):
@@ -873,6 +968,7 @@ func _on_Node_line_created(start_ball, end_ball):
 		center_viewport_to_cursor()
 
 	save_file()
+	commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
 
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
@@ -1012,6 +1108,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 		pvc.schedule_autodrag_for_addball(addball_no)
 
 	save_file()
+	commit_visual_change("Created Addballz #%d" % addball_no)
 
 func _count_section_entries(section_name: String) -> int:
 	var section_find = search(section_name, 0, 0, 0)
@@ -1056,7 +1153,7 @@ func _on_ToolsMenu_delete_ball(ball_no: int):
 	else:
 		pass 
 	save_file()
-
+	commit_visual_change("Deleted Addballz #%d" % ball_no)
 
 func _on_ToolsMenu_omit_ball(ball_no: int):
 	save_backup()
@@ -1070,6 +1167,7 @@ func _on_ToolsMenu_omit_ball(ball_no: int):
 		cursor_set_column(0)
 		insert_text_at_cursor(str(ball_no) + "\n")
 	save_file()
+	commit_visual_change("Omitted Ballz #%d" % ball_no)
 
 func _on_ToolsMenu_unomit_ball(ball_no: int):
 	save_backup()
@@ -1091,6 +1189,7 @@ func _on_ToolsMenu_unomit_ball(ball_no: int):
 			select(line_idx, 0, line_idx + 1, 0)
 			cut()
 			save_file()
+			commit_visual_change("Unomitted Ballz #%d" % ball_no)
 			return
 		
 		i += 1
@@ -1325,7 +1424,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		set_line(start_of_section + i, final_line)
 		i += 1
 	save_file()
-
+	commit_visual_change("Applied Colors")
 
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
 	save_backup()
@@ -1431,6 +1530,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		set_line(start_of_section + i, final_line)
 		i += 1
 	save_file()
+	commit_visual_change("Applied Colors")
 
 func find_mirrored_ball(ball_no: int) -> int:
 	if ball_no >= KeyBallsData.max_base_ball_num:
@@ -1877,6 +1977,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_paint_lines_to_append, "\n") + "\n")
 
 	save_file()
+	commit_visual_change("Mirrored L to R" if not reverse else "Mirrored R to L")
 
 func _get_omitted_balls() -> Array:
 	var omitted_balls = []
@@ -2004,6 +2105,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 
 	print("[LNZ EDIT] Successfully performed selective L to R mirror for ball #%d." % target_ball_no)
 	save_file()
+	commit_visual_change("Mirrored Ballz #%d" % target_ball_no)
 
 func _process_paintball_line_for_mirror(parts: PoolStringArray, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
 	if parts.size() < 6: 
@@ -2253,7 +2355,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 
 	if applied_something:
 		save_file()
-
+		commit_visual_change("Applied Preset to Ballz #%d" % ball_no)
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_Q:
@@ -2730,6 +2832,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 			i += 1
 				
 	save_file()
+	commit_visual_change("Perfomed Color Swap")
 
 ## Mirror (Copy L to R) Helper Functions
 
@@ -3249,6 +3352,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					set_line(i, new_line)
 					print("[LNZ EDIT] Updated line: %s" % new_line)
 					save_file()
+					commit_visual_change("Resized Addballz #%d" % ball_no, true)
 					return
 			count += 1
 		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
@@ -3272,6 +3376,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					set_line(i, new_line)
 					print("[LNZ EDIT] Updated line: %s" % new_line)
 					save_file()
+					commit_visual_change("Resized Ballz #%d" % ball_no, true)
 					return
 				else:
 					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
@@ -3360,6 +3465,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
 	save_file()
+	commit_visual_change("Moved Ballz #%d" % ball_no, true)
 
 func apply_batch_moves(pending_moves: Dictionary):
 	if pending_moves.empty():
@@ -3477,6 +3583,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					count += 1
 	
 	save_file()
+	commit_visual_change("Batch Moved Ballz")
 
 func _escape_regex(pattern_str: String) -> String:
 	var special_chars = ".+*?()[]{}|^$\\/"
