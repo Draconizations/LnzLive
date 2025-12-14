@@ -86,6 +86,7 @@ func _ready():
 
 func set_hidden(is_hidden):
 	$MeshInstance.visible = !is_hidden
+	$Area/CollisionShape.disabled = is_hidden
 
 func set_visible(new_value):
 	visible_override = new_value
