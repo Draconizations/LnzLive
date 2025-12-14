@@ -559,8 +559,12 @@ func _on_apply_paintballz():
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _get_section_bounds("[Paint Ballz]")
-		var insert_line_num
 
+		# OLD solution: duping paintballz
+		# for rep in range(1, 6):
+		# 	for line in paintball_lines_list:
+		# 		new_paintball_lines += line + " ;rep" + str(rep) + "\n"
+		
 		if bounds.empty():
 			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
@@ -570,30 +574,56 @@ func _on_apply_paintballz():
 			_set_text_preserve(text)
 			bounds = _get_section_bounds("[Paint Ballz]")
 
-		insert_line_num = bounds["start"]
-		var j = 0
-		while insert_line_num + j < bounds["end"]:
-			var line = get_line(insert_line_num + j).strip_edges()
-			if line.begins_with(";"):
-				j += 1
-				continue
-			break
-		insert_line_num += j
-
+		var insert_at_line = bounds["start"]
+		var need_fillers = false
 		var delim = _detect_delimiter(bounds["start"], bounds["end"])
-		var new_paintball_lines = ""
 
+		if is_babyz:
+			var valid_entries_count = 0
+			var scanner_line = bounds["start"]
+			var found_target = false
+			var total_lines = get_line_count()
+			
+			while scanner_line < total_lines:
+				var line = get_line(scanner_line).strip_edges()
+				
+				if line.begins_with("["):
+					break 
+				
+				if !line.empty() and !line.begins_with(";"):
+					valid_entries_count += 1
+				
+				if valid_entries_count == 17:
+					insert_at_line = scanner_line + 1
+					found_target = true
+					break
+				
+				scanner_line += 1
+			
+			if !found_target:
+				need_fillers = true
+				insert_at_line = bounds["start"]
 
-		if is_babyz and _count_section_entries("[Paint Ballz]") < 17:
-			for k in range(17):
-				# invisible paintballz to fill where the pox would go!
-				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
-				new_paintball_lines += filler_line + " ; chickenpox\n"
+		else:
+			var runner = bounds["start"]
+			var total_lines = get_line_count()
+			while runner < total_lines:
+				var line = get_line(runner).strip_edges()
+				
+				if line.begins_with("["):
+					break
 
-			# OLD solution: duping paintballz
-			# for rep in range(1, 6):
-			# 	for line in paintball_lines_list:
-			# 		new_paintball_lines += line + " ;rep" + str(rep) + "\n"
+				if line.empty() or line.begins_with(";"):
+					runner += 1
+				else:
+					break
+			insert_at_line = runner
+		var text_to_insert = ""
+		
+		if need_fillers:
+			for i in range(17):
+				var filler_line = "1" + delim + "-1" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0" + delim + "0"
+				text_to_insert += filler_line + " ; chickenpox filler\n"
 
 		var paintball_lines_list = []
 		for i in range(pending_paintballs.size() - 1, -1, -1):
@@ -615,13 +645,12 @@ func _on_apply_paintballz():
 			paintball_lines_list.append(paintball_line)
 
 		for line in paintball_lines_list:
-			new_paintball_lines += line + "\n"
+			text_to_insert += line + "\n"
 
-		_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
+		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
 		pet_node.clear_pending_paintballs()
-
+	
 	save_backup()
-
 	save_file()
 
 	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
