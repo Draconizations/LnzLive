@@ -827,9 +827,9 @@ func _gui_input(event):
 			Input.set_custom_mouse_cursor(rope)
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
-				if b != linez_start_ball:
+				if b != linez_start_ball and b.has_method("apply_outline_state"):
 					b.apply_outline_state(b.OutlineState.NONE)
-			if hover and hover != linez_start_ball:
+			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
 				hover.apply_outline_state(hover.OutlineState.HOVER)
 		elif not preset_mode and not paintball_mode and not project_mode and not move_mode:
 			Input.set_custom_mouse_cursor(hand_neutral)
