@@ -1602,8 +1602,12 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				is_source = true
 			elif base_ball in middle_balls_list:
 				var x_pos = parts[1].to_float()
-				if abs(x_pos) > 0.001:
-					is_source = true
+				if reverse:
+					if x_pos < -0.001:
+						is_source = true
+					else:
+						if x_pos > 0.001:
+							is_source = true
 		
 		if is_source:
 			source_addballs_found.append(current_scan_id)
