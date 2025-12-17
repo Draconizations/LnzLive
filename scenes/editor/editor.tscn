@@ -663,7 +663,7 @@ __meta__ = {
 margin_top = 46.0
 margin_right = 185.0
 margin_bottom = 65.0
-hint_tooltip = "Hotkey D or ALT+P to activate Line Mode"
+hint_tooltip = "Hotkey D or ALT+P to activate Project Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -1687,6 +1687,14 @@ margin_bottom = 29.0
 custom_fonts/font = ExtResource( 27 )
 pressed = true
 text = "Lines"
+
+[node name="Polygons" type="CheckBox" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
+margin_left = 407.0
+margin_right = 474.0
+margin_bottom = 29.0
+custom_fonts/font = ExtResource( 27 )
+pressed = true
+text = "Polygons"
 
 [node name="ClearButton" type="Button" parent="SceneRoot/RecolorPopup/VBoxContainer/CheckContainer"]
 margin_left = 478.0
