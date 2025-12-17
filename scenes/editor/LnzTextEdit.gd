@@ -15,7 +15,7 @@ var r = RegEx.new()
 
 var history_stack: Array = []
 var history_index: int = -1
-var max_history_size: int = 50
+var max_history_size: int = 25 # TBD: make a User Setting
 var last_commit_time: int = 0
 var last_commit_action: String = ""
 
@@ -296,27 +296,27 @@ func commit_visual_change(action_name: String, squash_recent: bool = false):
 	last_commit_time = current_time
 	last_commit_action = action_name
 	
-	print("[HISTORY] Committed: %s (Stack Size: %d)" % [action_name, history_stack.size()])
+	print("[HISTORY] COMMIT: %s (Stack Size: %d)" % [action_name, history_stack.size()])
 
 func undo_visual_edit():
 	if history_index <= 0:
-		print("[HISTORY] Nothing to undo.")
+		print("[HISTORY] Nothing to undo!")
 		return
 	
 	history_index -= 1
 	_restore_snapshot(history_stack[history_index])
-	print("[HISTORY] Undid to: %s" % history_stack[history_index].action)
+	print("[HISTORY] UNDO: %s" % history_stack[history_index].action)
 	
 	save_file() 
 
 func redo_visual_edit():
 	if history_index >= history_stack.size() - 1:
-		print("[HISTORY] Nothing to redo.")
+		print("[HISTORY] Nothing to redo!")
 		return
 
 	history_index += 1
 	_restore_snapshot(history_stack[history_index])
-	print("[HISTORY] Redid: %s" % history_stack[history_index].action)
+	print("[HISTORY] REDO: %s" % history_stack[history_index].action)
 	
 	save_file()
 
