@@ -18,6 +18,23 @@ var history_index: int = -1
 var max_history_size: int = 25 # TBD: make a User Setting
 var last_commit_time: int = 0
 var last_commit_action: String = ""
+var last_commit_id: int = -1
+
+class HistoryItem:
+	enum Type { SNAPSHOT, LOGICAL }
+	var type: int
+	var action_name: String
+	
+	var full_text: String
+	var cursor_line: int
+	var cursor_col: int
+	var v_scroll: float
+	var h_scroll: float
+	
+	var target_section: String
+	var target_id: int 
+	var old_line_data: String
+	var new_line_data: String
 
 var using_alt_font = false
 var default_font: DynamicFont
@@ -35,7 +52,6 @@ signal file_backed_up()
 var min_font_size = 4
 
 onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
-
 onready var find_panel = get_node("../FindPanel")
 
 onready var frame_slider = get_tree().root.get_node(
@@ -83,13 +99,10 @@ func _ready():
 
 func _setup_context_menu():
 	var menu = get_menu()
-	
 	if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
 		menu.connect("id_pressed", self, "_on_menu_id_pressed")
-
 	if menu.get_item_index(100) == -1:
 		menu.add_item("Find/Replace", 100)
-	
 	if menu.get_item_index(101) == -1:
 		menu.add_item("Toggle Comment", 101)
 
@@ -108,7 +121,6 @@ func _load_file(filepath: String, user_flag: bool):
 	is_user_file = user_flag
 
 	_set_text_preserve(contents)
-
 	initialize_history()
 
 func _on_example_file_selected(filepath):
@@ -121,7 +133,7 @@ func _on_user_file_selected(filepath):
 
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
-		save_file()
+		save_file(false)
 
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed:
 		if event.scancode == KEY_Z:
@@ -147,6 +159,160 @@ func _set_text_preserve(new_text: String):
 	set_h_scroll(old_h)
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
+
+
+func initialize_history():
+	history_stack.clear()
+	var item = HistoryItem.new()
+	item.type = HistoryItem.Type.SNAPSHOT
+	item.action_name = "Initial Load"
+	item.full_text = self.text
+	item.cursor_line = 0
+	item.cursor_col = 0
+	item.v_scroll = 0
+	item.h_scroll = 0
+	history_stack.append(item)
+	history_index = 0
+
+func commit_full_snapshot(action_name: String):
+	_trim_history_tail()
+	
+	var item = HistoryItem.new()
+	item.type = HistoryItem.Type.SNAPSHOT
+	item.action_name = action_name
+	item.full_text = self.text
+	item.cursor_line = cursor_get_line()
+	item.cursor_col = cursor_get_column()
+	item.v_scroll = get_v_scroll()
+	item.h_scroll = get_h_scroll()
+	
+	history_stack.append(item)
+	history_index += 1
+	_check_history_size()
+	print("[HISTORY] Snapshot Commit: %s" % action_name)
+
+func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String):
+	var current_time = OS.get_ticks_msec()
+	if history_index >= 0:
+		var last = history_stack[history_index]
+		if last.type == HistoryItem.Type.LOGICAL and last.target_id == id and last.action_name == action_name:
+			if (current_time - last_commit_time) < 1000:
+				last.new_line_data = new_line 
+				last_commit_time = current_time
+				return
+
+	_trim_history_tail()
+	
+	var item = HistoryItem.new()
+	item.type = HistoryItem.Type.LOGICAL
+	item.action_name = action_name
+	item.target_section = section
+	item.target_id = id
+	item.old_line_data = old_line
+	item.new_line_data = new_line
+	
+	history_stack.append(item)
+	history_index += 1
+	_check_history_size()
+	
+	last_commit_time = current_time
+	last_commit_action = action_name
+	last_commit_id = id
+	
+	print("[HISTORY] Logical Commit: %s (Ball %d)" % [action_name, id])
+
+func commit_visual_change(action_name: String, _squash_unused: bool = false):
+	commit_full_snapshot(action_name)
+
+func _trim_history_tail():
+	if history_index < history_stack.size() - 1:
+		history_stack = history_stack.slice(0, history_index)
+
+func _check_history_size():
+	if history_stack.size() > max_history_size:
+		history_stack.pop_front()
+		history_index -= 1
+
+func undo_visual_edit():
+	if history_index <= 0:
+		print("[HISTORY] Nothing to undo.")
+		return
+	
+	var item_being_undone = history_stack[history_index] 
+	
+	history_index -= 1
+	
+	if item_being_undone.type == HistoryItem.Type.LOGICAL:
+		_apply_logical_line(item_being_undone.target_section, item_being_undone.target_id, item_being_undone.old_line_data)
+	else:
+		var snapshot = _find_nearest_snapshot(history_index)
+		if snapshot:
+			_restore_snapshot(snapshot)
+			# Re-apply logicals between snapshot and history_index
+			for i in range(history_stack.find(snapshot) + 1, history_index + 1):
+				var log_item = history_stack[i]
+				if log_item.type == HistoryItem.Type.LOGICAL:
+					_apply_logical_line(log_item.target_section, log_item.target_id, log_item.new_line_data)
+		else:
+			print("[HISTORY] Error: No snapshot found to restore.")
+
+	print("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
+	
+	save_file(true)
+
+func redo_visual_edit():
+	if history_index >= history_stack.size() - 1:
+		print("[HISTORY] Nothing to redo.")
+		return
+	
+	history_index += 1
+	var item = history_stack[history_index]
+	
+	if item.type == HistoryItem.Type.SNAPSHOT:
+		_restore_snapshot(item)
+	else:
+		_apply_logical_line(item.target_section, item.target_id, item.new_line_data)
+
+	print("[HISTORY] REDO: %s" % item.action_name)
+	
+	save_file(true)
+
+func _find_nearest_snapshot(from_index: int) -> HistoryItem:
+	var idx = from_index
+	while idx >= 0:
+		if history_stack[idx].type == HistoryItem.Type.SNAPSHOT:
+			return history_stack[idx]
+		idx -= 1
+	return null
+
+func _restore_snapshot(item):
+	self.text = item.full_text
+	cursor_set_line(item.cursor_line)
+	cursor_set_column(item.cursor_col)
+	set_v_scroll(item.v_scroll)
+	set_h_scroll(item.h_scroll)
+	update()
+
+func _apply_logical_line(section: String, id: int, line_content: String):
+	var line_idx = -1
+	if section == "[Ballz Info]":
+		line_idx = find_line_in_ball_section(id)
+	elif section == "[Add Ball]":
+		var relative = id
+		if id >= KeyBallsData.max_base_ball_num:
+			relative = id - KeyBallsData.max_base_ball_num
+		line_idx = find_line_in_addball_section(relative)
+	elif section == "[Move]":
+		line_idx = find_line_in_move_section(id)
+	elif section == "[Project Ball]":
+		line_idx = find_line_in_project_section(id)
+	elif section == "[Linez]":
+		line_idx = find_line_in_linez_section(id)
+		
+	if line_idx != -1:
+		set_line(line_idx, line_content)
+	else:
+		print("[HISTORY] Warn: Could not find line for logical undo (%s #%d)" % [section, id])
 
 func _on_IncreaseFontButton_pressed():
 	var font = get_font("font")
@@ -177,14 +343,11 @@ func _on_FontToggleButton_pressed():
 		if btn: btn.text = "Font: Pixel"
 		
 	new_font.size = current_size
-	
 	add_font_override("font", new_font)
-	
 	update()
 
 func _on_AutowrapButton_pressed():
 	self.wrap_enabled = !self.wrap_enabled
-
 	var button = get_node("../HBoxContainer/AutowrapButton")
 	if self.wrap_enabled:
 		button.text = "Wrap: On"
@@ -223,7 +386,11 @@ func save_backup():
 	file.close()
 	emit_signal("file_backed_up")
 
-func save_file():
+func save_file(skip_history: bool = false):
+	# Only commit snapshot if we are NOT doing an automated/tool save
+	if not skip_history:
+		commit_full_snapshot("User Save")
+	
 	if filepath == null or filepath.empty():
 		var dir = Directory.new()
 		var base_path = "user://resources/"
@@ -233,11 +400,9 @@ func save_file():
 		var default_name = "unnamed.lnz"
 		var possible_file_name = base_path + default_name
 		var counter = 1
-		
 		while dir.file_exists(possible_file_name):
 			possible_file_name = base_path + "unnamed_" + str(OS.get_unix_time()) + ".lnz"
 			counter += 1
-		
 		filepath = possible_file_name
 		is_user_file = true
 
@@ -267,78 +432,6 @@ func save_file():
 	emit_signal("file_saved", filepath)
 	_set_text_preserve(get_text())
 	print("Saved LNZ and Applied Changes!")
-
-func initialize_history():
-	history_stack.clear()
-	var initial_snapshot = _create_snapshot_data("Initial Load")
-	history_stack.append(initial_snapshot)
-	history_index = 0
-
-func commit_visual_change(action_name: String, squash_recent: bool = false):
-	var current_time = OS.get_ticks_msec()
-	
-	if squash_recent and history_index > 0:
-		if action_name == last_commit_action and (current_time - last_commit_time) < 1000:
-			history_stack[history_index] = _create_snapshot_data(action_name)
-			last_commit_time = current_time
-			return
-
-	if history_index < history_stack.size() - 1:
-		history_stack = history_stack.slice(0, history_index)
-	
-	history_stack.append(_create_snapshot_data(action_name))
-	history_index += 1
-	
-	if history_stack.size() > max_history_size:
-		history_stack.pop_front()
-		history_index -= 1
-	
-	last_commit_time = current_time
-	last_commit_action = action_name
-	
-	print("[HISTORY] COMMIT: %s (Stack Size: %d)" % [action_name, history_stack.size()])
-
-func undo_visual_edit():
-	if history_index <= 0:
-		print("[HISTORY] Nothing to undo!")
-		return
-	
-	history_index -= 1
-	_restore_snapshot(history_stack[history_index])
-	print("[HISTORY] UNDO: %s" % history_stack[history_index].action)
-	
-	save_file() 
-
-func redo_visual_edit():
-	if history_index >= history_stack.size() - 1:
-		print("[HISTORY] Nothing to redo!")
-		return
-
-	history_index += 1
-	_restore_snapshot(history_stack[history_index])
-	print("[HISTORY] REDO: %s" % history_stack[history_index].action)
-	
-	save_file()
-
-func _create_snapshot_data(action: String) -> Dictionary:
-	return {
-		"action": action,
-		"text": self.text,
-		"cursor_line": cursor_get_line(),
-		"cursor_col": cursor_get_column(),
-		"v_scroll": get_v_scroll(),
-		"h_scroll": get_h_scroll()
-	}
-
-func _restore_snapshot(snapshot: Dictionary):
-	text = snapshot.text
-	
-	cursor_set_line(snapshot.cursor_line)
-	cursor_set_column(snapshot.cursor_col)
-	set_v_scroll(snapshot.v_scroll)
-	set_h_scroll(snapshot.h_scroll)
-	
-	update()
 
 # TBD fix all delimiter handling...
 
@@ -418,7 +511,6 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 		if delim_counts[delim] > max_count:
 			max_count = delim_counts[delim]
 			most_frequent_delim = delim
-
 	return most_frequent_delim
 
 func _split_and_clean(line: String, p_delimiter: String = "") -> PoolStringArray:
@@ -476,173 +568,147 @@ func _insert_text_at_line(line_no: int, text: String):
 
 func find_line_in_ball_section(ball_no):
 	var section_find = search('[Ballz Info]', 0, 0, 0)
+	if section_find.empty(): return -1
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
 func find_line_in_addball_section(ball_no):
 	var section_find = search('[Add Ball]', 0, 0, 0)
+	if section_find.empty(): return -1
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
 func find_line_in_move_section(ball_no):
 	var section_find = search('[Move]', 0, 0, 0)
-	var current_line = cursor_get_line()
+	if section_find.empty(): return -1
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
-	var start_point
-	if current_line >= start_of_section and current_line < end_of_section:
-		start_point = current_line
-	else:
-		start_point = start_of_section
+	
 	var i = 0
 	while true:
-		var looped = start_point + i
+		var looped = start_of_section + i
+		if looped >= get_line_count(): break
+		
 		var line = get_line(looped)
 		var stripped = line.strip_edges()
-		if stripped.begins_with("["):
-			if start_point == start_of_section:
-				return start_of_section - 1
-			else:
-				start_point = start_of_section
-				i = 0
-				continue
-		
+		if stripped.begins_with("["): break # End of section
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 
 		var parts = _split_and_clean(line)
 		if parts.size() > 0 and parts[0] == str(ball_no):
-			break
+			return start_of_section + i
 		i += 1
-	return start_point + i
+	return -1
 
 func find_line_in_project_section(ball_no):
 	var section_find = search('[Project Ball]', 0, 0, 0)
-	var current_line = cursor_get_line()
+	if section_find.empty(): return -1
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
-	var start_point
-	if current_line >= start_of_section and current_line < end_of_section:
-		start_point = current_line + 1
-	else:
-		start_point = start_of_section
 	var i = 0
 	while true:
-		var looped = start_point + i
+		var looped = start_of_section + i
+		if looped >= get_line_count(): break
+		
 		var line = get_line(looped)
 		var stripped = line.strip_edges()
-
-		if stripped.begins_with("["):
-			if start_point == start_of_section:
-				return start_of_section - 1
-			else:
-				start_point = start_of_section
-				i = 0
-				continue
-		
+		if stripped.begins_with("["): break
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
 		var parts = _split_and_clean(line)
 		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
-			break
-		
+			return looped
 		i += 1
-	return start_point + i
+	return -1
 	
 func find_line_in_linez_section(ball_no):
 	var section_find = search('[Linez]', 0, 0, 0)
-	var current_line = cursor_get_line()
+	if section_find.empty(): return -1
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var end_of_section = search('[', 0, start_of_section, 0)[SEARCH_RESULT_LINE]
-	var start_point
-	if current_line >= start_of_section and current_line < end_of_section:
-		start_point = current_line + 1
-	else:
-		start_point = start_of_section
 	var i = 0
 	while true:
-		var looped = start_point + i
+		var looped = start_of_section + i
+		if looped >= get_line_count(): break
+		
 		var line = get_line(looped)
 		var stripped = line.strip_edges()
-
-		if stripped.begins_with("["):
-			if start_point == start_of_section:
-				return start_of_section - 1
-			else:
-				start_point = start_of_section
-				i = 0
-				continue
-		
+		if stripped.begins_with("["): break
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
 		var parsed_line = _split_and_clean(line)
-		
-		if parsed_line.empty():
-			i += 1
-			continue
-
-		if parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no):
-			break
-		
+		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
+			return looped
 		i += 1
-	return start_point + i
+	return -1
 
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
 	while true:
-		if !line.lstrip(" ").begins_with(";"):
+		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
 			break
 		start_point += 1
+		if start_point >= get_line_count(): return -1
 		line = get_line(start_point)
+	
 	var i = 0
 	var j = -1
 	while true:
-		line = get_line(start_point + i)
-		if !line.lstrip(" ").begins_with(";"):
+		var check_idx = start_point + i
+		if check_idx >= get_line_count(): return -1
+		
+		line = get_line(check_idx)
+		if line.strip_edges().begins_with("["): return -1
+		
+		if !line.lstrip(" ").begins_with(";") and line.strip_edges() != "":
 			j += 1
 		if j == ball_no:
-			break;
+			return check_idx
 		i += 1
-	return start_point + i
+	return -1
+
+# --- LOGIC FUNCTIONS ---
 
 func get_corresponding_right_ball(left_ball_index):
 	if left_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if left_ball_index in [8, 9]:
 				return left_ball_index + 2
-			elif left_ball_index in [16, 17, 18] or left_ball_index in [49, 50, 51] or left_ball_index in [57, 58, 59]: # finger, toe, whisker
+			elif left_ball_index in [16, 17, 18] or left_ball_index in [49, 50, 51] or left_ball_index in [57, 58, 59]: 
 				return left_ball_index + 3
 			else:
 				return left_ball_index + 1
 		else:
 			return left_ball_index + 24
 	else:
-		return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
-		
+		if ball_map.has(left_ball_index) and ball_map[left_ball_index].has("corresponding_ball"):
+			return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
+		return left_ball_index
+
 func get_corresponding_left_ball(right_ball_index):
 	if right_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
 			if right_ball_index in [10, 11]:
 				return right_ball_index - 2
-			elif right_ball_index in [19, 20, 21] or right_ball_index in [52, 53, 54] or right_ball_index in [60, 61, 62]: # finger, toe, whisker
+			elif right_ball_index in [19, 20, 21] or right_ball_index in [52, 53, 54] or right_ball_index in [60, 61, 62]: 
 				return right_ball_index - 3
 			else:
 				return right_ball_index - 1
 		else:
 			return right_ball_index - 24
 	else:
-		return ball_map[ball_map[right_ball_index].corresponding_ball].new_ball_no
+		if ball_map.has(right_ball_index) and ball_map[right_ball_index].has("corresponding_ball"):
+			return ball_map[ball_map[right_ball_index].corresponding_ball].new_ball_no
+		return right_ball_index
 
 var ball_map = {}
 
 func _on_ApplyChangesButton_pressed():
 	save_backup()
-	save_file()
+	save_file(false) # User Manual Save = History Snapshot
 
 func _on_apply_paintballz():
 	save_backup()
@@ -652,11 +718,6 @@ func _on_apply_paintballz():
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _get_section_bounds("[Paint Ballz]")
-
-		# OLD solution: duping paintballz
-		# for rep in range(1, 6):
-		# 	for line in paintball_lines_list:
-		# 		new_paintball_lines += line + " ;rep" + str(rep) + "\n"
 		
 		if bounds.empty():
 			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
@@ -743,7 +804,7 @@ func _on_apply_paintballz():
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
 		pet_node.clear_pending_paintballs()
 
-	save_file()
+	save_file(true) # Skip history (we explicitly commit below)
 	commit_visual_change("Commited Paintballz")
 
 	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
@@ -786,7 +847,7 @@ func _on_palette_selected(filename_without_extension):
 			var insert_line = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_line, new_line)
 	
-	save_file()
+	save_file(true)
 	commit_visual_change("Applied Palette")
 
 func _on_HeadShotButton_pressed():
@@ -883,7 +944,7 @@ func _on_HeadShotButton_pressed():
 		new_text += line + "\n"
 
 	_set_text_preserve(new_text)
-	save_file()
+	save_file(true)
 	commit_visual_change("Captured Head Shot")
 
 # Connect by Linez
@@ -967,7 +1028,7 @@ func _on_Node_line_created(start_ball, end_ball):
 		cursor_set_column(0)
 		center_viewport_to_cursor()
 
-	save_file()
+	save_file(true)
 	commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
 
 # Create Addballz (+ Linez)
@@ -1107,7 +1168,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	if pvc and pvc.has_method("schedule_autodrag_for_addball"):
 		pvc.schedule_autodrag_for_addball(addball_no)
 
-	save_file()
+	save_file(true)
 	commit_visual_change("Created Addballz #%d" % addball_no)
 
 func _count_section_entries(section_name: String) -> int:
@@ -1152,7 +1213,7 @@ func _on_ToolsMenu_delete_ball(ball_no: int):
 		_update_all_references(ball_no)
 	else:
 		pass 
-	save_file()
+	save_file(true)
 	commit_visual_change("Deleted Addballz #%d" % ball_no)
 
 func _on_ToolsMenu_omit_ball(ball_no: int):
@@ -1166,7 +1227,7 @@ func _on_ToolsMenu_omit_ball(ball_no: int):
 		cursor_set_line(line_idx)
 		cursor_set_column(0)
 		insert_text_at_cursor(str(ball_no) + "\n")
-	save_file()
+	save_file(true)
 	commit_visual_change("Omitted Ballz #%d" % ball_no)
 
 func _on_ToolsMenu_unomit_ball(ball_no: int):
@@ -1188,7 +1249,7 @@ func _on_ToolsMenu_unomit_ball(ball_no: int):
 		if line == str(ball_no):
 			select(line_idx, 0, line_idx + 1, 0)
 			cut()
-			save_file()
+			save_file(true)
 			commit_visual_change("Unomitted Ballz #%d" % ball_no)
 			return
 		
@@ -1423,7 +1484,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 			n += 1
 		set_line(start_of_section + i, final_line)
 		i += 1
-	save_file()
+	save_file(true)
 	commit_visual_change("Applied Colors")
 
 func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_index, intended_part):
@@ -1529,7 +1590,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			n += 1
 		set_line(start_of_section + i, final_line)
 		i += 1
-	save_file()
+	save_file(true)
 	commit_visual_change("Applied Colors")
 
 func find_mirrored_ball(ball_no: int) -> int:
@@ -1980,7 +2041,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		var ins_line = _find_insertion_line(bounds_p.start, bounds_p.end)
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_paint_lines_to_append, "\n") + "\n")
 
-	save_file()
+	save_file(true)
 	commit_visual_change("Mirrored L to R" if not reverse else "Mirrored R to L")
 
 func _get_omitted_balls() -> Array:
@@ -2108,7 +2169,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		_process_move_section_for_mirror(target_ball_no, mirrored_ball_no)
 
 	print("[LNZ EDIT] Successfully performed selective L to R mirror for ball #%d." % target_ball_no)
-	save_file()
+	save_file(true)
 	commit_visual_change("Mirrored Ballz #%d" % target_ball_no)
 
 func _process_paintball_line_for_mirror(parts: PoolStringArray, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
@@ -2358,7 +2419,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 			_insert_text_at_cursor_at_line(insert_line_num, new_paintball_lines)
 
 	if applied_something:
-		save_file()
+		save_file(true)
 		commit_visual_change("Applied Preset to Ballz #%d" % ball_no)
 
 func _on_LnzTextEdit_gui_input(event):
@@ -2934,7 +2995,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 			i += 1
 				
-	save_file()
+	save_file(true)
 	commit_visual_change("Perfomed Color Swap")
 
 ## Mirror (Copy L to R) Helper Functions
@@ -3444,48 +3505,37 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 			if raw == "" or raw.begins_with(";"):
 				continue
 			if count == addball_index:
+				var old_line = get_line(i) 
 				var parts = _split_and_clean(raw)
 				if parts.size() > size_field_index:
-					var old_size = parts[size_field_index].to_int()
 					var new_size = size_dif
-					print("[LNZ EDIT] [Add Ball] Resizing ball %d at line %d" % [ball_no, i])
-					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
 					parts[size_field_index] = str(new_size)
 					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
-					print("[LNZ EDIT] Updated line: %s" % new_line)
-					save_file()
-					commit_visual_change("Resized Addballz #%d" % ball_no, true)
+					save_file(true)
+					commit_logical_change("Resized Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
 					return
 			count += 1
-		print("[LNZ EDIT] No matching [Add Ball] line found for ball %d" % ball_no)
 	else:
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"):
 				continue
-			#print("[LNZ EDIT] Scanning line %d (count = %d): %s" % [i, count, raw])
-			#print("[LNZ EDIT] Count reached = %d, looking for ball_no = %d" % [count, ball_no])
 			if count == ball_no:
+				var old_line = get_line(i)
 				var parts = _split_and_clean(raw)
 				if parts.size() > size_field_index:
-					var old_size = parts[size_field_index].to_int()
 					var new_size = size_dif
-					print("[LNZ EDIT] [Ballz Info] Resizing ball %d at line %d" % [ball_no, i])
-					print("[LNZ EDIT] Old size = %d → New size = %d" % [old_size, new_size])
 					parts[size_field_index] = str(new_size)
 					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
-					print("[LNZ EDIT] Updated line: %s" % new_line)
-					save_file()
-					commit_visual_change("Resized Ballz #%d" % ball_no, true)
+					save_file(true)
+					commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
 					return
 				else:
-					print("[LNZ EDIT] Line has too few fields for resizing ball %d" % ball_no)
 					return
 			count += 1
-		print("[LNZ EDIT] Ball %d not found in [Ballz Info]" % ball_no)
 
 func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	save_backup()
@@ -3497,7 +3547,6 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		if section_tag == "[Move]":
-			print("[LNZ EDIT] [Move] section missing, creating it.")
 			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section_line, "[Move]")
@@ -3505,7 +3554,6 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 			_set_text_preserve(all_lines.join("\n"))
 			sec = search(section_tag, 0, 0, 0)
 		else:
-			print("[LNZ EDIT] No %s section found" % section_tag)
 			return
 
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
@@ -3531,6 +3579,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 					if raw == "" or raw.begins_with(";"):
 						continue
 					if count == idx:
+						var old_line = get_line(i)
 						var parts = _split_and_clean(raw)
 						if parts.size() >= 4:
 							parts[1] = str(round(new_relative_pos.x))
@@ -3538,6 +3587,8 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 							parts[3] = str(round(new_relative_pos.z))
 							var new_line = _join_array(parts, " ")
 							set_line(i, new_line)
+							save_file(true)
+							commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
 						break
 					count += 1
 	else:
@@ -3548,27 +3599,23 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 				continue
 			var parts = _split_and_clean(raw)
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
+				var old_line = get_line(i)
 				parts[1] = str(parts[1].to_int() + new_pos.x)
 				parts[2] = str(parts[2].to_int() + new_pos.y)
 				parts[3] = str(parts[3].to_int() + new_pos.z)
 				var new_line = _join_array(parts, " ")
 				set_line(i, new_line)
-				print("[LNZ EDIT] Summed [Move] line at %d: %s" % [i, new_line])
 				updated = true
+				save_file(true)
+				commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
 				break
 		if not updated:
 			var sep = " "
-			var line_txt = "%d%s%d%s%d%s%d" % [
-				ball_no, sep,
-				new_pos.x, sep,
-				new_pos.y, sep,
-				new_pos.z
-			]
+			var line_txt = "%d%s%d%s%d%s%d" % [ball_no, sep, new_pos.x, sep, new_pos.y, sep, new_pos.z]
 			var insert_at = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
-			print("[LNZ EDIT] Inserting new [Move] line at %d: %s" % [insert_at, line_txt])
-	save_file()
-	commit_visual_change("Moved Ballz #%d" % ball_no, true)
+			save_file(true)
+			commit_visual_change("Created Move for Ballz #%d" % ball_no)
 
 func apply_batch_moves(pending_moves: Dictionary):
 	if pending_moves.empty():
@@ -3577,13 +3624,11 @@ func apply_batch_moves(pending_moves: Dictionary):
 	save_backup()
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	
-	# Group by Add Ball vs Move
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
 	
 	var move_sec = search(move_section_tag, 0, 0, 0)
 	if move_sec.empty():
-		print("[LNZ EDIT] [Move] section missing, creating it.")
 		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
 		all_lines.insert(first_section_line, "[Move]")
@@ -3609,10 +3654,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var orig_pos = data.orig_pos
 		var final_pos = data.new_pos
 		
-		# Calculate LNZ delta
 		var world_delta = final_pos - orig_pos
 		
-		# Undo pixel_world_size scale then LNZ scales
 		var px_scale = pet_node.pixel_world_size
 		var lnz_scale = pet_node.lnz.scales.x / 255.0
 		var lnz_delta_raw = world_delta / (px_scale * lnz_scale)
@@ -3620,22 +3663,16 @@ func apply_batch_moves(pending_moves: Dictionary):
 		
 		var lnz_delta = Vector3(round(lnz_delta_raw.x), round(lnz_delta_raw.y), round(lnz_delta_raw.z))
 		
-		# Hierarchy fix: If ball is an Addball, check if its Base Ball is also being moved.
-		# If so, subtract the base ball's move delta from the addball's delta.
 		if ball_no >= KeyBallsData.max_base_ball_num:
-			# Find base ball for this addball
-			# We can use lnz.addballs or pet_node.ball_map to find the base.
-			# pet_node.lnz is accessible here.
 			if pet_node.lnz.addballs.has(ball_no):
 				var addball_data = pet_node.lnz.addballs[ball_no]
 				var base_ball_no = -1
-				if typeof(addball_data) == TYPE_OBJECT: # AddBallData
+				if typeof(addball_data) == TYPE_OBJECT:
 					base_ball_no = addball_data.base
 				elif typeof(addball_data) == TYPE_DICTIONARY:
 					base_ball_no = addball_data.base
 				
 				if base_ball_no != -1 and pending_moves.has(base_ball_no):
-					# Calculate base ball's delta
 					var base_data = pending_moves[base_ball_no]
 					var base_world_delta = base_data.new_pos - base_data.orig_pos
 					var base_lnz_delta_raw = base_world_delta / (px_scale * lnz_scale)
@@ -3645,7 +3682,6 @@ func apply_batch_moves(pending_moves: Dictionary):
 					lnz_delta -= base_lnz_delta
 
 		if ball_no < KeyBallsData.max_base_ball_num:
-			# Base ball: Update [Move]
 			var updated = false
 			for i in range(move_start, move_end):
 				var raw = get_line(i).strip_edges()
@@ -3663,12 +3699,11 @@ func apply_batch_moves(pending_moves: Dictionary):
 				var line_txt = "%d%s%d%s%d%s%d" % [ball_no, sep, lnz_delta.x, sep, lnz_delta.y, sep, lnz_delta.z]
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
-				move_end += 1 # shift bounds
+				move_end += 1
 				if add_start != -1 and add_start > move_start:
 					add_start += 1
 					add_end += 1
 		else:
-			# Add ball: Update [Add Ball]
 			if add_start != -1:
 				var idx = ball_no - KeyBallsData.max_base_ball_num
 				var count = 0
@@ -3685,7 +3720,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 						break
 					count += 1
 	
-	save_file()
+	save_file(true)
 	commit_visual_change("Batch Moved Ballz")
 
 func _escape_regex(pattern_str: String) -> String:
