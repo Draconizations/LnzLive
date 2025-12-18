@@ -196,7 +196,7 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	if history_index >= 0:
 		var last = history_stack[history_index]
 		if last.type == HistoryItem.Type.LOGICAL and last.target_id == id and last.action_name == action_name:
-			if (current_time - last_commit_time) < 1000:
+			if (current_time - last_commit_time) < 300:
 				last.new_line_data = new_line 
 				last_commit_time = current_time
 				return
@@ -258,6 +258,8 @@ func undo_visual_edit():
 
 	print("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
 	
+	last_commit_action = ""
+	
 	save_file(true)
 
 func redo_visual_edit():
@@ -274,6 +276,8 @@ func redo_visual_edit():
 		_apply_logical_line(item.target_section, item.target_id, item.new_line_data)
 
 	print("[HISTORY] REDO: %s" % item.action_name)
+	
+	last_commit_action = ""
 	
 	save_file(true)
 
