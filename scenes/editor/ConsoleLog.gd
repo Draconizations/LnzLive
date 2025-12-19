@@ -1,62 +1,58 @@
 extends RichTextLabel
 
-var message_queue = []
-var fade_duration = 3.0
-var display_time = 3.0
+export var max_messages := 5
+export var display_time := 3.0
+export var fade_speed := 1.5
+
 var current_messages = []
 
 func _ready():
 	bbcode_enabled = true
 	scroll_active = false
-	set_process(true)
+	log_message("Welcome to LnzLive...")
 
 func log_message(msg: String):
 	var entry = {
 		"text": msg,
-		"time_left": display_time,
-		"alpha": 1.0
+		"alpha": 1.0,
+		"timer": display_time
 	}
 	current_messages.append(entry)
-	if current_messages.size() > 5:
+	
+	if current_messages.size() > max_messages:
 		current_messages.pop_front()
+	
 	_update_display()
 
 func _process(delta):
 	if current_messages.empty():
 		return
 
-	var dirty = false
-	var to_remove = []
-
-	for i in range(current_messages.size()):
+	var needs_update = false
+	var i = current_messages.size() - 1
+	
+	while i >= 0:
 		var msg = current_messages[i]
-		msg.time_left -= delta
+		msg.timer -= delta
+		
+		if msg.timer <= 1.0:
+			msg.alpha = max(0, msg.timer)
+			needs_update = true
+		
+		if msg.timer <= 0:
+			current_messages.remove(i)
+			needs_update = true
+		
+		i -= 1
 
-		if msg.time_left <= 0:
-			to_remove.append(i)
-			dirty = true
-		elif msg.time_left < 1.0:
-			msg.alpha = msg.time_left
-			dirty = true
-
-	if not to_remove.empty():
-		for i in range(to_remove.size() - 1, -1, -1):
-			current_messages.remove(to_remove[i])
-		dirty = true
-
-	if dirty:
+	if needs_update:
 		_update_display()
 
 func _update_display():
 	clear()
-	push_table(1)
-
 	for msg in current_messages:
-		push_cell()
-		var col = Color(1, 1, 1, msg.alpha)
-		push_color(col)
-		append_bbcode(msg.text)
-		pop()
-		pop()
+		var display_color = Color(1.0, 1.0, 1.0, msg.alpha)
 		
-	pop()
+		push_color(display_color)
+		append_bbcode(msg.text + "\n")
+		pop()
