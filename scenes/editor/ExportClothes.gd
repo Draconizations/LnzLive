@@ -16,7 +16,7 @@ var dog_generator
 var current_species
 
 const KIND_PETZ = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_BackL", "Sock_BackR", "Tail", "Hat", "Hat2", "EarringL", "EarringR", "NoseThing", "NoseThing2", "Glasses"]
-const KIND_BABYZ = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses"]
+const KIND_BABYZ = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses", "EarringL", "EarringR", "Tail"]
 
 func _ready():
 	dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
