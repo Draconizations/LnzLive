@@ -425,7 +425,6 @@ func save_backup():
 	emit_signal("file_backed_up")
 
 func save_file(skip_history: bool = false):
-	# Only commit snapshot if we are NOT doing an automated/tool save
 	if not skip_history:
 		commit_full_snapshot("User Save")
 	
