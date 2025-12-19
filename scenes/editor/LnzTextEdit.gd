@@ -165,7 +165,6 @@ func _set_text_preserve(new_text: String):
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
 
-
 func initialize_history():
 	history_stack.clear()
 	var item = HistoryItem.new()
@@ -488,21 +487,6 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 			empty_count += 1
 	return {"start": start_line, "end": end_line, "header": header_line, "empties": empty_count}
 
-func _split_line(line: String, delim: String = " ") -> PoolStringArray:
-	var data_part = line
-	var comment_idx = line.find(";")
-	if comment_idx != -1:
-		data_part = line.substr(0, comment_idx)
-	
-	data_part = data_part.strip_edges()
-	
-	if data_part.empty():
-		return PoolStringArray()
-
-	var normalized_line = split_regex.sub(data_part, delim, true)
-	
-	return normalized_line.split(" ", false)
-
 func _detect_delimiter(start_line: int, end_line: int) -> String:
 	# Define join strings and the patterns to find them
 	# Check for most complex (comma + whitespace) first
@@ -550,6 +534,21 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 			most_frequent_delim = delim
 	return most_frequent_delim
 
+func _split_line(line: String) -> PoolStringArray:
+	var data_part = line
+	var comment_idx = line.find(";")
+	if comment_idx != -1:
+		data_part = line.substr(0, comment_idx)
+	
+	data_part = data_part.strip_edges()
+	
+	if data_part.empty():
+		return PoolStringArray()
+		
+	var normalized_line = split_regex.sub(data_part, " ", true)
+	
+	return normalized_line.split(" ", false)
+
 func _update_fields(parts: Array, updates: Dictionary, delim: String) -> String:
 	var new_parts = []
 	for i in range(parts.size()):
@@ -583,7 +582,6 @@ func _insert_text_at_cursor_at_line(line: int, text: String):
 	select(line, 0, line, 0) # clear selection
 	insert_text_at_cursor(text)
 
-# Manual insert at line (workaround for Godot 3.x lacking built-in insert_line)
 func _insert_text_at_line(line_no: int, text: String):
 	var result = ""
 	var total_lines = get_line_count()
@@ -998,7 +996,7 @@ func _on_Node_line_created(start_ball, end_ball):
 		if line.empty() or line == "" or line.begins_with(";"):
 			continue
 
-		var parts = _split_line(line, delim)
+		var parts = _split_line(line)
 		if parts.size() < 2:
 			continue
 
@@ -1729,7 +1727,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				base_mirror_map[ball_no] = target_base
 				
 				if !(target_base in omitted_balls):
-					var parts = _split_line(line, delim)
+					var parts = _split_line(line)
 					var mirrored_attrs = _mirror_ball_attributes(parts, false)
 					var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 					
@@ -1756,7 +1754,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in addball_lines_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip, delim)
+			var parts = _split_line(strip)
 			var sig = _join_array(parts, delim)
 			if !existing_signatures.has(sig):
 				existing_signatures[sig] = sig_scan_id
@@ -1770,7 +1768,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 			continue
 
 		var is_source = false
-		var parts = _split_line(strip_line, delim)
+		var parts = _split_line(strip_line)
 		
 		if current_scan_id in omitted_balls:
 			is_source = false
@@ -1848,7 +1846,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
 		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			var sig = _join_array(parts, delim)
 			existing_linez_signatures[sig] = true
 
@@ -1859,7 +1857,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in linez_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip, delim)
+			var parts = _split_line(strip)
 			if parts.size() < 2: continue
 			
 			var s = parts[0].to_int()
@@ -1919,7 +1917,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in move_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip, delim)
+			var parts = _split_line(strip)
 			if parts.size() < 1: continue
 			var move_ball = parts[0].to_int()
 
@@ -1964,7 +1962,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in proj_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip, delim)
+			var parts = _split_line(strip)
 			if parts.size() < 2: continue
 			
 			var b = parts[0].to_int()
@@ -2004,7 +2002,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
 		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			existing_paint_sigs[_join_array(parts, delim)] = true
 	
 	var paint_content = []
@@ -2014,7 +2012,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in paint_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip, delim)
+			var parts = _split_line(strip)
 			if parts.size() < 3: continue
 			
 			var base = parts[0].to_int()
@@ -2106,7 +2104,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	if line_index != -1:
 		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 		var line = get_line(line_index)
-		var parts = _split_line(line, delim)
+		var parts = _split_line(line)
 		var mirrored_attrs = _mirror_ball_attributes(parts, false)
 		var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 		
@@ -2134,7 +2132,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			if line.empty() or line.begins_with(";"): continue
 
 			var current_addball_no = KeyBallsData.max_base_ball_num + i
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			if parts.empty() or parts[0].to_int() != target_ball_no:
 				continue
 
@@ -2174,7 +2172,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
 			
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			var processed_line = call(method_name, parts, target_ball_no, mirrored_ball_no, associated_left_balls, temp_addball_map)
 			
 			if processed_line != null and processed_line.size() > 0:
@@ -2240,7 +2238,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 		var line = get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 		
-		var parts = _split_line(line, delim)
+		var parts = _split_line(line)
 		if parts.size() >= 4 and parts[0].to_int() == target_ball_no:
 			target_line_found = true
 			var mirrored_parts = Array(parts)
@@ -2256,7 +2254,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 		for i in range(move_bounds.start, move_bounds.end):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			if parts.size() > 0 and parts[0].to_int() == mirrored_ball_no:
 				lines_to_remove.append(i)
 		
@@ -2350,7 +2348,7 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 #	for i in range(start_line, end_line):
 #		var line = get_line(i).strip_edges()
 #		if line.begins_with(str(ball_no) + delim):
-#			var parts = _split_line(line, delim)
+#			var parts = _split_line(line)
 #			var max_index = value_indices.max()
 #			while parts.size() <= max_index:
 #				parts.append("0")
@@ -3054,7 +3052,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 			var right_ball_no = get_corresponding_right_ball(ball_no)
 			entry.corresponding_ball = right_ball_no
 
-			var parts = _split_line(line, delim)
+			var parts = _split_line(line)
 			var mirrored_attrs = _mirror_ball_attributes(parts, false)
 			var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 
@@ -3149,7 +3147,7 @@ func _process_section_for_mirror(section_name: String, line_processor, left_ball
 		if line.empty() or line.begins_with(";") or line.begins_with("["):
 			continue
 
-		var parts = _split_line(line, delim)
+		var parts = _split_line(line)
 		if parts.empty():
 			continue
 
