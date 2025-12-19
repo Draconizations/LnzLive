@@ -87,6 +87,10 @@ config/icon="res://LnzLiveIcon.png"
 
 KeyBallsData="*res://data_classes/key_balls_data.gd"
 
+[config]
+
+version="PB-beta-v1.4.6-preview-10"
+
 [debug]
 
 gdscript/warnings/shadowed_variable=false
@@ -105,6 +109,8 @@ window/stretch/shrink=1.5
 
 filter=false
 default=false
+application/config/version=false
+application/config/versio=false
 
 [importer_defaults]
 
