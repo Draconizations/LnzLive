@@ -181,6 +181,11 @@ func initialize_history():
 	history_index = 0
 
 func commit_full_snapshot(action_name: String):
+	if history_index >= 0:
+		var last = history_stack[history_index]
+		if last.type == HistoryItem.Type.SNAPSHOT and last.full_text == self.text:
+			return
+
 	_trim_history_tail()
 	
 	var item = HistoryItem.new()
@@ -442,6 +447,17 @@ func save_backup():
 	emit_signal("file_backed_up")
 
 func save_file(skip_history: bool = false):
+	if not skip_history and history_index >= 0:
+		var last_snap_idx = _find_nearest_snapshot(history_index)
+		if last_snap_idx != -1:
+			var last_snapshot = history_stack[last_snap_idx]
+			if last_snapshot.full_text == self.text:
+				var msg = "No changes detected! Skipping LNZ save..."
+				print(msg)
+				if console_log:
+					console_log.log_message(msg)
+				return
+
 	if not skip_history:
 		commit_full_snapshot("User Save")
 	
@@ -449,7 +465,7 @@ func save_file(skip_history: bool = false):
 		var dir = Directory.new()
 		var base_path = "user://resources/"
 		dir.open("user://")
-		dir.make_dir_recursive("resources") 
+		dir.make_dir_recursive("resources")
 		
 		var default_name = "unnamed.lnz"
 		var possible_file_name = base_path + default_name
@@ -460,18 +476,16 @@ func save_file(skip_history: bool = false):
 		filepath = possible_file_name
 		is_user_file = true
 
+	var dir = Directory.new()
+	dir.open("user://")
+	dir.make_dir("resources")
+	
 	if is_user_file:
-		var dir = Directory.new()
-		dir.open("user://")
-		dir.make_dir("resources")
 		var file = File.new()
 		file.open(filepath, File.WRITE)
 		file.store_string(text)
 		file.close()
 	else:
-		var dir = Directory.new()
-		dir.open("user://")
-		dir.make_dir("resources")
 		var filename = filepath.get_file()
 		var possible_file_name = "user://resources/" + filename
 		var file = File.new()
@@ -484,7 +498,8 @@ func save_file(skip_history: bool = false):
 		is_user_file = true
 
 	emit_signal("file_saved", filepath)
-	_set_text_preserve(get_text())
+	_set_text_preserve(get_text()) 
+	
 	print("Saved LNZ and Applied Changes!")
 	if console_log:
 		console_log.log_message("Saved LNZ and Applied Changes!")
