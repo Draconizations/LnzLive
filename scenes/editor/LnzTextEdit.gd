@@ -2597,8 +2597,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					i += 1
 					continue
 
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line, delimiter)
+				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_line(line)
 				
 				if parsed_line.size() < 8:
 					i += 1
@@ -2646,7 +2646,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 						break
 				
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
+					var final_line = _update_fields(parsed_line, updates, delim)
 					set_line(current_line_num, final_line)
 				
 				i += 1
@@ -2669,8 +2669,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					i += 1
 					continue
 
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line, delimiter)
+				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_line(line)
 				
 				if parsed_line.size() < 14 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
@@ -2718,7 +2718,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 						break
 
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
+					var final_line = _update_fields(parsed_line, updates, delim)
 					set_line(current_line_num, final_line)
 				
 				i += 1
@@ -2737,8 +2737,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					i += 1
 					continue
 				
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line, delimiter)
+				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_line(line)
 				
 				if parsed_line.size() < 11 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
@@ -2768,7 +2768,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 						break
 
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
+					var final_line = _update_fields(parsed_line, updates, delim)
 					set_line(current_line_num, final_line)
 
 				i += 1
@@ -2789,8 +2789,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					i += 1
 					continue
 
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line, delimiter)
+				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_line(line)
 				
 				if parsed_line.size() < 6:
 					i += 1
@@ -2847,7 +2847,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 						break
 				
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
+					var final_line = _update_fields(parsed_line, updates, delim)
 					set_line(current_line_num, final_line)
 
 				i += 1
@@ -2868,8 +2868,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					i += 1
 					continue
 
-				var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line, delimiter)
+				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+				var parsed_line = _split_line(line)
 				
 				# FIX: Polygons must have at least 5 columns (4 balls + 1 color)
 				if parsed_line.size() < 5:
@@ -2946,7 +2946,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 							break
 				
 				if not updates.empty():
-					var final_line = _update_fields(parsed_line, updates, delimiter)
+					var final_line = _update_fields(parsed_line, updates, delim)
 					set_line(current_line_num, final_line)
 
 				i += 1
@@ -2966,8 +2966,8 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				i += 1
 				continue
 
-			var delimiter = _detect_delimiter(current_line_num, current_line_num + 1)
-			var parsed_line = _split_line(line, delimiter)
+			var delim = _detect_delimiter(current_line_num, current_line_num + 1)
+			var parsed_line = _split_line(line)
 			
 			if parsed_line.size() < 2:
 				i += 1
@@ -3008,7 +3008,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					break
 			
 			if not updates.empty():
-				var final_line = _update_fields(parsed_line, updates, delimiter)
+				var final_line = _update_fields(parsed_line, updates, delim)
 				set_line(current_line_num, final_line)
 
 			i += 1
@@ -3076,7 +3076,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 			if line.empty() or line.begins_with(";") or line.begins_with("["):
 				continue
 
-			var parts = _split_line(line, delim_addball)
+			var parts = _split_line(line)
 			var base_ball = parts[0].to_int()
 
 			if base_ball in right_balls_list:
@@ -3096,7 +3096,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 				new_ball_count += 1
 
 				var mirrored_attrs = _mirror_ball_attributes(parts, true)
-				var mirrored_line_parts = _split_line(line, delim_addball)
+				var mirrored_line_parts = _split_line(line)
 
 				var right_base_ball = get_corresponding_right_ball(base_ball)
 				mirrored_line_parts[0] = str(right_base_ball)
