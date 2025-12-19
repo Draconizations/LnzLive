@@ -11,7 +11,8 @@ extends TextEdit
 
 var is_user_file = false
 var filepath: String
-var r = RegEx.new()
+
+var split_regex = RegEx.new()
 
 var history_stack: Array = []
 var history_index: int = -1
@@ -35,6 +36,8 @@ class HistoryItem:
 	var target_id: int 
 	var old_line_data: String
 	var new_line_data: String
+
+	var cached_line_index: int = -1
 
 var using_alt_font = false
 var default_font: DynamicFont
@@ -65,8 +68,10 @@ onready var camera_holder = get_tree().root.get_node(
 func _ready():
 	_setup_context_menu()
 
+	split_regex.compile("[\\s,]+")
+
 	wrap_enabled = false
-	r.compile("[-.\\d]+")
+
 	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
 	
 	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406),false)
@@ -191,7 +196,7 @@ func commit_full_snapshot(action_name: String):
 	_check_history_size()
 	print("[HISTORY] Snapshot Commit: %s" % action_name)
 
-func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String):
+func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int = -1):
 	var current_time = OS.get_ticks_msec()
 	if history_index >= 0:
 		var last = history_stack[history_index]
@@ -210,6 +215,8 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	item.target_id = id
 	item.old_line_data = old_line
 	item.new_line_data = new_line
+
+	item.cached_line_index = line_idx
 	
 	history_stack.append(item)
 	history_index += 1
@@ -219,7 +226,7 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	last_commit_action = action_name
 	last_commit_id = id
 	
-	print("[HISTORY] Logical Commit: %s (Ball %d)" % [action_name, id])
+	print("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
 
 func commit_visual_change(action_name: String, _squash_unused: bool = false):
 	commit_full_snapshot(action_name)
@@ -245,11 +252,13 @@ func undo_visual_edit():
 	if item_being_undone.type == HistoryItem.Type.LOGICAL:
 		_apply_logical_line(item_being_undone.target_section, item_being_undone.target_id, item_being_undone.old_line_data)
 	else:
-		var snapshot = _find_nearest_snapshot(history_index)
-		if snapshot:
+		var snapshot_idx = _find_nearest_snapshot(history_index)
+		
+		if snapshot_idx != -1:
+			var snapshot = history_stack[snapshot_idx]
 			_restore_snapshot(snapshot)
-			# Re-apply logicals between snapshot and history_index
-			for i in range(history_stack.find(snapshot) + 1, history_index + 1):
+			
+			for i in range(snapshot_idx + 1, history_index + 1):
 				var log_item = history_stack[i]
 				if log_item.type == HistoryItem.Type.LOGICAL:
 					_apply_logical_line(log_item.target_section, log_item.target_id, log_item.new_line_data)
@@ -281,13 +290,13 @@ func redo_visual_edit():
 	
 	save_file(true)
 
-func _find_nearest_snapshot(from_index: int) -> HistoryItem:
+func _find_nearest_snapshot(from_index: int) -> int:
 	var idx = from_index
 	while idx >= 0:
 		if history_stack[idx].type == HistoryItem.Type.SNAPSHOT:
-			return history_stack[idx]
+			return idx
 		idx -= 1
-	return null
+	return -1
 
 func _restore_snapshot(item):
 	self.text = item.full_text
@@ -297,8 +306,33 @@ func _restore_snapshot(item):
 	set_h_scroll(item.h_scroll)
 	update()
 
-func _apply_logical_line(section: String, id: int, line_content: String):
+func _apply_logical_line(section: String, id: int, line_content: String, cached_idx: int = -1):
 	var line_idx = -1
+
+	if cached_idx != -1 and cached_idx < get_line_count():
+		var check_line = get_line(cached_idx).strip_edges()
+		
+		if not check_line.empty() and not check_line.begins_with(";"):
+			var parts = _split_line(check_line)
+			var matches_cache = false
+			
+			if section in ["[Ballz Info]", "[Move]"]:
+				if parts.size() > 0 and parts[0] == str(id):
+					matches_cache = true
+			elif section == "[Add Ball]":
+				var relative = id
+				if id >= KeyBallsData.max_base_ball_num:
+					relative = id - KeyBallsData.max_base_ball_num
+				if parts.size() > 0 and parts[0] == str(relative):
+					matches_cache = true
+			elif section == "[Linez]":
+				if parts.size() >= 2 and (parts[0] == str(id) or parts[1] == str(id)):
+					matches_cache = true
+					
+			if matches_cache:
+				set_line(cached_idx, line_content)
+				return
+
 	if section == "[Ballz Info]":
 		line_idx = find_line_in_ball_section(id)
 	elif section == "[Add Ball]":
@@ -458,17 +492,14 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	return {"start": start_line, "end": end_line, "header": header_line, "empties": empty_count}
 
 func _split_line(line: String) -> PoolStringArray:
-	var regex = RegEx.new()
-	regex.compile("[\\s,]+") 
-	
 	var cleaned_line = line.strip_edges()
-	if cleaned_line.empty():
-		return PoolStringArray() # Return empty array for empty lines
-
-	var normalized_line = regex.sub(cleaned_line, " ", true)
 	
-	var parts = normalized_line.split(" ", false) 
-	return parts
+	if cleaned_line.empty():
+		return PoolStringArray() 
+
+	var normalized_line = split_regex.sub(cleaned_line, " ", true)
+	
+	return normalized_line.split(" ", false)
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
 	# Define join strings and the patterns to find them
@@ -808,7 +839,7 @@ func _on_apply_paintballz():
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
 		pet_node.clear_pending_paintballs()
 
-	save_file(true) # Skip history (we explicitly commit below)
+	save_file(true)
 	commit_visual_change("Commited Paintballz")
 
 	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
@@ -1425,9 +1456,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 			continue
 		elif line.begins_with("["):
 			break
-		# here the first number is color
 
-		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
 		for delim in delimiters:
@@ -1462,9 +1491,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 			continue
 		elif line.begins_with("["):
 			break
-		# here the fifth number is color
 
-		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
 		for delim in delimiters:
@@ -1528,9 +1555,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		if !(i in core_ball_nos):
 			i += 1
 			continue
-		# here the first number is color
 
-		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
 		for delim in delimiters:
@@ -1565,9 +1590,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			continue
 		elif line.begins_with("["):
 			break
-		# here the fifth number is color
 
-		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
 		for delim in delimiters:
@@ -3286,7 +3309,6 @@ func _on_ToolsMenu_move_head(x, y, z):
 		elif line.begins_with("["):
 			break
 			
-		# var parsed_line = r.search_all(line)
 		var delimiters = [", ", ",", "\t", " "]
 		var parsed_line = []
 		for delim in delimiters:
