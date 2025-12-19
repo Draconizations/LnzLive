@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=2]
+[gd_scene load_steps=39 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -30,8 +30,7 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
 [ext_resource path="res://scenes/editor/ExportClothes.tscn" type="PackedScene" id=37]
 [ext_resource path="res://scenes/editor/ExportButtonClothes.gd" type="Script" id=38]
-[ext_resource path="res://scenes/editor/VersionLabel.gd" type="Script" id=39]
-[ext_resource path="res://scenes/editor/ConsoleLog.gd" type="Script" id=40]
+[ext_resource path="res://scenes/editor/ConsoleLog.gd" type="Script" id=39]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -1259,7 +1258,7 @@ custom_constants/shadow_offset_x = 1
 custom_constants/shadow_offset_y = 1
 bbcode_enabled = true
 scroll_active = false
-script = ExtResource( 40 )
+script = ExtResource( 39 )
 
 [node name="VersionLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
 margin_top = 54.0
@@ -1267,9 +1266,8 @@ margin_right = 759.0
 margin_bottom = 65.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "v1.4.6"
+text = "PB-beta-v1.4.6-preview-10"
 align = 2
-script = ExtResource( 39 )
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
 margin_left = 771.0
