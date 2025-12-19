@@ -30,6 +30,8 @@
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
 [ext_resource path="res://scenes/editor/ExportClothes.tscn" type="PackedScene" id=37]
 [ext_resource path="res://scenes/editor/ExportButtonClothes.gd" type="Script" id=38]
+[ext_resource path="res://scenes/editor/VersionLabel.gd" type="Script" id=39]
+[ext_resource path="res://scenes/editor/ConsoleLog.gd" type="Script" id=40]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -1229,6 +1231,45 @@ clip_text = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="BottomSpacer" type="Control" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
+margin_top = 160.0
+margin_right = 759.0
+margin_bottom = 1011.0
+mouse_filter = 2
+size_flags_vertical = 3
+
+[node name="BottomInfoContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
+margin_top = 1015.0
+margin_right = 759.0
+margin_bottom = 1080.0
+mouse_filter = 2
+alignment = 2
+
+[node name="ConsoleLog" type="RichTextLabel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
+margin_right = 759.0
+margin_bottom = 50.0
+rect_min_size = Vector2( 0, 50 )
+rect_clip_content = false
+mouse_filter = 2
+custom_fonts/normal_font = ExtResource( 35 )
+custom_colors/default_color = Color( 1, 1, 1, 1 )
+custom_colors/font_color_shadow = Color( 0, 0, 0, 0.501961 )
+custom_constants/shadow_offset_x = 1
+custom_constants/shadow_offset_y = 1
+bbcode_enabled = true
+scroll_active = false
+script = ExtResource( 40 )
+
+[node name="VersionLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer"]
+margin_top = 54.0
+margin_right = 759.0
+margin_bottom = 65.0
+custom_fonts/font = ExtResource( 35 )
+custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
+text = "v1.4.6"
+align = 2
+script = ExtResource( 39 )
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
 margin_left = 771.0

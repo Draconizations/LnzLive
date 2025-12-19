@@ -54,6 +54,8 @@ signal file_backed_up()
 
 var min_font_size = 4
 
+onready var console_log = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer/ConsoleLog")
+
 onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
 onready var find_panel = get_node("../FindPanel")
 
@@ -194,6 +196,8 @@ func commit_full_snapshot(action_name: String):
 	history_index += 1
 	_check_history_size()
 	print("[HISTORY] Snapshot Commit: %s" % action_name)
+	if console_log:
+		console_log.log_message("[HISTORY] Snapshot Commit: %s" % action_name)
 
 func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int = -1):
 	var current_time = OS.get_ticks_msec()
@@ -226,6 +230,8 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	last_commit_id = id
 	
 	print("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
+	if console_log:
+		console_log.log_message("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
 
 func commit_visual_change(action_name: String, _squash_unused: bool = false):
 	commit_full_snapshot(action_name)
@@ -241,7 +247,9 @@ func _check_history_size():
 
 func undo_visual_edit():
 	if history_index <= 0:
-		print("[HISTORY] Nothing to undo.")
+		print("[HISTORY] UNDO: Nothing to undo...")
+		if console_log:
+			console_log.log_message("[HISTORY] UNDO: Nothing to undo...")
 		return
 	
 	var item_being_undone = history_stack[history_index] 
@@ -262,9 +270,13 @@ func undo_visual_edit():
 				if log_item.type == HistoryItem.Type.LOGICAL:
 					_apply_logical_line(log_item.target_section, log_item.target_id, log_item.new_line_data)
 		else:
-			print("[HISTORY] Error: No snapshot found to restore.")
+			print("[HISTORY] ERROR: No snapshot found to restore")
+			if console_log:
+				console_log.log_message("[HISTORY] ERROR: No snapshot found to restore")
 
 	print("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
+	if console_log:
+		console_log.log_message("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
 	
 	last_commit_action = ""
 	
@@ -272,7 +284,9 @@ func undo_visual_edit():
 
 func redo_visual_edit():
 	if history_index >= history_stack.size() - 1:
-		print("[HISTORY] Nothing to redo.")
+		print("[HISTORY] REDO: Nothing to redo...")
+		if console_log:
+			console_log.log_message("[HISTORY] REDO: Nothing to redo...")
 		return
 	
 	history_index += 1
@@ -284,6 +298,8 @@ func redo_visual_edit():
 		_apply_logical_line(item.target_section, item.target_id, item.new_line_data)
 
 	print("[HISTORY] REDO: %s" % item.action_name)
+	if console_log:
+		console_log.log_message("[HISTORY] REDO: %s" % item.action_name)
 	
 	last_commit_action = ""
 	
@@ -349,7 +365,9 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 	if line_idx != -1:
 		set_line(line_idx, line_content)
 	else:
-		print("[HISTORY] Warn: Could not find line for logical undo (%s #%d)" % [section, id])
+		print("[HISTORY] WARN: No line found to undo (%s #%d)" % [section, id])
+		if console_log:
+			console_log.log_message("[HISTORY] WARN: No line found to undo (%s #%d)" % [section, id])
 
 func _on_IncreaseFontButton_pressed():
 	var font = get_font("font")
@@ -468,6 +486,8 @@ func save_file(skip_history: bool = false):
 	emit_signal("file_saved", filepath)
 	_set_text_preserve(get_text())
 	print("Saved LNZ and Applied Changes!")
+	if console_log:
+		console_log.log_message("Saved LNZ and Applied Changes!")
 
 func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
@@ -983,6 +1003,8 @@ func _on_Node_line_created(start_ball, end_ball):
 
 	if start_line == -1:
 		print("[LNZ EDIT] No [Linez] section found")
+		if console_log:
+			console_log.log_message("[LNZ EDIT] No [Linez] section found")
 		return
 
 	var delim = _detect_delimiter(start_line, end_line)
@@ -1063,6 +1085,8 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if reference_ball == null:
 		print("[LNZ EDIT] No reference ball given")
+		if console_log:
+			console_log.log_message("[LNZ EDIT] No reference ball given")
 		return
 
 	var ball_no = reference_ball.ball_no
@@ -1145,11 +1169,15 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	if KeyBallsData.bodyarea_map.has(real_base_ball):
 		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
 	else:
-		print("Missing bodyarea for ball", real_base_ball)
+		print("[LNZ EDIT] Missing bodyarea for ball", real_base_ball)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Missing bodyarea for ball" + str(real_base_ball))
 	
 	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
 		print("[LNZ EDIT] No [Add Ball] section found")
+		if console_log:
+			console_log.log_message("[LNZ EDIT] No [Add Ball] section found")
 		return
 	var start_line = section_find[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
@@ -1698,7 +1726,9 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	# [Ballz Info]
 	var bounds = _get_section_bounds("[Ballz Info]")
 	if bounds.empty():
-		print("[LNZ EDIT] No [Ballz Info] found!")
+		# print("[LNZ EDIT] No [Ballz Info] found!")
+		# if console_log:
+		# 	console_log.log_message("[LNZ EDIT] No [Ballz Info] found!")
 		return
 
 	var delim = _detect_delimiter(bounds.start, bounds.end)
@@ -2088,13 +2118,17 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	save_backup()
 
 	if target_ball_no >= KeyBallsData.max_base_ball_num:
-		print("[LNZ EDIT] Copy-Mirror is only supported for base balls (0-%d)." % (KeyBallsData.max_base_ball_num - 1))
+		print("[LNZ EDIT] Copy-Mirror is only supported for base ballz (0-%d)" % (KeyBallsData.max_base_ball_num - 1))
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Copy-Mirror is only supported for base ballz (0-%d)" % (KeyBallsData.max_base_ball_num - 1))
 		return
 
 	var mirrored_ball_no = find_mirrored_ball(target_ball_no)
 	var is_mirrored = mirrored_ball_no != target_ball_no
 	if !is_mirrored:
-		print("[LNZ EDIT] Ball #%d is a middle ball or non-symmetrical. Mirroring Addballz/Linez/Paintballz to the ball itself." % target_ball_no)
+		print("[LNZ EDIT] Ballz #%d is a center ball, so mirroring Addballz/Linez/Paintballz to itself" % target_ball_no)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Ballz #%d is a center ball, so mirroring Addballz/Linez/Paintballz to itself" % target_ball_no)
 
 	var omitted_balls = _get_omitted_balls()
 
@@ -2137,7 +2171,9 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 				continue
 
 			if omitted_balls.has(current_addball_no):
-				print("[LNZ EDIT] Skipping Addball #%d because it is in [Omissions]." % current_addball_no)
+				print("[LNZ EDIT] Skipping Addballz #%d because it is in [Omissions]" % current_addball_no)
+				if console_log:
+					console_log.log_message("[LNZ EDIT] Skipping Addballz #%d because it is in [Omissions]" % current_addball_no)
 				continue
 
 			var mirrored_attrs = _mirror_ball_attributes(parts, true)
@@ -2186,9 +2222,11 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	if is_mirrored:
 		_process_move_section_for_mirror(target_ball_no, mirrored_ball_no)
 
-	print("[LNZ EDIT] Successfully performed selective L to R mirror for ball #%d." % target_ball_no)
+	print("[LNZ EDIT] Performed Mirror-Copy for Ballz #%dto its mirror Ballz #%d" % [target_ball_no, mirrored_ball_no])
+	if console_log:
+		console_log.log_message("[LNZ EDIT] Performed Mirror-Copy for Ballz #%d to its mirror Ballz #%d" % [target_ball_no, mirrored_ball_no])
 	save_file(true)
-	commit_visual_change("Mirrored Ballz #%d" % target_ball_no)
+	commit_visual_change("Mirrored Ballz #%d to #%d" % [target_ball_no, mirrored_ball_no])
 
 func _process_paintball_line_for_mirror(parts: PoolStringArray, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
 	if parts.size() < 6: 
@@ -2281,6 +2319,8 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
@@ -3462,7 +3502,9 @@ func write_project_ball_section(projections: Array):
 func update_lnz_section_one_value(section_name, val1):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		print("Section not found: " + section_name)
+		print("[LNZ EDIT] Section not found: " + section_name)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Section not found: " + section_name)
 		return
 
 	var start_line = bounds["start"]
@@ -3471,7 +3513,9 @@ func update_lnz_section_one_value(section_name, val1):
 func update_lnz_section_two_values(section_name, val1, val2):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		print("Section not found: " + section_name)
+		print("[LNZ EDIT] Section not found: " + section_name)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Section not found: " + section_name)
 		return
 
 	var start_line = bounds["start"]
@@ -3502,10 +3546,14 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 		size_field_index = 10  # 11th field is size for addballs
 
 	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+	if console_log:
+		console_log.log_message("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
 
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
+		if console_log:
+			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
 	var start_line = sec[SEARCH_RESULT_LINE] + 1
