@@ -204,15 +204,19 @@ func commit_full_snapshot(action_name: String):
 	if console_log:
 		console_log.log_message("[HISTORY] Snapshot Commit: %s" % action_name)
 
-func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int = -1):
+func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int = -1) -> bool:
+	if line_idx == -1:
+		return false 
+
 	var current_time = OS.get_ticks_msec()
+
 	if history_index >= 0:
 		var last = history_stack[history_index]
 		if last.type == HistoryItem.Type.LOGICAL and last.target_id == id and last.action_name == action_name:
 			if (current_time - last_commit_time) < 300:
 				last.new_line_data = new_line 
 				last_commit_time = current_time
-				return
+				return true
 
 	_trim_history_tail()
 	
@@ -223,7 +227,6 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	item.target_id = id
 	item.old_line_data = old_line
 	item.new_line_data = new_line
-
 	item.cached_line_index = line_idx
 	
 	history_stack.append(item)
@@ -237,6 +240,8 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	print("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
 	if console_log:
 		console_log.log_message("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
+
+	return true
 
 func commit_visual_change(action_name: String, _squash_unused: bool = false):
 	commit_full_snapshot(action_name)
@@ -3593,7 +3598,12 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
 					save_file(true)
-					commit_logical_change("Resized Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
+
+					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
+					if not success:
+						print("[HISTORY] Fallback: Line not found, committing full snapshot")
+						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
+
 					return
 			count += 1
 	else:
@@ -3611,7 +3621,12 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					var new_line = _join_array(parts, " ")
 					set_line(i, new_line)
 					save_file(true)
-					commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
+
+					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
+					if not success:
+						print("[HISTORY] Fallback: Line not found, committing full snapshot")
+						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
+
 					return
 				else:
 					return
@@ -3671,7 +3686,11 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 							var new_line = _join_array(parts, " ")
 							set_line(i, new_line)
 							save_file(true)
-							commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
+
+							var success = commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
+							if not success:
+								print("[HISTORY] Fallback: Line not found, committing full snapshot")
+								commit_full_snapshot("Moved Addballz #%d [FULL COMMIT]" % ball_no)
 						break
 					count += 1
 	else:
@@ -3690,7 +3709,12 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 				set_line(i, new_line)
 				updated = true
 				save_file(true)
-				commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line)
+
+				var success = commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
+				if not success:
+					print("[HISTORY] Fallback: Line not found, committing full snapshot")
+					commit_full_snapshot("Moved Ballz #%d [FULL COMMIT]" % ball_no)
+
 				break
 		if not updated:
 			var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, new_pos.x, delim, new_pos.y, delim, new_pos.z]
