@@ -138,6 +138,15 @@ hint_tooltip = "Comma-separated list of ball IDs to paint on (e.g. 1,2,5-10)"
 size_flags_horizontal = 3
 placeholder_text = "e.g. 1,2,5-10"
 
+[node name="UnselectButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_left = 130.0
+margin_right = 236.0
+margin_bottom = 25.0
+hint_tooltip = "Unselect affected ballz"
+mouse_default_cursor_shape = 2
+custom_fonts/font = SubResource( 1 )
+text = "Unselect All"
+
 [node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 28.0
 margin_right = 592.0

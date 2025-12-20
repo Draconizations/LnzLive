@@ -142,6 +142,7 @@ func _ready():
 	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
 	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
+	auto_paintballer_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 	move_mode_settings_instance.connect("apply_moves", self, "_on_move_mode_apply")
@@ -279,7 +280,7 @@ func clear_active_selected_ball():
 
 func get_visual_state_for_ball(b):
 	if not "ball_no" in b:
-			return
+		return
 	else:
 		if move_mode:
 			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
@@ -287,12 +288,10 @@ func get_visual_state_for_ball(b):
 				if b.ball_no == pivot_id:
 					return b.OutlineState.PIVOT
 
-		if (move_mode or preset_mode) and b in selected_balls:
+		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
 			return b.OutlineState.ACTIVE_SELECTED
 		elif move_mode and pending_moves.has(b.ball_no):
 			return b.OutlineState.MODIFIED
-		elif auto_paintballer_mode and b.ball_no in _auto_paint_affected_cache:
-				return b.OutlineState.MODIFIED
 		else:
 			if b == active_selected_ball:
 				return b.OutlineState.ACTIVE_SELECTED
@@ -313,7 +312,7 @@ func _gui_input(event):
 	if input_is_paused:
 		return
 
-	if (move_mode or preset_mode) and Input.is_key_pressed(KEY_CONTROL):
+	if (move_mode or preset_mode or auto_paintballer_mode) and Input.is_key_pressed(KEY_CONTROL):
 		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 			if event.pressed:
 				box_selecting = true
@@ -1398,6 +1397,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	else:
 		auto_paintballer_settings_instance.hide()
 		dog_generator._on_clear_auto_paintballz()
+		_on_unselect_all()
 		_auto_paint_affected_cache.clear()
 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 		for b in all_balls:
@@ -1808,11 +1808,14 @@ func _track_pending_move(ball):
 func _on_unselect_all():
 	var to_update = selected_balls.duplicate()
 	selected_balls.clear()
+	
+	if auto_paintballer_mode:
+		_auto_paint_affected_cache.clear() 
+	
 	for b in to_update:
-		if is_instance_valid(b):
-			if not "ball_no" in b:
-				continue
-			b.apply_outline_state(get_visual_state_for_ball(b))
+		if is_instance_valid(b) and "ball_no" in b:
+			b.apply_outline_state(get_visual_state_for_ball(b)) 
+			
 	_update_selected_ballz_in_settings()
 
 func _on_move_mode_clear():
@@ -2174,6 +2177,9 @@ func _update_selected_ballz_in_settings():
 				
 	move_mode_settings_instance.update_selected_balls_text(ids)
 	preset_settings_instance.update_selected_balls_text(ids)
+
+	if auto_paintballer_mode:
+		auto_paintballer_settings_instance.update_selected_balls_text(ids)
 
 func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()

@@ -37,6 +37,7 @@ signal randomize_auto_paintballz(paintballz)
 signal apply_auto_paintballz
 signal clear_auto_paintballz
 signal affected_list_changed(ball_ids)
+signal unselect_all
 
 onready var params_container = find_node("ParamsContainer")
 
@@ -61,6 +62,7 @@ func _ready():
 	
 	find_node("RandomizeButton").connect("pressed", self, "_on_RandomizeButton_pressed")
 	find_node("AffectedBallz").connect("text_changed", self, "_on_AffectedBallz_text_changed")
+	find_node("UnselectButton").connect("pressed", self, "_on_UnselectButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
@@ -1111,6 +1113,43 @@ func add_affected_ball(ball_no: int):
 		line_edit.text += "," + str(ball_no)
 		
 	_on_AffectedBallz_text_changed(line_edit.text)
+
+func update_selected_balls_text(ball_ids: Array):
+	var affected_edit = find_node("AffectedBallz")
+	if not affected_edit or affected_edit.has_focus():
+		return
+
+	if ball_ids.empty():
+		affected_edit.text = ""
+		return
+
+	ball_ids.sort()
+	var start = ball_ids[0]
+	var prev = start
+	var ranges = []
+	
+	for i in range(1, ball_ids.size()):
+		var curr = ball_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+			
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+		
+	affected_edit.text = PoolStringArray(ranges).join(",")
+	_on_AffectedBallz_text_changed(affected_edit.text)
+
+func _on_UnselectButton_pressed():
+	emit_signal("unselect_all")
 
 func _connect_settings_signals():
 	find_node("AffectedBallz").connect("text_changed", self, "_on_setting_changed")
