@@ -13,6 +13,9 @@ signal select_balls_by_ids(ids)
 signal flip_selection(axis_vector, pivot_id)
 signal pivot_changed
 
+const SETTINGS_PATH = "user://settings.cfg"
+var _is_loading_settings = false
+
 var current_constraint_mode = "free" # free, x, y, z, xy, xz, yz
 
 func _ready():
@@ -90,6 +93,9 @@ func _ready():
 	find_node("FlipY").connect("pressed", self, "_on_Flip_pressed", ["y"])
 	find_node("FlipZ").connect("pressed", self, "_on_Flip_pressed", ["z"])
 
+	_connect_settings_signals()
+	load_settings()
+
 func show():
 	$Panel.show()
 
@@ -165,6 +171,9 @@ func _on_constraint_selected(selected_name):
 		var node = find_node(c)
 		if node:
 			node.pressed = (c == selected_name)
+
+	if not _is_loading_settings:
+		save_settings()
 
 # func _on_MirrorX_toggled(pressed):
 # 	emit_signal("mirror_toggled", pressed)
@@ -269,3 +278,112 @@ func _on_AffectedBallz_text_changed(new_text):
 
 func _on_pivot_ui_changed(_arg = null):
 	emit_signal("pivot_changed")
+	if not _is_loading_settings:
+		save_settings()
+
+func _connect_settings_signals():
+	find_node("AlignModeOption").connect("item_selected", self, "_on_setting_changed")
+	find_node("NudgeX").connect("value_changed", self, "_on_setting_changed")
+	find_node("NudgeY").connect("value_changed", self, "_on_setting_changed")
+	find_node("NudgeZ").connect("value_changed", self, "_on_setting_changed")
+
+	find_node("MirrorX").connect("toggled", self, "_on_setting_changed")
+	find_node("MirrorY").connect("toggled", self, "_on_setting_changed")
+	find_node("MirrorZ").connect("toggled", self, "_on_setting_changed")
+
+	find_node("RotateRoll").connect("value_changed", self, "_on_setting_changed")
+	find_node("RotatePitch").connect("value_changed", self, "_on_setting_changed")
+	find_node("RotateYaw").connect("value_changed", self, "_on_setting_changed")
+
+	var reset_btn = find_node("ResetDefaultsButton")
+	if reset_btn:
+		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+
+func _on_setting_changed(_arg = null):
+	if _is_loading_settings:
+		return
+	save_settings()
+
+func save_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading settings for save: ", err)
+		return
+
+	config.set_value("MoveProperties", "constraint_mode", current_constraint_mode)
+	config.set_value("MoveProperties", "align_mode", find_node("AlignModeOption").selected)
+
+	config.set_value("MoveProperties", "nudge_x", find_node("NudgeX").value)
+	config.set_value("MoveProperties", "nudge_y", find_node("NudgeY").value)
+	config.set_value("MoveProperties", "nudge_z", find_node("NudgeZ").value)
+
+	config.set_value("MoveProperties", "rotate_roll", find_node("RotateRoll").value)
+	config.set_value("MoveProperties", "rotate_pitch", find_node("RotatePitch").value)
+	config.set_value("MoveProperties", "rotate_yaw", find_node("RotateYaw").value)
+
+	config.set_value("MoveProperties", "mirror_x", find_node("MirrorX").pressed)
+	config.set_value("MoveProperties", "mirror_y", find_node("MirrorY").pressed)
+	config.set_value("MoveProperties", "mirror_z", find_node("MirrorZ").pressed)
+
+	config.set_value("MoveProperties", "use_pivot", find_node("UsePivotCheckBox").pressed)
+	config.set_value("MoveProperties", "pivot_ball", find_node("PivotBall").value)
+
+	var save_err = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("Error saving MoveModeSettings: ", save_err)
+
+func load_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK:
+		return
+
+	_is_loading_settings = true
+
+	var constraint = config.get_value("MoveProperties", "constraint_mode", "Free")
+	_on_constraint_selected(constraint)
+
+	find_node("AlignModeOption").selected = config.get_value("MoveProperties", "align_mode", 1)
+
+	find_node("NudgeX").value = config.get_value("MoveProperties", "nudge_x", 0.0)
+	find_node("NudgeY").value = config.get_value("MoveProperties", "nudge_y", 0.0)
+	find_node("NudgeZ").value = config.get_value("MoveProperties", "nudge_z", 0.0)
+
+	find_node("RotateRoll").value = config.get_value("MoveProperties", "rotate_roll", 0.0)
+	find_node("RotatePitch").value = config.get_value("MoveProperties", "rotate_pitch", 0.0)
+	find_node("RotateYaw").value = config.get_value("MoveProperties", "rotate_yaw", 0.0)
+
+	find_node("MirrorX").pressed = config.get_value("MoveProperties", "mirror_x", false)
+	find_node("MirrorY").pressed = config.get_value("MoveProperties", "mirror_y", false)
+	find_node("MirrorZ").pressed = config.get_value("MoveProperties", "mirror_z", false)
+
+	find_node("UsePivotCheckBox").pressed = config.get_value("MoveProperties", "use_pivot", false)
+	find_node("PivotBall").value = config.get_value("MoveProperties", "pivot_ball", 0.0)
+
+	_is_loading_settings = false
+
+func _on_reset_defaults_pressed():
+	_is_loading_settings = true
+
+	_on_constraint_selected("Free")
+
+	find_node("AlignModeOption").selected = 1 # Center
+
+	find_node("NudgeX").value = 0.0
+	find_node("NudgeY").value = 0.0
+	find_node("NudgeZ").value = 0.0
+
+	find_node("RotateRoll").value = 0.0
+	find_node("RotatePitch").value = 0.0
+	find_node("RotateYaw").value = 0.0
+
+	find_node("MirrorX").pressed = false
+	find_node("MirrorY").pressed = false
+	find_node("MirrorZ").pressed = false
+
+	find_node("UsePivotCheckBox").pressed = false
+	find_node("PivotBall").value = 0.0
+
+	_is_loading_settings = false
+	save_settings()

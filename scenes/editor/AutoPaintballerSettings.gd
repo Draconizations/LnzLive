@@ -40,6 +40,9 @@ signal affected_list_changed(ball_ids)
 
 onready var params_container = find_node("ParamsContainer")
 
+const SETTINGS_PATH = "user://settings.cfg"
+var _is_loading_settings = false
+
 var _ordered_color_index = 0
 var _ordered_outline_color_index = 0
 var _ordered_texture_index = 0
@@ -74,6 +77,8 @@ func _ready():
 
 	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
 
+	_connect_settings_signals()
+	load_settings()
 
 func _on_UseSeed_toggled(button_pressed):
 	var seed_edit = find_node("Seed")
@@ -1106,3 +1111,215 @@ func add_affected_ball(ball_no: int):
 		line_edit.text += "," + str(ball_no)
 		
 	_on_AffectedBallz_text_changed(line_edit.text)
+
+func _connect_settings_signals():
+	find_node("AffectedBallz").connect("text_changed", self, "_on_setting_changed")
+	find_node("ColorList").connect("text_changed", self, "_on_setting_changed")
+	find_node("OutlineColorList").connect("text_changed", self, "_on_setting_changed")
+	find_node("TextureList").connect("text_changed", self, "_on_setting_changed")
+	find_node("FractalAxiom").connect("text_changed", self, "_on_setting_changed")
+	find_node("Seed").connect("text_changed", self, "_on_setting_changed")
+
+	find_node("FractalRules").connect("text_changed", self, "_on_setting_changed")
+
+	find_node("Distribution").connect("item_selected", self, "_on_setting_changed")
+	find_node("BandDirection").connect("item_selected", self, "_on_setting_changed")
+	find_node("FractalPreset").connect("item_selected", self, "_on_setting_changed")
+	find_node("HalfieAxis").connect("item_selected", self, "_on_setting_changed")
+	find_node("HalfieSide").connect("item_selected", self, "_on_setting_changed")
+
+	find_node("Ordered").connect("toggled", self, "_on_setting_changed")
+	find_node("UseSeed").connect("toggled", self, "_on_setting_changed")
+	find_node("Anchored").connect("toggled", self, "_on_setting_changed")
+	find_node("LeopardPairedColors").connect("toggled", self, "_on_setting_changed")
+
+	_connect_spinboxes_recursive(self)
+
+	var reset_btn = find_node("ResetDefaultsButton")
+	if reset_btn:
+		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+
+func _connect_spinboxes_recursive(node):
+	for child in node.get_children():
+		if child is SpinBox:
+			child.connect("value_changed", self, "_on_setting_changed")
+		_connect_spinboxes_recursive(child)
+
+func _on_setting_changed(_arg = null):
+	if _is_loading_settings:
+		return
+	save_settings()
+
+func save_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		return
+
+	var p = get_properties()
+	
+	for key in p.keys():
+		config.set_value("AutoPaintballer", key, p[key])
+
+	var save_err = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("Error saving AutoPaintballerSettings: ", save_err)
+
+func load_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK:
+		return
+
+	_is_loading_settings = true
+
+	find_node("AffectedBallz").text = config.get_value("AutoPaintballer", "affected_ballz", "")
+	find_node("Distribution").selected = config.get_value("AutoPaintballer", "distribution", 0)
+	find_node("NumSpots").value = config.get_value("AutoPaintballer", "num_spots", 25.0)
+	find_node("Ordered").pressed = config.get_value("AutoPaintballer", "ordered", false)
+	find_node("UseSeed").pressed = config.get_value("AutoPaintballer", "use_seed", false)
+	find_node("Seed").text = config.get_value("AutoPaintballer", "seed", "")
+
+	find_node("SizeMin").value = config.get_value("AutoPaintballer", "size_min", 10.0)
+	find_node("SizeMax").value = config.get_value("AutoPaintballer", "size_max", 20.0)
+	find_node("ColorList").text = config.get_value("AutoPaintballer", "color_list", "")
+	find_node("TextureList").text = config.get_value("AutoPaintballer", "texture_list", "0")
+	find_node("OutlineColorList").text = config.get_value("AutoPaintballer", "outline_color_list", "244")
+	find_node("OutlineTypeMin").value = config.get_value("AutoPaintballer", "outline_type_min", -1.0)
+	find_node("OutlineTypeMax").value = config.get_value("AutoPaintballer", "outline_type_max", -1.0)
+	find_node("FuzzMin").value = config.get_value("AutoPaintballer", "fuzz_min", 0.0)
+	find_node("FuzzMax").value = config.get_value("AutoPaintballer", "fuzz_max", 0.0)
+	find_node("Group").value = config.get_value("AutoPaintballer", "group", 0.0)
+	find_node("Anchored").pressed = config.get_value("AutoPaintballer", "anchored", true)
+
+	find_node("SpiralTurns").value = config.get_value("AutoPaintballer", "spiral_turns", 5.0)
+	find_node("StarPointSize").value = config.get_value("AutoPaintballer", "star_point_size", 4.0)
+	find_node("StarPoints").value = config.get_value("AutoPaintballer", "star_points", 5.0)
+	find_node("RayLength").value = config.get_value("AutoPaintballer", "ray_length", 4.0)
+	find_node("RainbowAngle").value = config.get_value("AutoPaintballer", "rainbow_angle", 0.0)
+	find_node("RainbowCurvature").value = config.get_value("AutoPaintballer", "rainbow_curvature", 0.0)
+	find_node("RainbowWidth").value = config.get_value("AutoPaintballer", "rainbow_width", 0.5)
+	find_node("RainbowLength").value = config.get_value("AutoPaintballer", "rainbow_length", 1.0)
+
+	find_node("BandDirection").selected = config.get_value("AutoPaintballer", "band_direction", 0)
+	find_node("NumBands").value = config.get_value("AutoPaintballer", "num_bands", 5.0)
+	find_node("BandSpacing").value = config.get_value("AutoPaintballer", "band_spacing", 0.5)
+	find_node("BandOffset").value = config.get_value("AutoPaintballer", "band_offset", 0.0)
+	find_node("BandAngle").value = config.get_value("AutoPaintballer", "band_angle", 0.0)
+	find_node("GridSize").value = config.get_value("AutoPaintballer", "grid_size", 5.0)
+	find_node("NumClusters").value = config.get_value("AutoPaintballer", "num_clusters", 3.0)
+	find_node("NumRings").value = config.get_value("AutoPaintballer", "num_rings", 3.0)
+
+	find_node("NoiseScale").value = config.get_value("AutoPaintballer", "noise_scale", 10.0)
+	find_node("NoiseThreshold").value = config.get_value("AutoPaintballer", "noise_threshold", 0.5)
+	find_node("NoiseOctaves").value = config.get_value("AutoPaintballer", "noise_octaves", 3.0)
+	find_node("VoronoiCells").value = config.get_value("AutoPaintballer", "voronoi_cells", 5.0)
+	find_node("VoronoiEdgeSize").value = config.get_value("AutoPaintballer", "voronoi_edge_size", 0.05)
+	find_node("WaveDegreeL").value = config.get_value("AutoPaintballer", "wave_degree_l", 2.0)
+	find_node("WaveOrderM").value = config.get_value("AutoPaintballer", "wave_order_m", 1.0)
+	find_node("WaveThreshold").value = config.get_value("AutoPaintballer", "wave_threshold", 0.6)
+
+	find_node("StripeFeedRate").value = config.get_value("AutoPaintballer", "stripe_feed_rate", 0.07)
+	find_node("StripeKillRate").value = config.get_value("AutoPaintballer", "stripe_kill_rate", 0.05)
+	find_node("DiffusionActivator").value = config.get_value("AutoPaintballer", "diffusion_b", 0.5)
+	find_node("DiffusionInhibitor").value = config.get_value("AutoPaintballer", "diffusion_a", 1.0)
+	find_node("StripeTimestep").value = config.get_value("AutoPaintballer", "stripe_timestep", 1.0)
+
+	find_node("LeopardRadiusMin").value = config.get_value("AutoPaintballer", "leopard_radius_min", 0.05)
+	find_node("LeopardRadiusMax").value = config.get_value("AutoPaintballer", "leopard_radius_max", 0.1)
+	find_node("LeopardIrregularity").value = config.get_value("AutoPaintballer", "leopard_irregularity", 0.3)
+	find_node("LeopardCompleteness").value = config.get_value("AutoPaintballer", "leopard_completeness", 0.75)
+	find_node("LeopardPairedColors").pressed = config.get_value("AutoPaintballer", "leopard_use_paired_colors", false)
+
+	find_node("FractalIterations").value = config.get_value("AutoPaintballer", "fractal_iterations", 5.0)
+	find_node("FractalAngle").value = config.get_value("AutoPaintballer", "fractal_angle", 90.0)
+	find_node("FractalPreset").selected = config.get_value("AutoPaintballer", "fractal_preset", 0)
+	find_node("FractalAxiom").text = config.get_value("AutoPaintballer", "fractal_axiom", "F")
+	find_node("FractalRules").text = config.get_value("AutoPaintballer", "fractal_rules", "")
+
+	find_node("HalfieAxis").selected = config.get_value("AutoPaintballer", "halfie_axis", 0)
+	find_node("HalfieSide").selected = config.get_value("AutoPaintballer", "halfie_side", 0)
+
+	_on_Distribution_item_selected(find_node("Distribution").selected)
+	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
+	_on_UseSeed_toggled(find_node("UseSeed").pressed)
+
+	_is_loading_settings = false
+
+func _on_reset_defaults_pressed():
+	_is_loading_settings = true
+
+	find_node("AffectedBallz").text = ""
+	find_node("Distribution").selected = 0
+	find_node("NumSpots").value = 25.0
+	find_node("Ordered").pressed = false
+	find_node("UseSeed").pressed = false
+	find_node("Seed").text = ""
+
+	find_node("SizeMin").value = 10.0
+	find_node("SizeMax").value = 20.0
+	find_node("ColorList").text = ""
+	find_node("TextureList").text = "0"
+	find_node("OutlineColorList").text = "244"
+	find_node("OutlineTypeMin").value = -1.0
+	find_node("OutlineTypeMax").value = -1.0
+	find_node("FuzzMin").value = 0.0
+	find_node("FuzzMax").value = 0.0
+	find_node("Group").value = 0.0
+	find_node("Anchored").pressed = true
+
+	find_node("WaveDegreeL").value = 2.0
+	find_node("WaveOrderM").value = 1.0
+	find_node("WaveThreshold").value = 0.6
+	find_node("VoronoiCells").value = 5.0
+	find_node("VoronoiEdgeSize").value = 0.05
+
+	find_node("NoiseScale").value = 10.0
+	find_node("NoiseThreshold").value = 0.5
+	find_node("NoiseOctaves").value = 3.0
+	find_node("FractalPreset").selected = 0
+	find_node("FractalAxiom").text = ""
+	find_node("FractalRules").text = ""
+	find_node("FractalIterations").value = 5.0
+	find_node("FractalAngle").value = 90.0
+
+	find_node("SpiralTurns").value = 5.0
+	find_node("StarPointSize").value = 4.0
+	find_node("StarPoints").value = 5.0
+	find_node("RayLength").value = 4.0
+
+	find_node("RainbowAngle").value = 0.0
+	find_node("RainbowCurvature").value = 0.0
+	find_node("RainbowWidth").value = 0.5
+	find_node("RainbowLength").value = 1.0
+	find_node("BandDirection").selected = 0
+	find_node("NumBands").value = 5.0
+	find_node("BandSpacing").value = 0.5
+	find_node("BandOffset").value = 0.0
+	find_node("BandAngle").value = 0.0
+
+	find_node("GridSize").value = 5.0
+	find_node("NumClusters").value = 3.0
+	find_node("NumRings").value = 3.0
+
+	find_node("StripeFeedRate").value = 0.07
+	find_node("StripeKillRate").value = 0.05
+	find_node("DiffusionActivator").value = 0.5
+	find_node("DiffusionInhibitor").value = 1.0
+	find_node("StripeTimestep").value = 1.0
+
+	find_node("LeopardRadiusMin").value = 0.05
+	find_node("LeopardRadiusMax").value = 0.1
+	find_node("LeopardIrregularity").value = 0.3
+	find_node("LeopardCompleteness").value = 0.75
+	find_node("LeopardPairedColors").pressed = false
+
+	find_node("HalfieAxis").selected = 0
+	find_node("HalfieSide").selected = 0
+
+	_on_Distribution_item_selected(0)
+	_on_FractalPreset_item_selected(0)
+	_on_UseSeed_toggled(false)
+
+	_is_loading_settings = false
+	save_settings()

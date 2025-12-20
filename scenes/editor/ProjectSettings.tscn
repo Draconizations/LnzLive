@@ -522,3 +522,11 @@ margin_bottom = 570.0
 size_flags_vertical = 10
 custom_fonts/font = SubResource( 1 )
 text = "Randomize Extensions"
+
+[node name="ResetDefaultsButton" type="Button" parent="Panel/HBoxContainer/RightColumn"]
+margin_top = 574.0
+margin_right = 384.0
+margin_bottom = 597.0
+size_flags_vertical = 10
+custom_fonts/font = SubResource( 1 )
+text = "Reset Defaults"

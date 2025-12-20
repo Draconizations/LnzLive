@@ -8,6 +8,9 @@ extends CanvasLayer
 ## 4. Handle advanced list transformations (mirroring and custom/preset rotation)
 ## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
+const SETTINGS_PATH = "user://settings.cfg"
+var _is_loading_settings = false
+
 signal eyedropper_toggled(is_on)
 signal apply_to_selection
 signal unselect_all
@@ -154,6 +157,9 @@ func _ready():
 
 	active_palette = default_palette
 
+	_connect_settings_signals()
+	load_settings()
+
 	update_preview()
 
 func show():
@@ -207,6 +213,7 @@ func _on_ShowRawButton_pressed():
 
 func _on_property_changed(_val = null):
 	if _ignore_ui_changes: return
+	save_settings()
 	update_preview()
 
 func _on_Tree_item_edited():
@@ -252,12 +259,14 @@ func _on_scale_changed(value, is_size_control):
 		else:
 			size_scale_spin.value = value
 		_ignore_ui_changes = false
-		
+	
+	save_settings()
 	update_preview()
 
 func _on_rotation_changed(_val):
 	if _ignore_ui_changes: return
 	_apply_rotation_to_tree()
+	save_settings()
 	update_preview()
 
 func _apply_rotation_to_tree():
@@ -289,6 +298,7 @@ func _on_MirrorButton_pressed(axis):
 	_reset_rotation_spinboxes()
 
 	_populate_tree_from_base()
+	save_settings()
 	update_preview()
 
 func _populate_tree_from_base():
@@ -349,6 +359,7 @@ func _on_SetPaintballzButton_pressed():
 
 	_reset_rotation_spinboxes()
 	_populate_tree_from_base()
+	save_settings()
 	update_preview()
 
 func _split_and_clean_paintball(line: String) -> Array:
@@ -622,6 +633,7 @@ func set_properties(properties):
 	_populate_tree_from_base()
 
 	_ignore_ui_changes = false
+	save_settings()
 	update_preview()
 
 func _convert_lnz_object_to_dict(obj) -> Dictionary:
@@ -685,3 +697,114 @@ func update_selected_balls_text(ball_ids: Array):
 		ranges.append(str(start) + "-" + str(prev))
 
 	affected_ballz.text = PoolStringArray(ranges).join(",")
+
+func _connect_settings_signals():
+	include_paintballz_chk.connect("toggled", self, "_on_property_changed")
+	scale_paintballz_chk.connect("toggled", self, "_on_property_changed")
+	
+	var reset_btn = find_node("ResetDefaultsButton")
+	if reset_btn:
+		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+
+func save_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading settings for save: ", err)
+		return
+
+	config.set_value("PresetProperties", "size", size_spinbox.value)
+	config.set_value("PresetProperties", "size_mode", size_mode_option.selected)
+	config.set_value("PresetProperties", "color", color_edit.text)
+	config.set_value("PresetProperties", "outline_color", outline_color_edit.text)
+	config.set_value("PresetProperties", "outline", outline_spinbox.value)
+	config.set_value("PresetProperties", "fuzz", fuzz_spinbox.value)
+	config.set_value("PresetProperties", "texture", texture_spinbox.value)
+	
+	config.set_value("PresetProperties", "include_size", include_size_chk.pressed)
+	config.set_value("PresetProperties", "include_color", include_color_chk.pressed)
+	config.set_value("PresetProperties", "include_outline_color", include_outline_color_chk.pressed)
+	config.set_value("PresetProperties", "include_outline", include_outline_chk.pressed)
+	config.set_value("PresetProperties", "include_fuzz", include_fuzz_chk.pressed)
+	config.set_value("PresetProperties", "include_texture", include_texture_chk.pressed)
+	
+	config.set_value("PresetProperties", "size_scale", size_scale_spin.value)
+	config.set_value("PresetProperties", "pos_scale", pos_scale_spin.value)
+	config.set_value("PresetProperties", "link_scale", link_scale_chk.pressed)
+	
+	config.set_value("PresetProperties", "include_paintballz", include_paintballz_chk.pressed)
+	config.set_value("PresetProperties", "scale_paintballz", scale_paintballz_chk.pressed)
+	
+	config.set_value("PresetProperties", "paintballz_data", _base_paintballz_data)
+
+	var save_err = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("Error saving PresetSettings: ", save_err)
+
+func load_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK:
+		return
+	
+	_ignore_ui_changes = true
+
+	size_spinbox.value = config.get_value("PresetProperties", "size", 10.0)
+	size_mode_option.selected = config.get_value("PresetProperties", "size_mode", 2)
+	color_edit.text = config.get_value("PresetProperties", "color", "0")
+	outline_color_edit.text = config.get_value("PresetProperties", "outline_color", "0")
+	outline_spinbox.value = config.get_value("PresetProperties", "outline", -1.0)
+	fuzz_spinbox.value = config.get_value("PresetProperties", "fuzz", 0.0)
+	texture_spinbox.value = config.get_value("PresetProperties", "texture", -1.0)
+	
+	include_size_chk.pressed = config.get_value("PresetProperties", "include_size", true)
+	include_color_chk.pressed = config.get_value("PresetProperties", "include_color", true)
+	include_outline_color_chk.pressed = config.get_value("PresetProperties", "include_outline_color", true)
+	include_outline_chk.pressed = config.get_value("PresetProperties", "include_outline", true)
+	include_fuzz_chk.pressed = config.get_value("PresetProperties", "include_fuzz", true)
+	include_texture_chk.pressed = config.get_value("PresetProperties", "include_texture", true)
+	
+	size_scale_spin.value = config.get_value("PresetProperties", "size_scale", 1.0)
+	pos_scale_spin.value = config.get_value("PresetProperties", "pos_scale", 1.0)
+	link_scale_chk.pressed = config.get_value("PresetProperties", "link_scale", false)
+	
+	include_paintballz_chk.pressed = config.get_value("PresetProperties", "include_paintballz", true)
+	scale_paintballz_chk.pressed = config.get_value("PresetProperties", "scale_paintballz", false)
+	
+	_base_paintballz_data = config.get_value("PresetProperties", "paintballz_data", [])
+	_populate_tree_from_base()
+	
+	_ignore_ui_changes = false
+
+func _on_reset_defaults_pressed():
+	_ignore_ui_changes = true
+	
+	size_spinbox.value = 10.0
+	size_mode_option.selected = 2
+	color_edit.text = "0"
+	outline_color_edit.text = "0"
+	outline_spinbox.value = -1.0
+	fuzz_spinbox.value = 0.0
+	texture_spinbox.value = -1.0
+	
+	include_size_chk.pressed = true
+	include_color_chk.pressed = true
+	include_outline_color_chk.pressed = true
+	include_outline_chk.pressed = true
+	include_fuzz_chk.pressed = true
+	include_texture_chk.pressed = true
+	
+	size_scale_spin.value = 1.0
+	pos_scale_spin.value = 1.0
+	link_scale_chk.pressed = false
+	
+	include_paintballz_chk.pressed = true
+	scale_paintballz_chk.pressed = false
+	
+	_base_paintballz_data.clear()
+	_populate_tree_from_base()
+	
+	_ignore_ui_changes = false
+	
+	save_settings()
+	update_preview()

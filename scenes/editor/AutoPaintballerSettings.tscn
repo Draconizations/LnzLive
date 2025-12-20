@@ -1402,3 +1402,10 @@ hint_tooltip = "Apply to commit pending Paintballz to LNZ"
 mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Apply"
+
+[node name="ResetDefaultsButton" type="Button" parent="Panel/VBoxContainer"]
+margin_top = 453.0
+margin_right = 292.0
+margin_bottom = 482.0
+custom_fonts/font = SubResource( 1 )
+text = "Reset Defaults"
