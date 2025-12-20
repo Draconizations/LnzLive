@@ -1950,7 +1950,17 @@ func _mirror_l_to_r_full(reverse: bool = false):
 						mirror_parts[5] = temp
 					
 					var new_line_sig = _join_array(mirror_parts, delim)
-					if !existing_linez_signatures.has(new_line_sig):
+					
+					var reverse_mirror_parts = mirror_parts.duplicate()
+					reverse_mirror_parts[0] = mirror_parts[1]
+					reverse_mirror_parts[1] = mirror_parts[0]
+					if reverse_mirror_parts.size() > 5:
+						var temp = reverse_mirror_parts[4]
+						reverse_mirror_parts[4] = reverse_mirror_parts[5]
+						reverse_mirror_parts[5] = temp
+					var reverse_sig = _join_array(reverse_mirror_parts, delim)
+					
+					if !existing_linez_signatures.has(new_line_sig) and !existing_linez_signatures.has(reverse_sig):
 						final_linez_lines_to_append.append(new_line_sig)
 						existing_linez_signatures[new_line_sig] = true
 
