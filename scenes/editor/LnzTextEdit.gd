@@ -16,7 +16,7 @@ var split_regex = RegEx.new()
 
 var history_stack: Array = []
 var history_index: int = -1
-var max_history_size: int = 25 # TBD: make a User Setting
+var max_history_size: int = 25
 var last_commit_time: int = 0
 var last_commit_action: String = ""
 var last_commit_id: int = -1

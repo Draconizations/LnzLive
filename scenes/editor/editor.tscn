@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=2]
+[gd_scene load_steps=42 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -31,6 +31,7 @@
 [ext_resource path="res://scenes/editor/ExportClothes.tscn" type="PackedScene" id=37]
 [ext_resource path="res://scenes/editor/ExportButtonClothes.gd" type="Script" id=38]
 [ext_resource path="res://scenes/editor/ConsoleLog.gd" type="Script" id=39]
+[ext_resource path="res://scenes/editor/UserSettingsDialog.tscn" type="PackedScene" id=40]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -465,7 +466,6 @@ custom_fonts/font = ExtResource( 28 )
 text = "Import Breed File"
 
 [node name="UserSettingsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
-visible = false
 margin_top = 34.0
 margin_right = 150.0
 margin_bottom = 64.0
@@ -1902,6 +1902,8 @@ __meta__ = {
 }
 
 [node name="ExportClothes" parent="SceneRoot" instance=ExtResource( 37 )]
+
+[node name="UserSettingsDialog" parent="SceneRoot" instance=ExtResource( 40 )]
 
 [connection signal="addball_deleted" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_addball_deleted"]
 [connection signal="animation_loaded" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider" method="_on_animation_loaded"]
