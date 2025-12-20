@@ -9,6 +9,9 @@ extends CanvasLayer
 ## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
 signal eyedropper_toggled(is_on)
+signal apply_to_selection
+signal unselect_all
+signal select_balls_by_ids(ids)
 
 onready var panel = $Panel
 onready var scroll_vbox = $Panel/VBoxContainer/ScrollContainer/VBoxContainer
@@ -30,6 +33,7 @@ onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
 var ball_texture_list = []
 
 onready var eyedropper_toggle = scroll_vbox.get_node("ToolsContainer/EyedropperToggle")
+onready var exclude_eyes_chk = scroll_vbox.get_node("SelectionActions/ExcludeEyesCheckBox")
 onready var include_paintballz_chk = scroll_vbox.get_node("IncludeContainer/IncludePaintballzCheckBox")
 onready var scale_paintballz_chk = scroll_vbox.get_node("IncludeContainer/ScalePaintballzCheckBox")
 
@@ -103,7 +107,17 @@ func _ready():
 
 	size_scale_spin.connect("value_changed", self, "_on_scale_changed", [true])
 	pos_scale_spin.connect("value_changed", self, "_on_scale_changed", [false])
-	link_scale_chk.connect("toggled", self, "_on_property_changed") 
+	link_scale_chk.connect("toggled", self, "_on_property_changed")
+
+	var apply_btn = scroll_vbox.get_node("SelectionActions/ApplyButton")
+	apply_btn.connect("pressed", self, "_on_ApplyButton_pressed")
+
+	var unselect_btn = scroll_vbox.get_node("SelectionActions/UnselectButton")
+	unselect_btn.connect("pressed", self, "_on_UnselectButton_pressed")
+
+	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
+	affected_ballz.connect("text_entered", self, "_on_AffectedBallz_text_entered")
+	affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
 
 	paintballz_tree.columns = 11
 	paintballz_tree.set_column_titles_visible(true)
@@ -527,6 +541,8 @@ func is_eyedropper_active():
 func get_properties():
 	var properties = {}
 
+	properties["exclude_eyes"] = exclude_eyes_chk.pressed
+
 	if include_size_chk.pressed:
 		properties["size"] = int(round(size_spinbox.value))
 		properties["size_mode"] = size_mode_option.selected
@@ -620,3 +636,52 @@ func _convert_lnz_object_to_dict(obj) -> Dictionary:
 		"texture_id": obj.texture_id,
 		"anchored": obj.anchored
 	}
+
+func _on_ApplyButton_pressed():
+	emit_signal("apply_to_selection")
+
+func _on_UnselectButton_pressed():
+	emit_signal("unselect_all")
+
+func _on_AffectedBallz_text_entered(new_text):
+	var ids = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+	scroll_vbox.get_node("AffectedBallz").release_focus()
+
+func _on_AffectedBallz_text_changed(new_text):
+	var ids = LnzLiveUtils.parse_number_list(new_text)
+	emit_signal("select_balls_by_ids", ids)
+
+func update_selected_balls_text(ball_ids: Array):
+	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
+	if affected_ballz.has_focus():
+		return
+
+	ball_ids.sort()
+
+	if ball_ids.empty():
+		affected_ballz.text = ""
+		return
+
+	var start = ball_ids[0]
+	var prev = start
+	var ranges = []
+
+	for i in range(1, ball_ids.size()):
+		var curr = ball_ids[i]
+		if curr == prev + 1:
+			prev = curr
+		else:
+			if start == prev:
+				ranges.append(str(start))
+			else:
+				ranges.append(str(start) + "-" + str(prev))
+			start = curr
+			prev = curr
+
+	if start == prev:
+		ranges.append(str(start))
+	else:
+		ranges.append(str(start) + "-" + str(prev))
+
+	affected_ballz.text = PoolStringArray(ranges).join(",")

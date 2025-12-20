@@ -99,6 +99,10 @@ const ZOOM_STEP := 1.2
 var selected_balls = []
 var pending_moves = {} # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
 
+var box_selecting = false
+var box_start_pos = Vector2()
+var box_end_pos = Vector2()
+
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
@@ -125,6 +129,9 @@ func _ready():
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
+	preset_settings_instance.connect("apply_to_selection", self, "_on_preset_apply_selection")
+	preset_settings_instance.connect("unselect_all", self, "_on_unselect_all")
+	preset_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
 
 	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
@@ -279,11 +286,11 @@ func get_visual_state_for_ball(b):
 				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
 				if b.ball_no == pivot_id:
 					return b.OutlineState.PIVOT
-			if b in selected_balls:
-				return b.OutlineState.ACTIVE_SELECTED
-			elif pending_moves.has(b.ball_no):
-				return b.OutlineState.MODIFIED
-			return b.OutlineState.NONE
+
+		if (move_mode or preset_mode) and b in selected_balls:
+			return b.OutlineState.ACTIVE_SELECTED
+		elif move_mode and pending_moves.has(b.ball_no):
+			return b.OutlineState.MODIFIED
 		elif auto_paintballer_mode and b.ball_no in _auto_paint_affected_cache:
 				return b.OutlineState.MODIFIED
 		else:
@@ -296,9 +303,44 @@ func flip_camera_view():
 	camera_transform.basis.x *= -1
 	camera.transform = camera_transform
 
+func _draw():
+	if box_selecting:
+		var rect = Rect2(box_start_pos, box_end_pos - box_start_pos)
+		draw_rect(rect, Color(0.5, 1, 0.5, 0.2), true)
+		draw_rect(rect, Color(0.5, 1, 0.5, 0.8), false)
+
 func _gui_input(event):
 	if input_is_paused:
 		return
+
+	if (move_mode or preset_mode) and Input.is_key_pressed(KEY_CONTROL):
+		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+			if event.pressed:
+				box_selecting = true
+				box_start_pos = event.position
+				box_end_pos = event.position
+				return
+			elif box_selecting:
+				box_selecting = false
+				update()
+				if box_start_pos.distance_to(event.position) < 5.0:
+					var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+					if hover:
+						if hover in selected_balls:
+							selected_balls.erase(hover)
+						else:
+							selected_balls.append(hover)
+						if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
+							hover.apply_outline_state(get_visual_state_for_ball(hover))
+						_update_selected_ballz_in_settings()
+				else:
+					_commit_box_selection()
+				return
+
+		if event is InputEventMouseMotion and box_selecting:
+			box_end_pos = event.position
+			update()
+			return
 
 	if event is InputEventMouseButton and event.pressed and not Input.is_key_pressed(KEY_SHIFT) and not move_mode:
 		_reset_tab_state()
@@ -1088,6 +1130,8 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	if result and result.collider:
 		var parent = result.collider.get_parent()
 		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
+			if parent.get("omitted") == true and not dog_generator.draw_omitted_balls:
+				return null
 			return parent
 	return null
 
@@ -2116,19 +2160,90 @@ func _on_flip_selection(axis_vector, pivot_id):
 
 func _update_selected_ballz_in_settings():
 	var ids = []
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false)
+	
+	var filter = KeyBallsData.get_group_balls("irises")
+	if exclude_eyes:
+		filter += KeyBallsData.get_group_balls("eyes")
+	
 	for b in selected_balls:
-		if is_instance_valid(b):
-			ids.append(b.ball_no)
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in filter:
+				ids.append(b.ball_no)
+				
 	move_mode_settings_instance.update_selected_balls_text(ids)
+	preset_settings_instance.update_selected_balls_text(ids)
 
 func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()
+	var iris_ids = KeyBallsData.get_group_balls("irises")
+	
 	for id in ids:
+		if id in iris_ids:
+			continue
+			
 		var ball = _find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
-			selected_balls.append(ball)
-			ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+			if "ball_no" in ball:
+				selected_balls.append(ball)
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+				
 	_update_selected_ballz_in_settings()
+
+func _commit_box_selection():
+	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	
+	var iris_ids = KeyBallsData.get_group_balls("irises")
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false) 
+	var eye_ids = KeyBallsData.get_group_balls("eyes") if exclude_eyes else []
+
+	for b in all_balls:
+		if not is_instance_valid(b) or not b.is_inside_tree(): 
+			continue
+
+		if b.get("omitted") == true and not dog_generator.draw_omitted_balls:
+			continue
+		
+		if not ("ball_no" in b) or not b.visible: 
+			continue
+			
+		if b.ball_no in iris_ids or b.ball_no in eye_ids: 
+			continue
+
+		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
+		var relative_pos = projected_pos_local - Vector2(500, 500)
+		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
+
+		if rect.has_point(pos_in_container):
+			if not (b in selected_balls):
+				selected_balls.append(b)
+				if b.has_method("apply_outline_state"):
+					b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
+func _on_preset_apply_selection():
+	if selected_balls.empty():
+		return
+
+	var properties = preset_settings_instance.get_properties()
+	var ball_ids = []
+	
+	var should_exclude_eyes = properties.get("exclude_eyes", false)
+	var exclusion_list = []
+	if should_exclude_eyes:
+		exclusion_list = KeyBallsData.get_group_balls("eyes") + KeyBallsData.get_group_balls("irises")
+
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in exclusion_list:
+				ball_ids.append(b.ball_no)
+
+	if not ball_ids.empty():
+		lnz_text_edit.apply_batch_presets(ball_ids, properties)
 
 func _on_pivot_changed():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
