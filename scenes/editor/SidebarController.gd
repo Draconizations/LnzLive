@@ -24,6 +24,10 @@ func _ready():
 	tab_container.connect("tab_changed", self, "_on_tab_changed")
 
 func add_tool_tab(control: Control, title: String):
+	if control == null or not is_instance_valid(control):
+		print("Sidebar Error: Tool panel for '", title, "' failed to load.")
+		return
+
 	if not tab_container:
 		return
 
@@ -74,33 +78,37 @@ func undock_panel(panel: Control):
 func switch_to_tab(panel: Control):
 	if panel.get_parent() == tab_container:
 		var idx = panel.get_index()
-		tab_container.current_tab = idx
+		if tab_container.current_tab != idx:
+			tab_container.current_tab = idx
 
 func _on_tab_changed(tab_index: int):
 	var control = tab_container.get_child(tab_index)
-
 	var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
+	
+	if not pet_view:
+		return
+
 	if pet_view:
 		if control.name == "File Tree":
 			pass
 		elif control.name == "Paintball Mode":
-			if not pet_view.paintball_mode:
+			if is_instance_valid(pet_view) and not pet_view.paintball_mode:
 				pet_view.paintball_check_box.pressed = true
 		elif control.name == "Auto Paintballer":
-			if not pet_view.auto_paintballer_mode:
+			if is_instance_valid(pet_view) and not pet_view.auto_paintballer_mode:
 				pet_view.auto_paintballer_check_box.pressed = true
 		elif control.name == "Move Mode":
-			if not pet_view.move_mode:
+			if is_instance_valid(pet_view) and not pet_view.move_mode:
 				pet_view.move_mode_check_box.pressed = true
 		elif control.name == "Line Mode":
-			if not pet_view.linez_mode:
+			if is_instance_valid(pet_view) and not pet_view.linez_mode:
 				pet_view.line_mode_check_box.pressed = true
 		elif control.name == "Preset Mode":
-			if not pet_view.preset_mode:
+			if is_instance_valid(pet_view) and not pet_view.preset_mode:
 				pet_view.preset_mode_check_box.pressed = true
 		elif control.name == "Project Mode":
-			if not pet_view.project_mode:
+			if is_instance_valid(pet_view) and not pet_view.project_mode:
 				pet_view.project_mode_check_box.pressed = true
 		elif control.name == "Palette Viewer":
-			if not pet_view.view_palette_check_box.pressed:
+			if is_instance_valid(pet_view) and not pet_view.view_palette_check_box.pressed:
 				pet_view.view_palette_check_box.pressed = true

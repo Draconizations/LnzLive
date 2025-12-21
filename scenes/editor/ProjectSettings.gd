@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## ProjectSettings.gd
 ## Manages the UI panel and logic for the Project Mode settings
 ## This script combines two key LNZ editing features:
@@ -15,7 +15,6 @@ extends CanvasLayer
 signal apply_projections(projections)
 signal randomize_body_proportions(settings)
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 onready var projections_tree = find_node("ProjectionsTree")

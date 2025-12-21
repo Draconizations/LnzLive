@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## PaintballSettings.gd
 ## Manages the UI panel and logic for the Paintball Mode settings
 ## This script controls the visibility of the settings panel and provides methods to:
@@ -12,7 +12,6 @@ signal apply_paintballz
 signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 func _ready():

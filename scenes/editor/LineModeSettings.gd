@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## LineModeSettings.gd
 ## Manages the UI panel and logic for the Line Mode settings
 ## This script controls the visibility of the settings panel and provides methods to:
@@ -6,7 +6,6 @@ extends CanvasLayer
 ## 2. Show and hide the panel
 ## 3. Retrieve all current line properties (e.g., fuzz, color, thickness) set by the user
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 func _ready():

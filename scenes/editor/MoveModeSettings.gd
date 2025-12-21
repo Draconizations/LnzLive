@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 
 signal apply_moves
 signal clear_moves
@@ -13,7 +13,6 @@ signal select_balls_by_ids(ids)
 signal flip_selection(axis_vector, pivot_id)
 signal pivot_changed
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 var current_constraint_mode = "free" # free, x, y, z, xy, xz, yz

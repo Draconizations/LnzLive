@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## AutoPaintballerSettings.gd
 ## Manages panel UI and logic for the Auto Paintballer tool
 ## This script controls procedural generation of paintballz
@@ -41,7 +41,6 @@ signal unselect_all
 
 onready var params_container = find_node("ParamsContainer")
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 var _ordered_color_index = 0
@@ -51,7 +50,7 @@ var _ordered_ball_index = 0
 
 func _ready():
 	var viewport_size = get_viewport().size
-	var panel = $Panel
+	var panel = self
 	var panel_size = panel.rect_size
 	
 	var default_x = (viewport_size.x - panel_size.x) / 2
