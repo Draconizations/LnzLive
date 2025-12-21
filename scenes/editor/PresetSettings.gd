@@ -156,11 +156,11 @@ func _ready():
 
 	call_deferred("update_preview")
 
-func show():
-	panel.show()
+# func show():
+# 	panel.show()
 
-func hide():
-	panel.hide()
+# func hide():
+# 	panel.hide()
 
 func set_texture_list(list):
 	ball_texture_list = list

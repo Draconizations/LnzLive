@@ -18,7 +18,6 @@ signal randomize_body_proportions(settings)
 var _is_loading_settings = false
 
 onready var projections_tree = find_node("ProjectionsTree")
-onready var panel = $Panel
 
 func _ready():
 	# Connect signals
@@ -52,7 +51,7 @@ func _ready():
 	hide()
 
 	var viewport_size = get_viewport().size
-	var panel = $Panel
+	var panel = self
 	var panel_size = panel.rect_size
 	
 	var default_x = (viewport_size.x - panel_size.x) / 2
@@ -363,13 +362,13 @@ func _on_ApplyButton_pressed():
 	emit_signal("apply_projections", lnz_projections)
 
 
-func show():
-	# Re-populate options in case species has changed since _ready()
-	_populate_projections_tree()
-	panel.show()
+# func show():
+# 	# Re-populate options in case species has changed since _ready()
+# 	_populate_projections_tree()
+# 	panel.show()
 
-func hide():
-	panel.hide()
+# func hide():
+# 	panel.hide()
 
 func _on_ProjectionsTree_column_title_pressed(column_index):
 	if column_index == 5 or column_index == 6: # Lock or Mirror

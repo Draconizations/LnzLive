@@ -72,8 +72,6 @@ func _ready():
 
 	find_node("RandomSystemButton").connect("pressed", self, "_on_RandomSystemButton_pressed")
 	
-	get_viewport().connect("size_changed", self, "_on_viewport_size_changed")
-	_on_viewport_size_changed()
 	_on_Distribution_item_selected(0)
 
 	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
@@ -136,15 +134,6 @@ func _on_FractalAxiom_text_changed(new_text: String):
 		var cursor_pos = axiom_edit.caret_position
 		axiom_edit.text = sanitized_text
 		axiom_edit.caret_position = min(cursor_pos, sanitized_text.length())
-
-func _on_viewport_size_changed():
-	var viewport_size = get_viewport().size
-	var panel = $Panel
-	var panel_size = panel.rect_size
-	panel.margin_left = (viewport_size.x - panel_size.x) / 2
-	panel.margin_right = panel.margin_left + panel_size.x
-	panel.margin_top = viewport_size.y - panel_size.y - 10
-	panel.margin_bottom = panel.margin_top + panel_size.y
 
 func _on_AffectedBallz_text_changed(new_text):
 	var ids = LnzLiveUtils.parse_number_list(new_text)
@@ -895,11 +884,11 @@ func _on_ApplyButton_pressed():
 func _on_ClearButton_pressed():
 	emit_signal("clear_auto_paintballz")
 
-func show():
-	$Panel.show()
+# func show():
+# 	$Panel.show()
 
-func hide():
-	$Panel.hide()
+# func hide():
+# 	$Panel.hide()
 
 func _get_basis_from_normal(normal_vec):
 	var basis_y = normal_vec.normalized()

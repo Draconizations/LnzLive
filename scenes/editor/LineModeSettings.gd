@@ -10,7 +10,7 @@ var _is_loading_settings = false
 
 func _ready():
 	var viewport_size = get_viewport().size
-	var panel = $Panel
+	var panel = self
 	var panel_size = panel.rect_size
 	
 	var default_x = (viewport_size.x - panel_size.x) / 2
@@ -22,11 +22,11 @@ func _ready():
 	_connect_settings_signals()
 	load_settings()
 
-func show():
-	$Panel.show()
+# func show():
+# 	$Panel.show()
 
-func hide():
-	$Panel.hide()
+# func hide():
+# 	$Panel.hide()
 
 func get_properties():
 	var properties = {}

@@ -20,7 +20,7 @@ func _ready():
 	find_node("EraserCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
 
 	var viewport_size = get_viewport().size
-	var panel = $Panel
+	var panel = self
 	var panel_size = panel.rect_size
 	
 	var default_x = (viewport_size.x - panel_size.x) / 2
@@ -41,11 +41,11 @@ func _on_ClearButton_pressed():
 func _on_DeleteModeCheckBox_toggled(is_on):
 	emit_signal("delete_mode_toggled", is_on)
 
-func show():
-	$Panel.show()
+# func show():
+# 	$Panel.show()
 
-func hide():
-	$Panel.hide()
+# func hide():
+# 	$Panel.hide()
 
 func get_properties():
 	var properties = {}
