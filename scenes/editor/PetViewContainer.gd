@@ -2128,8 +2128,20 @@ func _on_paintball_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Paintball Mode")
 	paintball_mode = is_on
 	_update_mode_panel_visibility(paintball_settings_instance, is_on)
+	
+	if not is_on:
+		paintball_target_ball = null
+		close_paintball_on_apply = false
+		_restore_all_balls()
+	else:
+		_restore_all_balls()
+		_ordered_color_index = 0
+		_ordered_outline_color_index = 0
+		_ordered_texture_index = 0
+		paintball_settings_instance.find_node("Target").selected = 0
+		
 	_update_paintball_mode_ui()
-
+	
 # func _on_paintball_mode_toggled(is_on):
 # 	paintball_mode = is_on
 # 	if not is_on:
@@ -2165,7 +2177,13 @@ func _on_line_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Line Mode")
 	linez_mode = is_on
 	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
-	if not is_on:
+	
+	if is_on:
+		Input.set_custom_mouse_cursor(rope)
+	else:
+		line_mode_close = false
+		if is_instance_valid(linez_start_ball):
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
 		Input.set_custom_mouse_cursor(hand_neutral)
 
@@ -2200,7 +2218,15 @@ func _on_move_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Move Mode")
 	move_mode = is_on
 	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
-	if not is_on: _on_unselect_all()
+	
+	if is_on:
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
+		Input.set_custom_mouse_cursor(hand_neutral)
+		ball_label.hide()
+		_reset_tab_state()
+	else:
+		_on_unselect_all()
+		_on_move_mode_clear()
 
 # func _on_move_mode_toggled(is_on):
 # 	move_mode = is_on
@@ -2243,6 +2269,20 @@ func _on_preset_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Preset Mode")
 	preset_mode = is_on
 	_update_mode_panel_visibility(preset_settings_instance, is_on)
+	
+	if is_on:
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if pet_node and pet_node.lnz:
+			if pet_node.lnz.texture_list:
+				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+			if pet_node.lnz.palette:
+				preset_settings_instance.set_palette(pet_node.lnz.palette)
+		
+		Input.set_custom_mouse_cursor(smallbrush)
+		mouse_default_cursor_shape = CURSOR_ARROW
+	else:
+		Input.set_custom_mouse_cursor(hand_neutral)
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
 # func _on_preset_mode_toggled(is_on):
 # 	preset_mode = is_on
@@ -2312,6 +2352,15 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Auto Paintballer")
 	auto_paintballer_mode = is_on
 	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
+	
+	if not is_on:
+		dog_generator._on_clear_auto_paintballz()
+		_on_unselect_all()
+		_auto_paint_affected_cache.clear()
+		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+		for b in all_balls:
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
+				b.apply_outline_state(b.OutlineState.NONE)
 
 # func _on_auto_paintballer_mode_toggled(is_on):
 # 	auto_paintballer_mode = is_on
