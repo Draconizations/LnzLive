@@ -2,10 +2,9 @@ extends VBoxContainer
 
 onready var tab_container = get_node("SidebarTabs")
 onready var tree = get_node("SidebarTabs/FileTree/Tree")
-onready var file_nav_hbox1 = get_node("SidebarTabs/FileTree/FileNavHBox1")
-onready var file_nav_hbox2 = get_node("SidebarTabs/FileTree/FileNavHBox2")
 
 var floating_layer: CanvasLayer = null
+const UTILITY_TABS = ["File Tree", "Palette Viewer"]
 
 func _ready():
 	if tab_container:
@@ -25,10 +24,6 @@ func _ready():
 
 func add_tool_tab(control: Control, title: String):
 	if control == null or not is_instance_valid(control):
-		print("Sidebar Error: Tool panel for '", title, "' failed to load.")
-		return
-
-	if not tab_container:
 		return
 
 	if control.get_parent() == tab_container:
@@ -42,6 +37,8 @@ func add_tool_tab(control: Control, title: String):
 
 	if control.has_method("set_docked"):
 		control.set_docked(true)
+	
+	_update_tab_visibilities()
 
 func dock_panel(panel: Control):
 	if panel.get_parent() == tab_container:
@@ -52,16 +49,18 @@ func dock_panel(panel: Control):
 		panel.get_parent().remove_child(panel)
 
 	tab_container.add_child(panel)
-
-	switch_to_tab(panel)
-
+	
 	if panel.has_method("set_docked"):
 		panel.set_docked(true)
+		
+	_update_tab_visibilities()
+	switch_to_tab(panel)
 
 func undock_panel(panel: Control):
 	if panel.get_parent() != tab_container:
 		return
 
+	var was_current = (tab_container.get_current_tab_control() == panel)
 	tab_container.remove_child(panel)
 
 	if not floating_layer:
@@ -74,41 +73,42 @@ func undock_panel(panel: Control):
 
 	if panel.has_method("set_docked"):
 		panel.set_docked(false)
+	
+	if was_current:
+		tab_container.current_tab = 0
+		
+	_update_tab_visibilities()
 
 func switch_to_tab(panel: Control):
 	if panel.get_parent() == tab_container:
 		var idx = panel.get_index()
-		if tab_container.current_tab != idx:
+		if not tab_container.get_tab_disabled(idx):
 			tab_container.current_tab = idx
+
+func _update_tab_visibilities():
+	var is_any_mode_floating = false
+	for panel in floating_layer.get_children():
+		if not panel.name in UTILITY_TABS:
+			is_any_mode_floating = true
+			break
+			
+	for i in range(tab_container.get_child_count()):
+		var child = tab_container.get_child(i)
+		if not child.name in UTILITY_TABS:
+			tab_container.set_tab_disabled(i, is_any_mode_floating)
 
 func _on_tab_changed(tab_index: int):
 	var control = tab_container.get_child(tab_index)
 	var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
-	
-	if not pet_view:
-		return
+	if not pet_view or not is_instance_valid(pet_view): return
 
-	if pet_view:
-		if control.name == "File Tree":
+	match control.name:
+		"Paintball Mode": pet_view.paintball_check_box.pressed = true
+		"Auto Paintballer": pet_view.auto_paintballer_check_box.pressed = true
+		"Move Mode": pet_view.move_mode_check_box.pressed = true
+		"Line Mode": pet_view.line_mode_check_box.pressed = true
+		"Preset Mode": pet_view.preset_mode_check_box.pressed = true
+		"Project Mode": pet_view.project_mode_check_box.pressed = true
+		"Palette Viewer": pet_view.view_palette_check_box.pressed = true
+		"File Tree":
 			pass
-		elif control.name == "Paintball Mode":
-			if is_instance_valid(pet_view) and not pet_view.paintball_mode:
-				pet_view.paintball_check_box.pressed = true
-		elif control.name == "Auto Paintballer":
-			if is_instance_valid(pet_view) and not pet_view.auto_paintballer_mode:
-				pet_view.auto_paintballer_check_box.pressed = true
-		elif control.name == "Move Mode":
-			if is_instance_valid(pet_view) and not pet_view.move_mode:
-				pet_view.move_mode_check_box.pressed = true
-		elif control.name == "Line Mode":
-			if is_instance_valid(pet_view) and not pet_view.linez_mode:
-				pet_view.line_mode_check_box.pressed = true
-		elif control.name == "Preset Mode":
-			if is_instance_valid(pet_view) and not pet_view.preset_mode:
-				pet_view.preset_mode_check_box.pressed = true
-		elif control.name == "Project Mode":
-			if is_instance_valid(pet_view) and not pet_view.project_mode:
-				pet_view.project_mode_check_box.pressed = true
-		elif control.name == "Palette Viewer":
-			if is_instance_valid(pet_view) and not pet_view.view_palette_check_box.pressed:
-				pet_view.view_palette_check_box.pressed = true
