@@ -4,7 +4,7 @@ onready var tab_container = get_node("SidebarTabs")
 onready var tree = get_node("SidebarTabs/FileTree/Tree")
 
 var floating_layer: CanvasLayer = null
-const UTILITY_TABS = ["File Tree", "Palette Viewer"]
+const UTILITY_TABS = ["FileTree", "Palette Viewer"]
 
 func _ready():
 	if tab_container:
@@ -35,8 +35,14 @@ func add_tool_tab(control: Control, title: String):
 	tab_container.add_child(control)
 	control.name = title
 
+	if title == "FileTree":
+		tab_container.move_child(control, 0)
+	elif title == "Palette Viewer":
+		var target_idx = 1 if tab_container.get_child(0).name == "FileTree" else 0
+		tab_container.move_child(control, target_idx)
+
 	if control.has_method("set_docked"):
-		control.set_docked(true)
+		control.set_docked(true) 
 	
 	_update_tab_visibilities()
 
@@ -87,14 +93,17 @@ func switch_to_tab(panel: Control):
 
 func _update_tab_visibilities():
 	var is_any_mode_floating = false
-	for panel in floating_layer.get_children():
-		if not panel.name in UTILITY_TABS:
-			is_any_mode_floating = true
-			break
+	if floating_layer:
+		for panel in floating_layer.get_children():
+			if not panel.name in UTILITY_TABS:
+				is_any_mode_floating = true
+				break
 			
 	for i in range(tab_container.get_child_count()):
 		var child = tab_container.get_child(i)
-		if not child.name in UTILITY_TABS:
+		if child.name in UTILITY_TABS:
+			tab_container.set_tab_disabled(i, false)
+		else:
 			tab_container.set_tab_disabled(i, is_any_mode_floating)
 
 func _on_tab_changed(tab_index: int):

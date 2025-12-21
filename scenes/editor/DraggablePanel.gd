@@ -93,12 +93,52 @@ func _on_dock_button_pressed():
 func _on_close_button_pressed():
 	_on_dock_button_pressed()
 
+func _setup_custom_buttons():
+	var style_normal = load("res://resources/styles/styleboxflat_button_normal.tres")
+	var style_hover = load("res://resources/styles/styleboxflat_button_hover.tres")
+	var pixel_font = load("res://resources/fonts/font_pixel_maz_24.tres")
+
+	dock_button = Button.new()
+	dock_button.text = "Dock"
+
+	dock_button.add_stylebox_override("normal", style_normal)
+	dock_button.add_stylebox_override("hover", style_hover)
+	dock_button.add_stylebox_override("pressed", style_normal)
+	dock_button.add_font_override("font", pixel_font)
+	
+	dock_button.connect("pressed", self, "_on_dock_button_pressed")
+	add_child(dock_button)
+	
+	dock_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
+	dock_button.margin_right = -35
+	dock_button.margin_top = 5
+	dock_button.margin_left = -95
+	dock_button.margin_bottom = 25
+
+	close_button = Button.new()
+	close_button.text = "x"
+
+	close_button.add_stylebox_override("normal", style_normal)
+	close_button.add_stylebox_override("hover", style_hover)
+	close_button.add_stylebox_override("pressed", style_normal)
+	close_button.add_font_override("font", pixel_font)
+	
+	close_button.connect("pressed", self, "_on_close_button_pressed")
+	add_child(close_button)
+	
+	close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
+	close_button.margin_right = -5
+	close_button.margin_top = 5
+	close_button.margin_left = -30
+	close_button.margin_bottom = 25
+
+	update_buttons()
+
 func set_docked(docked: bool):
 	is_docked = docked
 	dragging = false
 	
 	if is_docked:
-		original_rect_size = rect_size
 		set_anchors_and_margins_preset(Control.PRESET_WIDE)
 		margin_left = 0
 		margin_right = 0
@@ -108,8 +148,7 @@ func set_docked(docked: bool):
 		size_flags_vertical = SIZE_EXPAND_FILL
 	else:
 		set_anchors_and_margins_preset(Control.PRESET_TOP_LEFT)
-		if original_rect_size != Vector2.ZERO:
-			rect_size = original_rect_size
+		rect_size = original_rect_size
 		restore_position(rect_global_position)
 
 	update_buttons()
