@@ -2415,3 +2415,6 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	else:
 		if not panel.is_docked:
 			panel.hide()
+	
+	if sidebar_controller and sidebar_controller.has_method("update_tab_visibilities"):
+		sidebar_controller.update_tab_visibilities()

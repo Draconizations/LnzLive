@@ -12,33 +12,52 @@ var drag_start = Vector2()
 var is_docked = false
 
 var dock_button: Button
-var close_button: Button
+# var close_button: Button
 var original_rect_size: Vector2
 
 func _ready():
 	get_viewport().connect("size_changed", self, "_on_viewport_resized")
 
 	dock_button = Button.new()
-	dock_button.text = "Dock"
-	dock_button.connect("pressed", self, "_on_dock_button_pressed")
+	# close_button = Button.new()
+	
 	add_child(dock_button)
+	# add_child(close_button)
+
+	_stylize_button(dock_button, "Dock")
+	# _stylize_button(close_button, "x")
+
 	dock_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
 	dock_button.margin_right = -35
 	dock_button.margin_top = 5
 	dock_button.margin_left = -95
 	dock_button.margin_bottom = 25
 
-	close_button = Button.new()
-	close_button.text = "x"
-	close_button.connect("pressed", self, "_on_close_button_pressed")
-	add_child(close_button)
-	close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
-	close_button.margin_right = -5
-	close_button.margin_top = 5
-	close_button.margin_left = -30
-	close_button.margin_bottom = 25
+	# close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
+	# close_button.margin_right = -5
+	# close_button.margin_top = 5
+	# close_button.margin_left = -30
+	# close_button.margin_bottom = 25
 
+	dock_button.connect("pressed", self, "_on_dock_button_pressed")
+	# close_button.connect("pressed", self, "_on_close_button_pressed")
+	
 	update_buttons()
+
+func _stylize_button(btn: Button, btn_text: String):
+	btn.text = btn_text
+	
+	var style_normal = load("res://resources/styles/styleboxflat_button_normal.tres")
+	var style_hover = load("res://resources/styles/styleboxflat_button_hover.tres")
+	var pixel_font = load("res://resources/fonts/font_pixel_maz_24.tres")
+
+	btn.add_stylebox_override("normal", style_normal)
+	btn.add_stylebox_override("hover", style_hover)
+	btn.add_stylebox_override("pressed", style_normal)
+	btn.add_stylebox_override("focus", load("res://resources/styles/stylebox_empty.tres"))
+	btn.add_font_override("font", pixel_font)
+	
+	btn.set_deferred("flat", false)
 
 func _gui_input(event):
 	if is_docked:
@@ -115,22 +134,22 @@ func _setup_custom_buttons():
 	dock_button.margin_left = -95
 	dock_button.margin_bottom = 25
 
-	close_button = Button.new()
-	close_button.text = "x"
+	# close_button = Button.new()
+	# close_button.text = "x"
 
-	close_button.add_stylebox_override("normal", style_normal)
-	close_button.add_stylebox_override("hover", style_hover)
-	close_button.add_stylebox_override("pressed", style_normal)
-	close_button.add_font_override("font", pixel_font)
+	# close_button.add_stylebox_override("normal", style_normal)
+	# close_button.add_stylebox_override("hover", style_hover)
+	# close_button.add_stylebox_override("pressed", style_normal)
+	# close_button.add_font_override("font", pixel_font)
 	
-	close_button.connect("pressed", self, "_on_close_button_pressed")
-	add_child(close_button)
+	# close_button.connect("pressed", self, "_on_close_button_pressed")
+	# add_child(close_button)
 	
-	close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
-	close_button.margin_right = -5
-	close_button.margin_top = 5
-	close_button.margin_left = -30
-	close_button.margin_bottom = 25
+	# close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
+	# close_button.margin_right = -5
+	# close_button.margin_top = 5
+	# close_button.margin_left = -30
+	# close_button.margin_bottom = 25
 
 	update_buttons()
 
@@ -156,7 +175,7 @@ func set_docked(docked: bool):
 func update_buttons():
 	if is_docked:
 		dock_button.text = "Pop out"
-		close_button.visible = false
+		# close_button.visible = false
 	else:
 		dock_button.text = "Dock"
-		close_button.visible = true
+		# close_button.visible = true

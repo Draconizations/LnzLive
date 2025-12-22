@@ -95,7 +95,7 @@ func _update_tab_visibilities():
 	var is_any_mode_floating = false
 	if floating_layer:
 		for panel in floating_layer.get_children():
-			if not panel.name in UTILITY_TABS:
+			if panel.visible and not panel.name in UTILITY_TABS:
 				is_any_mode_floating = true
 				break
 			
