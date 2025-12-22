@@ -11,6 +11,7 @@ export var base_ball_size         = 10                 setget set_base_ball_size
 export var ball_size              = 10                 setget set_ball_size
 export var fuzz_amount            = 0                  setget set_fuzz_amount
 export var outline                = -1                 setget set_outline
+export var group                  = -1                 setget set_group
 export var color_index            = -1                 setget set_color_index
 export var outline_color_index    = 0                  setget set_outline_color_index
 export var z_add                  = 0.0                setget set_z_add
@@ -184,6 +185,9 @@ func set_outline(new_value):
 	outline = new_value
 	$MeshInstance.material_override.set_shader_param("outline", new_value)
 	
+func set_group(new_value):
+	group = new_value
+
 func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)

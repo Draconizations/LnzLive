@@ -598,6 +598,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 5 )
 text = "Show Input LNZ"
 
+
 [node name="RawLnzContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
 visible = false
 margin_top = 555.0
@@ -621,7 +622,19 @@ custom_styles/focus = SubResource( 6 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 5 )
-text = "Apply PB LNZ to Preset"
+text = "Apply LNZ to Preset"
+
+[node name="GetPaintballzButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RawLnzContainer"]
+margin_top = 135.0
+margin_right = 420.0
+margin_bottom = 162.0
+custom_fonts/font = SubResource( 1 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+text = "Copy Preset to LNZ"
 
 [node name="ResetDefaultsButton" type="Button" parent="Panel/VBoxContainer"]
 margin_top = 700.0

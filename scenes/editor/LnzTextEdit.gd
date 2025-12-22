@@ -2508,7 +2508,7 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			paintball_line += str(paintball_info.outline_color_index) + delim
 			paintball_line += str(paintball_info.fuzz) + delim
 			paintball_line += str(paintball_info.outline) + delim
-			paintball_line += "0" + delim
+			paintball_line += str(paintball_info.group) + delim
 			paintball_line += str(paintball_info.texture_id) + delim
 			paintball_line += str(paintball_info.anchored)
 
@@ -2561,7 +2561,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				paintball_line += str(paintball_info.outline_color_index) + delim
 				paintball_line += str(paintball_info.fuzz) + delim
 				paintball_line += str(paintball_info.outline) + delim
-				paintball_line += "0" + delim # group, not in use for paintballz
+				paintball_line += str(paintball_info.group) + delim
 				paintball_line += str(paintball_info.texture_id) + delim
 				paintball_line += str(paintball_info.anchored)
 
