@@ -811,12 +811,26 @@ func _gui_input(event):
 		if is_resizing:
 			var delta = event.position - drag_start_pos
 			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
+
 			if change < 0:
 				Input.set_custom_mouse_cursor(hand_pinch)
 			else:
 				Input.set_custom_mouse_cursor(hand_stretch)
-			var new_size = clamp(original_scale + change, 1.0, 100.0)
-			drag_ball.set_ball_size(new_size)
+			
+			var target_visual = clamp(original_scale + change, 1.0, 500.0)
+
+			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+			var is_ab = drag_ball.ball_no >= KeyBallsData.max_base_ball_num
+			var bhd_s = pet_node.bhd.ball_sizes[drag_ball.ball_no] if not is_ab else 0
+			var engine_scale = pet_node.lnz.scales[1]
+			
+			var req_total = (target_visual / (engine_scale / 255.0)) + 2
+			var final_lnz = round(req_total - bhd_s)
+			
+			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+			snapped_visual -= 1 - fmod(snapped_visual, 2)
+			
+			drag_ball.set_ball_size(snapped_visual)
 		else:
 			Input.set_custom_mouse_cursor(hand_move)
 			var real_center = rect_position + rect_size / 2.0
@@ -1286,28 +1300,27 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 
 func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
 	var ball_no = drag_ball.ball_no
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
-
-	var lnz_size = 0
-	if is_addball:
-		if pet_node.lnz.addballs.has(ball_no):
-			lnz_size = pet_node.lnz.addballs[ball_no].size
-	else:
-		if pet_node.lnz.balls.has(ball_no):
-			lnz_size = pet_node.lnz.balls[ball_no].size
-
-	var current_visual_diameter = drag_ball.ball_size
-
-	print("Old visual scale: %s" % original_scale)
-	print("New visual scale: %s" % current_visual_diameter)
-
-	var pct_delta = drag_ball.ball_size / original_scale
-	var size_dif = lnz_size*pct_delta + (current_visual_diameter - original_scale)*pct_delta
-
-	print("[LNZ EDIT] Ball %d original diameter: %d vs adjusted diameter: %d, stored LNZ = %d, updated LNZ = %d"
-		% [ball_no, original_scale, current_visual_diameter, lnz_size, size_dif])
-
-	return size_dif
+	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
+	
+	var bhd_size = 0
+	if not is_addball:
+		bhd_size = pet_node.bhd.ball_sizes[ball_no]
+	
+	var scale = pet_node.lnz.scales[1] # 
+	var desired_visual = drag_ball.ball_size
+	
+	var req_total_size = (desired_visual / (scale / 255.0)) + 2
+	var lnz_value = int(round(req_total_size - bhd_size))
+	
+	for i in range(-1, 2):
+		var test_lnz = lnz_value + i
+		var test_visual = round(((bhd_size + test_lnz) - 2) * (scale / 255.0))
+		test_visual -= 1 - fmod(test_visual, 2)
+		
+		if test_visual == desired_visual:
+			return test_lnz
+			
+	return lnz_value
 
 func begin_auto_move_for_ball(ball: Spatial) -> void:
 	if not ball: return

@@ -900,6 +900,14 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			pb_visual_ball.z_add = float(count)
 			pb_visual_ball.base_ball_no = paintball.base
 
+			if omissions.has(key):
+				if draw_omitted_balls:
+					pb_visual_ball.visible_override = true
+				else:
+					pb_visual_ball.visible_override = false
+					pb_visual_ball.visible = false
+			elif !draw_paintballs:
+				pb_visual_ball.visible_override = false
 
 			if !draw_paintballs:
 				pb_visual_ball.visible_override = false
@@ -1204,11 +1212,21 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 					node.visible = draw_balls
 				elif node.is_in_group("addballs"):
 					node.visible = draw_addballs
+
+				if paintball_map.has(ball_no):
+					for pb in paintball_map[ball_no]:
+						pb.visible_override = true
+						pb.visible = draw_paintballs
 			else:
 				node.visible_override = false
 				
 				if not node.is_in_group("balls"):
 					node.visible = false
+
+				if paintball_map.has(ball_no):
+					for pb in paintball_map[ball_no]:
+						pb.visible_override = false
+						pb.visible = false
 
 func signal_ball_mouse_enter(ball_info):
 	emit_signal("ball_mouse_enter", ball_info)
