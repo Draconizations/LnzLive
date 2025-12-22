@@ -133,13 +133,13 @@ func _ready():
 		sidebar_controller = sidebar_node
 	
 	if sidebar_controller:
-		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "Auto Paintballer")
-		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette Viewer")
-		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paintball Mode")
-		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line Mode")
-		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move Mode")
-		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset Mode")
-		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Project Mode")
+		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
+		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
+		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
+		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
+		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
+		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
+		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Project")
 	else:
 		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
@@ -2429,5 +2429,5 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 		if not panel.is_docked:
 			panel.hide()
 	
-	if sidebar_controller and sidebar_controller.has_method("update_tab_visibilities"):
-		sidebar_controller.update_tab_visibilities()
+	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
+		sidebar_controller._update_tab_visibilities()

@@ -4,7 +4,7 @@ onready var tab_container = get_node("SidebarTabs")
 onready var tree = get_node("SidebarTabs/FileTree/Tree")
 
 var floating_layer: CanvasLayer = null
-const UTILITY_TABS = ["FileTree", "Palette Viewer"]
+const UTILITY_TABS = ["FileTree", "Palette"]
 
 func _ready():
 	if tab_container:
@@ -37,7 +37,7 @@ func add_tool_tab(control: Control, title: String):
 
 	if title == "FileTree":
 		tab_container.move_child(control, 0)
-	elif title == "Palette Viewer":
+	elif title == "Palette":
 		var target_idx = 1 if tab_container.get_child(0).name == "FileTree" else 0
 		tab_container.move_child(control, target_idx)
 
@@ -112,12 +112,12 @@ func _on_tab_changed(tab_index: int):
 	if not pet_view or not is_instance_valid(pet_view): return
 
 	match control.name:
-		"Paintball Mode": pet_view.paintball_check_box.pressed = true
-		"Auto Paintballer": pet_view.auto_paintballer_check_box.pressed = true
-		"Move Mode": pet_view.move_mode_check_box.pressed = true
-		"Line Mode": pet_view.line_mode_check_box.pressed = true
-		"Preset Mode": pet_view.preset_mode_check_box.pressed = true
-		"Project Mode": pet_view.project_mode_check_box.pressed = true
-		"Palette Viewer": pet_view.view_palette_check_box.pressed = true
-		"File Tree":
+		"Paint": pet_view.paintball_check_box.pressed = true
+		"AutoPaint": pet_view.auto_paintballer_check_box.pressed = true
+		"Move": pet_view.move_mode_check_box.pressed = true
+		"Line": pet_view.line_mode_check_box.pressed = true
+		"Preset": pet_view.preset_mode_check_box.pressed = true
+		"Project": pet_view.project_mode_check_box.pressed = true
+		"Palette": pet_view.view_palette_check_box.pressed = true
+		"FileTree":
 			pass
