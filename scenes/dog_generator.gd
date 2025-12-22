@@ -647,7 +647,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if new_create:
 				visual_ball = paintball_scene.instance()
 				visual_ball.add_to_group("balls")
-				visual_ball.override_ball_no = ball.ball_no
+				visual_ball.ball_no = ball.ball_no
 				visual_ball.z_add = 10
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")

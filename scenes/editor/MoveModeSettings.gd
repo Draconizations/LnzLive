@@ -144,7 +144,7 @@ func is_mirror_x_active():
 	return find_node("MirrorX").pressed
 
 func _setup_group_buttons():
-	var groups = ["Head", "Body", "Legs", "Tail", "Ears"]
+	var groups = ["Head", "Body", "Legs", "Tail", "Ears", "Eyes"]
 	for g in groups:
 		var btn = find_node(g)
 		if btn:

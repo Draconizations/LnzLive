@@ -2177,12 +2177,12 @@ func _on_flip_selection(axis_vector, pivot_id):
 func _update_selected_ballz_in_settings():
 	var ids = []
 	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false)
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
 	
-	var filter = KeyBallsData.get_group_balls("irises")
+	var filter = []
 	if exclude_eyes:
-		filter += KeyBallsData.get_group_balls("eyes")
-	
+		filter += KeyBallsData.get_group_balls("Eyes")
+
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:
 			if not b.ball_no in filter:
@@ -2196,12 +2196,8 @@ func _update_selected_ballz_in_settings():
 
 func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()
-	var iris_ids = KeyBallsData.get_group_balls("irises")
 	
 	for id in ids:
-		if id in iris_ids:
-			continue
-			
 		var ball = _find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			if "ball_no" in ball:
@@ -2214,22 +2210,22 @@ func _commit_box_selection():
 	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	
-	var iris_ids = KeyBallsData.get_group_balls("irises")
 	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) 
-	var eye_ids = KeyBallsData.get_group_balls("eyes") if exclude_eyes else []
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
+	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
 
 	for b in all_balls:
-		if not is_instance_valid(b) or not b.is_inside_tree(): 
+		#if not is_instance_valid(b) or not b.is_inside_tree(): 
+		if not is_instance_valid(b) or not b.visible: 
 			continue
 
 		if b.get("omitted") == true and not dog_generator.draw_omitted_balls:
 			continue
 		
-		if not ("ball_no" in b) or not b.visible: 
+		if not ("ball_no" in b): 
 			continue
 			
-		if b.ball_no in iris_ids or b.ball_no in eye_ids: 
+		if b.ball_no in eye_ids: 
 			continue
 
 		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
@@ -2251,10 +2247,12 @@ func _on_preset_apply_selection():
 	var properties = preset_settings_instance.get_properties()
 	var ball_ids = []
 	
-	var should_exclude_eyes = properties.get("exclude_eyes", false)
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	print(exclude_eyes)
 	var exclusion_list = []
-	if should_exclude_eyes:
-		exclusion_list = KeyBallsData.get_group_balls("eyes") + KeyBallsData.get_group_balls("irises")
+	if exclude_eyes:
+		exclusion_list = KeyBallsData.get_group_balls("Eyes")
+		print(exclusion_list)
 
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:

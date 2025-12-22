@@ -652,7 +652,8 @@ func build_move_groups():
 		"Body": dog_torso, 
 		"Legs": _flatten(legs_dog),
 		"Tail": tail_dog.duplicate(),
-		"Ears": _flatten_dict(ear_ext_dog)
+		"Ears": _flatten_dict(ear_ext_dog),
+		"Eyes": eyes_dog.values() + eyes_dog.keys()
 	}
 
 	var cat_torso = [38, 39, 25, 26, 6, 2, 3, 36]
@@ -662,7 +663,8 @@ func build_move_groups():
 		"Body": cat_torso,
 		"Legs": _flatten(legs_cat),
 		"Tail": tail_cat.duplicate(),
-		"Ears": _flatten_dict(ear_ext_cat)
+		"Ears": _flatten_dict(ear_ext_cat),
+		"Eyes": eyes_cat.values() + eyes_cat.keys()
 	}
 
 	var bab_torso = [94, 95, 66, 67, 10, 11, 4, 70, 81]
@@ -672,7 +674,8 @@ func build_move_groups():
 		"Body": bab_torso,
 		"Legs": _flatten(legs_bab),
 		"Tail": [],
-		"Ears": _flatten_dict(ear_ext_bab)
+		"Ears": _flatten_dict(ear_ext_bab),
+		"Eyes": eyes_bab.values() + eyes_bab.keys()
 	}
 
 func _flatten(array_of_arrays):
