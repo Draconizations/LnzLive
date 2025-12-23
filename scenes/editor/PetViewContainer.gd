@@ -2481,12 +2481,18 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	if is_active:
 		if panel.is_docked:
 			sidebar_controller.dock_panel(panel)
+			sidebar_controller.switch_to_tab(panel) 
 		else:
 			panel.show()
 			panel.raise()
 	else:
 		if not panel.is_docked:
 			panel.hide()
+		
+		if sidebar_controller:
+			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
+			if tree_tab:
+				sidebar_controller.switch_to_tab(tree_tab) 
 	
 	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
 		sidebar_controller._update_tab_visibilities()
