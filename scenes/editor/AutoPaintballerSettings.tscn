@@ -9,10 +9,8 @@
 size = 30
 font_data = ExtResource( 3 )
 
-[node name="AutoPaintballerSettings" type="CanvasLayer"]
+[node name="AutoPaintballerSettings" type="Panel"]
 script = ExtResource( 1 )
-
-[node name="Panel" type="Panel" parent="."]
 visible = false
 margin_left = 10.0
 margin_top = 10.0
@@ -20,12 +18,11 @@ margin_right = 410.0
 margin_bottom = 535.0
 rect_min_size = Vector2( 600, 525 )
 custom_styles/panel = ExtResource( 2 )
-script = ExtResource( 4 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 4.0
@@ -36,20 +33,20 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
 margin_right = 592.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 1 )
 text = "Auto Paintballer"
 align = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 25.0
 margin_right = 592.0
 margin_bottom = 54.0
 alignment = 1
 
-[node name="RandomizeButton" type="Button" parent="Panel/VBoxContainer/HBoxContainer"]
+[node name="RandomizeButton" type="Button" parent="VBoxContainer/HBoxContainer"]
 margin_left = 149.0
 margin_right = 296.0
 margin_bottom = 29.0
@@ -58,7 +55,7 @@ mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Randomize"
 
-[node name="ClearButton" type="Button" parent="Panel/VBoxContainer/HBoxContainer"]
+[node name="ClearButton" type="Button" parent="VBoxContainer/HBoxContainer"]
 margin_left = 300.0
 margin_right = 449.0
 margin_bottom = 29.0
@@ -67,12 +64,12 @@ mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Clear"
 
-[node name="HBoxContainerOptions" type="HBoxContainer" parent="Panel/VBoxContainer"]
+[node name="HBoxContainerOptions" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 58.0
 margin_right = 592.0
 margin_bottom = 82.0
 
-[node name="Ordered" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+[node name="Ordered" type="CheckBox" parent="VBoxContainer/HBoxContainerOptions"]
 margin_right = 195.0
 margin_bottom = 24.0
 hint_tooltip = "Cycle through colors/textures in order instead of randomly"
@@ -80,7 +77,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Ordered"
 
-[node name="UseSeed" type="CheckBox" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+[node name="UseSeed" type="CheckBox" parent="VBoxContainer/HBoxContainerOptions"]
 margin_left = 199.0
 margin_right = 394.0
 margin_bottom = 24.0
@@ -89,7 +86,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Use Seed"
 
-[node name="Seed" type="LineEdit" parent="Panel/VBoxContainer/HBoxContainerOptions"]
+[node name="Seed" type="LineEdit" parent="VBoxContainer/HBoxContainerOptions"]
 margin_left = 398.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -99,7 +96,7 @@ editable = false
 custom_fonts/font = SubResource( 1 )
 placeholder_text = "Random Seed"
 
-[node name="AutoPaintballerWarning" type="RichTextLabel" parent="Panel/VBoxContainer"]
+[node name="AutoPaintballerWarning" type="RichTextLabel" parent="VBoxContainer"]
 margin_top = 86.0
 margin_right = 592.0
 margin_bottom = 119.0
@@ -108,21 +105,21 @@ bbcode_enabled = true
 text = "Warning: experimental tool! Depending on number of spots and distribution modes, randomize could take a long time to preview."
 fit_content_height = true
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 95.0
 margin_right = 592.0
 margin_bottom = 488.0
 size_flags_vertical = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 592.0
 size_flags_horizontal = 3
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -130,7 +127,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Affected Ballz"
 
-[node name="AffectedBallz" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
+[node name="AffectedBallz" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -138,7 +135,7 @@ hint_tooltip = "Comma-separated list of ball IDs to paint on (e.g. 1,2,5-10)"
 size_flags_horizontal = 3
 placeholder_text = "e.g. 1,2,5-10"
 
-[node name="UnselectButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="UnselectButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_left = 130.0
 margin_right = 236.0
 margin_bottom = 25.0
@@ -147,12 +144,12 @@ mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Unselect All"
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -160,7 +157,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Distribution"
 
-[node name="Distribution" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
+[node name="Distribution" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -171,7 +168,7 @@ text = "Uniform"
 items = [ "Uniform", null, false, 0, null, "Spiral", null, false, 1, null, "Star", null, false, 2, null, "Bands", null, false, 3, null, "Noise (Simplex)", null, false, 4, null, "Grid", null, false, 5, null, "Checkerboard", null, false, 6, null, "Random Walk", null, false, 7, null, "Clustered", null, false, 8, null, "Pole-Focused", null, false, 9, null, "Equator-Focused", null, false, 10, null, "Halfie", null, false, 11, null, "Bullseye", null, false, 12, null,  "Leospots", null, false, 13, null, "Rainbow", null, false, 14, null, "Stripes (Turing)", null, false, 15, null,"Fractal (L-system)", null, false, 16, null, "Cell (Voronoi)", null, false, 17, null, "Wave (Harmonic)", null, false, 18, null ]
 selected = 0
 
-[node name="DescriptionLabel" type="RichTextLabel" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="DescriptionLabel" type="RichTextLabel" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 77.0
@@ -179,12 +176,12 @@ custom_fonts/normal_font = SubResource( 1 )
 bbcode_enabled = true
 fit_content_height = true
 
-[node name="HBoxContainer12" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer12" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 81.0
 margin_right = 592.0
 margin_bottom = 105.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -192,7 +189,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Number of Spots"
 
-[node name="NumSpots" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
+[node name="NumSpots" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer12"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -202,21 +199,21 @@ min_value = 1.0
 max_value = 1000.0
 value = 25.0
 
-[node name="ParamsContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="ParamsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 109.0
 margin_right = 592.0
 margin_bottom = 109.0
 
-[node name="WaveContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="WaveContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="DegreeHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
+[node name="DegreeHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/DegreeHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/DegreeHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -224,7 +221,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Degree (L)"
 
-[node name="WaveDegreeL" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/DegreeHBox"]
+[node name="WaveDegreeL" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/DegreeHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -235,12 +232,12 @@ max_value = 3.0
 step = 1.0
 value = 2.0
 
-[node name="OrderHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
+[node name="OrderHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/OrderHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/OrderHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -248,7 +245,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Order (M)"
 
-[node name="WaveOrderM" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/OrderHBox"]
+[node name="WaveOrderM" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/OrderHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -259,12 +256,12 @@ max_value = 3.0
 step = 1.0
 value = 1.0
 
-[node name="ThresholdHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
+[node name="ThresholdHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/ThresholdHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/ThresholdHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -272,7 +269,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Threshold"
 
-[node name="WaveThreshold" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/ThresholdHBox"]
+[node name="WaveThreshold" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/WaveContainer/ThresholdHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -283,16 +280,16 @@ max_value = 1.0
 step = 0.05
 value = 0.6
 
-[node name="VoronoiContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="VoronoiContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="CellsHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer"]
+[node name="CellsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/CellsHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/CellsHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -300,7 +297,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Num Cells"
 
-[node name="VoronoiCells" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/CellsHBox"]
+[node name="VoronoiCells" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/CellsHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -311,12 +308,12 @@ max_value = 25.0
 step = 1.0
 value = 5.0
 
-[node name="EdgeSizeHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer"]
+[node name="EdgeSizeHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/EdgeSizeHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/EdgeSizeHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -324,7 +321,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Edge Size"
 
-[node name="VoronoiEdgeSize" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/EdgeSizeHBox"]
+[node name="VoronoiEdgeSize" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/VoronoiContainer/EdgeSizeHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -335,16 +332,16 @@ max_value = 0.5
 step = 0.01
 value = 0.05
 
-[node name="NoiseContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="NoiseContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="ScaleHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
+[node name="ScaleHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ScaleHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ScaleHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -352,7 +349,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Noise Scale (Period)"
 
-[node name="NoiseScale" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ScaleHBox"]
+[node name="NoiseScale" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ScaleHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -363,12 +360,12 @@ max_value = 100.0
 step = 0.1
 value = 10.0
 
-[node name="ThresholdHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
+[node name="ThresholdHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ThresholdHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ThresholdHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -376,7 +373,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Threshold"
 
-[node name="NoiseThreshold" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ThresholdHBox"]
+[node name="NoiseThreshold" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/ThresholdHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -387,12 +384,12 @@ max_value = 1.0
 step = 0.05
 value = 0.5
 
-[node name="OctavesHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
+[node name="OctavesHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/OctavesHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/OctavesHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -400,7 +397,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Octaves"
 
-[node name="NoiseOctaves" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/OctavesHBox"]
+[node name="NoiseOctaves" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NoiseContainer/OctavesHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -411,16 +408,16 @@ max_value = 10.0
 step = 1.0
 value = 3.0
 
-[node name="FractalContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="FractalContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 258.0
 
-[node name="PresetContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+[node name="PresetContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_right = 592.0
 margin_bottom = 29.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
 margin_top = 4.0
 margin_right = 195.0
 margin_bottom = 25.0
@@ -428,7 +425,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Preset"
 
-[node name="FractalPreset" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+[node name="FractalPreset" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
 margin_left = 199.0
 margin_right = 394.0
 margin_bottom = 29.0
@@ -439,7 +436,7 @@ text = "Custom"
 items = [ "Custom", null, false, 0, null, "Dragon Curve", null, false, 1, null, "Sierpinski", null, false, 2, null, "Barnsley Fern", null, false, 3, null ]
 selected = 0
 
-[node name="RandomSystemButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
+[node name="RandomSystemButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/PresetContainer"]
 margin_left = 398.0
 margin_right = 592.0
 margin_bottom = 29.0
@@ -448,12 +445,12 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Generate Random"
 
-[node name="AxiomContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+[node name="AxiomContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_top = 33.0
 margin_right = 592.0
 margin_bottom = 57.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -461,7 +458,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Axiom"
 
-[node name="FractalAxiom" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
+[node name="FractalAxiom" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AxiomContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -469,18 +466,18 @@ hint_tooltip = "Initial state string"
 size_flags_horizontal = 3
 placeholder_text = "F"
 
-[node name="RulesContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+[node name="RulesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_top = 61.0
 margin_right = 592.0
 margin_bottom = 191.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
 margin_right = 592.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 1 )
 text = "Rules (e.g. F=F+G)"
 
-[node name="FractalRules" type="TextEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
+[node name="FractalRules" type="TextEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/RulesContainer"]
 margin_top = 25.0
 margin_right = 592.0
 margin_bottom = 130.0
@@ -490,12 +487,12 @@ custom_fonts/font = SubResource( 1 )
 show_line_numbers = true
 wrap_enabled = true
 
-[node name="IterationsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+[node name="IterationsContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_top = 195.0
 margin_right = 592.0
 margin_bottom = 219.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -503,7 +500,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Iterations"
 
-[node name="FractalIterations" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
+[node name="FractalIterations" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/IterationsContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -513,12 +510,12 @@ min_value = 1.0
 max_value = 10.0
 value = 5.0
 
-[node name="AngleContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
+[node name="AngleContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer"]
 margin_top = 223.0
 margin_right = 592.0
 margin_bottom = 247.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -526,7 +523,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Angle"
 
-[node name="FractalAngle" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
+[node name="FractalAngle" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/FractalContainer/AngleContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -536,13 +533,13 @@ min_value = 1.0
 max_value = 180.0
 value = 90.0
 
-[node name="SpiralTurnsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="SpiralTurnsContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_top = 4.0
 margin_right = 392.0
 margin_bottom = 28.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/SpiralTurnsContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/SpiralTurnsContainer"]
 margin_top = 1.0
 margin_right = 194.0
 margin_bottom = 22.0
@@ -550,7 +547,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Turns"
 
-[node name="SpiralTurns" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/SpiralTurnsContainer"]
+[node name="SpiralTurns" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/SpiralTurnsContainer"]
 margin_left = 198.0
 margin_right = 392.0
 margin_bottom = 24.0
@@ -559,13 +556,13 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 5.0
 
-[node name="StarPointsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="StarPointsContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_top = 4.0
 margin_right = 392.0
 margin_bottom = 28.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
 margin_top = 1.0
 margin_right = 194.0
 margin_bottom = 22.0
@@ -573,7 +570,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Point Size"
 
-[node name="StarPointSize" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
+[node name="StarPointSize" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
 margin_left = 198.0
 margin_right = 392.0
 margin_bottom = 24.0
@@ -582,7 +579,7 @@ size_flags_horizontal = 3
 min_value = 2.0
 value = 4.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
 margin_top = 1.0
 margin_right = 194.0
 margin_bottom = 22.0
@@ -590,7 +587,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Point Count"
 
-[node name="StarPoints" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
+[node name="StarPoints" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StarPointsContainer"]
 margin_left = 198.0
 margin_right = 392.0
 margin_bottom = 24.0
@@ -599,13 +596,13 @@ size_flags_horizontal = 3
 min_value = 2.0
 value = 5.0
 
-[node name="RayLengthContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="RayLengthContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_top = 60.0
 margin_right = 592.0
 margin_bottom = 84.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RayLengthContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RayLengthContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -613,7 +610,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Ray Length"
 
-[node name="RayLength" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RayLengthContainer"]
+[node name="RayLength" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RayLengthContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -622,16 +619,16 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 4.0
 
-[node name="RainbowContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="RainbowContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="AngleContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+[node name="AngleContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -639,7 +636,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Angle"
 
-[node name="RainbowAngle" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
+[node name="RainbowAngle" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/AngleContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -649,12 +646,12 @@ min_value = -180.0
 max_value = 180.0
 step = 5.0
 
-[node name="CurvatureContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+[node name="CurvatureContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -662,7 +659,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Curvature"
 
-[node name="RainbowCurvature" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
+[node name="RainbowCurvature" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/CurvatureContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -671,12 +668,12 @@ size_flags_horizontal = 3
 max_value = 1.0
 step = 0.05
 
-[node name="WidthContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+[node name="WidthContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -684,7 +681,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Width"
 
-[node name="RainbowWidth" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
+[node name="RainbowWidth" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/WidthContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -695,12 +692,12 @@ max_value = 10.0
 step = 0.01
 value = 0.5
 
-[node name="LengthContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
+[node name="LengthContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer"]
 margin_top = 84.0
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -708,7 +705,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Length"
 
-[node name="RainbowLength" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
+[node name="RainbowLength" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/RainbowContainer/LengthContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -719,16 +716,16 @@ max_value = 4.0
 step = 0.1
 value = 1.0
 
-[node name="BandsContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="BandsContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 136.0
 
-[node name="DirectionHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
+[node name="DirectionHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/DirectionHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/DirectionHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -736,7 +733,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Direction"
 
-[node name="BandDirection" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/DirectionHBox"]
+[node name="BandDirection" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/DirectionHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -747,12 +744,12 @@ text = "Horizontal"
 items = [ "Horizontal", null, false, 0, null, "Vertical", null, false, 1, null ]
 selected = 0
 
-[node name="BandsHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
+[node name="BandsHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/BandsHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/BandsHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -760,7 +757,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Bands"
 
-[node name="NumBands" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/BandsHBox"]
+[node name="NumBands" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/BandsHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -769,12 +766,12 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 5.0
 
-[node name="SpacingHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
+[node name="SpacingHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/SpacingHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/SpacingHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -782,7 +779,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Spacing"
 
-[node name="BandSpacing" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/SpacingHBox"]
+[node name="BandSpacing" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/SpacingHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -793,12 +790,12 @@ max_value = 10.0
 step = 0.05
 value = 0.5
 
-[node name="OffsetHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
+[node name="OffsetHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
 margin_top = 84.0
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/OffsetHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/OffsetHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -806,7 +803,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Offset"
 
-[node name="BandOffset" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/OffsetHBox"]
+[node name="BandOffset" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/OffsetHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -816,12 +813,12 @@ min_value = -1.0
 max_value = 1.0
 step = 0.05
 
-[node name="AngleHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
+[node name="AngleHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer"]
 margin_top = 112.0
 margin_right = 592.0
 margin_bottom = 136.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/AngleHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/AngleHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -829,7 +826,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Angle"
 
-[node name="BandAngle" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/AngleHBox"]
+[node name="BandAngle" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BandsContainer/AngleHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -839,12 +836,12 @@ min_value = -180.0
 max_value = 180.0
 step = 5.0
 
-[node name="GridSizeContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="GridSizeContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/GridSizeContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/GridSizeContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -852,7 +849,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Grid Size"
 
-[node name="GridSize" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/GridSizeContainer"]
+[node name="GridSize" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/GridSizeContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -861,12 +858,12 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 5.0
 
-[node name="NumClustersContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="NumClustersContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NumClustersContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NumClustersContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -874,7 +871,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Clusters"
 
-[node name="NumClusters" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NumClustersContainer"]
+[node name="NumClusters" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/NumClustersContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -883,16 +880,16 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 3.0
 
-[node name="StripesContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="StripesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="FeedRateHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
+[node name="FeedRateHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/FeedRateHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/FeedRateHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -900,7 +897,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Feed Rate"
 
-[node name="StripeFeedRate" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/FeedRateHBox"]
+[node name="StripeFeedRate" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/FeedRateHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -911,12 +908,12 @@ max_value = 0
 step = 0.001
 value = 0.07
 
-[node name="KillRateHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
+[node name="KillRateHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/KillRateHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/KillRateHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -924,7 +921,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Kill Rate"
 
-[node name="StripeKillRate" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/KillRateHBox"]
+[node name="StripeKillRate" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/KillRateHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -935,12 +932,12 @@ max_value = 0.07
 step = 0.001
 value = 0.05
 
-[node name="DiffusionHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
+[node name="DiffusionHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="LabelA" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
+[node name="LabelA" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -948,7 +945,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Diffusion (Activator)"
 
-[node name="DiffusionActivator" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
+[node name="DiffusionActivator" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -959,7 +956,7 @@ max_value = 2.0
 step = 0.01
 value = 0.5
 
-[node name="LabelI" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
+[node name="LabelI" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -967,7 +964,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Diffusion (Inhibitor)"
 
-[node name="DiffusionInhibitor" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
+[node name="DiffusionInhibitor" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/DiffusionHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -978,12 +975,12 @@ max_value = 2.0
 step = 0.01
 value = 1.0
 
-[node name="TimestepHBox" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
+[node name="TimestepHBox" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer"]
 margin_top = 84.0
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/TimestepHBox"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/TimestepHBox"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -991,7 +988,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Timestep"
 
-[node name="StripeTimestep" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/TimestepHBox"]
+[node name="StripeTimestep" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/StripesContainer/TimestepHBox"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1002,16 +999,16 @@ max_value = 2.0
 step = 0.1
 value = 1.0
 
-[node name="LeopardContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="LeopardContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 136.0
 
-[node name="RadiusMinContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
+[node name="RadiusMinContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMinContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMinContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1019,7 +1016,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Spot Radius Min"
 
-[node name="LeopardRadiusMin" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMinContainer"]
+[node name="LeopardRadiusMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMinContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1030,12 +1027,12 @@ max_value = 0.5
 step = 0.01
 value = 0.05
 
-[node name="RadiusMaxContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
+[node name="RadiusMaxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMaxContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMaxContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1043,7 +1040,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Spot Radius Max"
 
-[node name="LeopardRadiusMax" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMaxContainer"]
+[node name="LeopardRadiusMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/RadiusMaxContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1054,12 +1051,12 @@ max_value = 0.5
 step = 0.01
 value = 0.1
 
-[node name="IrregularityContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
+[node name="IrregularityContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
 margin_top = 56.0
 margin_right = 592.0
 margin_bottom = 80.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/IrregularityContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/IrregularityContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1067,7 +1064,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Irregularity"
 
-[node name="LeopardIrregularity" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/IrregularityContainer"]
+[node name="LeopardIrregularity" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/IrregularityContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1077,12 +1074,12 @@ max_value = 1.0
 step = 0.05
 value = 0.3
 
-[node name="CompletenessContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
+[node name="CompletenessContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
 margin_top = 84.0
 margin_right = 592.0
 margin_bottom = 108.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/CompletenessContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/CompletenessContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1090,7 +1087,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Completeness"
 
-[node name="LeopardCompleteness" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/CompletenessContainer"]
+[node name="LeopardCompleteness" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/CompletenessContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1101,12 +1098,12 @@ max_value = 1.0
 step = 0.05
 value = 0.75
 
-[node name="PairedColorsContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
+[node name="PairedColorsContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer"]
 margin_top = 112.0
 margin_right = 592.0
 margin_bottom = 136.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/PairedColorsContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/PairedColorsContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1114,23 +1111,23 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Use Paired Colors"
 
-[node name="LeopardPairedColors" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/PairedColorsContainer"]
+[node name="LeopardPairedColors" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/LeopardContainer/PairedColorsContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
 hint_tooltip = "Use pairs of colors (Outer, Inner) from the list"
 size_flags_horizontal = 3
 
-[node name="HalfieContainer" type="VBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="HalfieContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer"]
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1138,7 +1135,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Axis"
 
-[node name="HalfieAxis" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer"]
+[node name="HalfieAxis" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1148,12 +1145,12 @@ text = "X"
 items = [ "X", null, false, 0, null, "Y", null, false, 1, null, "Z", null, false, 2, null ]
 selected = 0
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer"]
 margin_top = 28.0
 margin_right = 592.0
 margin_bottom = 52.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer2"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer2"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1161,7 +1158,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Side"
 
-[node name="HalfieSide" type="OptionButton" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer2"]
+[node name="HalfieSide" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/HalfieContainer/HBoxContainer2"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1171,12 +1168,12 @@ text = "Positive"
 items = [ "Positive", null, false, 0, null, "Negative", null, false, 1, null ]
 selected = 0
 
-[node name="BullseyeContainer" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
+[node name="BullseyeContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer"]
 visible = false
 margin_right = 592.0
 margin_bottom = 24.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BullseyeContainer"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BullseyeContainer"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1184,7 +1181,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Rings"
 
-[node name="NumRings" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BullseyeContainer"]
+[node name="NumRings" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/ParamsContainer/BullseyeContainer"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1193,7 +1190,7 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 3.0
 
-[node name="Label2" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 113.0
 margin_right = 592.0
 margin_bottom = 134.0
@@ -1201,12 +1198,12 @@ custom_fonts/font = SubResource( 1 )
 text = "Property Ranges"
 align = 1
 
-[node name="HBoxContainer4" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 138.0
 margin_right = 592.0
 margin_bottom = 162.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
 margin_top = 1.0
 margin_right = 195.0
 margin_bottom = 22.0
@@ -1214,7 +1211,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Diameter"
 
-[node name="SizeMin" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
+[node name="SizeMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
 margin_left = 199.0
 margin_right = 393.0
 margin_bottom = 24.0
@@ -1223,7 +1220,7 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 10.0
 
-[node name="SizeMax" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
+[node name="SizeMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer4"]
 margin_left = 397.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1232,12 +1229,12 @@ size_flags_horizontal = 3
 min_value = 1.0
 value = 20.0
 
-[node name="HBoxContainer5" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 166.0
 margin_right = 592.0
 margin_bottom = 190.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1245,7 +1242,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Color"
 
-[node name="ColorList" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
+[node name="ColorList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer5"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1253,12 +1250,12 @@ hint_tooltip = "Comma-separated color indices (e.g. 1,2,5-10)"
 size_flags_horizontal = 3
 placeholder_text = "e.g. 1,2,5-10"
 
-[node name="HBoxContainer9" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 278.0
 margin_right = 592.0
 margin_bottom = 302.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1266,7 +1263,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Texture"
 
-[node name="TextureList" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
+[node name="TextureList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer9"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1275,12 +1272,12 @@ size_flags_horizontal = 3
 text = "0"
 placeholder_text = "e.g. -1,1-2"
 
-[node name="HBoxContainer6" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 194.0
 margin_right = 592.0
 margin_bottom = 218.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1288,7 +1285,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Outline Color"
 
-[node name="OutlineColorList" type="LineEdit" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
+[node name="OutlineColorList" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer6"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1297,12 +1294,12 @@ size_flags_horizontal = 3
 text = "244"
 placeholder_text = "e.g. 1,2,5-10"
 
-[node name="HBoxContainer7" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 222.0
 margin_right = 592.0
 margin_bottom = 246.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
 margin_top = 1.0
 margin_right = 195.0
 margin_bottom = 22.0
@@ -1312,7 +1309,7 @@ text = "Outline Type"
 mouse_filter = 0
 hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 
-[node name="OutlineTypeMin" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
+[node name="OutlineTypeMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
 margin_left = 199.0
 margin_right = 393.0
 margin_bottom = 24.0
@@ -1322,7 +1319,7 @@ min_value = -2.0
 max_value = 10.0
 value = -1.0
 
-[node name="OutlineTypeMax" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
+[node name="OutlineTypeMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer7"]
 margin_left = 397.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1332,12 +1329,12 @@ min_value = -2.0
 max_value = 10.0
 value = -1.0
 
-[node name="HBoxContainer8" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 250.0
 margin_right = 592.0
 margin_bottom = 274.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
 margin_top = 1.0
 margin_right = 195.0
 margin_bottom = 22.0
@@ -1345,7 +1342,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Fuzz"
 
-[node name="FuzzMin" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
+[node name="FuzzMin" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
 margin_left = 199.0
 margin_right = 393.0
 margin_bottom = 24.0
@@ -1353,7 +1350,7 @@ hint_tooltip = "Minimum fuzz"
 size_flags_horizontal = 3
 max_value = 100.0
 
-[node name="FuzzMax" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
+[node name="FuzzMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer8"]
 margin_left = 397.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1361,12 +1358,12 @@ hint_tooltip = "Maximum fuzz"
 size_flags_horizontal = 3
 max_value = 100.0
 
-[node name="HBoxContainer10" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 306.0
 margin_right = 592.0
 margin_bottom = 330.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1374,7 +1371,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Group"
 
-[node name="Group" type="SpinBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
+[node name="Group" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer10"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1382,12 +1379,12 @@ hint_tooltip = "Add Group index"
 size_flags_horizontal = 3
 max_value = 100.0
 
-[node name="HBoxContainer11" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 334.0
 margin_right = 592.0
 margin_bottom = 358.0
 
-[node name="Label" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
+[node name="Label" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
 margin_top = 1.0
 margin_right = 294.0
 margin_bottom = 22.0
@@ -1395,7 +1392,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Anchored"
 
-[node name="Anchored" type="CheckBox" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
+[node name="Anchored" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
 margin_left = 298.0
 margin_right = 592.0
 margin_bottom = 24.0
@@ -1403,7 +1400,7 @@ hint_tooltip = "Anchor Paintballz to not rotate over parent ball"
 size_flags_horizontal = 3
 pressed = true
 
-[node name="ApplyButton" type="Button" parent="Panel/VBoxContainer"]
+[node name="ApplyButton" type="Button" parent="VBoxContainer"]
 margin_top = 492.0
 margin_right = 592.0
 margin_bottom = 521.0
@@ -1412,7 +1409,7 @@ mouse_default_cursor_shape = 2
 custom_fonts/font = SubResource( 1 )
 text = "Apply"
 
-[node name="ResetDefaultsButton" type="Button" parent="Panel/VBoxContainer"]
+[node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
 margin_top = 453.0
 margin_right = 292.0
 margin_bottom = 482.0

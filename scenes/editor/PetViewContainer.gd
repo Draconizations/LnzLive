@@ -38,6 +38,8 @@ var original_lnz_size = 0
 var original_scale = 1.0
 var drag_start_pos = Vector2()
 
+var sidebar_controller = null
+
 var linez_mode = false
 var linez_start_ball = null
 var line_mode_close = false
@@ -59,12 +61,21 @@ var _ordered_color_index = 0
 var _ordered_outline_color_index = 0
 var _ordered_texture_index = 0
 
-onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
-onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
-onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
-onready var auto_paintballer_settings_instance = preload("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
-onready var palette_viewer_instance = preload("res://scenes/editor/PaletteViewer.tscn").instance()
-onready var move_mode_settings_instance = preload("res://scenes/editor/MoveModeSettings.tscn").instance()
+# onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
+# onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
+# onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
+# onready var auto_paintballer_settings_instance = preload("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
+# onready var palette_viewer_instance = preload("res://scenes/editor/PaletteViewer.tscn").instance()
+# onready var move_mode_settings_instance = preload("res://scenes/editor/MoveModeSettings.tscn").instance()
+# onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
+
+var paintball_settings_instance: Control
+var project_settings_instance: Control
+var preset_settings_instance: Control
+var auto_paintballer_settings_instance: Control
+var palette_viewer_instance: Control
+var move_mode_settings_instance: Control
+var line_mode_settings_instance: Control
 
 onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
 onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
@@ -75,7 +86,6 @@ onready var view_palette_check_box = get_tree().root.get_node("Root/SceneRoot/HS
 onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
 onready var move_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/MoveModeCheckBox")
 
-onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
 
@@ -106,6 +116,39 @@ var box_end_pos = Vector2()
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
+
+	paintball_settings_instance = load("res://scenes/editor/PaintballSettings.tscn").instance()
+	project_settings_instance = load("res://scenes/editor/ProjectSettings.tscn").instance()
+	preset_settings_instance = load("res://scenes/editor/PresetSettings.tscn").instance()
+	auto_paintballer_settings_instance = load("res://scenes/editor/AutoPaintballerSettings.tscn").instance()
+	palette_viewer_instance = load("res://scenes/editor/PaletteViewer.tscn").instance()
+	move_mode_settings_instance = load("res://scenes/editor/MoveModeSettings.tscn").instance()
+	line_mode_settings_instance = load("res://scenes/editor/LineModeSettings.tscn").instance()
+
+	var sidebar_node = get_tree().root.find_node("VBoxContainer", true, false)
+	var sidebars = get_tree().get_nodes_in_group("SidebarController")
+	if sidebars.size() > 0:
+		sidebar_controller = sidebars[0]
+	elif sidebar_node and sidebar_node.has_method("add_tool_tab"):
+		sidebar_controller = sidebar_node
+	
+	if sidebar_controller:
+		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
+		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
+		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
+		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
+		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
+		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
+		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Project")
+	else:
+		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 	
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
@@ -122,29 +165,24 @@ func _ready():
 	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
 	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
 	paintball_settings_instance.connect("clear_paintballz", dog_generator, "_on_clear_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
 	preset_settings_instance.connect("apply_to_selection", self, "_on_preset_apply_selection")
 	preset_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 	preset_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
 
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
 
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
 	auto_paintballer_settings_instance.connect("randomize_auto_paintballz", dog_generator, "_on_randomize_auto_paintballz")
 	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
 	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
 	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
 	auto_paintballer_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 	move_mode_settings_instance.connect("apply_moves", self, "_on_move_mode_apply")
 	move_mode_settings_instance.connect("clear_moves", self, "_on_move_mode_clear")
 	move_mode_settings_instance.connect("unselect_all", self, "_on_unselect_all")
@@ -157,9 +195,6 @@ func _ready():
 	move_mode_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
 	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
-
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
-	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 
 	Input.set_custom_mouse_cursor(hand_neutral)
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
@@ -174,6 +209,14 @@ func _ready():
 
 	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
+
+func _ensure_panel_visible(panel):
+	if panel.is_docked:
+		if sidebar_controller and sidebar_controller.tab_container.current_tab != panel.get_index():
+			sidebar_controller.switch_to_tab(panel)
+	else:
+		panel.show()
+		panel.raise()
 
 func _reset_tab_state():
 	if is_instance_valid(_last_selected_by_tab):
@@ -1321,6 +1364,7 @@ func _on_affected_list_changed(ids: Array):
 
 func _update_paintball_mode_ui():
 	if paintball_mode:
+		_ensure_panel_visible(paintball_settings_instance)
 		paintball_settings_instance.show()
 		Input.set_custom_mouse_cursor(smallbrush)
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
@@ -1353,153 +1397,6 @@ func _on_paintball_mode_for_ball_toggled(ball):
 	else:
 		_update_paintball_mode_ui()
 	_isolate_target_ball(ball)
-
-func _on_paintball_mode_toggled(is_on):
-	paintball_mode = is_on
-	if not is_on:
-		paintball_target_ball = null
-		close_paintball_on_apply = false
-		_restore_all_balls()
-	else:
-		_restore_all_balls()
-		_ordered_color_index = 0
-		_ordered_outline_color_index = 0
-		_ordered_texture_index = 0
-		paintball_settings_instance.find_node("Target").selected = 0
-		if linez_mode:
-			linez_mode = false
-			line_mode_check_box.pressed = false
-			_on_line_mode_toggled(false)
-		if preset_mode:
-			preset_mode = false
-			preset_mode_check_box.pressed = false
-			_on_preset_mode_toggled(false)
-		if project_mode:
-			project_mode = false
-			project_mode_check_box.pressed = false
-			_on_project_mode_toggled(false)
-		if move_mode:
-			move_mode = false
-			move_mode_check_box.pressed = false
-			_on_move_mode_toggled(false)
-	_update_paintball_mode_ui()
-
-func _on_auto_paintballer_mode_toggled(is_on):
-	auto_paintballer_mode = is_on
-	if is_on:
-		auto_paintballer_settings_instance.show()
-		if paintball_mode:
-			paintball_mode = false
-			paintball_check_box.pressed = false
-			_on_paintball_mode_toggled(false)
-		if linez_mode:
-			linez_mode = false
-			line_mode_check_box.pressed = false
-			_on_line_mode_toggled(false)
-		if preset_mode:
-			preset_mode = false
-			preset_mode_check_box.pressed = false
-			_on_preset_mode_toggled(false)
-		if project_mode:
-			project_mode = false
-			project_mode_check_box.pressed = false
-			_on_project_mode_toggled(false)
-		if move_mode:
-			move_mode = false
-			move_mode_check_box.pressed = false
-			_on_move_mode_toggled(false)
-	else:
-		auto_paintballer_settings_instance.hide()
-		dog_generator._on_clear_auto_paintballz()
-		_on_unselect_all()
-		_auto_paint_affected_cache.clear()
-		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-		for b in all_balls:
-			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-				b.apply_outline_state(b.OutlineState.NONE)
-
-func _on_line_mode_toggled(is_on):
-	linez_mode = is_on
-	if is_on:
-		line_mode_settings_instance.show()
-		Input.set_custom_mouse_cursor(rope)
-		if paintball_mode:
-			paintball_mode = false
-			paintball_check_box.pressed = false
-			_on_paintball_mode_toggled(false)
-		if preset_mode:
-			preset_mode = false
-			preset_mode_check_box.pressed = false
-			_on_preset_mode_toggled(false)
-		if move_mode:
-			move_mode = false
-			move_mode_check_box.pressed = false
-			_on_move_mode_toggled(false)
-	else:
-		line_mode_close = false
-		line_mode_settings_instance.hide()
-		if is_instance_valid(linez_start_ball):
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-		linez_start_ball = null
-		Input.set_custom_mouse_cursor(hand_neutral)
-
-func _on_move_mode_toggled(is_on):
-	move_mode = is_on
-	if is_on:
-		move_mode_settings_instance.show()
-		move_mode_settings_instance.set_queued_count(pending_moves.size())
-		Input.set_custom_mouse_cursor(hand_neutral)
-		
-		# Disable other modes
-		if paintball_mode:
-			paintball_mode = false
-			paintball_check_box.pressed = false
-			_on_paintball_mode_toggled(false)
-		if linez_mode:
-			linez_mode = false
-			line_mode_check_box.pressed = false
-			_on_line_mode_toggled(false)
-		if preset_mode:
-			preset_mode = false
-			preset_mode_check_box.pressed = false
-			_on_preset_mode_toggled(false)
-		if project_mode:
-			project_mode = false
-			project_mode_check_box.pressed = false
-			_on_project_mode_toggled(false)
-			
-		# Hide ball label and clear tab selection
-		ball_label.hide()
-		_reset_tab_state()
-		
-	else:
-		move_mode_settings_instance.hide()
-		# Clear visual state of selected balls
-		_on_unselect_all()
-		_on_move_mode_clear() # Revert any pending moves visuals
-
-func _on_project_mode_toggled(is_on):
-	project_mode = is_on
-	if is_on:
-		project_settings_instance.show()
-		if paintball_mode:
-			paintball_mode = false
-			paintball_check_box.pressed = false
-			_on_paintball_mode_toggled(false)
-		if linez_mode:
-			linez_mode = false
-			line_mode_check_box.pressed = false
-			_on_line_mode_toggled(false)
-		if preset_mode:
-			preset_mode = false
-			preset_mode_check_box.pressed = false
-			_on_preset_mode_toggled(false)
-		if move_mode:
-			move_mode = false
-			move_mode_check_box.pressed = false
-			_on_move_mode_toggled(false)
-	else:
-		project_settings_instance.hide()
 
 func _on_view_palette_check_box_toggled(is_on):
 	palette_viewer_instance.visible = is_on
@@ -1603,38 +1500,6 @@ func _handle_line_mode_input(event) -> bool:
 						line_mode_check_box.pressed = false
 			return true
 	return false
-
-func _on_preset_mode_toggled(is_on):
-	preset_mode = is_on
-	if is_on:
-		preset_settings_instance.show()
-
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
-			preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-		
-		if pet_node and pet_node.lnz and pet_node.lnz.palette:
-			preset_settings_instance.set_palette(pet_node.lnz.palette)
-
-		Input.set_custom_mouse_cursor(smallbrush)
-		if paintball_mode:
-			paintball_mode = false
-			paintball_check_box.pressed = false
-		if linez_mode:
-			linez_mode = false
-			line_mode_check_box.pressed = false
-		if project_mode:
-			project_mode = false
-			project_mode_check_box.pressed = false
-		if move_mode:
-			move_mode = false
-			move_mode_check_box.pressed = false
-			_on_move_mode_toggled(false)
-		mouse_default_cursor_shape = CURSOR_ARROW
-	else:
-		preset_settings_instance.hide()
-		Input.set_custom_mouse_cursor(hand_neutral)
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
 func _on_eyedropper_toggled(is_on):
 	if is_on:
@@ -2328,3 +2193,306 @@ func _on_pivot_changed():
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+###
+
+func _on_paintball_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Paintball Mode")
+	paintball_mode = is_on
+	_update_mode_panel_visibility(paintball_settings_instance, is_on)
+	
+	if not is_on:
+		paintball_target_ball = null
+		close_paintball_on_apply = false
+		_restore_all_balls()
+	else:
+		_restore_all_balls()
+		_ordered_color_index = 0
+		_ordered_outline_color_index = 0
+		_ordered_texture_index = 0
+		paintball_settings_instance.find_node("Target").selected = 0
+		
+	_update_paintball_mode_ui()
+	
+# func _on_paintball_mode_toggled(is_on):
+# 	paintball_mode = is_on
+# 	if not is_on:
+# 		paintball_target_ball = null
+# 		close_paintball_on_apply = false
+# 		_restore_all_balls()
+# 	else:
+# 		_restore_all_balls()
+# 		_ordered_color_index = 0
+# 		_ordered_outline_color_index = 0
+# 		_ordered_texture_index = 0
+# 		paintball_settings_instance.find_node("Target").selected = 0
+# 		if linez_mode:
+# 			linez_mode = false
+# 			line_mode_check_box.pressed = false
+# 			_on_line_mode_toggled(false)
+# 		if preset_mode:
+# 			preset_mode = false
+# 			preset_mode_check_box.pressed = false
+# 			_on_preset_mode_toggled(false)
+# 		if project_mode:
+# 			project_mode = false
+# 			project_mode_check_box.pressed = false
+# 			_on_project_mode_toggled(false)
+# 		if move_mode:
+# 			move_mode = false
+# 			move_mode_check_box.pressed = false
+# 			_on_move_mode_toggled(false)
+# 	_update_paintball_mode_ui()
+
+
+func _on_line_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Line Mode")
+	linez_mode = is_on
+	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
+	
+	if is_on:
+		Input.set_custom_mouse_cursor(rope)
+	else:
+		line_mode_close = false
+		if is_instance_valid(linez_start_ball):
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+		linez_start_ball = null
+		Input.set_custom_mouse_cursor(hand_neutral)
+
+# func _on_line_mode_toggled(is_on):
+# 	linez_mode = is_on
+# 	if is_on:
+# 		_ensure_panel_visible(line_mode_settings_instance)
+# 		line_mode_settings_instance.show()
+# 		Input.set_custom_mouse_cursor(rope)
+# 		if paintball_mode:
+# 			paintball_mode = false
+# 			paintball_check_box.pressed = false
+# 			_on_paintball_mode_toggled(false)
+# 		if preset_mode:
+# 			preset_mode = false
+# 			preset_mode_check_box.pressed = false
+# 			_on_preset_mode_toggled(false)
+# 		if move_mode:
+# 			move_mode = false
+# 			move_mode_check_box.pressed = false
+# 			_on_move_mode_toggled(false)
+# 	else:
+# 		line_mode_close = false
+# 		line_mode_settings_instance.hide()
+# 		if is_instance_valid(linez_start_ball):
+# 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+# 		linez_start_ball = null
+# 		Input.set_custom_mouse_cursor(hand_neutral)
+
+
+func _on_move_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Move Mode")
+	move_mode = is_on
+	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
+	
+	if is_on:
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
+		Input.set_custom_mouse_cursor(hand_neutral)
+		ball_label.hide()
+		_reset_tab_state()
+	else:
+		_on_unselect_all()
+		_on_move_mode_clear()
+
+# func _on_move_mode_toggled(is_on):
+# 	move_mode = is_on
+# 	if is_on:
+# 		_ensure_panel_visible(move_mode_settings_instance)
+# 		move_mode_settings_instance.show()
+# 		move_mode_settings_instance.set_queued_count(pending_moves.size())
+# 		Input.set_custom_mouse_cursor(hand_neutral)
+		
+# 		# Disable other modes
+# 		if paintball_mode:
+# 			paintball_mode = false
+# 			paintball_check_box.pressed = false
+# 			_on_paintball_mode_toggled(false)
+# 		if linez_mode:
+# 			linez_mode = false
+# 			line_mode_check_box.pressed = false
+# 			_on_line_mode_toggled(false)
+# 		if preset_mode:
+# 			preset_mode = false
+# 			preset_mode_check_box.pressed = false
+# 			_on_preset_mode_toggled(false)
+# 		if project_mode:
+# 			project_mode = false
+# 			project_mode_check_box.pressed = false
+# 			_on_project_mode_toggled(false)
+			
+# 		# Hide ball label and clear tab selection
+# 		ball_label.hide()
+# 		_reset_tab_state()
+		
+# 	else:
+# 		move_mode_settings_instance.hide()
+# 		# Clear visual state of selected balls
+# 		_on_unselect_all()
+# 		_on_move_mode_clear() # Revert any pending moves visuals
+
+
+func _on_preset_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Preset Mode")
+	preset_mode = is_on
+	_update_mode_panel_visibility(preset_settings_instance, is_on)
+	
+	if is_on:
+		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+		if pet_node and pet_node.lnz:
+			if pet_node.lnz.texture_list:
+				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+			if pet_node.lnz.palette:
+				preset_settings_instance.set_palette(pet_node.lnz.palette)
+		
+		Input.set_custom_mouse_cursor(smallbrush)
+		mouse_default_cursor_shape = CURSOR_ARROW
+	else:
+		Input.set_custom_mouse_cursor(hand_neutral)
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+
+# func _on_preset_mode_toggled(is_on):
+# 	preset_mode = is_on
+# 	if is_on:
+# 		_ensure_panel_visible(preset_settings_instance)
+# 		preset_settings_instance.show()
+
+# 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+# 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
+# 			preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+		
+# 		if pet_node and pet_node.lnz and pet_node.lnz.palette:
+# 			preset_settings_instance.set_palette(pet_node.lnz.palette)
+
+# 		Input.set_custom_mouse_cursor(smallbrush)
+# 		if paintball_mode:
+# 			paintball_mode = false
+# 			paintball_check_box.pressed = false
+# 		if linez_mode:
+# 			linez_mode = false
+# 			line_mode_check_box.pressed = false
+# 		if project_mode:
+# 			project_mode = false
+# 			project_mode_check_box.pressed = false
+# 		if move_mode:
+# 			move_mode = false
+# 			move_mode_check_box.pressed = false
+# 			_on_move_mode_toggled(false)
+# 		mouse_default_cursor_shape = CURSOR_ARROW
+# 	else:
+# 		preset_settings_instance.hide()
+# 		Input.set_custom_mouse_cursor(hand_neutral)
+# 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+
+
+func _on_project_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Project Mode")
+	project_mode = is_on
+	_update_mode_panel_visibility(project_settings_instance, is_on)
+
+# func _on_project_mode_toggled(is_on):
+# 	project_mode = is_on
+# 	if is_on:
+# 		_ensure_panel_visible(project_settings_instance)
+# 		project_settings_instance.show()
+# 		if paintball_mode:
+# 			paintball_mode = false
+# 			paintball_check_box.pressed = false
+# 			_on_paintball_mode_toggled(false)
+# 		if linez_mode:
+# 			linez_mode = false
+# 			line_mode_check_box.pressed = false
+# 			_on_line_mode_toggled(false)
+# 		if preset_mode:
+# 			preset_mode = false
+# 			preset_mode_check_box.pressed = false
+# 			_on_preset_mode_toggled(false)
+# 		if move_mode:
+# 			move_mode = false
+# 			move_mode_check_box.pressed = false
+# 			_on_move_mode_toggled(false)
+# 	else:
+# 		project_settings_instance.hide()
+
+
+func _on_auto_paintballer_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Auto Paintballer")
+	auto_paintballer_mode = is_on
+	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
+	
+	if not is_on:
+		dog_generator._on_clear_auto_paintballz()
+		_on_unselect_all()
+		_auto_paint_affected_cache.clear()
+		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+		for b in all_balls:
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
+				b.apply_outline_state(b.OutlineState.NONE)
+
+# func _on_auto_paintballer_mode_toggled(is_on):
+# 	auto_paintballer_mode = is_on
+# 	if is_on:
+# 		_ensure_panel_visible(auto_paintballer_settings_instance)
+# 		auto_paintballer_settings_instance.show()
+# 		if paintball_mode:
+# 			paintball_mode = false
+# 			paintball_check_box.pressed = false
+# 			_on_paintball_mode_toggled(false)
+# 		if linez_mode:
+# 			linez_mode = false
+# 			line_mode_check_box.pressed = false
+# 			_on_line_mode_toggled(false)
+# 		if preset_mode:
+# 			preset_mode = false
+# 			preset_mode_check_box.pressed = false
+# 			_on_preset_mode_toggled(false)
+# 		if project_mode:
+# 			project_mode = false
+# 			project_mode_check_box.pressed = false
+# 			_on_project_mode_toggled(false)
+# 		if move_mode:
+# 			move_mode = false
+# 			move_mode_check_box.pressed = false
+# 			_on_move_mode_toggled(false)
+# 	else:
+# 		auto_paintballer_settings_instance.hide()
+# 		dog_generator._on_clear_auto_paintballz()
+# 		_on_unselect_all()
+# 		_auto_paint_affected_cache.clear()
+# 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+# 		for b in all_balls:
+# 			if is_instance_valid(b) and b.has_method("apply_outline_state"):
+# 				b.apply_outline_state(b.OutlineState.NONE)
+
+func _deactivate_other_modes(active_mode_name: String):
+	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
+	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false
+	if active_mode_name != "Move Mode": move_mode_check_box.pressed = false
+	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
+	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
+	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
+
+func _update_mode_panel_visibility(panel: Control, is_active: bool):
+	if is_active:
+		if panel.is_docked:
+			sidebar_controller.dock_panel(panel)
+			sidebar_controller.switch_to_tab(panel) 
+		else:
+			panel.show()
+			panel.raise()
+	else:
+		if not panel.is_docked:
+			panel.hide()
+		
+		if sidebar_controller:
+			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
+			if tree_tab:
+				sidebar_controller.switch_to_tab(tree_tab) 
+	
+	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
+		sidebar_controller._update_tab_visibilities()

@@ -91,7 +91,7 @@ func _ready():
 		if not pet_node.is_connected(s, self, "_on_Node_" + s):
 			pet_node.connect(s, self, "_on_Node_" + s)
 
-	var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+	var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 	if file_tree and not file_tree.is_connected("palette_selected", self, "_on_palette_selected"):
 		file_tree.connect("palette_selected", self, "_on_palette_selected")
 	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):

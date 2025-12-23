@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## PresetSettings.gd
 ## Manages the UI panel and logic for the Preset Mode settings
 ## This script controls the visibility of the settings panel and provides methods to:
@@ -8,7 +8,6 @@ extends CanvasLayer
 ## 4. Handle advanced list transformations (mirroring and custom/preset rotation)
 ## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
-const SETTINGS_PATH = "user://settings.cfg"
 var _is_loading_settings = false
 
 signal eyedropper_toggled(is_on)
@@ -16,8 +15,8 @@ signal apply_to_selection
 signal unselect_all
 signal select_balls_by_ids(ids)
 
-onready var panel = $Panel
-onready var scroll_vbox = $Panel/VBoxContainer/ScrollContainer/VBoxContainer
+onready var panel = self
+onready var scroll_vbox = $VBoxContainer/ScrollContainer/VBoxContainer
 onready var paintballz_text_edit = scroll_vbox.get_node("RawLnzContainer/PaintballzTextEdit")
 onready var set_paintballz_button = scroll_vbox.get_node("RawLnzContainer/SetPaintballzButton")
 onready var get_paintballz_button = scroll_vbox.get_node("RawLnzContainer/GetPaintballzButton")
@@ -141,14 +140,6 @@ func _ready():
 
 	paintballz_tree.connect("item_edited", self, "_on_Tree_item_edited")
 	paintballz_tree.select_mode = Tree.SELECT_SINGLE
-
-	# var viewport_size = get_viewport().size
-	# var panel = $Panel
-	# var panel_size = panel.rect_size
-	# panel.margin_left = (viewport_size.x - panel_size.x) / 2
-	# panel.margin_right = panel.margin_left + panel_size.x
-	# panel.margin_top = viewport_size.y - panel_size.y - 10
-	# panel.margin_bottom = panel.margin_top + panel_size.y
 	
 	var viewport_size = get_viewport().size
 	var panel_size = panel.rect_size
@@ -159,18 +150,21 @@ func _ready():
 	
 	panel.restore_position(default_pos)
 
+	if not is_inside_tree():
+		return
+
 	active_palette = default_palette
 
 	_connect_settings_signals()
 	load_settings()
 
-	update_preview()
+	call_deferred("update_preview")
 
-func show():
-	panel.show()
+# func show():
+# 	panel.show()
 
-func hide():
-	panel.hide()
+# func hide():
+# 	panel.hide()
 
 func set_texture_list(list):
 	ball_texture_list = list
