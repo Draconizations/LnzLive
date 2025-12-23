@@ -1673,6 +1673,7 @@ func close_paintball_mode():
 func _finalize_freeline():
 	var props = paintball_settings_instance.get_properties()
 	var jitter = props.jitter
+	var stroke = []
 
 	# Determine if there is a single target for the entire stroke
 	var stroke_target_ball = null
@@ -1706,7 +1707,17 @@ func _finalize_freeline():
 				current_diameter = int(round(calculated_diameter))
 
 		if point_target_ball:
-			_create_paintball_at_position(screen_pos, point_target_ball, current_diameter)
+			stroke.append({
+				"pos": screen_pos,
+				"ball": point_target_ball,
+				"diam": current_diameter
+			})
+
+	if props.get("shuffle", false):
+		stroke.shuffle()
+
+	for data in stroke:
+		_create_paintball_at_position(data.pos, data.ball, data.diam)
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
 	var from = camera.project_ray_origin(screen_pos)
