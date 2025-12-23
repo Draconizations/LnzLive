@@ -616,7 +616,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 5 )
 text = "Apply LNZ to Preset"
 
-[node name="GetPaintballzButton" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/RawLnzContainer"]
+[node name="GetPaintballzButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RawLnzContainer"]
 margin_top = 135.0
 margin_right = 420.0
 margin_bottom = 162.0
