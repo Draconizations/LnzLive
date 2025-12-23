@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=2]
+[gd_scene load_steps=43 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://scenes/editor/FrameSlider.gd" type="Script" id=5]
 [ext_resource path="res://scenes/editor/PlayButton.gd" type="Script" id=6]
 [ext_resource path="res://scenes/editor/FPSLabel.gd" type="Script" id=7]
+[ext_resource path="res://scenes/editor/BallNo.gd" type="Script" id=8]
 [ext_resource path="res://scenes/editor/ExportButtonOBJ.gd" type="Script" id=9]
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
 [ext_resource path="res://scenes/editor/RecolorLine.tscn" type="PackedScene" id=11]
@@ -1377,6 +1378,14 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
+[node name="BallNo" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 456.0
+margin_right = 466.0
+margin_bottom = 25.0
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = ExtResource( 27 )
+script = ExtResource( 8 )
+
 [node name="FindPanel" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 visible = false
 margin_top = 29.0
@@ -1952,6 +1961,7 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
+[connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="_on_LnzTextEdit_file_backed_up"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/Tree" method="rescan"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
