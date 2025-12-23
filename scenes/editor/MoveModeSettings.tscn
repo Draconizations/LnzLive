@@ -157,7 +157,7 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Unselect All"
 
-[node name="GroupSelectionLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="GroupSelectionLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 52.0
 margin_right = 247.0
 margin_bottom = 69.0
@@ -231,7 +231,7 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Ears"
 
-[node name="Eyes" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
+[node name="Eyes" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/GroupSelectionContainer"]
 margin_left = 201.0
 margin_right = 247.0
 margin_bottom = 25.0
@@ -243,7 +243,7 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Eyes"
 
-[node name="FilterUnselectLabel" type="Label" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="FilterUnselectLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 52.0
 margin_right = 247.0
 margin_bottom = 69.0
@@ -251,13 +251,13 @@ custom_fonts/font = SubResource( 2 )
 text = "Unselect Side:"
 align = 1
 
-[node name="FilterUnselectButtons" type="HBoxContainer" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer"]
+[node name="FilterUnselectButtons" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 102.0
 margin_right = 247.0
 margin_bottom = 127.0
 alignment = 1
 
-[node name="UnselectL" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
+[node name="UnselectL" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
 margin_left = 11.0
 margin_right = 82.0
 margin_bottom = 25.0
@@ -269,7 +269,7 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Left"
 
-[node name="UnselectC" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
+[node name="UnselectC" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
 margin_left = 86.0
 margin_right = 157.0
 margin_bottom = 25.0
@@ -281,7 +281,7 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 1 )
 text = "Center"
 
-[node name="UnselectR" type="Button" parent="Panel/VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
+[node name="UnselectR" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/FilterUnselectButtons"]
 margin_left = 161.0
 margin_right = 232.0
 margin_bottom = 25.0
