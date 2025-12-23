@@ -67,6 +67,7 @@ func get_properties():
 	properties["jitter"] = find_node("Jitter").value
 	properties["ordered"] = find_node("Ordered").pressed
 	properties["repeat"] = find_node("Repeat").pressed
+	properties["shuffle"] = find_node("Shuffle").pressed
 	return properties
 
 func _connect_settings_signals():
@@ -88,6 +89,7 @@ func _connect_settings_signals():
 	find_node("Jitter").connect("value_changed", self, "_on_setting_changed")
 	find_node("Ordered").connect("toggled", self, "_on_setting_changed")
 	find_node("Repeat").connect("toggled", self, "_on_setting_changed")
+	find_node("Shuffle").connect("toggled", self, "_on_setting_changed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_setting_changed")
 
 	var reset_btn = find_node("ResetDefaultsButton")
@@ -124,6 +126,7 @@ func save_settings():
 	config.set_value("PaintballProperties", "jitter", find_node("Jitter").value)
 	config.set_value("PaintballProperties", "ordered", find_node("Ordered").pressed)
 	config.set_value("PaintballProperties", "repeat", find_node("Repeat").pressed)
+	config.set_value("PaintballProperties", "shuffle", find_node("Shuffle").pressed)
 	config.set_value("PaintballProperties", "eraser", find_node("EraserCheckBox").pressed)
 
 	var save_err = config.save(SETTINGS_PATH)
@@ -156,6 +159,7 @@ func load_settings():
 	find_node("Jitter").value = config.get_value("PaintballProperties", "jitter", 0.0)
 	find_node("Ordered").pressed = config.get_value("PaintballProperties", "ordered", false)
 	find_node("Repeat").pressed = config.get_value("PaintballProperties", "repeat", false)
+	find_node("Shuffle").pressed = config.get_value("PaintballProperties", "shuffle", false)
 	find_node("EraserCheckBox").pressed = config.get_value("PaintballProperties", "eraser", false)
 
 	_is_loading_settings = false
@@ -181,6 +185,7 @@ func _on_reset_defaults_pressed():
 	find_node("Jitter").value = 0.0
 	find_node("Ordered").pressed = false
 	find_node("Repeat").pressed = false
+	find_node("Shuffle").pressed = false
 	find_node("EraserCheckBox").pressed = false
 
 	_is_loading_settings = false

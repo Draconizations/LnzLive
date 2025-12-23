@@ -7,6 +7,7 @@
 [ext_resource path="res://scenes/editor/FrameSlider.gd" type="Script" id=5]
 [ext_resource path="res://scenes/editor/PlayButton.gd" type="Script" id=6]
 [ext_resource path="res://scenes/editor/FPSLabel.gd" type="Script" id=7]
+[ext_resource path="res://scenes/editor/BallNo.gd" type="Script" id=8]
 [ext_resource path="res://scenes/editor/ExportButtonOBJ.gd" type="Script" id=9]
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
 [ext_resource path="res://scenes/editor/RecolorLine.tscn" type="PackedScene" id=11]
@@ -1306,7 +1307,7 @@ margin_right = 759.0
 margin_bottom = 74.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-14"
+text = "PB-beta-v1.4.6-preview-15"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1416,6 +1417,14 @@ custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 6 )
 custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
+
+[node name="BallNo" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
+margin_left = 456.0
+margin_right = 466.0
+margin_bottom = 25.0
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = ExtResource( 27 )
+script = ExtResource( 8 )
 
 [node name="FindPanel" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 visible = false
@@ -1992,9 +2001,10 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/ReplaceAllButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ReplaceAllButton_pressed"]
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
+[connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]

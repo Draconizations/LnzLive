@@ -241,9 +241,9 @@ func _process(_delta):
 
 	elif linez_mode:
 		if is_instance_valid(linez_start_ball):
-			text = "Line Mode: Left-click a 2nd ball to end a line.\n"
+			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 2nd ball to end a line."
 		else:
-			text = "Line Mode: Left-click a 1st ball to start a line.\n"
+			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 1st ball to start a line."
 	elif paintball_mode:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
@@ -1538,6 +1538,7 @@ func close_paintball_mode():
 func _finalize_freeline():
 	var props = paintball_settings_instance.get_properties()
 	var jitter = props.jitter
+	var stroke = []
 
 	# Determine if there is a single target for the entire stroke
 	var stroke_target_ball = null
@@ -1571,7 +1572,17 @@ func _finalize_freeline():
 				current_diameter = int(round(calculated_diameter))
 
 		if point_target_ball:
-			_create_paintball_at_position(screen_pos, point_target_ball, current_diameter)
+			stroke.append({
+				"pos": screen_pos,
+				"ball": point_target_ball,
+				"diam": current_diameter
+			})
+
+	if props.get("shuffle", false):
+		stroke.shuffle()
+
+	for data in stroke:
+		_create_paintball_at_position(data.pos, data.ball, data.diam)
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
 	var from = camera.project_ray_origin(screen_pos)

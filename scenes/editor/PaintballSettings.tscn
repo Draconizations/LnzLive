@@ -149,6 +149,15 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Repeated"
 
+[node name="Shuffle" type="CheckBox" parent="VBoxContainer/HBoxContainerOptions"]
+margin_left = 148.0
+margin_right = 292.0
+margin_bottom = 24.0
+hint_tooltip = "Shuffle layer of paintballz in stroke"
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 1 )
+text = "Shuffled"
+
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 81.0
 margin_right = 292.0

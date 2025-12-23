@@ -52,6 +52,8 @@ signal find_move(line_no)
 signal find_project_ball(line_no)
 signal file_backed_up()
 
+signal ball_number_changed(ball_no)
+
 var min_font_size = 4
 
 onready var console_log = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer/ConsoleLog")
@@ -103,6 +105,8 @@ func _ready():
 		cascadia_font.use_filter = true
 	else:
 		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+
+	self.connect("cursor_changed", self, "_on_cursor_changed")
 
 func _setup_context_menu():
 	var menu = get_menu()
@@ -166,6 +170,10 @@ func _set_text_preserve(new_text: String):
 	set_h_scroll(old_h)
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
+
+func _on_cursor_changed():
+	var ball_no = get_current_ball_index()
+	emit_signal("ball_number_changed", ball_no)
 
 func initialize_history():
 	history_stack.clear()
@@ -1065,6 +1073,8 @@ func _on_Node_line_created(start_ball, end_ball):
 
 			set_line(i, parts.join(delim))
 			line_updated = true
+
+			commit_visual_change("Updated Linez between %d and %d" % [start_ball, end_ball])
 			break
 
 	if not line_updated:
@@ -1096,8 +1106,9 @@ func _on_Node_line_created(start_ball, end_ball):
 		cursor_set_column(0)
 		center_viewport_to_cursor()
 
+		commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
+
 	save_file(true)
-	commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
 
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
@@ -2573,6 +2584,25 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 		save_file(true)
 		commit_visual_change("Applied Preset to Ballz #%d" % ball_no)
 
+func get_current_ball_index() -> int:
+	# try to merge this with the CTRL+Q finder later, but this is for the ball # helper
+	var current_line = cursor_get_line()
+	var nearest_section_start = search("[", SEARCH_BACKWARDS, current_line, 0) 
+	
+	if nearest_section_start.empty():
+		var word = get_word_under_cursor()
+		return int(word) if word.is_valid_integer() else -1
+
+	var nearest_section = get_line(nearest_section_start[SEARCH_RESULT_LINE])
+	
+	if nearest_section == "[Ballz Info]":
+		return _get_line_no_from_line_index(current_line, "[Ballz Info]")
+	elif nearest_section == "[Add Ball]":
+		var idx = _get_line_no_from_line_index(current_line, "[Add Ball]")
+		return idx + KeyBallsData.max_base_ball_num if idx != -1 else -1
+		
+	return -1
+
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_Q:
 		var nearest_section_start = search("[", SEARCH_BACKWARDS, cursor_get_line(), 0)
@@ -2591,10 +2621,13 @@ func _on_LnzTextEdit_gui_input(event):
 			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
 			if ball_no != -1:
 				emit_signal("find_ball", ball_no)
+				console_log.log_message("[HELPER] Ballz # %s" % ball_no)
 		elif nearest_section == "[Add Ball]":
 			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
 			if ball_no != -1:
 				emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
+				var addball_no = ball_no + KeyBallsData.max_base_ball_num
+				console_log.log_message("[HELPER] Addballz # %s" % addball_no)
 		elif nearest_section == "[Linez]":
 			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
 			if line_no != -1:

@@ -287,7 +287,7 @@ margin_top = 249.0
 margin_right = 292.0
 margin_bottom = 266.0
 custom_fonts/font = SubResource( 2 )
-text = "Toggle to replace existing Linez properties"
+text = "Checkboxes specify which properties of existing Linez to replace"
 align = 1
 autowrap = true
 
