@@ -1065,6 +1065,8 @@ func _on_Node_line_created(start_ball, end_ball):
 
 			set_line(i, parts.join(delim))
 			line_updated = true
+
+			commit_visual_change("Updated Linez between %d and %d" % [start_ball, end_ball])
 			break
 
 	if not line_updated:
@@ -1096,8 +1098,9 @@ func _on_Node_line_created(start_ball, end_ball):
 		cursor_set_column(0)
 		center_viewport_to_cursor()
 
+		commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
+
 	save_file(true)
-	commit_visual_change("Created Linez between %d and %d" % [start_ball, end_ball])
 
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
