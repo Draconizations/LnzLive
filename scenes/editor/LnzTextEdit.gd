@@ -2621,10 +2621,13 @@ func _on_LnzTextEdit_gui_input(event):
 			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
 			if ball_no != -1:
 				emit_signal("find_ball", ball_no)
+				console_log.log_message("[HELPER] Ballz # %s" % ball_no)
 		elif nearest_section == "[Add Ball]":
 			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
 			if ball_no != -1:
 				emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
+				var addball_no = ball_no + KeyBallsData.max_base_ball_num
+				console_log.log_message("[HELPER] Addballz # %s" % addball_no)
 		elif nearest_section == "[Linez]":
 			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
 			if line_no != -1:
