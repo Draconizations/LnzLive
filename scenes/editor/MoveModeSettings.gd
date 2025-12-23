@@ -3,6 +3,7 @@ extends DraggablePanel
 signal apply_moves
 signal clear_moves
 signal unselect_all
+signal unselect_side(side)
 signal align_selection(axis, mode) # mode: 0=min, 1=center, 2=max
 signal snap_selection(axis, direction) # direction: -1=min, 1=max
 signal nudge_selection(vector)
@@ -31,6 +32,10 @@ func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("UnselectButton").connect("pressed", self, "_on_UnselectButton_pressed")
+
+	find_node("UnselectL").connect("pressed", self, "_on_UnselectSide_pressed", ["left"])
+	find_node("UnselectC").connect("pressed", self, "_on_UnselectSide_pressed", ["center"])
+	find_node("UnselectR").connect("pressed", self, "_on_UnselectSide_pressed", ["right"])
 
 	_setup_group_buttons()
 	
@@ -143,7 +148,7 @@ func is_mirror_x_active():
 	return find_node("MirrorX").pressed
 
 func _setup_group_buttons():
-	var groups = ["Head", "Body", "Legs", "Tail", "Ears"]
+	var groups = ["Head", "Body", "Legs", "Tail", "Ears", "Eyes"]
 	for g in groups:
 		var btn = find_node(g)
 		if btn:
@@ -162,6 +167,9 @@ func _on_ClearButton_pressed():
 func _on_UnselectButton_pressed():
 	emit_signal("unselect_all")
 
+func _on_UnselectSide_pressed(side):
+	emit_signal("unselect_side", side)
+	
 func _on_constraint_selected(selected_name):
 	current_constraint_mode = selected_name
 	

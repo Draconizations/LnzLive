@@ -19,6 +19,7 @@ onready var panel = self
 onready var scroll_vbox = $VBoxContainer/ScrollContainer/VBoxContainer
 onready var paintballz_text_edit = scroll_vbox.get_node("RawLnzContainer/PaintballzTextEdit")
 onready var set_paintballz_button = scroll_vbox.get_node("RawLnzContainer/SetPaintballzButton")
+onready var get_paintballz_button = scroll_vbox.get_node("RawLnzContainer/GetPaintballzButton")
 onready var show_raw_button = scroll_vbox.get_node("ShowRawButton")
 onready var raw_lnz_container = scroll_vbox.get_node("RawLnzContainer")
 onready var paintballz_tree = scroll_vbox.get_node("PaintballzTree")
@@ -82,6 +83,7 @@ func _ready():
 	eyedropper_toggle.connect("toggled", self, "_on_EyedropperToggle_toggled")
 
 	set_paintballz_button.connect("pressed", self, "_on_SetPaintballzButton_pressed")
+	get_paintballz_button.connect("pressed", self, "_on_GetPaintballzButton_pressed")
 	show_raw_button.connect("pressed", self, "_on_ShowRawButton_pressed")
 
 	mirror_x_btn.connect("pressed", self, "_on_MirrorButton_pressed", ["x"])
@@ -121,7 +123,7 @@ func _ready():
 	affected_ballz.connect("text_entered", self, "_on_AffectedBallz_text_entered")
 	affected_ballz.connect("text_changed", self, "_on_AffectedBallz_text_changed")
 
-	paintballz_tree.columns = 11
+	paintballz_tree.columns = 12
 	paintballz_tree.set_column_titles_visible(true)
 	paintballz_tree.set_column_title(0, "Ball")
 	paintballz_tree.set_column_title(1, "Dia")
@@ -132,10 +134,12 @@ func _ready():
 	paintballz_tree.set_column_title(6, "OutCol")
 	paintballz_tree.set_column_title(7, "Fuzz")
 	paintballz_tree.set_column_title(8, "Out")
-	paintballz_tree.set_column_title(9, "Tex")
-	paintballz_tree.set_column_title(10, "Anc")
+	paintballz_tree.set_column_title(9, "Grp")
+	paintballz_tree.set_column_title(10, "Tex")
+	paintballz_tree.set_column_title(11, "Anc")
 
 	paintballz_tree.connect("item_edited", self, "_on_Tree_item_edited")
+	paintballz_tree.select_mode = Tree.SELECT_SINGLE
 	
 	var viewport_size = get_viewport().size
 	var panel_size = panel.rect_size
@@ -239,8 +243,9 @@ func _read_item_data(item: TreeItem) -> Dictionary:
 		"outline_color_index": item.get_text(6).to_int(),
 		"fuzz": item.get_text(7).to_int(),
 		"outline": item.get_text(8).to_int(),
-		"texture_id": item.get_text(9).to_int(),
-		"anchored": item.get_text(10).to_int()
+		"group": item.get_text(9).to_int(),
+		"texture_id": item.get_text(10).to_int(),
+		"anchored": item.get_text(11).to_int()
 	}
 
 func _on_scale_changed(value, is_size_control):
@@ -312,10 +317,11 @@ func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3):
 	item.set_text(6, str(p_data.outline_color_index))
 	item.set_text(7, str(p_data.fuzz))
 	item.set_text(8, str(p_data.outline))
-	item.set_text(9, str(p_data.texture_id))
-	item.set_text(10, str(p_data.anchored))
+	item.set_text(9, str(p_data.group))
+	item.set_text(10, str(p_data.texture_id))
+	item.set_text(11, str(p_data.anchored))
 
-	for i in range(11):
+	for i in range(12):
 		item.set_editable(i, true)
 
 func _on_SetPaintballzButton_pressed():
@@ -333,10 +339,13 @@ func _on_SetPaintballzButton_pressed():
 		if parts.size() < 9:
 			continue
 
-		var has_group_column = parts.size() >= 12
+		# var has_group_column = parts.size() >= 12
 		
-		var tex_index = 10 if has_group_column else 9
-		var anchor_index = 11 if has_group_column else 10
+		# var tex_index = 10 if has_group_column else 9
+		# var anchor_index = 11 if has_group_column else 10
+
+		var tex_index = 10
+		var anchor_index = 11
 
 		var p_data = {
 			"base": parts[0].to_int(),
@@ -346,6 +355,7 @@ func _on_SetPaintballzButton_pressed():
 			"outline_color_index": parts[6].to_int(),
 			"fuzz": parts[7].to_int(),
 			"outline": parts[8].to_int(),
+			"group": parts[9].to_int(),
 			"texture_id": parts[tex_index].to_int() if parts.size() > tex_index else -1,
 			"anchored": parts[anchor_index].to_int() if parts.size() > anchor_index else 0
 		}
@@ -355,6 +365,23 @@ func _on_SetPaintballzButton_pressed():
 	_populate_tree_from_base()
 	save_settings()
 	update_preview()
+
+func _on_GetPaintballzButton_pressed():
+	var lnz_lines = []
+	var root = paintballz_tree.get_root()
+	if not root:
+		return
+	
+	var item = root.get_children()
+	while item:
+		var parts = []
+		for i in range(11):
+			parts.append(item.get_text(i))
+		
+		lnz_lines.append(PoolStringArray(parts).join("\t"))
+		item = item.get_next()
+	
+	paintballz_text_edit.text = PoolStringArray(lnz_lines).join("\n")
 
 func _split_and_clean_paintball(line: String) -> Array:
 	var line_parts = line.split(";", false, 1)
@@ -639,6 +666,7 @@ func _convert_lnz_object_to_dict(obj) -> Dictionary:
 		"outline_color_index": obj.outline_color_index,
 		"fuzz": obj.fuzz,
 		"outline": obj.outline,
+		"group": obj.group,
 		"texture_id": obj.texture_id,
 		"anchored": obj.anchored
 	}

@@ -186,6 +186,7 @@ func _ready():
 	move_mode_settings_instance.connect("apply_moves", self, "_on_move_mode_apply")
 	move_mode_settings_instance.connect("clear_moves", self, "_on_move_mode_clear")
 	move_mode_settings_instance.connect("unselect_all", self, "_on_unselect_all")
+	move_mode_settings_instance.connect("unselect_side", self, "_on_unselect_side")
 	move_mode_settings_instance.connect("align_selection", self, "_on_align_selection")
 	move_mode_settings_instance.connect("snap_selection", self, "_on_snap_selection")
 	move_mode_settings_instance.connect("nudge_selection", self, "_on_nudge_selection")
@@ -1696,6 +1697,55 @@ func _on_unselect_all():
 			
 	_update_selected_ballz_in_settings()
 
+func _on_unselect_side(side: String):
+	if selected_balls.empty():
+		return
+
+	var symmetry_dict = {}
+	match KeyBallsData.species:
+		KeyBallsData.Species.CAT:
+			symmetry_dict = KeyBallsData.cat_body_part_symmetry
+		KeyBallsData.Species.DOG:
+			symmetry_dict = KeyBallsData.dog_body_part_symmetry
+		KeyBallsData.Species.BABY:
+			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+
+	var left_lookup = {}
+	var right_lookup = {}
+	for main_part in symmetry_dict:
+		for sub_part in symmetry_dict[main_part]:
+			var part_info = symmetry_dict[main_part][sub_part]
+			if part_info.has("left"):
+				for id in part_info.left: left_lookup[id] = true
+			if part_info.has("right"):
+				for id in part_info.right: right_lookup[id] = true
+
+	var to_remove = []
+	for b in selected_balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+			
+		var ball_no = b.ball_no
+		var is_left = left_lookup.has(ball_no)
+		var is_right = right_lookup.has(ball_no)
+		var is_center = not is_left and not is_right
+		
+		var should_unselect = false
+		match side:
+			"left":   should_unselect = is_left
+			"right":  should_unselect = is_right
+			"center": should_unselect = is_center
+
+		if should_unselect:
+			to_remove.append(b)
+
+	for b in to_remove:
+		selected_balls.erase(b)
+		if b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
 func _on_move_mode_clear():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
@@ -2042,12 +2092,12 @@ func _on_flip_selection(axis_vector, pivot_id):
 func _update_selected_ballz_in_settings():
 	var ids = []
 	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false)
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
 	
-	var filter = KeyBallsData.get_group_balls("irises")
+	var filter = []
 	if exclude_eyes:
-		filter += KeyBallsData.get_group_balls("eyes")
-	
+		filter += KeyBallsData.get_group_balls("Eyes")
+
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:
 			if not b.ball_no in filter:
@@ -2061,12 +2111,8 @@ func _update_selected_ballz_in_settings():
 
 func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()
-	var iris_ids = KeyBallsData.get_group_balls("irises")
 	
 	for id in ids:
-		if id in iris_ids:
-			continue
-			
 		var ball = _find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			if "ball_no" in ball:
@@ -2079,22 +2125,22 @@ func _commit_box_selection():
 	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	
-	var iris_ids = KeyBallsData.get_group_balls("irises")
 	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) 
-	var eye_ids = KeyBallsData.get_group_balls("eyes") if exclude_eyes else []
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
+	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
 
 	for b in all_balls:
-		if not is_instance_valid(b) or not b.is_inside_tree(): 
+		#if not is_instance_valid(b) or not b.is_inside_tree(): 
+		if not is_instance_valid(b) or not b.visible: 
 			continue
 
 		if b.get("omitted") == true and not dog_generator.draw_omitted_balls:
 			continue
 		
-		if not ("ball_no" in b) or not b.visible: 
+		if not ("ball_no" in b): 
 			continue
 			
-		if b.ball_no in iris_ids or b.ball_no in eye_ids: 
+		if b.ball_no in eye_ids: 
 			continue
 
 		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
@@ -2116,10 +2162,12 @@ func _on_preset_apply_selection():
 	var properties = preset_settings_instance.get_properties()
 	var ball_ids = []
 	
-	var should_exclude_eyes = properties.get("exclude_eyes", false)
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	print(exclude_eyes)
 	var exclusion_list = []
-	if should_exclude_eyes:
-		exclusion_list = KeyBallsData.get_group_balls("eyes") + KeyBallsData.get_group_balls("irises")
+	if exclude_eyes:
+		exclusion_list = KeyBallsData.get_group_balls("Eyes")
+		print(exclusion_list)
 
 	for b in selected_balls:
 		if is_instance_valid(b) and "ball_no" in b:

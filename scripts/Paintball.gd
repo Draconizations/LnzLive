@@ -11,11 +11,12 @@ export var base_ball_size         = 10                 setget set_base_ball_size
 export var ball_size              = 10                 setget set_ball_size
 export var fuzz_amount            = 0                  setget set_fuzz_amount
 export var outline                = -1                 setget set_outline
+export var group                  = -1                 setget set_group
 export var color_index            = -1                 setget set_color_index
 export var outline_color_index    = 0                  setget set_outline_color_index
 export var z_add                  = 0.0                setget set_z_add
 
-export var override_ball_no       = -1
+export var ball_no                = -1
 export var visible_override       = true               setget set_visible
 export var omitted                = false
 
@@ -36,9 +37,22 @@ const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_pale
 
 export var petz_palette           = DEFAULT_PALETTE
 
-var is_over = false
-var old_outline
-var old_outline_color
+enum OutlineState {
+	NONE,
+	ACTIVE_SELECTED,
+	LINEZ_START,
+	LINEZ_TARGET,
+	HOVER,
+	MODIFIED,
+	PIVOT
+}
+
+var current_outline_state         = OutlineState.NONE  setget , get_outline_state
+
+var old_outline                   = outline
+var old_outline_color             = outline_color_index
+
+var is_over                       = false
 
 signal paintball_mouse_enter(paintball_info)
 signal paintball_mouse_exit()
@@ -49,6 +63,9 @@ signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, section)
 
 func _ready():
+	old_outline = outline
+	old_outline_color = outline_color_index
+
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 
@@ -168,6 +185,9 @@ func set_outline(new_value):
 	outline = new_value
 	$MeshInstance.material_override.set_shader_param("outline", new_value)
 	
+func set_group(new_value):
+	group = new_value
+
 func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)
@@ -177,25 +197,73 @@ func set_outline_color_index(new_value):
 	$MeshInstance.material_override.set_shader_param("outline_color_index", new_value)
 
 func selected():
-	if override_ball_no != -1:
-		emit_signal("ball_selected", override_ball_no, Section.Section.BALL)
+	if ball_no != -1:
+		emit_signal("ball_selected", ball_no, Section.Section.BALL)
 
 func _on_Area_mouse_entered():
 	old_outline = outline
 	old_outline_color = outline_color_index
 	set_outline(3)
 	set_outline_color_index(0)
-	if override_ball_no != -1:
-		emit_signal("ball_mouse_enter", {ball_no = override_ball_no})
+	if ball_no != -1:
+		emit_signal("ball_mouse_enter", {ball_no = ball_no})
 	else:
 		emit_signal("paintball_mouse_enter", {base_ball_no = base_ball_no})
 	is_over = true
 
+func apply_outline_state(state: int):
+	if current_outline_state == OutlineState.NONE:
+		old_outline = outline
+		old_outline_color = outline_color_index
+
+	current_outline_state = state
+
+	match state:
+		OutlineState.HOVER:
+			set_outline(3)
+			set_outline_color_index(0)  # WHITE
+		OutlineState.ACTIVE_SELECTED:
+			set_outline(3)
+			set_outline_color_index(2)  # GREEN
+		OutlineState.LINEZ_START:
+			set_outline(3)
+			set_outline_color_index(1)  # RED
+		OutlineState.LINEZ_TARGET:
+			set_outline(3)
+			set_outline_color_index(4)  # BLUE
+		OutlineState.MODIFIED:
+			set_outline(3)
+			set_outline_color_index(248) # GRAY
+		OutlineState.PIVOT:
+			set_outline(3)
+			set_outline_color_index(1) # RED
+		OutlineState.NONE:
+			set_outline(old_outline)
+			set_outline_color_index(old_outline_color)
+
+func turn_on_highlight():
+	apply_outline_state(OutlineState.HOVER)
+	
+func turn_off_highlight():
+	if get_tree() == null or get_tree().root == null:
+		apply_outline_state(OutlineState.NONE)
+		return
+
+	var pet_container = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	if pet_container and pet_container.has_method("get_visual_state_for_ball"):
+		var new_state = pet_container.get_visual_state_for_ball(self)
+		apply_outline_state(new_state)
+	else:
+		apply_outline_state(OutlineState.NONE)
+
+func get_outline_state():
+	return current_outline_state
+
 func _on_Area_mouse_exited():
 	set_outline(old_outline)
 	set_outline_color_index(old_outline_color)
-	if override_ball_no != -1:
-		emit_signal("ball_mouse_exit", override_ball_no)
+	if ball_no != -1:
+		emit_signal("ball_mouse_exit", ball_no)
 	else:
 		emit_signal("paintball_mouse_exit")
 	is_over = false
@@ -203,3 +271,21 @@ func _on_Area_mouse_exited():
 func _input(event):
 	if event is InputEventKey and event.pressed and is_over:
 		get_tree().set_input_as_handled()
+
+var timer_count = 0
+
+func flash():
+	timer_count = 0
+	if !is_over:
+		turn_on_highlight()
+		$FlashTimer.start()
+
+func _on_FlashTimer_timeout():
+	timer_count += 1
+	if !is_over:
+		if timer_count % 2 == 1:
+			turn_off_highlight()
+		else:
+			turn_on_highlight()
+		if timer_count > 4:
+			$FlashTimer.stop()

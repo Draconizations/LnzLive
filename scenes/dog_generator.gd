@@ -287,7 +287,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		paintballs[k] = ar.duplicate()
 		var i = 0
 		for a in ar:
-			paintballs[k][i] = {base = a.base, size = a.size, normalised_position = a.normalised_position, color_index = a.color_index, outline = a.outline, outline_color_index = a.outline_color_index, fuzz = a.fuzz, z_add = a.z_add, texture_id = a.texture_id, anchored = a.anchored}
+			paintballs[k][i] = {base = a.base, size = a.size, normalised_position = a.normalised_position, color_index = a.color_index, outline = a.outline, outline_color_index = a.outline_color_index, fuzz = a.fuzz, z_add = a.z_add, group = a.group, texture_id = a.texture_id, anchored = a.anchored}
 			i+=1
 	collated_data = {balls = collated_data, addballs = addballs, paintballs = paintballs}
 	collated_data = munge_balls(collated_data, lnz_info)
@@ -647,7 +647,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if new_create:
 				visual_ball = paintball_scene.instance()
 				visual_ball.add_to_group("balls")
-				visual_ball.override_ball_no = ball.ball_no
+				visual_ball.ball_no = ball.ball_no
 				visual_ball.z_add = 10
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
@@ -1404,6 +1404,7 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.color_index = paintball_info.color
 	pb_visual_ball.outline_color_index = paintball_info.outline_color
 	pb_visual_ball.outline = paintball_info.outline_type
+	pb_visual_ball.group = paintball_info.group
 	pb_visual_ball.fuzz_amount = clamp(paintball_info.fuzz / 2, 0, 5)
 
 	if paintball_info.texture > -1:
@@ -1453,6 +1454,7 @@ func _on_randomize_auto_paintballz(paintballz):
 		pb_visual_ball.color_index = paintball_data.color_index
 		pb_visual_ball.outline_color_index = paintball_data.outline_color_index
 		pb_visual_ball.outline = paintball_data.outline
+		pb_visual_ball.group = paintball_data.group
 		pb_visual_ball.fuzz_amount = clamp(paintball_data.fuzz / 2, 0, 5)
 
 		if paintball_data.texture_id > -1:
