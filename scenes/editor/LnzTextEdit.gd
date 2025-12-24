@@ -14,6 +14,8 @@ var filepath: String
 
 var split_regex = RegEx.new()
 
+var bookmarks: Array = []
+
 var history_stack: Array = []
 var history_index: int = -1
 var max_history_size: int = 25
@@ -108,6 +110,8 @@ func _ready():
 
 	self.connect("cursor_changed", self, "_on_cursor_changed")
 
+	_update_section_bookmarks()
+
 func _setup_context_menu():
 	var menu = get_menu()
 	if not menu.is_connected("id_pressed", self, "_on_menu_id_pressed"):
@@ -142,6 +146,15 @@ func _on_user_file_selected(filepath):
 		return
 	_load_file(filepath, true)
 
+func _update_section_bookmarks():
+	bookmarks.clear() 
+	var lines = get_line_count() 
+	
+	for i in range(lines):
+		var line_text = get_line(i).strip_edges() 
+		if line_text.begins_with("["): 
+			bookmarks.append(i)
+
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file(false)
@@ -170,6 +183,20 @@ func _set_text_preserve(new_text: String):
 	set_h_scroll(old_h)
 	cursor_set_line(old_l)
 	cursor_set_column(old_c)
+	_update_section_bookmarks()
+
+func get_next_section_line_idx(from_line: int) -> int:
+	for line_index in bookmarks: 
+		if line_index >= from_line: 
+			return line_index 
+	return -1 
+
+func get_prev_section_line_idx(from_line: int) -> int:
+	for i in range(bookmarks.size() - 1, -1, -1): 
+		var line_index = bookmarks[i] 
+		if line_index <= from_line: 
+			return line_index 
+	return -1
 
 func _on_cursor_changed():
 	var ball_no = get_current_ball_index()
@@ -2616,56 +2643,77 @@ func get_current_ball_index() -> int:
 	return -1
 
 func _on_LnzTextEdit_gui_input(event):
-	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_Q:
-		var nearest_section_start = search("[", SEARCH_BACKWARDS, cursor_get_line(), 0)
-		
-		if nearest_section_start.empty():
-			emit_signal("find_ball", int(get_word_under_cursor()))
-			return
-		
-		var nearest_section_line = nearest_section_start[SEARCH_RESULT_LINE]
-		var nearest_section = get_line(nearest_section_line)
-		
-		var ball_no = -1
-		var line_no = -1
-		
-		if nearest_section == "[Ballz Info]":
-			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
-			if ball_no != -1:
-				emit_signal("find_ball", ball_no)
-				console_log.log_message("[HELPER] Ballz # %s" % ball_no)
-		elif nearest_section == "[Add Ball]":
-			ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
-			if ball_no != -1:
-				emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
-				var addball_no = ball_no + KeyBallsData.max_base_ball_num
-				console_log.log_message("[HELPER] Addballz # %s" % addball_no)
-		elif nearest_section == "[Linez]":
-			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
-			if line_no != -1:
-				emit_signal("find_line", line_no)
-		elif nearest_section == "[Paint Ballz]":
-			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Paint Ballz]")
-			if line_no != -1:
-				emit_signal("find_paintball", line_no)
-		elif nearest_section == "[Polygons]":
-			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Polygons]")
-			if line_no != -1:
-				emit_signal("find_polygon", line_no)
-		elif nearest_section == "[Move]":
-			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Move]")
-			if line_no != -1:
-				emit_signal("find_move", line_no)
-		elif nearest_section == "[Project Ball]":
-			line_no = _get_line_no_from_line_index(cursor_get_line(), "[Project Ball]")
-			if line_no != -1:
-				emit_signal("find_project_ball", line_no)
-		else:
-			var word = get_word_under_cursor()
-			if word.is_valid_integer():
-				ball_no = int(word)
+	if event is InputEventKey and event.pressed:
+		if event.scancode == KEY_PAGEDOWN:
+			var next = get_next_section_line_idx(cursor_get_line() + 1)
+			if next != -1:
+				cursor_set_line(next)
+				cursor_set_column(0)
+				center_viewport_to_cursor()
+				print("[JUMP] Next Section: ", next)
+				accept_event()
+				get_tree().set_input_as_handled()
+
+		elif event.scancode == KEY_PAGEUP:
+			var prev = get_prev_section_line_idx(cursor_get_line() - 1)
+			if prev != -1:
+				cursor_set_line(prev)
+				cursor_set_column(0)
+				center_viewport_to_cursor()
+				print("[JUMP] Prev Section: ", prev)
+				accept_event()
+				get_tree().set_input_as_handled()
+
+		elif event.control and event.scancode == KEY_Q:
+			var nearest_section_start = search("[", SEARCH_BACKWARDS, cursor_get_line(), 0)
+			
+			if nearest_section_start.empty():
+				emit_signal("find_ball", int(get_word_under_cursor()))
+				return
+			
+			var nearest_section_line = nearest_section_start[SEARCH_RESULT_LINE]
+			var nearest_section = get_line(nearest_section_line)
+			
+			var ball_no = -1
+			var line_no = -1
+			
+			if nearest_section == "[Ballz Info]":
+				ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
 				if ball_no != -1:
 					emit_signal("find_ball", ball_no)
+					console_log.log_message("[HELPER] Ballz # %s" % ball_no)
+			elif nearest_section == "[Add Ball]":
+				ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
+				if ball_no != -1:
+					emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
+					var addball_no = ball_no + KeyBallsData.max_base_ball_num
+					console_log.log_message("[HELPER] Addballz # %s" % addball_no)
+			elif nearest_section == "[Linez]":
+				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
+				if line_no != -1:
+					emit_signal("find_line", line_no)
+			elif nearest_section == "[Paint Ballz]":
+				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Paint Ballz]")
+				if line_no != -1:
+					emit_signal("find_paintball", line_no)
+			elif nearest_section == "[Polygons]":
+				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Polygons]")
+				if line_no != -1:
+					emit_signal("find_polygon", line_no)
+			elif nearest_section == "[Move]":
+				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Move]")
+				if line_no != -1:
+					emit_signal("find_move", line_no)
+			elif nearest_section == "[Project Ball]":
+				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Project Ball]")
+				if line_no != -1:
+					emit_signal("find_project_ball", line_no)
+			else:
+				var word = get_word_under_cursor()
+				if word.is_valid_integer():
+					ball_no = int(word)
+					if ball_no != -1:
+						emit_signal("find_ball", ball_no)
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
 	var section_find = search(section_tag, 0, 0, 0)
