@@ -521,19 +521,28 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		return {}
+	
 	var header_line = sec[SEARCH_RESULT_LINE]
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var next_sec_search = search("[", 0, start_line, 0)
-	var end_line
-	if next_sec_search.empty():
-		end_line = get_line_count()
-	else:
-		end_line = next_sec_search[SEARCH_RESULT_LINE]
+	var start_line = header_line + 1
+	var end_line = get_line_count()
+	
+	for i in range(start_line, get_line_count()):
+		var line = get_line(i).strip_edges()
+		if line.begins_with("["):
+			end_line = i
+			break
+			
 	var empty_count = 0
 	for i in range(start_line, end_line):
 		if get_line(i).strip_edges() == "":
 			empty_count += 1
-	return {"start": start_line, "end": end_line, "header": header_line, "empties": empty_count}
+			
+	return {
+		"start": start_line, 
+		"end": end_line, 
+		"header": header_line, 
+		"empties": empty_count
+	}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
 	# Define join strings and the patterns to find them
@@ -1487,7 +1496,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
-	else:
+	elif species == KeyBallsData.Species.BAB:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
@@ -1575,19 +1584,22 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	if species == KeyBallsData.Species.CAT:
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
+		if intended_part != "TONGUE":
+			balls_to_exclude.append_array(KeyBallsData.tongue_cat)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_cat)
 	elif species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
+		if intended_part != "TONGUE":
+			balls_to_exclude.append_array(KeyBallsData.tongue_dog)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_dog)
-	else:
+	elif species == KeyBallsData.Species.BAB:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
-		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
+		if intended_part != "TONGUE":
+			balls_to_exclude.append_array(KeyBallsData.tongue_bab)
 		
 	var section_find = search('[Ballz Info]', 0, 0, 0)
 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
@@ -2742,7 +2754,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
-	else:
+	elif species == KeyBallsData.Species.BAB:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
@@ -3522,7 +3534,8 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 		for i in range(ballz_bounds.start, ballz_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";"):
+				continue
 			
 			var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
 			if ball_no != -1 and not (ball_no in balls_to_exclude):
@@ -3534,21 +3547,29 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	var addball_bounds = _get_section_bounds("[Add Ball]")
 	if not addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
+		var current_addball_idx = 0
+
 		for i in range(addball_bounds.start, addball_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";"):
+				continue
+			
+			var addball_id = KeyBallsData.max_base_ball_num + current_addball_idx
 			
 			var parts = _split_line(line)
-			if parts.size() > 7 and not (int(parts[0]) in balls_to_exclude):
+			if parts.size() > 7 and not (addball_id in balls_to_exclude):
 				parts[7] = str(fuzz)
 				set_line(i, _join_array(parts, delim))
+				
+			current_addball_idx += 1
 
 	var linez_bounds = _get_section_bounds("[Linez]")
 	if not linez_bounds.empty():
 		var delim = _detect_delimiter(linez_bounds.start, linez_bounds.end)
 		for i in range(linez_bounds.start, linez_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";"):
+				continue
 			
 			var parts = _split_line(line)
 			if parts.size() > 2:
