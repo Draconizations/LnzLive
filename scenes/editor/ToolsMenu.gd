@@ -30,7 +30,7 @@ var current_action
 
 onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
 
-enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE }
+enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE, TONGUE }
 
 func _ready():
 	add_submenu_item("Color...", "RecolorMenu")
@@ -70,7 +70,7 @@ func _on_LineEdit_gui_input(event):
 					for ar in KeyBallsData.foot_ext_cat:
 						for v in ar:
 							core_ball_nos.erase(v)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.legs_bab[0])
 					core_ball_nos.append_array(KeyBallsData.legs_bab[1])
 					for ar in KeyBallsData.foot_ext_bab:
@@ -81,21 +81,21 @@ func _on_LineEdit_gui_input(event):
 					core_ball_nos.append_array(KeyBallsData.tail_dog)
 				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.tail_cat)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.tail_bab)
 			elif current_action == RecolorAction.HEAD:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.head_ext_dog)
 				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.head_ext_cat)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.head_ext_bab)
 			elif current_action == RecolorAction.SNOUT:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.face_ext_dog)
 				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.face_ext_cat)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.face_ext_bab)
 			elif current_action == RecolorAction.EARS:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
@@ -108,7 +108,7 @@ func _on_LineEdit_gui_input(event):
 					core_ball_nos.append_array(v[0])
 					core_ball_nos.append_array(v[1])
 					core_ball_nos.append_array(KeyBallsData.ear_ext_cat.keys())
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					var v = KeyBallsData.ear_ext_bab.values()
 					core_ball_nos.append_array(v[0])
 					core_ball_nos.append_array(v[1])
@@ -120,7 +120,7 @@ func _on_LineEdit_gui_input(event):
 				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					for ar in KeyBallsData.foot_ext_cat:
 						core_ball_nos.append_array(ar)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					for ar in KeyBallsData.foot_ext_bab:
 						core_ball_nos.append_array(ar)
 			elif current_action == RecolorAction.NOSE:
@@ -128,14 +128,21 @@ func _on_LineEdit_gui_input(event):
 					core_ball_nos.append_array(KeyBallsData.nose_dog)
 				elif KeyBallsData.species == KeyBallsData.Species.CAT:
 					core_ball_nos.append_array(KeyBallsData.nose_cat)
-				else:
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.nose_bab)
+			elif current_action == RecolorAction.TONGUE:
+				if KeyBallsData.species == KeyBallsData.Species.DOG:
+					core_ball_nos.append_array(KeyBallsData.tongue_dog)
+				elif KeyBallsData.species == KeyBallsData.Species.CAT:
+					core_ball_nos.append_array(KeyBallsData.tongue_cat)
+				elif KeyBallsData.species == KeyBallsData.Species.BAB:
+					core_ball_nos.append_array(KeyBallsData.tongue_bab)
 			var part = RecolorAction.keys()[RecolorAction.values()[current_action]]
 			emit_signal("color_part_pet", core_ball_nos, base_color, outline_color, part)
 
 func _on_RecolorMenu_id_pressed(id):
 	current_action = id
-	if id == 8: # color swap
+	if id == 9: # color swap
 		get_parent().get_node("RecolorPopup").popup_centered()
 	else:
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()

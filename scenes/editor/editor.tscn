@@ -1972,7 +1972,7 @@ rect_min_size = Vector2( 150, 0 )
 custom_styles/hover = ExtResource( 20 )
 custom_styles/panel = ExtResource( 19 )
 custom_fonts/font = ExtResource( 35 )
-items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Color Swap", null, 0, false, false, 8, 0, null, "", false ]
+items = [ "Entire pet", null, 0, false, false, 0, 0, null, "", false, "Legs", null, 0, false, false, 1, 0, null, "", false, "Tail", null, 0, false, false, 2, 0, null, "", false, "Head", null, 0, false, false, 3, 0, null, "", false, "Snout", null, 0, false, false, 4, 0, null, "", false, "Ears", null, 0, false, false, 5, 0, null, "", false, "Paws", null, 0, false, false, 6, 0, null, "", false, "Nose", null, 0, false, false, 7, 0, null, "", false, "Tongue", null, 0, false, false, 8, 0, null, "", false, "Color Swap", null, 0, false, false, 9, 0, null, "", false ]
 __meta__ = {
 "_edit_use_anchors_": false
 }
