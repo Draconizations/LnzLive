@@ -3503,16 +3503,19 @@ func _replace_section_content(section_name: String, new_lines: Array):
 
 func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	save_backup()
-	var balls_to_exclude = []
+	var balls_to_exclude = _get_omitted_balls()
 	if KeyBallsData.species == KeyBallsData.Species.CAT:
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_cat)
 	elif KeyBallsData.species == KeyBallsData.Species.DOG:
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
 	elif KeyBallsData.species == KeyBallsData.Species.BABY:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
 
 	var ballz_bounds = _get_section_bounds("[Ballz Info]")
 	if not ballz_bounds.empty():
