@@ -3448,58 +3448,115 @@ func _replace_section_content(section_name: String, new_lines: Array):
 
 		_insert_text_at_cursor_at_line(start_line, final_text)
 
-func _on_ToolsMenu_move_head(x, y, z):
-	save_backup()
-	var head_balls: Array
-	if KeyBallsData.species == KeyBallsData.Species.CAT:
-		head_balls = KeyBallsData.head_ext_cat.duplicate()
-	else:
-		head_balls = KeyBallsData.head_ext_dog.duplicate()
-	var section_find = search('[Move]', 0, 0, 0)
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start_of_section + i).lstrip(" ")
-		if line.begins_with(";") or line.empty():
-			i += 1
-			continue
-		elif line.begins_with("["):
-			break
+# func _on_ToolsMenu_move_head(x, y, z):
+# 	save_backup()
+# 	var head_balls: Array
+# 	if KeyBallsData.species == KeyBallsData.Species.CAT:
+# 		head_balls = KeyBallsData.head_ext_cat.duplicate()
+# 	else:
+# 		head_balls = KeyBallsData.head_ext_dog.duplicate()
+# 	var section_find = search('[Move]', 0, 0, 0)
+# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	var i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		if line.begins_with(";") or line.empty():
+# 			i += 1
+# 			continue
+# 		elif line.begins_with("["):
+# 			break
 			
-		var delimiters = [", ", ",", "\t", " "]
-		var parsed_line = []
-		for delim in delimiters:
-			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
-				break
+# 		var delimiters = [", ", ",", "\t", " "]
+# 		var parsed_line = []
+# 		for delim in delimiters:
+# 			if line.split(delim).size() > 2:
+# 				parsed_line = line.split(delim, false)
+# 				break
 
-		if !(parsed_line[0].to_int() in head_balls):
-			i += 1
-			continue
-		head_balls.erase(parsed_line[0].to_int())
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item
-			if n == 1:
-				final_line += str(item.to_int() + x) + " "
-			elif n == 2:
-				final_line += str(item.to_int() + y) + " "
-			elif n == 3:
-				final_line += str(item.to_int() + z) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(start_of_section + i, final_line)
-		i += 1
+# 		if !(parsed_line[0].to_int() in head_balls):
+# 			i += 1
+# 			continue
+# 		head_balls.erase(parsed_line[0].to_int())
+# 		var n = 0
+# 		var final_line = ""
+# 		for r_item in parsed_line:
+# 			var item = r_item
+# 			if n == 1:
+# 				final_line += str(item.to_int() + x) + " "
+# 			elif n == 2:
+# 				final_line += str(item.to_int() + y) + " "
+# 			elif n == 3:
+# 				final_line += str(item.to_int() + z) + " "
+# 			else:
+# 				final_line += item + " "
+# 			n += 1
+# 		set_line(start_of_section + i, final_line)
+# 		i += 1
 	
-	# now insert any we missed
-	for b in head_balls:
-		cursor_set_line(start_of_section + i)
-		cursor_set_column(0)
-		insert_text_at_cursor(str(b) + " " + str(x) + " " + str(y) + " " + str(z) + "\n")
+# 	# now insert any we missed
+# 	for b in head_balls:
+# 		cursor_set_line(start_of_section + i)
+# 		cursor_set_column(0)
+# 		insert_text_at_cursor(str(b) + " " + str(x) + " " + str(y) + " " + str(z) + "\n")
 	
-	save_file()
+# 	save_file()
+
+func _on_ToolsMenu_apply_global_fuzz(fuzz):
+	save_backup()
+	var balls_to_exclude = []
+	if KeyBallsData.species == KeyBallsData.Species.CAT:
+		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
+	elif KeyBallsData.species == KeyBallsData.Species.DOG:
+		balls_to_exclude.append_array(KeyBallsData.eyes_dog.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
+		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
+
+	var ballz_bounds = _get_section_bounds("[Ballz Info]")
+	if not ballz_bounds.empty():
+		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
+		for i in range(ballz_bounds.start, ballz_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";"): continue
+			
+			var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
+			if ball_no != -1 and not (ball_no in balls_to_exclude):
+				var parts = _split_line(line)
+				if parts.size() > 3:
+					parts[3] = str(fuzz)
+					set_line(i, _join_array(parts, delim))
+
+	var addball_bounds = _get_section_bounds("[Add Ball]")
+	if not addball_bounds.empty():
+		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
+		for i in range(addball_bounds.start, addball_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";"): continue
+			
+			var parts = _split_line(line)
+			if parts.size() > 7 and not (int(parts[0]) in balls_to_exclude):
+				parts[7] = str(fuzz)
+				set_line(i, _join_array(parts, delim))
+
+	var linez_bounds = _get_section_bounds("[Linez]")
+	if not linez_bounds.empty():
+		var delim = _detect_delimiter(linez_bounds.start, linez_bounds.end)
+		for i in range(linez_bounds.start, linez_bounds.end):
+			var line = get_line(i).strip_edges()
+			if line.empty() or line.begins_with(";"): continue
+			
+			var parts = _split_line(line)
+			if parts.size() > 2:
+				var b1 = int(parts[0])
+				var b2 = int(parts[1])
+				if not (b1 in balls_to_exclude or b2 in balls_to_exclude):
+					parts[2] = str(fuzz)
+					set_line(i, _join_array(parts, delim))
+
+	save_file(true)
+	commit_visual_change("Applied Global Fuzz: " + str(fuzz))
 
 func get_project_ball_section() -> Array:
 	var projections = []

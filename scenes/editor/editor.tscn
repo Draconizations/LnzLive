@@ -1923,6 +1923,33 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="FuzzPopup" type="Popup" parent="SceneRoot"]
+margin_left = 450.228
+margin_top = 104.77
+margin_right = 490.228
+margin_bottom = 144.77
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/FuzzPopup"]
+margin_right = 40.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GlobalFuzzAmount" type="LineEdit" parent="SceneRoot/FuzzPopup/VBoxContainer"]
+margin_right = 110.0
+margin_bottom = 25.0
+rect_min_size = Vector2( 0, 45 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+placeholder_text = "fuzz amount"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="ToolsMenu" type="PopupMenu" parent="SceneRoot"]
 margin_left = 250.0
 margin_top = 750.0
@@ -2019,6 +2046,7 @@ __meta__ = {
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditX" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditY" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditZ" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
+[connection signal="gui_input" from="SceneRoot/FuzzPopup/VBoxContainer/GlobalFuzzAmount" to="SceneRoot/ToolsMenu" method="_on_ApplyGlobalFuzz_gui_input"]
 [connection signal="about_to_show" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_about_to_show"]
 [connection signal="add_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_add_ball"]
 [connection signal="color_entire_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_entire_pet"]
@@ -2030,6 +2058,7 @@ __meta__ = {
 [connection signal="index_pressed" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_index_pressed"]
 [connection signal="move_head" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_move_head"]
 [connection signal="omit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_omit_ball"]
+[connection signal="apply_global_fuzz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_global_fuzz"]
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="unomit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_unomit_ball"]

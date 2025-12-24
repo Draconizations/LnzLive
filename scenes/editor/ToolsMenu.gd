@@ -16,6 +16,7 @@ signal copy_l_to_r(ball_no)
 signal copy_r_to_l(ball_no)
 signal recolor(recolor_info)
 signal move_head(x,y,z)
+signal apply_global_fuzz(fuzz)
 signal print_ball_colors()
 signal paintball_mode_for_ball_toggled(ball)
 
@@ -41,10 +42,10 @@ func _ready():
 	add_item("Copy-Mirror (cam L-to-R)")        # index 6
 	add_item("Copy-Mirror (cam R-to-L)")        # index 7
 	add_item("Paintball Mode")                  # index 8
-	add_item("Move Head Ballz")                 # index 9
-	add_item("Copy Ballz Colors to Clipboard")  # index 10
-	add_item("Export to Clothes CLZ")           # index 11
-	add_item("Hide Ballz")                      # index 12
+	add_item("Export to Clothes CLZ")           # index 9
+	add_item("Hide Ballz")                      # index 10
+	add_item("Apply Global Fuzz")               # index 11
+	add_item("Copy Ballz Colors to Clipboard")  # index 12
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -143,19 +144,6 @@ func _on_RecolorMenu_id_pressed(id):
 func _on_RecolorMenuButton_pressed():
 	get_parent().get_node("RecolorPopup").popup_centered()
 
-	# add_submenu_item("Color...", "RecolorMenu")
-	# add_item("Create Addballz + Linez")         # index 1
-	# add_item("Create Addballz")                 # index 2
-	# add_item("Delete Addballz")                 # index 3
-	# add_item("Omit/Unomit Ballz")               # index 4
-	# add_item("Connect by Linez")                # index 5
-	# add_item("Copy-Mirror (cam L-to-R)")        # index 6
-	# add_item("Copy-Mirror (cam R-to-L)")        # index 7
-	# add_item("Paintball Mode")                  # index 8
-	# add_item("Move Head Ballz")                 # index 9
-	# add_item("Copy Ballz Colors to Clipboard")  # index 10
-	# add_item("Export to Clothes CLZ")           # index 11
-
 func _on_ToolsMenu_index_pressed(index):
 	var ball_no = -1
 	var is_addball = false
@@ -202,16 +190,18 @@ func _on_ToolsMenu_index_pressed(index):
 	elif index == 8: # Paintball Mode
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	elif index == 9: # Move Head
-		var options = get_parent().get_node("HeadMovePopup")
-		options.popup_centered()
-	elif index == 10: # Print Ballz Colors
-		emit_signal("print_ball_colors")
-	elif index == 11: # Export to Clothes CLZ
+	elif index == 9: # Export to Clothes CLZ
 		get_parent().get_node("ExportClothes").open(ball_no)
-	elif index == 12: # Hide Ballz
+	elif index == 10: # Hide Ballz
 		if is_instance_valid(selected_visual_ball):
 			emit_signal("hide_ball", ball_no)
+	elif index == 11: # Apply Global Fuzz
+		var options = get_parent().get_node("FuzzPopup")
+		options.popup_centered()
+		# var options = get_parent().get_node("HeadMovePopup")
+		# options.popup_centered()
+	elif index == 12: # Print Ballz Colors
+		emit_signal("print_ball_colors")
 
 func _on_ToolsMenu_about_to_show():
 	var ball_no = -1
@@ -293,24 +283,27 @@ func _on_ToolsMenu_about_to_show():
 		option_text += " (all ballz)"
 	set_item_text(8, option_text)
 
-	# 89: Move Head Ballz
-	set_item_text(9, "Move Head Ballz")
-	
-	# 10: Copy Ballz Colors to Clipboard
-	set_item_text(10, "Copy Ballz Colors to Clipboard")
+	# 9: Move Head Ballz
+	# set_item_text(9, "Move Head Ballz")
 
-	# 11: Export to Clothes CLZ
+	# 9: Export to Clothes CLZ
 	option_text = "Export to Clothes CLZ"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(11, option_text)
+	set_item_text(9, option_text)
 
-	# 12: Hide Ballz
+	# 10: Hide Ballz
 	option_text = "Hide Ballz"
-	set_item_disabled(12, !is_ball_selected)
+	set_item_disabled(10, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(12, option_text)
+	set_item_text(10, option_text)
+
+	# 11: Apply Global Fuzz
+	set_item_text(11, "Apply Global Fuzz")
+
+	# 12: Copy Ballz Colors to Clipboard
+	set_item_text(12, "Copy Ballz Colors to Clipboard")
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
@@ -470,10 +463,16 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 					new_max = texture_id
 	return new_max
 
-func _on_HeadMoveLineEdit_gui_input(event):
+# func _on_HeadMoveLineEdit_gui_input(event):
+# 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
+# 		var popup = get_parent().get_node("HeadMovePopup/VBoxContainer")
+# 		var x = popup.get_node("HeadMoveLineEditX").text.to_int()
+# 		var y = popup.get_node("HeadMoveLineEditY").text.to_int()
+# 		var z = popup.get_node("HeadMoveLineEditZ").text.to_int()
+# 		emit_signal("move_head", x, y, z)
+
+func _on_ApplyGlobalFuzz_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
-		var popup = get_parent().get_node("HeadMovePopup/VBoxContainer")
-		var x = popup.get_node("HeadMoveLineEditX").text.to_int()
-		var y = popup.get_node("HeadMoveLineEditY").text.to_int()
-		var z = popup.get_node("HeadMoveLineEditZ").text.to_int()
-		emit_signal("move_head", x, y, z)
+		var popup = get_parent().get_node("FuzzPopup/VBoxContainer")
+		var fuzz = popup.get_node("GlobalFuzzAmount").text.to_int()
+		emit_signal("apply_global_fuzz", fuzz)
