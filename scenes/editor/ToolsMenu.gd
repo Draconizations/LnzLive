@@ -406,7 +406,7 @@ func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, textu
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_and_clean(line)
+		var parts = lnz_text_edit._split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
 			var color = parts[color_idx]
 			var texture = parts[texture_idx]
@@ -461,7 +461,7 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_and_clean(line)
+		var parts = lnz_text_edit._split_line(line)
 		if parts.size() > texture_idx:
 			var texture_str = parts[texture_idx]
 			if texture_str.is_valid_integer():
