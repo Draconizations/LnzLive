@@ -897,11 +897,11 @@ func _on_ApplyRecolorsButton_pressed():
 
 			var result_color = ""
 			if rule.is_ramp:
-				result_color = _get_ramp_color_util(color_str, rule)
+				result_color = LnzLiveUtils.get_ramp_color(color_str, rule)
 			elif rule.before_color == "" or rule.before_color == color_str:
 				result_color = rule.after_color
 			
-			if not result_color.empty():
+			if result_color != null and result_color != "":
 				p_data.color_index = int(result_color)
 				if not rule.after_texture.empty():
 					p_data.texture_id = int(rule.after_texture)
@@ -910,29 +910,3 @@ func _on_ApplyRecolorsButton_pressed():
 	_populate_tree_from_base()
 	update_preview()
 	save_settings()
-
-func _get_ramp_color_util(current_color_str: String, rule) -> String:
-	if not current_color_str.is_valid_integer() or \
-	   not rule.before_color.is_valid_integer() or \
-	   not rule.after_color.is_valid_integer():
-		return ""
-
-	var current_color: int = int(current_color_str)
-	var before_color: int = int(rule.before_color)
-	var after_color: int = int(rule.after_color)
-
-	if current_color < 10 or current_color > 199 or before_color < 10 or before_color > 199:
-		return ""
-
-	var current_base: int = int(current_color / 10) * 10
-	var before_base: int = int(before_color / 10) * 10
-
-	if current_base != before_base:
-		return ""
-
-	if after_color >= 10 and after_color <= 199:
-		var offset: int = current_color - current_base
-		var after_base: int = int(after_color / 10) * 10
-		return str(after_base + offset)
-	else:
-		return str(after_color)
