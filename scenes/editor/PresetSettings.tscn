@@ -591,7 +591,6 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = ExtResource( 5 )
 text = "Show Input LNZ"
 
-
 [node name="RawLnzContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 visible = false
 margin_top = 555.0
@@ -627,6 +626,68 @@ custom_styles/focus = SubResource( 6 )
 custom_styles/disabled = SubResource( 6 )
 custom_styles/normal = SubResource( 5 )
 text = "Copy Preset to LNZ"
+
+[node name="RecolorSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 800.0
+margin_right = 408.0
+margin_bottom = 804.0
+
+[node name="RecolorLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 808.0
+margin_right = 408.0
+margin_bottom = 829.0
+custom_fonts/font = SubResource( 1 )
+text = "Paintball Recolor"
+align = 1
+
+[node name="RecolorActions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 833.0
+margin_right = 408.0
+margin_bottom = 862.0
+alignment = 1
+
+[node name="AutofillRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
+margin_right = 202.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 5 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+text = "Autofill"
+
+[node name="ApplyRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
+margin_left = 206.0
+margin_right = 408.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 5 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+text = "Recolor"
+
+[node name="ClearRecolorsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/RecolorActions"]
+margin_left = 412.0
+margin_right = 614.0
+margin_bottom = 29.0
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 5 )
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+text = "Clear"
+
+[node name="RecolorRulesContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 866.0
+margin_right = 408.0
+margin_bottom = 866.0
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
 margin_top = 670.0

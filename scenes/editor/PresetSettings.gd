@@ -69,6 +69,11 @@ onready var mirror_x_btn = scroll_vbox.get_node("MirrorGrid/MirrorXButton")
 onready var mirror_y_btn = scroll_vbox.get_node("MirrorGrid/MirrorYButton")
 onready var mirror_z_btn = scroll_vbox.get_node("MirrorGrid/MirrorZButton")
 
+onready var recolor_rules_container = scroll_vbox.get_node("RecolorRulesContainer")
+onready var autofill_btn = scroll_vbox.get_node("RecolorActions/AutofillRecolorsButton")
+onready var apply_recolor_btn = scroll_vbox.get_node("RecolorActions/ApplyRecolorsButton")
+onready var clear_recolor_btn = scroll_vbox.get_node("RecolorActions/ClearRecolorsButton")
+
 var _base_paintballz_data = []
 var _ignore_ui_changes = false
 var source_ball_reference_size = 10
@@ -140,6 +145,10 @@ func _ready():
 
 	paintballz_tree.connect("item_edited", self, "_on_Tree_item_edited")
 	paintballz_tree.select_mode = Tree.SELECT_SINGLE
+
+	autofill_btn.connect("pressed", self, "_on_AutofillRecolorsButton_pressed")
+	apply_recolor_btn.connect("pressed", self, "_on_ApplyRecolorsButton_pressed")
+	clear_recolor_btn.connect("pressed", self, "_on_ClearRecolorsButton_pressed")
 	
 	var viewport_size = get_viewport().size
 	var panel_size = panel.rect_size
@@ -830,3 +839,100 @@ func _on_reset_defaults_pressed():
 	
 	save_settings()
 	update_preview()
+
+func _on_ClearRecolorsButton_pressed():
+	for child in recolor_rules_container.get_children():
+		child.queue_free()
+
+func _on_AutofillRecolorsButton_pressed():
+	_on_ClearRecolorsButton_pressed()
+	
+	var unique_pairs = {}
+	for p_data in _base_paintballz_data:
+		var col_str = str(p_data.color_index)
+		var tex_str = str(p_data.texture_id) if p_data.texture_id != -1 else ""
+		var key = col_str + "|" + tex_str
+		
+		if not unique_pairs.has(key):
+			unique_pairs[key] = {
+				"color": col_str,
+				"texture": tex_str
+			}
+	
+	var recolor_line_scene = load("res://scenes/editor/RecolorLine.tscn")
+	for key in unique_pairs:
+		var pair = unique_pairs[key]
+		var line = recolor_line_scene.instance()
+		recolor_rules_container.add_child(line)
+		
+		line.get_node("BeforeColor").text = pair.color
+		line.get_node("BeforeTexture").text = pair.texture
+
+func _on_ApplyRecolorsButton_pressed():
+	var rules = []
+	for line in recolor_rules_container.get_children():
+		var ramp_btn = line.get_node_or_null("ColorRampCheck")
+		if not ramp_btn:
+			continue
+			
+		rules.append({
+			"before_color": line.get_node("BeforeColor").text.strip_edges(),
+			"after_color": line.get_node("AfterColor").text.strip_edges(),
+			"before_texture": line.get_node("BeforeTexture").text.strip_edges(),
+			"after_texture": line.get_node("AfterTexture").text.strip_edges(),
+			"is_ramp": ramp_btn.pressed
+		})
+	
+	if rules.empty(): 
+		return
+
+	for p_data in _base_paintballz_data:
+		var color_str = str(p_data.color_index)
+		var texture_str = str(p_data.texture_id) if p_data.texture_id != -1 else ""
+
+		for rule in rules:
+			var tex_match = rule.before_texture == "" or rule.before_texture == texture_str
+			if not tex_match: 
+				continue
+
+			var result_color = ""
+			if rule.is_ramp:
+				result_color = _get_ramp_color_util(color_str, rule)
+			elif rule.before_color == "" or rule.before_color == color_str:
+				result_color = rule.after_color
+			
+			if not result_color.empty():
+				p_data.color_index = int(result_color)
+				if not rule.after_texture.empty():
+					p_data.texture_id = int(rule.after_texture)
+				break 
+
+	_populate_tree_from_base()
+	update_preview()
+	save_settings()
+
+func _get_ramp_color_util(current_color_str: String, rule) -> String:
+	if not current_color_str.is_valid_integer() or \
+	   not rule.before_color.is_valid_integer() or \
+	   not rule.after_color.is_valid_integer():
+		return ""
+
+	var current_color: int = int(current_color_str)
+	var before_color: int = int(rule.before_color)
+	var after_color: int = int(rule.after_color)
+
+	if current_color < 10 or current_color > 199 or before_color < 10 or before_color > 199:
+		return ""
+
+	var current_base: int = int(current_color / 10) * 10
+	var before_base: int = int(before_color / 10) * 10
+
+	if current_base != before_base:
+		return ""
+
+	if after_color >= 10 and after_color <= 199:
+		var offset: int = current_color - current_base
+		var after_base: int = int(after_color / 10) * 10
+		return str(after_base + offset)
+	else:
+		return str(after_color)
