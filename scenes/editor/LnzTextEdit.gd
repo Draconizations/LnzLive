@@ -783,6 +783,56 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 
 # --- LOGIC FUNCTIONS ---
 
+func get_ball_name(ball_no: int) -> String:
+	var species = KeyBallsData.species
+	var max_base = KeyBallsData.max_base_ball_num
+	var ball_name = ""
+
+	if ball_no < max_base:
+		var definitions = {}
+		match species:
+			KeyBallsData.Species.CAT: definitions = KeyBallsData.cat_ball_definitions
+			KeyBallsData.Species.DOG: definitions = KeyBallsData.dog_ball_definitions
+			KeyBallsData.Species.BABY: definitions = KeyBallsData.bab_ball_definitions
+		
+		if definitions.has(ball_no):
+			ball_name = definitions[ball_no].get("name", "")
+	
+	else:
+		var addball_idx = ball_no - max_base
+		var line_idx = find_line_in_addball_section(addball_idx)
+		
+		if line_idx != -1:
+			var current_line = get_line(line_idx)
+			
+			if current_line.find(";") != -1:
+				var parts = current_line.split(";", false, 1)
+				if parts.size() > 1:
+					ball_name = parts[1].strip_edges()
+			
+			if ball_name == "":
+				var bounds = _get_section_bounds("[Add Ball]")
+				var header_idx = bounds.get("header", -1)
+				var search_idx = line_idx - 1
+				
+				while search_idx > header_idx:
+					var raw_line = get_line(search_idx).strip_edges()
+					
+					if raw_line.begins_with(";"):
+						ball_name = raw_line.substr(1).strip_edges()
+						if ball_name != "":
+							break
+					
+					elif raw_line.begins_with("["):
+						break
+					
+					search_idx -= 1
+	
+	if ball_name.length() > 25:
+		ball_name = ball_name.substr(0, 22) + "..."
+	
+	return ball_name
+
 func get_corresponding_right_ball(left_ball_index):
 	if left_ball_index < KeyBallsData.max_base_ball_num:
 		if KeyBallsData.species == KeyBallsData.Species.CAT:
@@ -2626,19 +2676,24 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 func get_current_ball_index() -> int:
 	# try to merge this with the CTRL+Q finder later, but this is for the ball # helper
 	var current_line = cursor_get_line()
-	var nearest_section_start = search("[", SEARCH_BACKWARDS, current_line, 0) 
+	var nearest_section = ""
 	
-	if nearest_section_start.empty():
+	for i in range(current_line, -1, -1):
+		var line_text = get_line(i).strip_edges()
+		if line_text.begins_with("["):
+			nearest_section = line_text
+			break
+	
+	if nearest_section == "":
 		var word = get_word_under_cursor()
 		return int(word) if word.is_valid_integer() else -1
 
-	var nearest_section = get_line(nearest_section_start[SEARCH_RESULT_LINE])
-	
 	if nearest_section == "[Ballz Info]":
 		return _get_line_no_from_line_index(current_line, "[Ballz Info]")
 	elif nearest_section == "[Add Ball]":
 		var idx = _get_line_no_from_line_index(current_line, "[Add Ball]")
-		return idx + KeyBallsData.max_base_ball_num if idx != -1 else -1
+		if idx != -1:
+			return idx + KeyBallsData.max_base_ball_num
 		
 	return -1
 
@@ -2721,14 +2776,15 @@ func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -
 		return -1
 	
 	var start_line = section_find[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-	if end_line == -1:
-		end_line = get_line_count()
-
 	var line_counter = -1
-	for i in range(start_line, end_line):
-		var line = get_line(i).lstrip(" ")
-		if line.begins_with(";") or line.empty() or line.begins_with("["):
+	
+	for i in range(start_line, get_line_count()):
+		var line = get_line(i).strip_edges()
+		
+		if line.begins_with("["):
+			break
+			
+		if line.begins_with(";") or line.empty():
 			continue
 		
 		line_counter += 1
