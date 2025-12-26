@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://scenes/editor/ProjectSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
@@ -9,8 +9,40 @@
 size = 26
 font_data = ExtResource( 3 )
 
+[sub_resource type="StyleBoxFlat" id=2]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=3]
+content_margin_left = 3.0
+content_margin_right = 3.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.294118, 0.403922, 0.403922, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
 [node name="ProjectSettings" type="Panel"]
-script = ExtResource( 1 )
+visible = false
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -21,6 +53,7 @@ margin_right = 400.0
 margin_bottom = -10.0
 rect_min_size = Vector2( 800, 590 )
 custom_styles/panel = ExtResource( 2 )
+script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -37,515 +70,568 @@ __meta__ = {
 }
 
 [node name="LeftColumn" type="VBoxContainer" parent="HBoxContainer"]
-margin_right = 384.0
+margin_right = 429.0
 margin_bottom = 570.0
 size_flags_horizontal = 3
 
 [node name="TitleLabel" type="Label" parent="HBoxContainer/LeftColumn"]
-margin_right = 384.0
-margin_bottom = 17.0
+margin_right = 429.0
+margin_bottom = 18.0
 custom_fonts/font = SubResource( 1 )
 text = "Projection Randomizer"
 align = 1
 
 [node name="HSeparator" type="HSeparator" parent="HBoxContainer/LeftColumn"]
-margin_top = 21.0
-margin_right = 384.0
-margin_bottom = 25.0
+margin_top = 22.0
+margin_right = 429.0
+margin_bottom = 26.0
 
 [node name="ProjectionsTree" type="Tree" parent="HBoxContainer/LeftColumn"]
-margin_top = 29.0
-margin_right = 384.0
-margin_bottom = 461.0
+margin_top = 30.0
+margin_right = 429.0
+margin_bottom = 496.0
 size_flags_vertical = 3
 columns = 9
 hide_root = true
 
 [node name="OrderNoteLabel" type="Label" parent="HBoxContainer/LeftColumn"]
-margin_top = 465.0
-margin_right = 384.0
-margin_bottom = 479.0
+margin_top = 500.0
+margin_right = 429.0
+margin_bottom = 518.0
 custom_fonts/font = SubResource( 1 )
 text = "Note: The order of entries matters."
 align = 1
 autowrap = true
 
 [node name="ButtonsHBox" type="HBoxContainer" parent="HBoxContainer/LeftColumn"]
-margin_top = 483.0
-margin_right = 384.0
-margin_bottom = 506.0
+margin_top = 522.0
+margin_right = 429.0
+margin_bottom = 544.0
 
 [node name="AddButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_right = 93.0
-margin_bottom = 23.0
+margin_right = 30.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Add"
 
 [node name="RemoveButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_left = 97.0
-margin_right = 190.0
-margin_bottom = 23.0
+margin_left = 34.0
+margin_right = 89.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Remove"
 
 [node name="MoveUpButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_left = 194.0
-margin_right = 287.0
-margin_bottom = 23.0
+margin_left = 93.0
+margin_right = 151.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Move Up"
 
 [node name="MoveDownButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_left = 291.0
-margin_right = 384.0
-margin_bottom = 23.0
+margin_left = 155.0
+margin_right = 231.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Move Down"
 
 [node name="ClearAllButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_left = 388.0
-margin_right = 481.0
-margin_bottom = 23.0
+margin_left = 235.0
+margin_right = 300.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Clear All"
 
 [node name="RestoreDefaultsButton" type="Button" parent="HBoxContainer/LeftColumn/ButtonsHBox"]
-margin_left = 485.0
-margin_right = 578.0
-margin_bottom = 23.0
+margin_left = 304.0
+margin_right = 429.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Restore Defaults"
 
 [node name="ActionButtonsHBox" type="HBoxContainer" parent="HBoxContainer/LeftColumn"]
-margin_top = 492.0
-margin_right = 384.0
-margin_bottom = 515.0
+margin_top = 548.0
+margin_right = 429.0
+margin_bottom = 570.0
 
 [node name="CopyFromLNZButton" type="Button" parent="HBoxContainer/LeftColumn/ActionButtonsHBox"]
-margin_right = 125.0
-margin_bottom = 23.0
+margin_right = 140.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Copy from LNZ"
 
 [node name="RandomizeProjectionsButton" type="Button" parent="HBoxContainer/LeftColumn/ActionButtonsHBox"]
-margin_left = 129.0
-margin_right = 254.0
-margin_bottom = 23.0
+margin_left = 144.0
+margin_right = 284.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Randomize"
 
 [node name="ApplyButton" type="Button" parent="HBoxContainer/LeftColumn/ActionButtonsHBox"]
-margin_left = 258.0
-margin_right = 384.0
-margin_bottom = 23.0
+margin_left = 288.0
+margin_right = 429.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Apply to LNZ"
 
 [node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
-margin_left = 388.0
-margin_right = 392.0
+margin_left = 433.0
+margin_right = 437.0
 margin_bottom = 570.0
 
 [node name="RightColumn" type="VBoxContainer" parent="HBoxContainer"]
-margin_left = 396.0
+margin_left = 441.0
 margin_right = 780.0
 margin_bottom = 570.0
 size_flags_horizontal = 3
 
 [node name="Label" type="Label" parent="HBoxContainer/RightColumn"]
-margin_right = 384.0
-margin_bottom = 17.0
+margin_right = 339.0
+margin_bottom = 18.0
 custom_fonts/font = SubResource( 1 )
 text = "Extensions Randomizer"
 align = 1
 
 [node name="HSeparator2" type="HSeparator" parent="HBoxContainer/RightColumn"]
-margin_top = 21.0
-margin_right = 384.0
-margin_bottom = 25.0
+margin_top = 22.0
+margin_right = 339.0
+margin_bottom = 26.0
 
 [node name="GridContainer" type="GridContainer" parent="HBoxContainer/RightColumn"]
-margin_top = 29.0
-margin_right = 384.0
-margin_bottom = 351.0
+margin_top = 30.0
+margin_right = 339.0
+margin_bottom = 444.0
+custom_constants/vseparation = 12
 columns = 3
 
 [node name="HeaderLabel1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_right = 125.0
-margin_bottom = 14.0
+margin_right = 110.0
+margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Setting"
 
 [node name="HeaderLabel2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_right = 254.0
-margin_bottom = 14.0
+margin_left = 114.0
+margin_right = 224.0
+margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Min"
 align = 1
 
 [node name="HeaderLabel3" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_right = 383.0
-margin_bottom = 14.0
+margin_left = 228.0
+margin_right = 338.0
+margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Max"
 align = 1
 
 [node name="LabelLegExt1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 21.0
-margin_right = 125.0
-margin_bottom = 38.0
+margin_top = 33.0
+margin_right = 110.0
+margin_bottom = 51.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Leg Extension 1"
 
 [node name="LegExt1MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 18.0
-margin_right = 254.0
-margin_bottom = 42.0
+margin_left = 114.0
+margin_top = 30.0
+margin_right = 224.0
+margin_bottom = 54.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LegExt1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 18.0
-margin_right = 383.0
-margin_bottom = 42.0
+margin_left = 228.0
+margin_top = 30.0
+margin_right = 338.0
+margin_bottom = 54.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelLegExt2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 49.0
-margin_right = 125.0
-margin_bottom = 66.0
+margin_top = 69.0
+margin_right = 110.0
+margin_bottom = 87.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Leg Extension 2"
 
 [node name="LegExt2MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 46.0
-margin_right = 254.0
-margin_bottom = 70.0
+margin_left = 114.0
+margin_top = 66.0
+margin_right = 224.0
+margin_bottom = 90.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LegExt2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 46.0
-margin_right = 383.0
-margin_bottom = 70.0
+margin_left = 228.0
+margin_top = 66.0
+margin_right = 338.0
+margin_bottom = 90.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelHeadEnl1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 77.0
-margin_right = 125.0
-margin_bottom = 94.0
+margin_top = 105.0
+margin_right = 110.0
+margin_bottom = 123.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Head Enlarge 1"
 
 [node name="HeadEnl1MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 74.0
-margin_right = 254.0
-margin_bottom = 98.0
+margin_left = 114.0
+margin_top = 102.0
+margin_right = 224.0
+margin_bottom = 126.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 100.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="HeadEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 74.0
-margin_right = 383.0
-margin_bottom = 98.0
+margin_left = 228.0
+margin_top = 102.0
+margin_right = 338.0
+margin_bottom = 126.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 120.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelHeadEnl2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 105.0
-margin_right = 125.0
-margin_bottom = 122.0
+margin_top = 141.0
+margin_right = 110.0
+margin_bottom = 159.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Head Enlarge 2"
 
 [node name="HeadEnl2MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 102.0
-margin_right = 254.0
-margin_bottom = 126.0
+margin_left = 114.0
+margin_top = 138.0
+margin_right = 224.0
+margin_bottom = 162.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
-value = 0.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="HeadEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 102.0
-margin_right = 383.0
-margin_bottom = 126.0
+margin_left = 228.0
+margin_top = 138.0
+margin_right = 338.0
+margin_bottom = 162.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
-value = 0.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFeetEnl1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 133.0
-margin_right = 125.0
-margin_bottom = 150.0
+margin_top = 177.0
+margin_right = 110.0
+margin_bottom = 195.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Feet Enlarge 1"
 
 [node name="FeetEnl1MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 130.0
-margin_right = 254.0
-margin_bottom = 154.0
+margin_left = 114.0
+margin_top = 174.0
+margin_right = 224.0
+margin_bottom = 198.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 50.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="FeetEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 130.0
-margin_right = 383.0
-margin_bottom = 154.0
+margin_left = 228.0
+margin_top = 174.0
+margin_right = 338.0
+margin_bottom = 198.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 150.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFeetEnl2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 161.0
-margin_right = 125.0
-margin_bottom = 178.0
+margin_top = 213.0
+margin_right = 110.0
+margin_bottom = 231.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Feet Enlarge 2"
 
 [node name="FeetEnl2MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 158.0
-margin_right = 254.0
-margin_bottom = 182.0
+margin_left = 114.0
+margin_top = 210.0
+margin_right = 224.0
+margin_bottom = 234.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
-value = 0.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="FeetEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 158.0
-margin_right = 383.0
-margin_bottom = 182.0
+margin_left = 228.0
+margin_top = 210.0
+margin_right = 338.0
+margin_bottom = 234.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 20.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelScales1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 189.0
-margin_right = 125.0
-margin_bottom = 206.0
+margin_top = 249.0
+margin_right = 110.0
+margin_bottom = 267.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Default Scale 1"
 
 [node name="Scales1MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 186.0
-margin_right = 254.0
-margin_bottom = 210.0
+margin_left = 114.0
+margin_top = 246.0
+margin_right = 224.0
+margin_bottom = 270.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 120.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="Scales1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 186.0
-margin_right = 383.0
-margin_bottom = 210.0
+margin_left = 228.0
+margin_top = 246.0
+margin_right = 338.0
+margin_bottom = 270.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 120.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelScales2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 217.0
-margin_right = 125.0
-margin_bottom = 234.0
+margin_top = 285.0
+margin_right = 110.0
+margin_bottom = 303.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Default Scale 2"
 
 [node name="Scales2MinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 214.0
-margin_right = 254.0
-margin_bottom = 238.0
+margin_left = 114.0
+margin_top = 282.0
+margin_right = 224.0
+margin_bottom = 306.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 100.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="Scales2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 214.0
-margin_right = 383.0
-margin_bottom = 238.0
+margin_left = 228.0
+margin_top = 282.0
+margin_right = 338.0
+margin_bottom = 306.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 100.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelBodyExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 245.0
-margin_right = 125.0
-margin_bottom = 262.0
+margin_top = 321.0
+margin_right = 110.0
+margin_bottom = 339.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Body Extension"
 
 [node name="BodyExtMinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 242.0
-margin_right = 254.0
-margin_bottom = 266.0
+margin_left = 114.0
+margin_top = 318.0
+margin_right = 224.0
+margin_bottom = 342.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -20.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="BodyExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 242.0
-margin_right = 383.0
-margin_bottom = 266.0
+margin_left = 228.0
+margin_top = 318.0
+margin_right = 338.0
+margin_bottom = 342.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 60.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFaceExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 273.0
-margin_right = 125.0
-margin_bottom = 290.0
+margin_top = 357.0
+margin_right = 110.0
+margin_bottom = 375.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Face Extension"
 
 [node name="FaceExtMinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 270.0
-margin_right = 254.0
-margin_bottom = 294.0
+margin_left = 114.0
+margin_top = 354.0
+margin_right = 224.0
+margin_bottom = 378.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="FaceExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 270.0
-margin_right = 383.0
-margin_bottom = 294.0
+margin_left = 228.0
+margin_top = 354.0
+margin_right = 338.0
+margin_bottom = 378.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelEarExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_top = 301.0
-margin_right = 125.0
-margin_bottom = 318.0
+margin_top = 393.0
+margin_right = 110.0
+margin_bottom = 411.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
 text = "Ear Extension"
 
 [node name="EarExtMinSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 129.0
-margin_top = 298.0
-margin_right = 254.0
-margin_bottom = 322.0
+margin_left = 114.0
+margin_top = 390.0
+margin_right = 224.0
+margin_bottom = 414.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 50.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="EarExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
-margin_left = 258.0
-margin_top = 298.0
-margin_right = 383.0
-margin_bottom = 322.0
+margin_left = 228.0
+margin_top = 390.0
+margin_right = 338.0
+margin_bottom = 414.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 100.0
-custom_icons/updown = ExtResource( 4 )
 
 [node name="RandomizeBodyButton" type="Button" parent="HBoxContainer/RightColumn"]
-margin_top = 547.0
-margin_right = 384.0
-margin_bottom = 570.0
+margin_top = 485.0
+margin_right = 339.0
+margin_bottom = 507.0
 size_flags_vertical = 10
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Randomize Extensions"
 
 [node name="ResetDefaultsButton" type="Button" parent="HBoxContainer/RightColumn"]
-margin_top = 574.0
-margin_right = 384.0
-margin_bottom = 597.0
+margin_top = 548.0
+margin_right = 339.0
+margin_bottom = 570.0
 size_flags_vertical = 10
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
 custom_fonts/font = SubResource( 1 )
 text = "Reset Defaults"
