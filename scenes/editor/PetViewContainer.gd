@@ -1,7 +1,7 @@
 extends Control
 
-onready var file_tree = get_tree().root.find_node("FileTree", true, false)
-onready var lnz_text_edit = get_tree().root.find_node("LnzTextEdit")
+onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var pet_view = self
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
