@@ -9,6 +9,18 @@ extends TextEdit
 # - Handles batch recolor and mirror‐copy operations
 # - Emits signals for file_saved, file_backed_up, and find_ball actions
 
+onready var file_tree = get_tree().root.find_node("FileTree", true, false)
+onready var lnz_text_edit = self
+onready var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
+onready var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+onready var camera_holder = get_tree().root.find_node("CameraHolder", true, false)
+
+onready var console_log = pet_view.find_node("ConsoleLog", true, false)
+onready var apply_changes_button = pet_view.find_node("ApplyChangesButton", true, false)
+onready var frame_slider = pet_view.find_node("FrameSlider", true, false)
+
+onready var find_panel = get_node("../FindPanel")
+
 var is_user_file = false
 var filepath: String
 
@@ -57,17 +69,6 @@ signal file_backed_up()
 signal ball_number_changed(ball_no)
 
 var min_font_size = 4
-
-onready var file_tree = get_tree().root.find_node("FileTree", true, false)
-onready var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
-onready var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-onready var camera_holder = get_tree().root.find_node("CameraHolder", true, false)
-
-onready var console_log = pet_view.find_node("ConsoleLog", true, false)
-onready var apply_changes_button = pet_view.find_node("ApplyChangesButton", true, false)
-onready var frame_slider = pet_view.find_node("FrameSlider", true, false)
-
-onready var find_panel = get_node("../FindPanel")
 
 func _ready():
 	_setup_context_menu()

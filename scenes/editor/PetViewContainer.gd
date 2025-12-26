@@ -1,13 +1,32 @@
 extends Control
 
+onready var file_tree = get_tree().root.find_node("FileTree", true, false)
+onready var lnz_text_edit = get_tree().root.find_node("LnzTextEdit")
+onready var pet_view = self
+onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
 onready var camera_holder = get_tree().root.get_node("Root/SceneRoot/ViewportContainer/Viewport/CameraHolder") as Spatial
 onready var camera = camera_holder.get_node("Camera") as Camera
-onready var ball_label = get_tree().root.get_node("Root/SceneRoot/BallLabel")
-onready var helper_label = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/HelperLabel")
+
+onready var ball_label = get_tree().root.find_node("BallLabel", true, false)
+onready var help_popup = get_tree().root.find_node("HelpPopupDialog", true, false)
+onready var recolor_popup = get_tree().root.find_node("RecolorPopup", true, false)
+onready var helper_label = find_node("HelperLabel")
 onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spatial
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
-onready var help_popup = get_tree().root.get_node("Root/SceneRoot/HelpPopupDialog") as WindowDialog
-onready var dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
+
+onready var auto_paintballer_check_box = find_node("AutoPaintballerModeCheckBox")
+onready var view_palette_check_box = find_node("ViewPaletteButton")
+
+onready var select_check_box = find_node("SelectCheckBox")
+
+onready var paintball_check_box = find_node("PaintballModeCheckBox")
+onready var project_mode_check_box = find_node("ProjectModeCheckBox")
+onready var preset_mode_check_box = find_node("PresetModeCheckBox")
+onready var line_mode_check_box = find_node("LineModeCheckBox")
+onready var move_mode_check_box = find_node("MoveModeCheckBox")
+
+onready var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 
 var _auto_paint_affected_cache: Array = []
 
@@ -76,20 +95,6 @@ var auto_paintballer_settings_instance: Control
 var palette_viewer_instance: Control
 var move_mode_settings_instance: Control
 var line_mode_settings_instance: Control
-
-onready var paintball_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PaintballModeCheckBox")
-onready var project_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/ProjectModeCheckBox")
-onready var preset_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/PresetModeCheckBox")
-onready var auto_paintballer_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox")
-onready var view_palette_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton")
-
-onready var line_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/LineModeCheckBox")
-onready var move_mode_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/MoveModeCheckBox")
-
-onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-onready var _select_check_box = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer/SelectCheckBox")
-
-onready var recolor_popup = get_tree().root.get_node("Root/SceneRoot/RecolorPopup")
 
 var preset_mode = false
 
@@ -172,11 +177,12 @@ func _ready():
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 
-	var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
-	paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
-	paintball_settings_instance.connect("clear_paintballz", dog_generator, "_on_clear_paintballz")
+	if is_instance_valid(lnz_text_edit):
+		paintball_settings_instance.connect("apply_paintballz", lnz_text_edit, "_on_apply_paintballz")
+	if is_instance_valid(pet_node):
+		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
@@ -184,12 +190,14 @@ func _ready():
 	preset_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 	preset_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
 
-	project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
+	if is_instance_valid(lnz_text_edit):
+		project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
 
-	auto_paintballer_settings_instance.connect("randomize_auto_paintballz", dog_generator, "_on_randomize_auto_paintballz")
-	auto_paintballer_settings_instance.connect("clear_auto_paintballz", dog_generator, "_on_clear_auto_paintballz")
-	auto_paintballer_settings_instance.connect("apply_auto_paintballz", dog_generator, "_on_apply_auto_paintballz")
+	if is_instance_valid(pet_node):
+		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
+		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "_on_clear_auto_paintballz")
+		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
 	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
 	auto_paintballer_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 
@@ -215,7 +223,7 @@ func _ready():
 
 	helper_label.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 
-	_select_check_box.connect("pressed", self, "_on_SelectCheckBox_pressed")
+	select_check_box.connect("pressed", self, "_on_SelectCheckBox_pressed")
 
 	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
@@ -456,7 +464,6 @@ func _gui_input(event):
 							drag_start_pos = event.position
 							
 							# Record original positions for this drag session
-							var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 							for b in selected_balls:
 								if not pet_node._orig_world_pos.has(b.ball_no):
 									pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
@@ -480,7 +487,6 @@ func _gui_input(event):
 						for b in selected_balls:
 							if is_instance_valid(b):
 								if not pending_moves.has(b.ball_no):
-									var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 									if pet_node._orig_world_pos.has(b.ball_no):
 										pending_moves[b.ball_no] = {
 											"orig_pos": pet_node._orig_world_pos[b.ball_no], 
@@ -569,7 +575,6 @@ func _gui_input(event):
 		if target_ball:
 			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
 			if is_eyedropper_active:
-				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
 				var ball_data = null
 				if pet_node.lnz.balls.has(ball_no):
@@ -603,7 +608,6 @@ func _gui_input(event):
 					preset_settings_instance.set_properties(properties)
 			else: # Brush mode
 				var properties = preset_settings_instance.get_properties()
-				var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 				var ball_no = target_ball.ball_no
 				var ref_size = int(round(preset_settings_instance.size_spinbox.value))
 				var size_mode = preset_settings_instance.size_mode_option.selected
@@ -711,7 +715,6 @@ func _gui_input(event):
 	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 			var pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
 				return
@@ -768,7 +771,6 @@ func _gui_input(event):
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
 		get_tree().set_input_as_handled()
-		var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			tools_menu.selected_visual_ball = hover
@@ -804,7 +806,6 @@ func _gui_input(event):
 		if hover:
 			drag_ball = hover
 			is_dragging = true
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
 			if alt_key:
 				is_resizing = true
@@ -832,7 +833,6 @@ func _gui_input(event):
 			
 			var target_visual = clamp(original_scale + change, 1.0, 500.0)
 
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 			var is_ab = drag_ball.ball_no >= KeyBallsData.max_base_ball_num
 			var bhd_s = pet_node.bhd.ball_sizes[drag_ball.ball_no] if not is_ab else 0
 			var engine_scale = pet_node.lnz.scales[1]
@@ -877,7 +877,6 @@ func _gui_input(event):
 
 	# Finalize drag or resize operation on mouse release:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed and is_dragging and drag_ball and not move_mode:
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if is_resizing:
 			var size_dif = get_lnz_size_difference(original_scale, drag_ball, pet_node)
 			pet_node.emit_ball_resize(drag_ball.ball_no, size_dif)
@@ -970,8 +969,6 @@ func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and is_dragging and drag_ball and not move_mode:
 		var commit_now: bool = (drag_started_via_code and event.pressed) or (not drag_started_via_code and not event.pressed)
 		if commit_now:
-			var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-
 			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
 			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
@@ -1023,7 +1020,6 @@ func _unhandled_key_input(event):
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
 		get_tree().set_input_as_handled()
-		var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 		if last_selected_is_valid():
 			tools_menu.selected_visual_ball = last_selected
 		else:
@@ -1060,7 +1056,7 @@ func _unhandled_key_input(event):
 	if event.pressed and not event.control and not event.alt and not event.shift:
 		match event.scancode:
 			KEY_S:
-				_select_check_box.pressed = !_select_check_box.pressed
+				select_check_box.pressed = !select_check_box.pressed
 				_on_SelectCheckBox_pressed()
 				get_tree().set_input_as_handled()
 				return
@@ -1158,10 +1154,10 @@ func _on_SelectCheckBox_toggled(button_pressed):
 	pass
 
 func _on_ModePopup_about_to_show():
-	_select_check_box.pressed = selecting_on
+	select_check_box.pressed = selecting_on
 
 func _on_SelectCheckBox_pressed():
-	selecting_on = _select_check_box.pressed
+	selecting_on = select_check_box.pressed
 	if !selecting_on:
 		if last_selected_is_valid():
 			last_selected._on_Area_mouse_exited()
@@ -1199,7 +1195,7 @@ func get_ball_under_mouse(screen_pos: Vector2):
 	if result and result.collider:
 		var parent = result.collider.get_parent()
 		if parent.is_in_group("balls") or parent.is_in_group("addballs"):
-			if parent.get("omitted") == true and not dog_generator.draw_omitted_balls:
+			if parent.get("omitted") == true and not pet_node.draw_omitted_balls:
 				return null
 			return parent
 	return null
@@ -1342,7 +1338,6 @@ func begin_auto_move_for_ball(ball: Spatial) -> void:
 	is_resizing = false
 	drag_started_via_code = true
 	Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
 
 func schedule_autodrag_for_addball(ball_no: int) -> void:
@@ -1385,7 +1380,6 @@ func _update_paintball_mode_ui():
 			paintball_settings_instance.find_node("Target").disabled = false
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if pet_node:
 			pet_node.clear_pending_paintballs()
 
@@ -1504,7 +1498,6 @@ func _handle_line_mode_input(event) -> bool:
 				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
 			else:
 				if hover != linez_start_ball:
-					var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
 					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 					linez_start_ball = null
@@ -1604,7 +1597,6 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 	if result and result.collider and result.collider.get_parent() == target_ball:
 		var intersection_point = result.position
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		var props = paintball_settings_instance.get_properties()
 
 		var color_list = LnzLiveUtils.parse_number_list(props.color)
@@ -1695,7 +1687,6 @@ func _restore_all_balls():
 
 func _track_pending_move(ball):
 	if not pending_moves.has(ball.ball_no):
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if pet_node._orig_world_pos.has(ball.ball_no):
 			pending_moves[ball.ball_no] = {
 				"orig_pos": pet_node._orig_world_pos[ball.ball_no], 
@@ -1789,13 +1780,12 @@ func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
 		
-	dog_generator.set_skip_next_rebuild(true)
+	pet_node.set_skip_next_rebuild(true)
 	lnz_text_edit.apply_batch_moves(pending_moves)
 	
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
 	
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
 		if not "ball_no" in b:
@@ -1937,8 +1927,7 @@ func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
 func _on_nudge_selection(vector: Vector3):
 	if selected_balls.empty():
 		return
-		
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
 	var px_scale = pet_node.pixel_world_size
 	var lnz_scale = pet_node.lnz.scales.x / 255.0
 	
@@ -2047,8 +2036,6 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 	
 	var basis = Basis(Quat(rot_rad))
 	
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-	
 	for b in selected_balls:
 		if is_instance_valid(b):
 			var addballz_base_selected = false
@@ -2083,7 +2070,6 @@ func _on_flip_selection(axis_vector, pivot_id):
 		return
 
 	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	
 	for b in selected_balls:
 		if is_instance_valid(b):
@@ -2157,7 +2143,7 @@ func _commit_box_selection():
 		if not is_instance_valid(b) or not b.visible: 
 			continue
 
-		if b.get("omitted") == true and not dog_generator.draw_omitted_balls:
+		if b.get("omitted") == true and not pet_node.draw_omitted_balls:
 			continue
 		
 		if not ("ball_no" in b): 
@@ -2355,7 +2341,6 @@ func _on_preset_mode_toggled(is_on):
 	_update_mode_panel_visibility(preset_settings_instance, is_on)
 	
 	if is_on:
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		if pet_node and pet_node.lnz:
 			if pet_node.lnz.texture_list:
 				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
@@ -2438,7 +2423,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
 	
 	if not is_on:
-		dog_generator._on_clear_auto_paintballz()
+		pet_node._on_clear_auto_paintballz()
 		_on_unselect_all()
 		_auto_paint_affected_cache.clear()
 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -2473,7 +2458,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 # 			_on_move_mode_toggled(false)
 # 	else:
 # 		auto_paintballer_settings_instance.hide()
-# 		dog_generator._on_clear_auto_paintballz()
+# 		pet_node._on_clear_auto_paintballz()
 # 		_on_unselect_all()
 # 		_auto_paint_affected_cache.clear()
 # 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
