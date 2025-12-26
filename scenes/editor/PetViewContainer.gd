@@ -995,7 +995,18 @@ func _gui_input(event):
 func _unhandled_key_input(event):
 	if input_is_paused:
 		return
+
+	if event.is_pressed() and event.scancode == KEY_ESCAPE:
+		paintball_check_box.pressed = false
+		line_mode_check_box.pressed = false
+		move_mode_check_box.pressed = false
+		preset_mode_check_box.pressed = false
+		project_mode_check_box.pressed = false
+		auto_paintballer_check_box.pressed = false
 		
+		get_tree().set_input_as_handled()
+		return
+
 	if move_mode and event.pressed:
 		var nudge_axis = ""
 		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
