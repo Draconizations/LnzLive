@@ -58,59 +58,48 @@ signal ball_number_changed(ball_no)
 
 var min_font_size = 4
 
-onready var console_log = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/BottomInfoContainer/ConsoleLog")
+onready var file_tree = get_tree().root.find_node("FileTree", true, false)
+onready var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
+onready var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+onready var camera_holder = get_tree().root.find_node("CameraHolder", true, false)
 
-onready var apply_changes_button = get_node("../../../PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer/ApplyChangesButton")
+onready var console_log = pet_view.find_node("ConsoleLog", true, false)
+onready var apply_changes_button = pet_view.find_node("ApplyChangesButton", true, false)
+onready var frame_slider = pet_view.find_node("FrameSlider", true, false)
+
 onready var find_panel = get_node("../FindPanel")
-
-onready var frame_slider = get_tree().root.get_node(
-	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
-) as HSlider
-
-onready var camera_holder = get_tree().root.get_node(
-	"Root/SceneRoot/ViewportContainer/Viewport/CameraHolder"
-) as Spatial
 
 func _ready():
 	_setup_context_menu()
+	_setup_fonts()
 
 	split_regex.compile("[\\s,]+")
 
 	wrap_enabled = false
 
-	apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
-	
-	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406),false)
-	add_color_region(";","",Color(0.168627, 0.45098, 0.45098),false)
-
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-	var signals = [
-		"ball_resized",
-		"addball_created",
-		"line_created"
-		]
-	for s in signals:
-		if not pet_node.is_connected(s, self, "_on_Node_" + s):
-			pet_node.connect(s, self, "_on_Node_" + s)
-
-	var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
-	if file_tree and not file_tree.is_connected("palette_selected", self, "_on_palette_selected"):
-		file_tree.connect("palette_selected", self, "_on_palette_selected")
-	if file_tree and not file_tree.is_connected("example_file_selected", self, "_on_example_file_selected"):
-		file_tree.connect("example_file_selected", self, "_on_example_file_selected")
-
-	default_font = get_font("font")
-	cascadia_font = DynamicFont.new()
-	var font_data = load("res://resources/fonts/CascadiaCode.ttf")
-	if font_data:
-		cascadia_font.font_data = font_data
-		cascadia_font.use_filter = true
-	else:
-		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+	if apply_changes_button:
+		apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
 
 	self.connect("cursor_changed", self, "_on_cursor_changed")
+	
+	add_color_region("[","]",Color(0.247119, 0.691406, 0.691406), false)
+	add_color_region(";","",Color(0.168627, 0.45098, 0.45098), false)
+
+	if pet_node:
+		for s in ["ball_resized", "addball_created", "line_created"]:
+			if not pet_node.is_connected(s, self, "_on_Node_" + s):
+				pet_node.connect(s, self, "_on_Node_" + s)
+
+	if file_tree:
+		var tree_node = file_tree.get_node("Tree") if file_tree.has_node("Tree") else file_tree
+		_safe_connect(tree_node, "palette_selected", "_on_palette_selected")
+		_safe_connect(tree_node, "example_file_selected", "_on_example_file_selected")
 
 	_update_section_bookmarks()
+
+func _safe_connect(target, sig, method):
+	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
+		target.connect(sig, self, method)
 
 func _setup_context_menu():
 	var menu = get_menu()
@@ -121,8 +110,17 @@ func _setup_context_menu():
 	if menu.get_item_index(101) == -1:
 		menu.add_item("Toggle Comment", 101)
 
+func _setup_fonts():
+	default_font = get_font("font")
+	cascadia_font = DynamicFont.new()
+	var font_data = load("res://resources/fonts/CascadiaCode.ttf")
+	if font_data:
+		cascadia_font.font_data = font_data
+		cascadia_font.use_filter = true
+	else:
+		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+
 func _load_file(filepath: String, user_flag: bool):
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	if pet_node and pet_node.has_method("unhide_all_balls"):
 		pet_node.unhide_all_balls()
 
@@ -873,7 +871,7 @@ func _on_ApplyChangesButton_pressed():
 
 func _on_apply_paintballz():
 	save_backup()
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
 	var pending_paintballs = pet_node._pending_paintballs_data
 
 	if pending_paintballs.size() > 0:
@@ -968,9 +966,8 @@ func _on_apply_paintballz():
 	save_file(true)
 	commit_visual_change("Commited Paintballz")
 
-	var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	if pet_view_container.close_paintball_on_apply:
-		pet_view_container.close_paintball_mode()
+	if pet_view.close_paintball_on_apply:
+		pet_view.close_paintball_mode()
 
 func _on_Tree_backup_file():
 	save_backup()
@@ -1016,7 +1013,6 @@ func _on_HeadShotButton_pressed():
 	var local_frame = int(frame_slider.value)
 	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
 
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	var anim_idx = pet_node.current_animation
 	var start_idx = pet_node.bhd.animation_ranges[anim_idx].actual_start
 	var global_frame = start_idx + local_frame
@@ -1123,7 +1119,7 @@ func _on_Node_line_created(start_ball, end_ball):
 
 	var delim = _detect_delimiter(start_line, end_line)
 
-	var line_mode_settings = get_tree().root.get_node("Root/SceneRoot/LineModeSettings")
+	var line_mode_settings = pet_view.line_mode_settings_instance
 	var props = line_mode_settings.get_properties()
 
 	var line_updated = false
@@ -1199,7 +1195,7 @@ func _on_Node_line_created(start_ball, end_ball):
 # Create Addballz (+ Linez)
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	save_backup()
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
 	if reference_ball == null:
 		print("[LNZ EDIT] No reference ball given")
 		if console_log:
@@ -1335,9 +1331,8 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	if also_connect_line:
 		_on_Node_line_created(addball_no, reference_ball.ball_no)
 
-	var pvc = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	if pvc and pvc.has_method("schedule_autodrag_for_addball"):
-		pvc.schedule_autodrag_for_addball(addball_no)
+	if pet_view and pet_view.has_method("schedule_autodrag_for_addball"):
+		pet_view.schedule_autodrag_for_addball(addball_no)
 
 	save_file(true)
 	commit_visual_change("Created Addballz #%d" % addball_no)
@@ -1762,8 +1757,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 func find_mirrored_ball(ball_no: int) -> int:
 	if ball_no >= KeyBallsData.max_base_ball_num:
 		return ball_no
-		
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+
 	var species = pet_node.lnz.species 
 	var symmetry_dict = {}
 
@@ -3904,7 +3898,6 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 		end_line = get_line_count()
 
 	if is_addball:
-		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 		var moved_ball_node = pet_node.ball_map.get(ball_no)
 		if moved_ball_node:
 			var base_ball_no = moved_ball_node.base_ball_no
@@ -3972,7 +3965,6 @@ func apply_batch_moves(pending_moves: Dictionary):
 		return
 	
 	save_backup()
-	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
