@@ -140,13 +140,13 @@ void fragment() {
         // Normalize to raw texture size
         uv *= float(ball_size) / texture_size_raw;
 
-         // Wrap into [0,1] to tile
-        uv = fract(uv);
-
-        // Flip to match orientation
-        tex_coords = vec2(1.0 - uv.x, 1.0 - uv.y);
+        // Wrap into [0,1] to tile
+        tex_coords = fract(uv);
 
     } else {
+        // This works OK for centering BMP on ballz BUT it causes distortion/scaling that makes texture not pixel perfect
+        // https://thebookofshaders.com/09/ see whether better solution here
+
          // Offset from ball center in pixels
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
 
