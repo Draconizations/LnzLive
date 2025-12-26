@@ -879,6 +879,12 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				pb_visual_ball.species = species
 
+				####
+				# normalised_position (direction from ball center) to shader
+				var pb_normal = paintball.normalised_position
+				pb_visual_ball.set_surface_normal(pb_normal)
+				####
+
 				if paintball.texture_id >= 0 and paintball.texture_id < texture_list.size():
 					var tex_info_pb = texture_list[paintball.texture_id]
 					var tex_load_pb = load_texture_from_list(paintball.texture_id, texture_list)

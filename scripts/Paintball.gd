@@ -37,6 +37,8 @@ const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_pale
 
 export var petz_palette           = DEFAULT_PALETTE
 
+export var surface_normal         = Vector3.FORWARD setget set_surface_normal
+
 enum OutlineState {
 	NONE,
 	ACTIVE_SELECTED,
@@ -97,6 +99,11 @@ func set_visible(new_value):
 func set_z_add(new_value):
 	z_add = new_value
 	$MeshInstance.material_override.set_shader_param("z_add", new_value)
+
+func set_surface_normal(new_normal: Vector3):
+	surface_normal = new_normal
+	if is_inside_tree() and $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("pb_normal", surface_normal)
 
 func set_tile_texture(enabled):
 	tile_texture = enabled

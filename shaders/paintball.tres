@@ -34,6 +34,8 @@ uniform bool highlight = false;
 uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
+uniform vec3 pb_normal;                           // direction of paintballz from ballz center
+
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
 
 varying flat vec2 center_fragcoord;
@@ -63,6 +65,13 @@ vec3 get_shifted_color(int palette_index) {
 }
 
 void fragment() {
+    // Discard paintballz going in vectors from ballz centers away from camera 
+    vec3 view_normal = (INV_CAMERA_MATRIX * vec4(pb_normal, 0.0)).xyz;
+
+    if (view_normal.z < 0.0) {
+        discard;
+    }
+
     vec2 c = center_fragcoord;
     vec2 b = base_center_fragcoord;
     vec2 st = FRAGCOORD.xy;
