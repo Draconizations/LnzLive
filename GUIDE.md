@@ -39,6 +39,7 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Viewport** | `left-click drag` | Rotate Camera View |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
 | **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top |
+| **Viewport** | `ESCAPE` | Exit Current Mode |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `G` | Open/Close Color Swap |
