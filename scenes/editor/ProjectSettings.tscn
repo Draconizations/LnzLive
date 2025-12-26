@@ -3,7 +3,7 @@
 [ext_resource path="res://scenes/editor/ProjectSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
-[ext_resource path="res://scenes/editor/DraggablePanel.gd" type="Script" id=4]
+[ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=4]
 
 [sub_resource type="DynamicFont" id=1]
 size = 26
@@ -221,6 +221,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = -30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LegExt1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -231,6 +232,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelLegExt2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 49.0
@@ -249,6 +251,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = -30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LegExt2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -259,6 +262,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelHeadEnl1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 77.0
@@ -277,6 +281,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HeadEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -287,6 +292,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 120.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelHeadEnl2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 105.0
@@ -305,6 +311,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 0.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HeadEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -315,6 +322,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 0.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFeetEnl1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 133.0
@@ -333,6 +341,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 50.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="FeetEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -343,6 +352,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 150.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFeetEnl2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 161.0
@@ -361,6 +371,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 0.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="FeetEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -371,6 +382,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 20.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelScales1" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 189.0
@@ -389,6 +401,7 @@ size_flags_horizontal = 3
 min_value = -400.0
 max_value = 400.0
 value = 120.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="Scales1MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -399,6 +412,7 @@ size_flags_horizontal = 3
 min_value = -400.0
 max_value = 400.0
 value = 120.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelScales2" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 217.0
@@ -417,6 +431,7 @@ size_flags_horizontal = 3
 min_value = -400.0
 max_value = 400.0
 value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="Scales2MaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -427,6 +442,7 @@ size_flags_horizontal = 3
 min_value = -400.0
 max_value = 400.0
 value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelBodyExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 245.0
@@ -445,6 +461,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = -20.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="BodyExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -455,6 +472,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 60.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelFaceExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 273.0
@@ -473,6 +491,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = -30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="FaceExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -483,6 +502,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 30.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelEarExt" type="Label" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_top = 301.0
@@ -501,6 +521,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 50.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="EarExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/RightColumn/GridContainer"]
 margin_left = 258.0
@@ -511,6 +532,7 @@ size_flags_horizontal = 3
 min_value = -200.0
 max_value = 200.0
 value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="RandomizeBodyButton" type="Button" parent="HBoxContainer/RightColumn"]
 margin_top = 547.0

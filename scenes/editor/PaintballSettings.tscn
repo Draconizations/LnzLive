@@ -3,7 +3,7 @@
 [ext_resource path="res://scenes/editor/PaintballSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
-[ext_resource path="res://scenes/editor/DraggablePanel.gd" type="Script" id=4]
+[ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=4]
 
 [sub_resource type="DynamicFont" id=1]
 size = 30
@@ -61,6 +61,7 @@ hint_tooltip = "Minimum random size"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 10.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="DiameterMax" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
 margin_left = 197.0
@@ -70,6 +71,7 @@ hint_tooltip = "Maximum random size"
 size_flags_horizontal = 3
 min_value = 1.0
 value = 20.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainerDiameterOptions" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 280.0
@@ -204,6 +206,7 @@ size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
 value = -1.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="OutlineTypeMax" type="SpinBox" parent="VBoxContainer/HBoxContainer4"]
 margin_left = 197.0
@@ -214,6 +217,7 @@ size_flags_horizontal = 3
 min_value = -2.0
 max_value = 10.0
 value = -1.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 137.0
@@ -235,6 +239,7 @@ margin_bottom = 24.0
 hint_tooltip = "Minimum surface fuzziness (0-100)"
 size_flags_horizontal = 3
 max_value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="FuzzMax" type="SpinBox" parent="VBoxContainer/HBoxContainer5"]
 margin_left = 197.0
@@ -243,6 +248,7 @@ margin_bottom = 24.0
 hint_tooltip = "Maximum surface fuzziness (0-100)"
 size_flags_horizontal = 3
 max_value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 193.0
@@ -263,6 +269,7 @@ margin_right = 292.0
 margin_bottom = 24.0
 hint_tooltip = "Add Group index"
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 221.0
@@ -343,6 +350,7 @@ size_flags_horizontal = 3
 min_value = 1.0
 max_value = 100.0
 value = 5.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/FreelineContainer"]
 margin_top = 56.0
@@ -364,6 +372,7 @@ margin_bottom = 24.0
 hint_tooltip = "Random position offset range"
 size_flags_horizontal = 3
 max_value = 100.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
 margin_top = 368.0

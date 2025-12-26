@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=2]
+[gd_scene load_steps=50 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -15,9 +15,13 @@
 [ext_resource path="res://scenes/editor/MenuButton.gd" type="Script" id=13]
 [ext_resource path="res://scenes/editor/UserSettings.gd" type="Script" id=14]
 [ext_resource path="res://resources/icons/ico_eyelid_neutral.png" type="Texture" id=15]
+[ext_resource path="res://resources/icons/ico_arr_R_A_mini.png" type="Texture" id=16]
+[ext_resource path="res://resources/icons/ico_arr_L_B_mini.png" type="Texture" id=17]
+[ext_resource path="res://resources/icons/ico_arr_L_A_mini.png" type="Texture" id=18]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=19]
 [ext_resource path="res://resources/styles/styleboxflat_button_hover.tres" type="StyleBox" id=20]
 [ext_resource path="res://scenes/editor/AxisOverlay.gd" type="Script" id=21]
+[ext_resource path="res://resources/icons/ico_arr_R_B_mini.png" type="Texture" id=22]
 [ext_resource path="res://resources/styles/stylebox_tree_bg.tres" type="StyleBox" id=23]
 [ext_resource path="res://resources/styles/stylebox_empty.tres" type="StyleBox" id=24]
 [ext_resource path="res://resources/styles/stylebox_color_picker.tres" type="StyleBox" id=25]
@@ -37,7 +41,7 @@
 
 [sub_resource type="CubeMesh" id=1]
 
-[sub_resource type="StyleBoxFlat" id=11]
+[sub_resource type="StyleBoxFlat" id=2]
 content_margin_left = 12.0
 content_margin_right = 12.0
 content_margin_top = 2.0
@@ -63,7 +67,7 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=2]
+[sub_resource type="StyleBoxFlat" id=4]
 content_margin_left = 12.0
 content_margin_right = 12.0
 content_margin_top = 2.0
@@ -76,20 +80,8 @@ corner_radius_top_left = 2
 corner_radius_top_right = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=4]
-bg_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-anti_aliasing = false
-
 [sub_resource type="StyleBoxFlat" id=5]
-content_margin_left = 5.0
-content_margin_right = 5.0
-content_margin_top = 2.0
-content_margin_bottom = 2.0
-bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+bg_color = Color( 0.0196078, 0.207843, 0.207843, 1 )
 corner_radius_top_left = 2
 corner_radius_top_right = 2
 corner_radius_bottom_right = 2
@@ -101,6 +93,18 @@ content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
 content_margin_bottom = 2.0
+bg_color = Color( 0.223529, 0.352941, 0.352941, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="StyleBoxFlat" id=7]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
 bg_color = Color( 0.294118, 0.403922, 0.403922, 1 )
 corner_radius_top_left = 2
 corner_radius_top_right = 2
@@ -108,15 +112,15 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="DynamicFontData" id=7]
+[sub_resource type="DynamicFontData" id=8]
 font_path = "res://resources/fonts/PixelCode.ttf"
 
-[sub_resource type="DynamicFont" id=8]
+[sub_resource type="DynamicFont" id=9]
 size = 14
 extra_spacing_top = -8
-font_data = SubResource( 7 )
+font_data = SubResource( 8 )
 
-[sub_resource type="StyleBoxFlat" id=9]
+[sub_resource type="StyleBoxFlat" id=10]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -128,7 +132,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=10]
+[sub_resource type="StyleBoxFlat" id=11]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -255,9 +259,13 @@ __meta__ = {
 margin_right = 378.0
 margin_bottom = 1080.0
 size_flags_vertical = 3
-custom_styles/tab_fg = SubResource( 11 )
+custom_icons/increment_highlight = ExtResource( 22 )
+custom_icons/increment = ExtResource( 16 )
+custom_icons/decrement_highlight = ExtResource( 17 )
+custom_icons/decrement = ExtResource( 18 )
+custom_styles/tab_fg = SubResource( 2 )
 custom_styles/tab_disabled = SubResource( 3 )
-custom_styles/tab_bg = SubResource( 2 )
+custom_styles/tab_bg = SubResource( 4 )
 custom_styles/panel = ExtResource( 23 )
 custom_fonts/font = ExtResource( 27 )
 tab_align = 0
@@ -277,7 +285,7 @@ margin_right = 376.0
 margin_bottom = 995.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_styles/bg = SubResource( 4 )
+custom_styles/bg = SubResource( 5 )
 allow_rmb_select = true
 hide_root = true
 script = ExtResource( 2 )
@@ -314,11 +322,11 @@ alignment = 1
 margin_left = 49.0
 margin_right = 187.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import Palette "
 
@@ -326,11 +334,11 @@ text = "Import Palette "
 margin_left = 191.0
 margin_right = 327.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import Texture"
 
@@ -344,11 +352,11 @@ alignment = 1
 margin_left = 62.0
 margin_right = 160.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Import LNZ"
 
@@ -356,11 +364,11 @@ text = "Import LNZ"
 margin_left = 164.0
 margin_right = 313.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Open User Folder"
 
@@ -1261,7 +1269,7 @@ margin_top = 30.0
 margin_right = 655.0
 margin_bottom = 90.0
 rect_min_size = Vector2( 475, 60 )
-custom_fonts/font = SubResource( 8 )
+custom_fonts/font = SubResource( 9 )
 text = "Welcome to LnzLive!
 Helpful hints will appear here..."
 align = 1
@@ -1335,11 +1343,11 @@ size_flags_horizontal = 3
 [node name="FontToggleButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
 margin_right = 91.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Font: Pixel"
 
@@ -1348,11 +1356,11 @@ margin_left = 95.0
 margin_right = 115.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 20, 20 )
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "-"
 
@@ -1361,11 +1369,11 @@ margin_left = 119.0
 margin_right = 141.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 22, 20 )
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "+"
 
@@ -1373,11 +1381,11 @@ text = "+"
 margin_left = 145.0
 margin_right = 231.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Wrap: Off"
 
@@ -1385,11 +1393,11 @@ text = "Wrap: Off"
 margin_left = 235.0
 margin_right = 351.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find/Replace"
 
@@ -1397,11 +1405,11 @@ text = "Find/Replace"
 margin_left = 355.0
 margin_right = 452.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Text Editor"
 
@@ -1410,19 +1418,19 @@ visible = false
 margin_left = 349.0
 margin_right = 447.0
 margin_bottom = 21.0
-custom_styles/hover = SubResource( 5 )
-custom_styles/pressed = SubResource( 5 )
-custom_styles/focus = SubResource( 6 )
-custom_styles/disabled = SubResource( 6 )
-custom_styles/normal = SubResource( 6 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
 [node name="BallNo" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
 margin_left = 456.0
-margin_right = 466.0
-margin_bottom = 25.0
-custom_styles/normal = SubResource( 7 )
+margin_top = 2.0
+margin_right = 456.0
+margin_bottom = 23.0
 custom_fonts/font = ExtResource( 27 )
 script = ExtResource( 8 )
 
@@ -1475,9 +1483,9 @@ rect_clip_content = true
 [node name="FindNextButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer"]
 margin_right = 81.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Next"
 
@@ -1485,9 +1493,9 @@ text = "Find Next"
 margin_left = 85.0
 margin_right = 168.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Find Prev"
 
@@ -1495,9 +1503,9 @@ text = "Find Prev"
 margin_left = 172.0
 margin_right = 247.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace"
 
@@ -1505,9 +1513,9 @@ text = "Replace"
 margin_left = 251.0
 margin_right = 352.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Replace All"
 
@@ -1515,9 +1523,9 @@ text = "Replace All"
 margin_left = 356.0
 margin_right = 475.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Match Case"
 
@@ -1525,9 +1533,9 @@ text = "Match Case"
 margin_left = 479.0
 margin_right = 609.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Whole Words"
 
@@ -1536,9 +1544,9 @@ margin_left = 613.0
 margin_right = 743.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 9 )
-custom_styles/pressed = SubResource( 9 )
-custom_styles/normal = SubResource( 10 )
+custom_styles/hover = SubResource( 10 )
+custom_styles/pressed = SubResource( 10 )
+custom_styles/normal = SubResource( 11 )
 custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
@@ -2030,8 +2038,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
@@ -2049,6 +2057,7 @@ __meta__ = {
 [connection signal="gui_input" from="SceneRoot/FuzzPopup/VBoxContainer/GlobalFuzzAmount" to="SceneRoot/ToolsMenu" method="_on_ApplyGlobalFuzz_gui_input"]
 [connection signal="about_to_show" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_about_to_show"]
 [connection signal="add_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_add_ball"]
+[connection signal="apply_global_fuzz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_global_fuzz"]
 [connection signal="color_entire_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_entire_pet"]
 [connection signal="color_part_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_part_pet"]
 [connection signal="copy_l_to_r" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_copy_l_to_r"]
@@ -2058,7 +2067,6 @@ __meta__ = {
 [connection signal="index_pressed" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_index_pressed"]
 [connection signal="move_head" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_move_head"]
 [connection signal="omit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_omit_ball"]
-[connection signal="apply_global_fuzz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_global_fuzz"]
 [connection signal="print_ball_colors" from="SceneRoot/ToolsMenu" to="PetRoot/Node" method="_on_ToolsMenu_print_ball_colors"]
 [connection signal="recolor" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_recolor"]
 [connection signal="unomit_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_unomit_ball"]

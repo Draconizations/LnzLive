@@ -3,7 +3,7 @@
 [ext_resource path="res://scenes/editor/MoveModeSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=3]
-[ext_resource path="res://scenes/editor/DraggablePanel.gd" type="Script" id=4]
+[ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=4]
 
 [sub_resource type="DynamicFont" id=1]
 size = 30
@@ -567,6 +567,7 @@ margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelY" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_top = 31.0
@@ -583,6 +584,7 @@ margin_bottom = 52.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelZ" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/NudgeGrid"]
 margin_top = 59.0
@@ -599,6 +601,7 @@ margin_bottom = 80.0
 size_flags_horizontal = 3
 min_value = -1000.0
 max_value = 1000.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="ApplyNudge" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 542.0
@@ -632,6 +635,7 @@ margin_bottom = 24.0
 size_flags_horizontal = 3
 min_value = -180.0
 max_value = 180.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelPitch" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
 margin_top = 31.0
@@ -648,6 +652,7 @@ margin_bottom = 52.0
 size_flags_horizontal = 3
 min_value = -180.0
 max_value = 180.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelYaw" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
 margin_top = 59.0
@@ -664,6 +669,7 @@ margin_bottom = 80.0
 size_flags_horizontal = 3
 min_value = -180.0
 max_value = 180.0
+custom_icons/updown = ExtResource( 4 )
 
 [node name="LabelPivot" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/RotateGrid"]
 margin_top = 87.0
@@ -687,6 +693,7 @@ margin_left = 28.0
 margin_right = 179.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
 
 [node name="FlipContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 683.0
