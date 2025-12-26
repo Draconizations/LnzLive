@@ -44,7 +44,7 @@ margin_left = 10.0
 margin_top = 10.0
 margin_right = 310.0
 margin_bottom = 285.0
-rect_min_size = Vector2( 300, 275 )
+rect_min_size = Vector2( 300, 325 )
 custom_styles/panel = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
