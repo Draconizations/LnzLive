@@ -93,16 +93,26 @@ onready var recolor_popup = get_tree().root.get_node("Root/SceneRoot/RecolorPopu
 
 var preset_mode = false
 
-var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
-var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
-var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x.png")
-var hand_stretch = load("res://resources/icons/ico_hand_stretch_2x.png")
-var eyedropper = load("res://resources/icons/ico_tool_eyedropper_2x.png")
-var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x.png")
-var bigbrush = load("res://resources/icons/ico_tool_brush_2x.png")
-var paintbucket = load("res://resources/icons/ico_tool_bucket_2x.png")
-var rope = load("res://resources/icons/icon_line_mode.png")
-var eraser = load("res://resources/icons/ico_eraser_2x.png")
+#var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
+var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x_64px.png")
+#var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
+var hand_move = load("res://resources/icons/ico_hand_move_2x_64px.png")
+#var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x.png")
+var hand_pinch = load("res://resources/icons/ico_hand_pinch_2x_64px.png")
+#var hand_stretch = load("res://resources/icons/ico_hand_stretch_2x.png")
+var hand_stretch = load("res://resources/icons/ico_hand_stretch_2x_64px.png")
+#var eyedropper = load("res://resources/icons/ico_tool_eyedropper_2x.png")
+var eyedropper = load("res://resources/icons/ico_tool_eyedropper_2x_64px.png")
+#var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x.png")
+var smallbrush = load("res://resources/icons/ico_tool_paintbrush_2x_64px.png")
+#var bigbrush = load("res://resources/icons/ico_tool_brush_2x.png")
+var bigbrush = load("res://resources/icons/ico_tool_brush_2x_64px.png")
+#var paintbucket = load("res://resources/icons/ico_tool_bucket_2x.png")
+var paintbucket = load("res://resources/icons/ico_tool_bucket_2x_64px.png")
+#var rope = load("res://resources/icons/icon_line_mode.png")
+var rope = load("res://resources/icons/icon_line_mode_2x_64px.png")
+#var eraser = load("res://resources/icons/ico_eraser_2x.png")
+var eraser = load("res://resources/icons/ico_eraser_2x_64px.png")
 
 const ZOOM_STEP := 1.2
 
@@ -196,10 +206,10 @@ func _ready():
 	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
 
-	Input.set_custom_mouse_cursor(hand_neutral)
-	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM)
-	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_CROSS)
-	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_POINTING_HAND)
+	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_CROSS, Vector2(30, 31))
+	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_POINTING_HAND, Vector2(30, 31))
 
 	# flip_camera_view()
 
@@ -253,14 +263,14 @@ func _process(_delta):
 			# cursor is handled by _on_delete_mode_toggled
 		elif temp_eraser_active:
 			text = "Paintball Mode: Left-click to erase nearest paintball."
-			Input.set_custom_mouse_cursor(eraser)
+			Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 		else:
 			var freeline_on = paintball_settings_instance.find_node("FreelineCheckBox").pressed or Input.is_key_pressed(KEY_SHIFT)
 			if freeline_on:
 				text = "Paintball Mode (Freeline): Left-click and drag to draw."
 			else:
 				text = "Paintball Mode: Left-click to add next paintball"
-			Input.set_custom_mouse_cursor(smallbrush) # Default for paintball mode
+			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
@@ -280,11 +290,13 @@ func _process(_delta):
 
 		if is_eyedropper:
 			text = "Eyedropper Mode: Left-click a ball to sample its properties."
-			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(0,30))
+			#Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(0,30))
+			#Input.set_custom_mouse_cursor(eyedropper)
+			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 		else:
 			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
-				Input.set_custom_mouse_cursor(bigbrush)
+				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 	elif selecting_on:
 		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 	else:
@@ -449,7 +461,7 @@ func _gui_input(event):
 								if not pet_node._orig_world_pos.has(b.ball_no):
 									pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 									
-							Input.set_custom_mouse_cursor(hand_move)
+							Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 							return # Consume click on ball
 
 					else:
@@ -461,7 +473,7 @@ func _gui_input(event):
 					# Mouse release
 					if is_dragging: # Only commit if we were actually dragging
 						is_dragging = false
-						Input.set_custom_mouse_cursor(hand_neutral)
+						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 						drag_ball = null
 						
 						# Commit pending moves for visual feedback (gray outline)
@@ -796,14 +808,14 @@ func _gui_input(event):
 
 			if alt_key:
 				is_resizing = true
-				Input.set_custom_mouse_cursor(hand_pinch)
+				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 				original_scale = drag_ball.ball_size
 				drag_start_pos = event.position
 				print("[LNZ EDIT] Started scale drag on ball:", drag_ball.name)
 			else:
 				print("[LNZ EDIT] Started drag on ball:", drag_ball.name)
 				# is_dragging = true
-				Input.set_custom_mouse_cursor(hand_move)
+				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
 		return
 	
@@ -814,9 +826,9 @@ func _gui_input(event):
 			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
 
 			if change < 0:
-				Input.set_custom_mouse_cursor(hand_pinch)
+				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 			else:
-				Input.set_custom_mouse_cursor(hand_stretch)
+				Input.set_custom_mouse_cursor(hand_stretch, 0, Vector2(30, 31))
 			
 			var target_visual = clamp(original_scale + change, 1.0, 500.0)
 
@@ -833,7 +845,7 @@ func _gui_input(event):
 			
 			drag_ball.set_ball_size(snapped_visual)
 		else:
-			Input.set_custom_mouse_cursor(hand_move)
+			Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 			var real_center = rect_position + rect_size / 2.0
 			var offset = event.position - real_center
 			offset /= tex.rect_scale
@@ -877,7 +889,7 @@ func _gui_input(event):
 
 		is_dragging = false
 		is_resizing = false
-		Input.set_custom_mouse_cursor(hand_neutral)
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		drag_ball = null
 		return
 
@@ -924,7 +936,7 @@ func _gui_input(event):
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
-			Input.set_custom_mouse_cursor(rope)
+			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 				if b != linez_start_ball and b.has_method("apply_outline_state"):
@@ -932,7 +944,7 @@ func _gui_input(event):
 			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
 				hover.apply_outline_state(hover.OutlineState.HOVER)
 		elif not preset_mode and not paintball_mode and not project_mode and not move_mode:
-			Input.set_custom_mouse_cursor(hand_neutral)
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
 	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab) and not move_mode:
@@ -968,7 +980,7 @@ func _gui_input(event):
 			is_dragging = false
 			is_resizing = false
 			drag_started_via_code = false
-			Input.set_custom_mouse_cursor(hand_neutral)
+			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 			drag_ball = null
 			return
 	
@@ -1329,7 +1341,7 @@ func begin_auto_move_for_ball(ball: Spatial) -> void:
 	is_dragging = true
 	is_resizing = false
 	drag_started_via_code = true
-	Input.set_custom_mouse_cursor(hand_move)
+	Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 	var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
 
@@ -1366,7 +1378,7 @@ func _update_paintball_mode_ui():
 	if paintball_mode:
 		_ensure_panel_visible(paintball_settings_instance)
 		paintball_settings_instance.show()
-		Input.set_custom_mouse_cursor(smallbrush)
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			paintball_settings_instance.find_node("Target").disabled = true
 		else:
@@ -1378,14 +1390,14 @@ func _update_paintball_mode_ui():
 			pet_node.clear_pending_paintballs()
 
 		paintball_settings_instance.hide()
-		Input.set_custom_mouse_cursor(hand_neutral)
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
 func _on_delete_mode_toggled(is_on):
 	if is_on:
-		Input.set_custom_mouse_cursor(eraser)
+		Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 	else:
-		Input.set_custom_mouse_cursor(smallbrush)
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 
 func _on_paintball_mode_for_ball_toggled(ball):
 	close_paintball_on_apply = true
@@ -1503,9 +1515,9 @@ func _handle_line_mode_input(event) -> bool:
 
 func _on_eyedropper_toggled(is_on):
 	if is_on:
-		Input.set_custom_mouse_cursor(eyedropper)
+		Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 	else:
-		Input.set_custom_mouse_cursor(smallbrush)
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 
 func _set_camera_view(view_name: String):
 	camera_holder.rotation = Vector3.ZERO
@@ -2251,13 +2263,13 @@ func _on_line_mode_toggled(is_on):
 	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
 	
 	if is_on:
-		Input.set_custom_mouse_cursor(rope)
+		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 	else:
 		line_mode_close = false
 		if is_instance_valid(linez_start_ball):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
-		Input.set_custom_mouse_cursor(hand_neutral)
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
 # func _on_line_mode_toggled(is_on):
 # 	linez_mode = is_on
@@ -2293,7 +2305,7 @@ func _on_move_mode_toggled(is_on):
 	
 	if is_on:
 		move_mode_settings_instance.set_queued_count(pending_moves.size())
-		Input.set_custom_mouse_cursor(hand_neutral)
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		ball_label.hide()
 		_reset_tab_state()
 	else:
@@ -2350,10 +2362,10 @@ func _on_preset_mode_toggled(is_on):
 			if pet_node.lnz.palette:
 				preset_settings_instance.set_palette(pet_node.lnz.palette)
 		
-		Input.set_custom_mouse_cursor(smallbrush)
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
-		Input.set_custom_mouse_cursor(hand_neutral)
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
 # func _on_preset_mode_toggled(is_on):
