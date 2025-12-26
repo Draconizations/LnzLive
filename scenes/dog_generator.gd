@@ -882,6 +882,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				####
 				# normalised_position (direction from ball center) to shader
 				var pb_normal = paintball.normalised_position
+				pb_normal.y *= -1.0 
 				pb_visual_ball.set_surface_normal(pb_normal)
 				####
 
