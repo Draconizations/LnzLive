@@ -9,7 +9,7 @@ extends TextEdit
 # - Handles batch recolor and mirror‐copy operations
 # - Emits signals for file_saved, file_backed_up, and find_ball actions
 
-onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = self
 onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")

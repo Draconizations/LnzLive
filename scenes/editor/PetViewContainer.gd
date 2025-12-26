@@ -1,6 +1,6 @@
 extends Control
 
-onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/Tree")
+onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var pet_view = self
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
