@@ -399,12 +399,18 @@ func scan_local_textures():
 
 				var icon_img = Image.new()
 				icon_img.load_bmp_from_buffer(buf)
+
+				var w = icon_img.get_width()
+				var h = icon_img.get_height()
+
 				icon_img.convert(Image.FORMAT_RGBA8)
 				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
 
 				var icon_tex = ImageTexture.new()
 				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 				new_item.set_icon(0, icon_tex)
+
+				new_item.set_text(0, filename + " (" + str(w) + "x" + str(h) + ")")
 		filename = dir.get_next()
 	dir.list_dir_end()
 
