@@ -10,7 +10,7 @@ Keep up-to-date on new beta versions of LnzLive by downloading the [**LnzLive La
 
 ### Loading LNZ into the Text Editor
 
-> Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in LnzPro or another editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
+> Note: *Loading and saving LNZ data of game files directly is a **planned feature**. For now, you still need to open your `.pet`/`.baby`/`.cat`/`.dog` file first in [Deus Hex](https://petzhexing.weebly.com/deus-hex.html), [LNZ Pro](https://www.sherlocksoftware.org/page.php?id=14), or another resource editor, and copy the LNZ text directly or export to file, to load into LnzLive. If you are using the web version of LnzLive, then you will have to import/export LNZ as files due to browsers restricting clipboard access.*
 
 You can load LNZ data in several ways:
 
