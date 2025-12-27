@@ -308,4 +308,5 @@ shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
 shader_param/highlight = false
 shader_param/rotation = Vector3( 0, 0, 0 )
 shader_param/tiling_unit = 128.0
+shader_param/pb_normal = null
 shader_param/tile_texture = true
