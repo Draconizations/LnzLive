@@ -619,18 +619,23 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 
 func _split_line(line: String) -> PoolStringArray:
 	var data_part = line
+	var comment_part = ""
 	var comment_idx = line.find(";")
+
 	if comment_idx != -1:
 		data_part = line.substr(0, comment_idx)
+		comment_part = line.substr(comment_idx)
 	
 	data_part = data_part.strip_edges()
-	
-	if data_part.empty():
+	if data_part.empty() and comment_part.empty():
 		return PoolStringArray()
 		
 	var normalized_line = split_regex.sub(data_part, " ", true)
+	var parts = normalized_line.split(" ", false)
 	
-	return normalized_line.split(" ", false)
+	parts.append(comment_part)
+	
+	return parts
 
 func _update_fields(parts: Array, updates: Dictionary, delim: String) -> String:
 	var new_parts = []
