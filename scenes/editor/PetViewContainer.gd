@@ -411,7 +411,7 @@ func _gui_input(event):
 			update()
 			return
 
-	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode:
+	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode:
 		_reset_tab_state()
 
 	if move_mode:
@@ -989,14 +989,17 @@ func _gui_input(event):
 	
 	if auto_paintballer_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		
 		if target_ball:
 			auto_paintballer_settings_instance.add_affected_ball(target_ball.ball_no)
-			if is_instance_valid(target_ball) and "ball_no" in target_ball:
-				target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
-			yield(get_tree().create_timer(0.1), "timeout")
-			if is_instance_valid(target_ball) and "ball_no" in target_ball:
-				target_ball.apply_outline_state(get_visual_state_for_ball(target_ball))
-		return
+			
+			if not (target_ball in selected_balls):
+				selected_balls.append(target_ball)
+			
+			target_ball.apply_outline_state(target_ball.OutlineState.ACTIVE_SELECTED)
+			
+			get_tree().set_input_as_handled() 
+			return
 
 func _unhandled_key_input(event):
 	if input_is_paused:
