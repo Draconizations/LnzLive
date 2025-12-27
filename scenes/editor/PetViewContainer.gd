@@ -252,11 +252,12 @@ func _process(_delta):
 
 	if is_instance_valid(_last_selected_by_tab) and not move_mode:
 		var target_ball = _last_selected_by_tab
+		var b_name = lnz_text_edit.get_ball_name(target_ball.ball_no)
 		var total_count = _nearby_balls_cache.size()
 		var current_idx = max(0, _current_tab_index) + 1
 		
 		# Helper text required by user
-		text = "Hovered: ball #%d (tabbable %d/%d)" % [target_ball.ball_no, current_idx, total_count]
+		text = "Hovered: %s #%d (tabbable %d/%d)" % [b_name, target_ball.ball_no, current_idx, total_count]
 		text += "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
 
 	elif linez_mode:
