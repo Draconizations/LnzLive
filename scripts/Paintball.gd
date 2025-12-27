@@ -208,15 +208,18 @@ func selected():
 		emit_signal("ball_selected", ball_no, Section.Section.BALL)
 
 func _on_Area_mouse_entered():
-	old_outline = outline
-	old_outline_color = outline_color_index
-	set_outline(3)
-	set_outline_color_index(0)
+	is_over = true
+	turn_on_highlight()
+
+	# old_outline = outline
+	# old_outline_color = outline_color_index
+	# set_outline(3)
+	# set_outline_color_index(0)
+	
 	if ball_no != -1:
 		emit_signal("ball_mouse_enter", {ball_no = ball_no})
 	else:
 		emit_signal("paintball_mouse_enter", {base_ball_no = base_ball_no})
-	is_over = true
 
 func apply_outline_state(state: int):
 	if current_outline_state == OutlineState.NONE:
@@ -267,17 +270,43 @@ func get_outline_state():
 	return current_outline_state
 
 func _on_Area_mouse_exited():
-	set_outline(old_outline)
-	set_outline_color_index(old_outline_color)
+	is_over = false
+	turn_off_highlight()
+
 	if ball_no != -1:
 		emit_signal("ball_mouse_exit", ball_no)
 	else:
 		emit_signal("paintball_mouse_exit")
-	is_over = false
+
+	# set_outline(old_outline)
+	# set_outline_color_index(old_outline_color)
+	# if ball_no != -1:
+	# 	emit_signal("ball_mouse_exit", ball_no)
+	# else:
+	# 	emit_signal("paintball_mouse_exit")
+	# is_over = false
 	
 func _input(event):
 	if event is InputEventKey and event.pressed and is_over:
-		get_tree().set_input_as_handled()
+		if event.scancode == KEY_SPACE and event.control:
+			return
+			
+		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
+			get_tree().set_input_as_handled()
+			if ball_no != -1:
+				emit_signal("ball_selected", ball_no, Section.Section.BALL)
+		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
+			get_tree().set_input_as_handled()
+			if ball_no != -1:
+				emit_signal("ball_selected", ball_no, Section.Section.MOVE)
+		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not event.control:
+			get_tree().set_input_as_handled()
+			if ball_no != -1:
+				emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
+		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
+			get_tree().set_input_as_handled()
+			if ball_no != -1:
+				emit_signal("ball_selected", ball_no, Section.Section.LINE)
 
 var timer_count = 0
 

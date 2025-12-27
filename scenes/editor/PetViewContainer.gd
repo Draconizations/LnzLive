@@ -393,7 +393,7 @@ func _gui_input(event):
 				box_selecting = false
 				update()
 				if box_start_pos.distance_to(event.position) < 5.0:
-					var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 					if hover:
 						if hover in selected_balls:
 							selected_balls.erase(hover)
@@ -411,7 +411,7 @@ func _gui_input(event):
 			update()
 			return
 
-	if event is InputEventMouseButton and event.pressed and not Input.is_key_pressed(KEY_SHIFT) and not move_mode:
+	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode:
 		_reset_tab_state()
 
 	if move_mode:
@@ -433,7 +433,7 @@ func _gui_input(event):
 				if event.pressed:
 					if Input.is_key_pressed(KEY_ALT):
 						var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-						var hover_ball = get_ball_under_mouse(hover_pos)
+						var hover_ball = get_intended_ball(hover_pos)
 						if hover_ball:
 							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
 							var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -442,7 +442,7 @@ func _gui_input(event):
 									b.apply_outline_state(get_visual_state_for_ball(b))
 							return
 
-					var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 					
 					if hover:
 						if Input.is_key_pressed(KEY_CONTROL):
@@ -577,7 +577,7 @@ func _gui_input(event):
 			return
 
 	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
 			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
 			if is_eyedropper_active:
@@ -758,7 +758,7 @@ func _gui_input(event):
 		else:
 			var target_mode = paintball_settings_instance.find_node("Target").selected
 			if target_mode == 0: # Hovered Ball
-				target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+				target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			else: # Selected Ball
 				if active_selected_ball and is_instance_valid(active_selected_ball):
 					target_ball = active_selected_ball
@@ -777,7 +777,7 @@ func _gui_input(event):
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
 		get_tree().set_input_as_handled()
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			tools_menu.selected_visual_ball = hover
 		else:
@@ -801,13 +801,13 @@ func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and Input.is_key_pressed(KEY_SHIFT):
 		var alt_key = Input.is_key_pressed(KEY_ALT)
 
-		#var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		#var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 
 		var hover = null
 		if is_instance_valid(_last_selected_by_tab):
 			hover = _last_selected_by_tab
 		else:
-			hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+			hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 
 		if hover:
 			drag_ball = hover
@@ -910,7 +910,7 @@ func _gui_input(event):
 
 	# Select ballz via single-click or clear selected ballz:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed and selecting_on and not move_mode:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			set_active_selected_ball(hover)
 		else:
@@ -942,7 +942,7 @@ func _gui_input(event):
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
 			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-			var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+			var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
 				if b != linez_start_ball and b.has_method("apply_outline_state"):
 					b.apply_outline_state(b.OutlineState.NONE)
@@ -988,7 +988,7 @@ func _gui_input(event):
 			return
 	
 	if auto_paintballer_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var target_ball = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if target_ball:
 			auto_paintballer_settings_instance.add_affected_ball(target_ball.ball_no)
 			if is_instance_valid(target_ball) and "ball_no" in target_ball:
@@ -1217,6 +1217,12 @@ func get_ball_under_mouse(screen_pos: Vector2):
 			return parent
 	return null
 
+func get_intended_ball(mouse_pos: Vector2) -> Spatial:
+	if is_instance_valid(_last_selected_by_tab):
+		return _last_selected_by_tab
+	
+	return get_ball_under_mouse(mouse_pos)
+
 func _sort_by_distance(a, b):
 	return a.distance < b.distance
 
@@ -1279,7 +1285,7 @@ func _cycle_nearby_ballz():
 		# Set new selection state (updates last_selected)
 		last_selected = target_ball
 		_last_selected_by_tab = target_ball
-		
+
 		# Apply highlight
 		if selecting_on and target_ball.has_method("_on_Area_mouse_entered"):
 			target_ball._on_Area_mouse_entered()
@@ -1508,7 +1514,7 @@ func _on_randomize_body_proportions(settings: Dictionary):
 
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var hover = get_ball_under_mouse((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 		if hover:
 			if !is_instance_valid(linez_start_ball):
 				linez_start_ball = hover
@@ -1577,7 +1583,7 @@ func _finalize_freeline():
 
 		var point_target_ball = stroke_target_ball
 		if not point_target_ball: # If no stroke-wide target, use hover mode
-			point_target_ball = get_ball_under_mouse(screen_pos)
+			point_target_ball = get_intended_ball(screen_pos)
 		
 		var current_diameter = -1 # default = random
 		if props.tapered:
