@@ -265,6 +265,9 @@ func _process(_delta):
 			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 2nd ball to end a line."
 		else:
 			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 1st ball to start a line."
+
+		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
+		
 	elif paintball_mode:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
