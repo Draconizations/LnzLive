@@ -430,7 +430,7 @@ func _gui_input(event):
 			update()
 			return
 
-	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode:
+	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode and not linez_mode:
 		_reset_tab_state()
 
 	if move_mode:
