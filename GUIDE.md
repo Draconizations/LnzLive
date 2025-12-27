@@ -71,14 +71,19 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Line Mode** | `E` | **Open/Close Linez Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 
+### History System
+
+LnzLive now tracks your edits (default: 25 saved actions) with an Undo/Redo history system. It uses "Logical Commits" for specific line changes (like moving a ball) and "Snapshots" for major operations. Use CTRL+Z to undo and CTRL+Y to redo while the viewport is focused.
+
 ### File Tree (Left Panel)
 
 The file tree organizes your LNZ files, textures, and palettes.
 
 *   **Examples:** Contains preset LNZ files for you to explore and learn from.
 *   **Local Storage:** Stores LNZ files you have saved from the editor.
-*   **Local Textures:** Shows imported BMP texture files with a thumbnail preview. This allows you to quickly see which textures you have available.
-*   **Local Palettes:** Shows imported PNG palette files. Double-click to apply a palette to the current model.
+*   **Local Textures:** Shows imported BMP texture files with a thumbnail preview and dimensions. This allows you to quickly see which textures you have available.
+*   **Base Textures:** Shows game textures built into LnzLive.
+*   **Local Palettes:** Shows imported palettes with a thumbnail preview. Double-click to apply a palette to the current model.
 
 Right-click on a file in `Local Storage` for more options:
 
@@ -216,11 +221,29 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 #### Paintball Mode
 
-In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically repeats the LNZ entries five times with `;rep#` comments to improve their stability in-game.
+In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically detects avoids the first 17 indices (chicken pox) and adds filler entries if necessary.
 
 #### Project Mode
 
 In `Project Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
+
+#### Move Mode
+
+Move Mode provides advanced visual editing for multiple balls:
+
+- **Group Movement:** Select multiple balls (CTRL+left-click or Box Select) to move them as a unit.
+
+- **Axis/Plane Locks:** Use the panel or hotkeys (X, Y, Z) to lock movement to specific axes or planes (X+Y, etc.).
+
+- **Nudging:** Use the panel buttons or Axis + Scroll to move selection by precise increments.
+
+- **Rotation:** Apply Roll, Pitch, or Yaw rotations. Use `ALT`+left-click to set a Pivot Ball for the rotation.
+
+- **Mirroring:** Toggle the `Mirr` options to move corresponding left/right balls symmetrically.
+
+- **Align & Snap:** Align selection to extremes or snap them to the furthest ball on an axis.
+
+- **Commit:** Use `Apply` to write changes to `[Move]` or `[Add Ball]` sections, or `Clear` to reset.
 
 #### Preset Mode
 
@@ -230,13 +253,35 @@ Holding the ALT key and clicking on a ballz will copy its properties and paintba
 
 For applying size properties, you have three options: true, set, and sum. True size determines what size difference is needed for a base ballz to match the effective visual size, or just sets that value for add ballz. Set applies the same value to base ballz and add ballz regardless. Sum can be used to increase or decrease sizes of ballz. The default is true size. Note that resizing ballz can also be done visually by holding SHIFT + ALT + left-click and dragging a ball inward (decrease) or outward (increase), which can be faster than click through sums via `Preset Mode`.
 
+Check/Uncheck properties to apply those to ballz.
+
+Previews: Now shows a visual preview of properties before applying.
+
+Multi-select and box select: Apply presets to multiple balls via CTRL+left-click, box-select or a ball range list.
+
+LNZ Input: Paste raw `[Paintballz]` LNZ text into the preset to apply it to target balls.
+
+Transformations: Rotate or rescale paintballz presets before applying.
+
+Recolor paintballz using the table or recolor options that populate all seen color + texture pairs.
+
 #### Line Mode
 
 In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified.
 
+Reordering: Reorder existing lines by selecting the same pair in reverse.
+
+Settings: More granular control over fuzz, color, and thickness when applying lines.
+
+Check/uncheck to apply/not apply properties to existing linez.
+
 ### Render
 
 Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
+
+Hide Ballz: Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
+
+Unhide Ballz: Use the button under the Render menu to restore all hidden balls.
 
 ### Export
 
@@ -284,9 +329,7 @@ The move will be reflected as a Move entry in the LNZ. If a Move line does not e
 Hold X, Y, or Z while dragging to constrain movement to that axis.
 
 ### Scale a ball
-SHIFT + ALT + left-click and drag to resize a ball interactively.
-
-The size change will be reflected in the Ballz Info or Add Ball line in the LNZ.
+SHIFT + ALT + left-click and drag to resize a ball interactively, which will show and snap to valid sizes. The size change will be reflected in the `[Ballz Info]` or `[Add Ball]` line in the LNZ.
 
 ## Tools menu
 
@@ -318,9 +361,9 @@ Click another ball to connect the two with a Linez entry in the LNZ.
 
 The Copy-Mirror tool on all ballz will apply all changes on the model's right (R) to the model's left (L) side (LnzLive is mirrored, so the left side of the viewport to the right side). This includes ballz, addballz, paintballz, linez, etc. Alternatively, if selected by right-clicking a specific ballz, then properties of that ball will be mirrored to its symmetrical equivalent. Or, if the ball is a center ball, applied to itself but mirrored on the X axis.
 
-### Move Head
+### Apply Global Fuzz
 
-LNZ has no such thing as a 'neck extension', so this is a small util to move all head ballz at once. The three text boxes are for X, Y, Z coordinates to move by. Hit Enter to apply. You can keep hitting Enter to continue moving.
+Set the fuzz value for all visible balls and lines at once (automatically excludes eyes/irises).
 
 ### Copy Ballz Colors to Clipboard
 
