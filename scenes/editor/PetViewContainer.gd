@@ -34,7 +34,7 @@ var _nearby_balls_cache: Array = []
 var _current_tab_index: int = -1
 var _last_selected_by_tab: Spatial = null
 var _tab_activation_mouse_pos := Vector2.ZERO
-const MAX_NEARBY_BALLS := 3
+const MAX_NEARBY_BALLS := 6
 const NEARBY_SCREEN_RADIUS := 60.0
 const TAB_RESET_THRESHOLD_PIXELS := 15.0
 
@@ -248,92 +248,111 @@ func _reset_tab_state():
 	_tab_activation_mouse_pos = Vector2.ZERO
 
 func _process(_delta):
-	var text = "Welcome to LnzLive!\nHelpful hints will appear here..."
-
-	if is_instance_valid(_last_selected_by_tab) and not move_mode:
-		var target_ball = _last_selected_by_tab
-		var b_name = lnz_text_edit.get_ball_name(target_ball.ball_no)
+	var header = ""
+	var body = "" 
+	var footer = ""
+	
+	# HIGHLIGHTS
+	var highlighted_ball = null
+	if is_instance_valid(_last_selected_by_tab):
+		highlighted_ball = _last_selected_by_tab
+		var b_name = lnz_text_edit.get_ball_name(highlighted_ball.ball_no)
 		var total_count = _nearby_balls_cache.size()
 		var current_idx = max(0, _current_tab_index) + 1
-		
-		# Helper text required by user
-		text = "Hovered: %s #%d (tabbable %d/%d)" % [b_name, target_ball.ball_no, current_idx, total_count]
-		text += "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+		header = "Hovered: %s #%d (tabbable %d/%d)" % [b_name, highlighted_ball.ball_no, current_idx, total_count]
+	elif selecting_on and last_selected_is_valid():
+		highlighted_ball = last_selected
+		var b_name = lnz_text_edit.get_ball_name(highlighted_ball.ball_no)
+		header = "Hovered: %s #%d" % [b_name, highlighted_ball.ball_no]
 
-	elif linez_mode:
+	# MODES
+	if linez_mode:
 		if is_instance_valid(linez_start_ball):
-			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 2nd ball to end a line."
+			body = "Line Mode: Create a new line or edit existing line.\nLeft-click a 2nd ball to end a line."
 		else:
-			text = "Line Mode: Create a new line or edit existing line.\nLeft-click a 1st ball to start a line."
-
+			body = "Line Mode: Create a new line or edit existing line.\nLeft-click a 1st ball to start a line."
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 		
 	elif paintball_mode:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
-		
 		if delete_mode:
-			text = "Paintball Mode: Left-click to erase nearest paintball."
-			# cursor is handled by _on_delete_mode_toggled
+			body = "Paintball Mode: Left-click to erase nearest paintball."
 		elif temp_eraser_active:
-			text = "Paintball Mode: Left-click to erase nearest paintball."
+			body = "Paintball Mode: Left-click to erase nearest paintball."
 			Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 		else:
 			var freeline_on = paintball_settings_instance.find_node("FreelineCheckBox").pressed or Input.is_key_pressed(KEY_SHIFT)
 			if freeline_on:
-				text = "Paintball Mode (Freeline): Left-click and drag to draw."
+				body = "Paintball Mode (Freeline): Left-click and drag to draw."
 			else:
-				text = "Paintball Mode: Left-click to add next paintball"
+				body = "Paintball Mode: Left-click to add next paintball"
 			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
-			text += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+			body += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+
 	elif auto_paintballer_mode:
-		text = "Auto Paintballer: Use the panel to generate random paintballz patterns. Click ballz to affect. Hit 'Apply' to save changes."
+		body = "Auto Paintballer: Use the panel to generate random paintballz patterns. Click ballz to affect. Hit 'Apply' to save changes."
+		
 	elif project_mode:
-		text = "Project Mode: Use the panel to add or randomize projections.\nHit 'Apply to LNZ' to save changes."
+		body = "Project Mode: Use the panel to add or randomize projections.\nHit 'Apply to LNZ' to save changes."
+		
 	elif move_mode:
-		text = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group."
+		body = "Move Mode: Click to select, CTRL+Click to toggle multiple.\nDrag selected balls to move group."
 		var queued_count = pending_moves.size()
 		if queued_count > 0:
-			text += "\nQueued Moves: " + str(queued_count)
+			body += "\nQueued Moves: " + str(queued_count)
+
 	elif preset_mode:
 		preset_settings_instance.sync_camera(camera.global_transform)
-
 		var is_eyedropper = Input.is_key_pressed(KEY_ALT) or preset_settings_instance.is_eyedropper_active()
-
 		if is_eyedropper:
-			text = "Eyedropper Mode: Left-click a ball to sample its properties."
-			#Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(0,30))
-			#Input.set_custom_mouse_cursor(eyedropper)
+			body = "Eyedropper Mode: Left-click a ball to sample its properties."
 			Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 		else:
-			text = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
+			body = "Preset Mode: Left-click to apply preset.\nHold ALT for eyedropper."
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
-	elif selecting_on:
-		text = "Select Mode: when hovering, cycle through...\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
-	else:
-		# Default hotkeys when no special mode is active
-		if Input.is_key_pressed(KEY_CONTROL):
-			text = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
-		elif Input.is_key_pressed(KEY_SHIFT):
-			text = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
-		elif Input.is_key_pressed(KEY_SPACE):
-			text = "Pan View (SPACE + left-click drag)"
 	
-	# Append axis lock info if any is pressed, regardless of mode
+	elif selecting_on:
+		body = "Select Mode: when hovering, cycle ballz using TAB..."
+	
+	else:
+		if Input.is_key_pressed(KEY_CONTROL):
+			body = "Open Tools Menu (CTRL + SPACE)\nApply and Save Changes (CTRL + S)\nFlash Ballz (CTRL + Q)"
+		elif Input.is_key_pressed(KEY_SHIFT):
+			body = "Move Ball (SHIFT + left-click drag)\nScale Ball (SHIFT + ALT + left-click drag)"
+		elif Input.is_key_pressed(KEY_SPACE):
+			body = "Pan View (SPACE + left-click drag)"
+		else:
+			body = "Welcome to LnzLive!\nHelpful hints will appear here..."
+
+	# HOTKEYS
+	if highlighted_ball:
+		footer = "\nZ or B: [Ball Info] or [Add Ball] | X or M: [Move]\nC or P: [Project Ball] | V or L: [Line]"
+	
 	var locks = []
 	if Input.is_key_pressed(KEY_X): locks.append("X")
 	if Input.is_key_pressed(KEY_Y): locks.append("Y")
 	if Input.is_key_pressed(KEY_Z): locks.append("Z")
 	if locks.size() > 0:
-		if text != "Welcome to LnzLive!\nHelpful hints will appear here...":
-			text += " | "
-		text += "Axis Lock: " + str(locks)
+		var lock_str = "Axis Lock: " + str(locks)
+		if footer != "":
+			footer += " | " + lock_str
+		elif body != "Welcome to LnzLive!\nHelpful hints will appear here...":
+			body += " | " + lock_str
+		else:
+			body = lock_str
 
-	helper_label.text = text
+	# HELPER
+	var final_text = body
+	if header != "":
+		final_text = header + "\n" + final_text
+	if footer != "":
+		final_text += footer
 
+	helper_label.text = final_text
 
 func set_active_selected_ball(ball):
 	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
