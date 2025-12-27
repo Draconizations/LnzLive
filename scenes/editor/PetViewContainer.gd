@@ -952,7 +952,7 @@ func _gui_input(event):
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab) and not move_mode:
+	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab):
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -1029,7 +1029,7 @@ func _unhandled_key_input(event):
 				get_tree().set_input_as_handled()
 				return
 
-	if event.is_pressed() and event.scancode == KEY_TAB and not move_mode:
+	if event.is_pressed() and event.scancode == KEY_TAB:
 		get_tree().set_input_as_handled()
 		_cycle_nearby_ballz()
 		return
