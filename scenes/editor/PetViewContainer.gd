@@ -185,6 +185,8 @@ func _ready():
 		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
+	if is_instance_valid(pet_node):
+		pet_node.connect("palette_changed", preset_settings_instance, "set_palette")
 	preset_settings_instance.connect("eyedropper_toggled", self, "_on_eyedropper_toggled")
 	preset_settings_instance.connect("apply_to_selection", self, "_on_preset_apply_selection")
 	preset_settings_instance.connect("unselect_all", self, "_on_unselect_all")
