@@ -59,7 +59,7 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Select Mode** | `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
-| **Project Mode** | `D` | **Open/Close Paintball Mode** |
+| **Shape Mode** | `D` | **Open/Close Paintball Mode** |
 | **Paintball Mode** | `W` | **Open/Close Paintball Mode** |
 | **Paintball Mode** | `left-click` | **Draw**: Add paintballz by point-and-click |
 | **Paintball Mode** | `CTRL` + `left-click` | **Eraser**: Delete nearest queued paintballz |
@@ -223,9 +223,9 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 
 In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically detects avoids the first 17 indices (chicken pox) and adds filler entries if necessary.
 
-#### Project Mode
+#### Shape Mode
 
-In `Project Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
+In `Shape Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
 
 #### Move Mode
 

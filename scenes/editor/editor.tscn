@@ -713,7 +713,7 @@ __meta__ = {
 margin_top = 46.0
 margin_right = 185.0
 margin_bottom = 65.0
-hint_tooltip = "Hotkey D or ALT+P to activate Project Mode"
+hint_tooltip = "Hotkey D or ALT+P to activate Shape Mode"
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
 custom_styles/focus = ExtResource( 19 )
@@ -721,7 +721,7 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
-text = "Project Mode"
+text = "Shape Mode"
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -1225,7 +1225,7 @@ text = "T-Pose"
 [node name="HelperContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 56.0
 margin_right = 759.0
-margin_bottom = 156.0
+margin_bottom = 206.0
 rect_min_size = Vector2( 0, 150 )
 size_flags_vertical = 0
 
@@ -1248,7 +1248,7 @@ font = ExtResource( 30 )
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
 margin_left = 104.0
 margin_right = 759.0
-margin_bottom = 90.0
+margin_bottom = 105.0
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
@@ -1267,7 +1267,7 @@ __meta__ = {
 [node name="HelperLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/VBoxContainer"]
 margin_top = 30.0
 margin_right = 655.0
-margin_bottom = 90.0
+margin_bottom = 105.0
 rect_min_size = Vector2( 475, 75 )
 custom_fonts/font = SubResource( 9 )
 text = "Welcome to LnzLive!
@@ -1281,7 +1281,7 @@ __meta__ = {
 }
 
 [node name="BottomSpacer" type="Control" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 160.0
+margin_top = 210.0
 margin_right = 759.0
 margin_bottom = 1002.0
 mouse_filter = 2
@@ -1648,7 +1648,7 @@ The editor has several modes for different tasks, available under the 'Mode' men
 - [b]Paintball Mode:[/b] Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
 - [b]Line Mode:[/b] Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
 - [b]Preset Mode:[/b] Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
-- [b]Project Mode:[/b] Create complex skeletal deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
+- [b]Shape Mode:[/b] Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
 
 [b]Backups[/b]
 
@@ -1673,7 +1673,7 @@ The editor has several modes for different tasks, available under the 'Mode' men
 - Paintball Mode: Add small, colored circles (paintballs) to the surface of balls. Use the settings panel to control their appearance. Click 'Apply Paintballz' to save them to the LNZ.
 - Line Mode: Click two balls to draw a line between them. Use the settings panel to control the line's properties. The changes are saved to the LNZ instantly.
 - Preset Mode: Apply a set of properties (like color, size, texture) to balls with a single click. Use the settings panel to define the preset. Hold ALT to use the eyedropper and sample properties from an existing ball.
-- Project Mode: Create complex skeletal deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
+- Shape Mode: Create complex deformations by projecting the movement of one ball onto another. Also allows for randomizing body proportions.
 
 Backups
 

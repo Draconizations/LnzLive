@@ -155,7 +155,7 @@ func _ready():
 		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
 		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
 		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
-		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Project")
+		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Shape")
 	else:
 		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)

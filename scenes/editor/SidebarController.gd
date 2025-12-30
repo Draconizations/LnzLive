@@ -6,6 +6,17 @@ onready var tree = get_node("SidebarTabs/FileTree/Tree")
 var floating_layer: CanvasLayer = null
 const UTILITY_TABS = ["FileTree", "Palette"]
 
+const TAB_ICONS = {
+	"FileTree": "res://resources/icons/ico_tab_file.png",
+	"Palette": "res://resources/icons/ico_tab_palette.png",
+	"Paint": "res://resources/icons/ico_tab_paint.png",
+	"AutoPaint": "res://resources/icons/ico_tab_autopaint.png",
+	"Move": "res://resources/icons/ico_tab_move.png",
+	"Line": "res://resources/icons/ico_tab_line.png",
+	"Preset": "res://resources/icons/ico_tab_preset.png",
+	"Shape": "res://resources/icons/ico_tab_shape.png"
+}
+
 func _ready():
 	if tab_container:
 		tab_container.visible = true
@@ -106,6 +117,11 @@ func _update_tab_visibilities():
 		else:
 			tab_container.set_tab_disabled(i, is_any_mode_floating)
 
+		if TAB_ICONS.has(child.name):
+			var icon_path = TAB_ICONS[child.name]
+			tab_container.set_tab_icon(i, load(icon_path))
+			tab_container.set_tab_title(i, "")
+
 func _on_tab_changed(tab_index: int):
 	var control = tab_container.get_child(tab_index)
 	var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
@@ -117,7 +133,7 @@ func _on_tab_changed(tab_index: int):
 		"Move": pet_view.move_mode_check_box.pressed = true
 		"Line": pet_view.line_mode_check_box.pressed = true
 		"Preset": pet_view.preset_mode_check_box.pressed = true
-		"Project": pet_view.project_mode_check_box.pressed = true
+		"Shape": pet_view.project_mode_check_box.pressed = true
 		"Palette": pet_view.view_palette_check_box.pressed = true
 		"FileTree":
 			pass
