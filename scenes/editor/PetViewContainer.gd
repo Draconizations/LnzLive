@@ -129,6 +129,7 @@ var box_start_pos = Vector2()
 var box_end_pos = Vector2()
 
 func _ready():
+	focus_mode = FOCUS_ALL
 	set_process_unhandled_key_input(true)
 	set_process(true)
 
@@ -400,6 +401,9 @@ func _draw():
 func _gui_input(event):
 	if input_is_paused:
 		return
+
+	if event is InputEventMouseButton and event.pressed:
+		grab_focus()
 
 	if (move_mode or preset_mode or auto_paintballer_mode) and Input.is_key_pressed(KEY_CONTROL):
 		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
@@ -788,10 +792,10 @@ func _gui_input(event):
 		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var focus_owner := get_focus_owner()
-		if focus_owner and focus_owner is TextEdit:
-			focus_owner.release_focus()
+	# if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+	# 	var focus_owner := get_focus_owner()
+	# 	if focus_owner and focus_owner is TextEdit:
+	# 		focus_owner.release_focus()
 
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
@@ -1022,6 +1026,12 @@ func _gui_input(event):
 
 func _unhandled_key_input(event):
 	if input_is_paused:
+		return
+
+	var focus_owner = get_focus_owner()
+	var text_edit_has_focus = focus_owner and focus_owner is TextEdit
+	
+	if text_edit_has_focus:
 		return
 
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:

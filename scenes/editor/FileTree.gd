@@ -27,7 +27,7 @@ var local_storage_palettes: TreeItem
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
 
-onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as WindowDialog
+onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as AcceptDialog
 onready var upload_popup = get_tree().root.get_node("Root/SceneRoot/WebFileUploadPopup") as AcceptDialog
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
@@ -66,6 +66,12 @@ func _ready():
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.rect_min_size = Vector2(400, 400)
 	
+	file_dialog.popup_exclusive = true
+	
+	if rename_dialog:
+		rename_dialog.popup_exclusive = true
+		rename_dialog.connect("about_to_show", self, "_on_RenameDialog_about_to_show")
+
 	var dir = Directory.new()
 	var lnz_dir_path = "res://resources/lnz/"
 	if dir.open(lnz_dir_path) == OK:
@@ -97,6 +103,12 @@ func _ready():
 	rescan_palettes()
 
 func _on_FileDialog_popup_hide():
+	pet_view_container.input_is_paused = false
+
+func _on_RenameDialog_about_to_show():
+	pet_view_container.input_is_paused = true
+
+func _on_RenameDialog_popup_hide():
 	pet_view_container.input_is_paused = false
 
 func _on_ImportLNZ_pressed():
@@ -708,6 +720,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		save_dialog.window_title = "Save File As"
 		save_dialog.current_file = filename
 		save_dialog.rect_min_size = Vector2(400, 400)
+		save_dialog.popup_exclusive = true
 		
 		add_child(save_dialog)
 		save_dialog.popup_centered()
