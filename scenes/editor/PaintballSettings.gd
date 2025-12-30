@@ -52,6 +52,7 @@ func get_properties():
 	properties["diameter_min"] = find_node("DiameterMin").value
 	properties["diameter_max"] = find_node("DiameterMax").value
 	properties["tapered"] = find_node("Tapered").pressed
+	properties["pixel_mode"] = find_node("PixelMode").pressed
 	properties["color"] = find_node("Color").text
 	properties["outline_color"] = find_node("OutlineColor").text
 	properties["outline_type_min"] = find_node("OutlineTypeMin").value
@@ -74,6 +75,7 @@ func _connect_settings_signals():
 	find_node("DiameterMin").connect("value_changed", self, "_on_setting_changed")
 	find_node("DiameterMax").connect("value_changed", self, "_on_setting_changed")
 	find_node("Tapered").connect("toggled", self, "_on_setting_changed")
+	find_node("PixelMode").connect("toggled", self, "_on_setting_changed")
 	find_node("Color").connect("text_changed", self, "_on_setting_changed")
 	find_node("OutlineColor").connect("text_changed", self, "_on_setting_changed")
 	find_node("OutlineTypeMin").connect("value_changed", self, "_on_setting_changed")
@@ -111,6 +113,7 @@ func save_settings():
 	config.set_value("PaintballProperties", "diameter_min", find_node("DiameterMin").value)
 	config.set_value("PaintballProperties", "diameter_max", find_node("DiameterMax").value)
 	config.set_value("PaintballProperties", "tapered", find_node("Tapered").pressed)
+	config.set_value("PaintballProperties", "pixel_mode", find_node("PixelMode").pressed)
 	config.set_value("PaintballProperties", "color", find_node("Color").text)
 	config.set_value("PaintballProperties", "outline_color", find_node("OutlineColor").text)
 	config.set_value("PaintballProperties", "outline_type_min", find_node("OutlineTypeMin").value)
@@ -144,6 +147,7 @@ func load_settings():
 	find_node("DiameterMin").value = config.get_value("PaintballProperties", "diameter_min", 10.0)
 	find_node("DiameterMax").value = config.get_value("PaintballProperties", "diameter_max", 20.0)
 	find_node("Tapered").pressed = config.get_value("PaintballProperties", "tapered", false)
+	find_node("PixelMode").pressed = config.get_value("PaintballProperties", "pixel_mode", false)
 	find_node("Color").text = config.get_value("PaintballProperties", "color", "")
 	find_node("OutlineColor").text = config.get_value("PaintballProperties", "outline_color", "244")
 	find_node("OutlineTypeMin").value = config.get_value("PaintballProperties", "outline_type_min", -1.0)
@@ -170,6 +174,7 @@ func _on_reset_defaults_pressed():
 	find_node("DiameterMin").value = 10.0
 	find_node("DiameterMax").value = 20.0
 	find_node("Tapered").pressed = false
+	find_node("PixelMode").pressed = false
 	find_node("Color").text = ""
 	find_node("OutlineColor").text = "244"
 	find_node("OutlineTypeMin").value = -1.0

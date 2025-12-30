@@ -1683,8 +1683,18 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		var diameter
 		if diameter_override != -1:
 			diameter = diameter_override
+			if props.get("pixel_mode", false):
+				var base_size = float(target_ball.ball_size)
+				if base_size == 0: base_size = 1.0
+				diameter = int(ceil((diameter / base_size) * 100.0))
 		else:
-			diameter = int(round(rand_range(props.diameter_min, props.diameter_max)))
+			if props.get("pixel_mode", false):
+				var base_size = float(target_ball.ball_size)
+				if base_size == 0: base_size = 1.0
+				var rand_px = rand_range(props["diameter_min"], props["diameter_max"])
+				diameter = int(ceil((rand_px / base_size) * 100.0))
+			else:
+				diameter = int(round(rand_range(props["diameter_min"], props["diameter_max"])))
 
 		var paintball_info = {
 			"base_ball_no": target_ball.ball_no,
