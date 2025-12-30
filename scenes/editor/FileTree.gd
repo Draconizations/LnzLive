@@ -326,10 +326,14 @@ func _on_Tree_item_activated():
 	release_focus()
 
 func rescan(selected_filepath):
+	var was_collapsed = true
 	if local_storage != null:
+		was_collapsed = local_storage.collapsed 
 		root.remove_child(local_storage)
+	
 	local_storage = create_item(root, 1)
 	local_storage.set_text(0, "Local Storage")
+	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
 	
 func rescan_textures():
@@ -338,8 +342,8 @@ func rescan_textures():
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
 	local_storage_textures = create_item(root, 2)
-	local_storage_textures.collapsed = was_collapsed
 	local_storage_textures.set_text(0, "Local Textures")
+	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
 func rescan_res_textures():
@@ -348,8 +352,8 @@ func rescan_res_textures():
 		was_collapsed = res_textures.collapsed
 		root.remove_child(res_textures)
 	res_textures = create_item(root, 3)
-	res_textures.collapsed = was_collapsed
 	res_textures.set_text(0, "Base Textures")
+	res_textures.collapsed = was_collapsed
 	scan_res_textures()
 	
 func rescan_palettes():
@@ -358,8 +362,8 @@ func rescan_palettes():
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
 	local_storage_palettes = create_item(root, 4)
-	local_storage_palettes.collapsed = was_collapsed
 	local_storage_palettes.set_text(0, "Local Palettes")
+	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes()
 	
 func scan_local_storage(selected_filepath):
@@ -484,7 +488,8 @@ func scan_local_palettes():
 			if err == OK:
 				var tex = ImageTexture.new()
 				tex.create_from_image(img, 0)
-				preloader.add_resource("palette_" + filename.to_lower(), tex)
+				var clean_key = "palette_" + filename.strip_edges().to_lower()
+				preloader.add_resource(clean_key, tex)
 				
 				if img.get_format() != Image.FORMAT_RGBA8:
 					img.convert(Image.FORMAT_RGBA8)

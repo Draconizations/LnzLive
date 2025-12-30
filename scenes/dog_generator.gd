@@ -601,16 +601,17 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	var pal_texture: Texture = null
 	if palette != null:
-		var user_res_path = "user://resources/palettes/" + palette
-		var res_res_path = "res://resources/palettes/" + palette
+		var user_res_path = "user://resources/palettes".plus_file(palette)
+		var res_res_path = "res://resources/palettes".plus_file(palette)
+
 		if ResourceLoader.exists(user_res_path):
 			pal_texture = ResourceLoader.load(user_res_path)
 		elif ResourceLoader.exists(res_res_path):
 			pal_texture = ResourceLoader.load(res_res_path)
-		elif preloader.has_resource("palette_" + palette.to_lower()):
-			pal_texture = preloader.get_resource("palette_" + palette.to_lower())
-	else:
-		pal_texture = default_palette
+		else:
+			var lookup_key = "palette_" + palette.to_lower()
+			if preloader.has_resource(lookup_key):
+				pal_texture = preloader.get_resource(lookup_key)
 
 	# If we're creating everything fresh, clear out old visuals
 	if new_create:
@@ -1040,18 +1041,19 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	if (species == KeyBallsData.Species.BABY):
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
 	
-	var pal_texture = null
+	var pal_texture: Texture = null
 	if palette != null:
-		var user_resource_path = "user://resources/palettes/" + palette
-		var res_resource_path = "res://resources/palettes/" + palette
-		if ResourceLoader.exists(user_resource_path):
-			pal_texture = ResourceLoader.load(user_resource_path)
-		elif ResourceLoader.exists(res_resource_path):
-			pal_texture = ResourceLoader.load(res_resource_path)
+		var user_res_path = "user://resources/palettes".plus_file(palette)
+		var res_res_path = "res://resources/palettes".plus_file(palette)
+
+		if ResourceLoader.exists(user_res_path):
+			pal_texture = ResourceLoader.load(user_res_path)
+		elif ResourceLoader.exists(res_res_path):
+			pal_texture = ResourceLoader.load(res_res_path)
 		else:
-			pal_texture = preloader.get_resource("palette_"+palette.to_lower())
-	else:
-		pal_texture = default_palette
+			var lookup_key = "palette_" + palette.to_lower()
+			if preloader.has_resource(lookup_key):
+				pal_texture = preloader.get_resource(lookup_key)
 	
 	var i = 0
 	for line in line_data:

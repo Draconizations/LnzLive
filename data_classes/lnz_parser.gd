@@ -180,10 +180,16 @@ func get_no_texture_rotate(file: File):
 
 func get_palette(file: File):
 	get_next_section(file, "Palette")
-	var parsed_lines = get_parsed_line_strings(file, ["filepath"])
-	for line in parsed_lines:
-		var filename = line.filepath.get_file()
-		palette = filename + ".png"
+	
+	var raw_line = file.get_line().strip_edges()
+	
+	while raw_line.empty() or raw_line.begins_with(";"):
+		if file.get_position() >= file.get_len(): 
+			break
+		raw_line = file.get_line().strip_edges()
+	
+	if not raw_line.empty():
+		palette = raw_line + ".png"
 
 func parse_paintballs(file: File):
 	file.seek(0)
