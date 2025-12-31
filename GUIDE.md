@@ -15,10 +15,10 @@ Keep up-to-date on new beta versions of LnzLive by downloading the [**LnzLive La
 You can load LNZ data in several ways:
 
 *   **Examples:** Double-click a preset LNZ file under `Examples` in the file tree (left-hand panel). These are useful for getting started and experimenting with the editor's features.
-*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) into the text editor (right-hand panel).
-*   **Import from File:** Click `File > Import LNZ / BMP / PNG` to load a `.lnz` text file from your computer.
+*   **Copy-and-Paste:** Paste LNZ data copied from a pet file (`.pet`, `.baby`) or breed file (`.dog`, `.cat`) directly into the text editor (right-hand panel).
+*   **Import from File:** Click `File > Import LNZ` to load a `.lnz` or `.txt` text file from your computer.
 
-To see your changes, click `Apply Changes` or save with `CTRL+S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
+To see your changes, click `Apply Changes` or save with `CTRL` + `S`. Your imported files will appear under `Local Storage` in the file tree, where you can right-click to rename, create backups, or export as a `.lnz` text file.
 
 ### Help! It crashes when I do X!
 
@@ -27,8 +27,6 @@ LnzLive is a work in progress! Please make regular backups of your LNZ files.
 If you encounter a bug or have a suggestion, please raise an issue in the GitHub repository so it can be tracked and resolved.
 
 ## User Interface Overview
-
-Helpful tips will appear at the top of the screen about visual and text editing tools.
 
 ### Controls
 
@@ -59,21 +57,34 @@ Helpful tips will appear at the top of the screen about visual and text editing 
 | **Select Mode** | `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
-| **Shape Mode** | `D` | **Open/Close Paintball Mode** |
-| **Paintball Mode** | `W` | **Open/Close Paintball Mode** |
+| **Shape Mode** | `D` or `ALT` + `P` | **Open/Close Shape Mode** |
+| **Paintball Mode** | `W` or `ALT` + `B` | **Open/Close Paintball Mode** |
 | **Paintball Mode** | `left-click` | **Draw**: Add paintballz by point-and-click |
 | **Paintball Mode** | `CTRL` + `left-click` | **Eraser**: Delete nearest queued paintballz |
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `Down` | **Scale/Resize**: Resize diameter of paintballz |
-| **Preset Mode** | `R` | **Open/Close Preset Mode** |
-| **Preset Mode** | `left-click` | **Apply Preset**: Apply current Preset to ball |
-| **Preset Mode** | `ALT` + `left-click` | **Eyedropper**: Sample properties from ball |
-| **Line Mode** | `E` | **Open/Close Linez Mode** |
+| **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
+| **Preset Mode** | left-click | **Apply Preset**: Apply current Preset to ball |
+| **Preset Mode** | `ALT` + left-click | **Eyedropper**: Sample properties from ball |
+| **Preset Mode** | `CTRL` + `left-click`| Group selection of ballz |
+| **Preset Mode** | `CTRL` + `left-click drag`| Box selection of ballz |
+| **Line Mode** | `E` | **Open/Close Line Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
+| **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
+| **Move Mode** | `CTRL` + `left-click`| Group selection of ballz |
+| **Move Mode** | `CTRL` + `left-click drag`| Box selection of ballz |
+| **Move Mode** | `ALT` + `left-click`| Select pivot ball |
+| **Move Mode** | `ALT` + `left-click`| Select pivot ball |
+| **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
+| **Move Mode** | `X`, `Y`, and/or `Z` (hold during drag) | Lock movement to specific axis or plane |
 
 ### History System
 
-LnzLive now tracks your edits (default: 25 saved actions) with an Undo/Redo history system. It uses "Logical Commits" for specific line changes (like moving a ball) and "Snapshots" for major operations. Use CTRL+Z to undo and CTRL+Y to redo while the viewport is focused.
+LnzLive uses a Undo/Redo history system to track visual and text edits as saved actions (default: 25 saved actions). It uses "Logical Commits" for specific line changes (like moving a ball) and "Snapshots" for major operations. Use `CTRL` + `Z` to undo and `CTRL` + `Y` while focused to redo while the viewport is focused.
+
+### User Config
+
+LnzLive saves most settings made by the user into a config file `settings.cfg` that can be found in system folder accessed from File -> Open User Folder. For settings used by tools and modes, these can usually be reset by their "Reset Defaults" buttons. You can also delete this config file for fresh settings on next session.
 
 ### File Tree (Left Panel)
 
@@ -102,7 +113,7 @@ The 3D viewport displays the LNZ model.
 *   **Pan:** Press the middle mouse button or hold `Space` and drag to move the model.
 *   **Quick Views:** Use the number keys `1-0` to jump to different camera angles (front, top, isometric, etc.).
 
-#### Navigation
+#### Features
 
 - Click and hold the left mouse button in the viewport (center panel) to rotate the pet.
 - Use the mouse wheel to zoom in and out.
@@ -119,19 +130,40 @@ The 3D viewport displays the LNZ model.
 	- 9: Left-Bottom Isometric View
 	- 0: Left-Top Isometric View
 
+#### Hint Helper
+
+Below the animation controller, there will appear helpful hints about hotkeys and modes.
+
+#### Console Log
+
+At the bottom of the viewport, there will be messages about actions or changes made.
+
 ### Text Editor (Right Panel)
 
 The text editor displays the raw LNZ data. You can edit the data directly and see the changes in the viewport after applying them.
+
+#### Features
+
+- Place the editing cursor on any line in `[Ballz Info]`, `[Add Ball]`, `[Linez]`, `[Polygons]`, `[Paintballz]`, `[Move]`, or `[Project Ball]`. You don't need to select the entire line, just place the cursor within it. Hit `CTRL` + `Q` to make affected ballz and/or linez flash in the pet view so you can locate.
+- The Find/Replace panel can be toggled by hitting `CTRL` + `F`, by right-click, or via the top buttons.
+- Right-clicking selected text and hitting "Toggle Comment" will prepend `;` to each line, effectively commenting those lines out.
+- Switch between Pixel and Cascadia fonts or change font size using the top buttons.
 
 ## Menu Options
 
 ### File
 
-- **Import LNZ / BMP / PNG:** Load LNZ files or custom texture/palette image files from your computer.
+- **Import LNZ**: Load `.lnz` or `.txt` files containing LNZ data into Local Storage.
+- **Import Texture**: Load `.bmp` files into Local Textures. Shows thumbnail preview and dimensions.
+- **Import Palette:** Load `.bmp` palette or `.png` color ramp files into Local Palettes. Shows thumbnail preview and double-click to apply.
+- **Open User Folder:** Opens folder used to store local files including `.lnz` generated in LnzLive.
+- **User Settings:** Store settings that will persist across LnzLive sessions including number of saved actions for undo/redo, background color, and screen resolution.
 
 ### Tool
 
 #### Auto Paintballer
+
+![Auto Paintballer icon](resources/icons/ico_tab_autopaint_2x.png)
 
 The `Auto Paintballer` is tool for procedurally generating either simple spots, complex patterns, or intricate fractals using `[Paintballz]`, which get placed according to selected distribution modes.
 
@@ -198,6 +230,8 @@ This dropdown determines the algorithm used to place paintballs.
 
 #### View Palette
 
+![Palette Viewer icon](resources/icons/ico_tab_palette_2x.png)
+
 Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
 
 #### Color Swap
@@ -219,33 +253,9 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
 
-#### Paintball Mode
-
-In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically detects avoids the first 17 indices (chicken pox) and adds filler entries if necessary.
-
-#### Shape Mode
-
-In `Shape Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
-
-#### Move Mode
-
-Move Mode provides advanced visual editing for multiple balls:
-
-- **Group Movement:** Select multiple balls (CTRL+left-click or Box Select) to move them as a unit.
-
-- **Axis/Plane Locks:** Use the panel or hotkeys (X, Y, Z) to lock movement to specific axes or planes (X+Y, etc.).
-
-- **Nudging:** Use the panel buttons or Axis + Scroll to move selection by precise increments.
-
-- **Rotation:** Apply Roll, Pitch, or Yaw rotations. Use `ALT`+left-click to set a Pivot Ball for the rotation.
-
-- **Mirroring:** Toggle the `Mirr` options to move corresponding left/right balls symmetrically.
-
-- **Align & Snap:** Align selection to extremes or snap them to the furthest ball on an axis.
-
-- **Commit:** Use `Apply` to write changes to `[Move]` or `[Add Ball]` sections, or `Clear` to reset.
-
 #### Preset Mode
+
+![Preset Mode icon](resources/icons/ico_tab_preset_2x.png)
 
 In `Preset Mode`, you can copy properties of existing ballz, including any applied paintballz, and apply these properties onto other ballz. It is here that you can also enter paintballz LNZ and have those paintballz get added to other ballz. You can also rotate those paintballz designs before applying.
 
@@ -265,7 +275,13 @@ Transformations: Rotate or rescale paintballz presets before applying.
 
 Recolor paintballz using the table or recolor options that populate all seen color + texture pairs.
 
+##### Tutorial: Preset Mode
+
+Coming soon!
+
 #### Line Mode
+
+![Line Mode icon](resources/icons/ico_tab_line_2x.png)
 
 In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified.
 
@@ -275,17 +291,66 @@ Settings: More granular control over fuzz, color, and thickness when applying li
 
 Check/uncheck to apply/not apply properties to existing linez.
 
+##### Tutorial: Line Mode
+
+Coming soon!
+
+#### Paintball Mode
+
+![Paintball Mode icon](resources/icons/ico_tab_paint_2x.png)
+
+In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically detects avoids the first 17 indices (chicken pox) and adds filler entries if necessary.
+
+##### Tutorial: Paintball Mode
+
+Coming soon!
+
+#### Move Mode
+
+![Move Mode icon](resources/icons/ico_tab_move_2x.png)
+
+Move Mode provides advanced visual editing for multiple balls:
+
+- **Group Movement:** Select multiple balls (CTRL+left-click or Box Select) to move them as a unit.
+
+- **Axis/Plane Locks:** Use the panel or hotkeys (X, Y, Z) to lock movement to specific axes or planes (X+Y, etc.).
+
+- **Nudging:** Use the panel buttons or Axis + Scroll to move selection by precise increments.
+
+- **Rotation:** Apply Roll, Pitch, or Yaw rotations. Use `ALT`+left-click to set a Pivot Ball for the rotation.
+
+- **Mirroring:** Toggle the `Mirr` options to move corresponding left/right balls symmetrically.
+
+- **Align & Snap:** Align selection to extremes or snap them to the furthest ball on an axis.
+
+- **Commit:** Use `Apply` to write changes to `[Move]` or `[Add Ball]` sections, or `Clear` to reset.
+
+##### Tutorial: Move Mode
+
+Coming soon!
+
+#### Shape Mode
+
+![Shape Mode icon](resources/icons/ico_tab_shape_2x.png)
+
+In `Shape Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
+
+##### Tutorial: Shape Mode
+
+Coming soon!
+
 ### Render
 
 Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
 
-Hide Ballz: Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
+- **Hide Ballz:** Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
 
-Unhide Ballz: Use the button under the Render menu to restore all hidden balls.
+- **Unhide Ballz:** Use the button under the Render menu to restore all hidden balls.
 
 ### Export
 
 - **Export OBJ 3D Model:** Experimental feature to export a 3D model of the loaded LNZ and animation frame! Your mileage may vary.
+- **Export to Clothes CLZ:** Prepare clothes LNZ from all addballz and linez attached to a ball that can be copied to a `.clo` game file.
 
 ### Help
 
@@ -347,19 +412,29 @@ The "Color Swap" option opens a menu can be used to quickly recolor and retextur
 
 While a ball/addball is hovered or selected, use "Create Addballz" or "Create Addballz + Linez" to create a new addball and/or line. If an addball is selected, the new addball will be parented to the same ball as the selected addball. The line will connect the selected addball and the new addball.
 
-### Delete Addballz / Omit Ballz
+### Delete Addballz
 
-While a ball/addball is hovered or selected, use "Delete Addballz / Omit Ballz" to either remove an addballz and its associated linez and paintballz completely, or add base ballz to the `[Omissions]` list.
+While an addball is hovered or selected, use "Delete Addballz" to remove an addballz and its associated linez and paintballz completely.
+
+### Omit Ballz
+
+While a ball/addball is hovered or selected, use "Omit Ballz" to include ballz in the `[Omissions]` list.
 
 ### Connect with Linez
 
-While a ball is hovered or selected, use "Connect with Linez" line creation mode.
-
-Click another ball to connect the two with a Linez entry in the LNZ.
+While a ball is hovered or selected, selecting "Connect with Linez" enters Line Mode. Click another ball to connect the two with a Linez entry in the LNZ.
 
 ### Copy-Mirror
 
-The Copy-Mirror tool on all ballz will apply all changes on the model's right (R) to the model's left (L) side (LnzLive is mirrored, so the left side of the viewport to the right side). This includes ballz, addballz, paintballz, linez, etc. Alternatively, if selected by right-clicking a specific ballz, then properties of that ball will be mirrored to its symmetrical equivalent. Or, if the ball is a center ball, applied to itself but mirrored on the X axis.
+The Copy-Mirror tool can be used to mirror changes over the X axis. When selected on the background (not a specific ball), you can choose to mirror right-to-left (R-to-L) or left-to-right (L-to-R) on all ballz which will apply all changes on the model's right (R) to the model's left (L) side (LnzLive is mirrored, so the left side of the viewport to the right side) or vice versa. This includes ballz, addballz, paintballz, linez, etc. Alternatively, if selected by right-clicking a specific ballz, then properties of that ball will be mirrored to its symmetrical equivalent. Or, if the ball is a center ball, applied to itself but mirrored on the X axis.
+
+### Export to Clothes CLZ
+
+The Export to Clothes CLZ tool will prepare clothes LNZ from all addballz and linez attached to the target ball that can be copied to a `.clo` game file.
+
+### Hide Ballz
+
+Right-click a ball and select Hide Ballz to visually remove it from the viewport with no LNZ changes (not omission, not deletion, this is temporary!).
 
 ### Apply Global Fuzz
 
@@ -373,29 +448,21 @@ Useful for making Color Info Override sections in breeds. Not supported in all b
 
 Destructive tools like `Color Swap` and `Copy-Mirror` will trigger an automatic backup. The visual editing tools like move and scale ballz are especially hard to reverse without backups, as these take effect immediately. LnzLive takes a backup of your file before applying these tools, and saves it as `{filename}_backup.lnz`. The backup will overwrite any existing backup file.
 
-> Note: *Improved save states or file versioning is a **planned feature**.*
-
 ## Textures and Palettes
 
-Custom BMP files can be loaded from local storage by clicking "Import LNZ / BMP / PNG" button. These should now appear under `Local Textures` in the file tree. You can now apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
+Custom BMP files can be loaded from local storage by clicking "Import Texture" button. These should now appear under `Local Textures` in the file tree. You can now apply textures as normal in the LNZ data. LnzLive doesn't care about the full filepath, only the filename.
 
-Similar to textures, custom palettes can be loaded from local storage, but need to be in a color ramp PNG format. **You will need to convert your BMP palette image to a PNG in the format that LnzLive expects**. You can generate this using either of these web tools:
+Similar to textures, custom palettes can be loaded from local storage, but need to be in a color ramp PNG format. You can convert your BMP palette image to a PNG in the format that LnzLive expects ahead of time using either of these web tools:
 
 - [Petz Palette Converter](https://draconizations.github.io/petz-palette-converter/)
 - [Petz Paletteiare](https://tabbzi.github.io/petz-paletteiare/)
 
-To load your palette image, use the "Import LNZ / Texture / Palette" buttons. These should appear under the file tree or under File at the top options menu. You can now apply the palettes as normal in the LNZ data, make sure to omit the `.png` at the end. Or, double-click the palette file name to apply automatically.
+Or, you can load your BMP palette image directly and LnzLive will convert to a color ramp PNG format for you.
+
+To load your palette image, use the "Import Palette" buttons. These should appear under the file tree or under File at the top options menu. You can now apply the palettes as normal in the LNZ data, make sure to omit the `.png` at the end. Or, double-click the palette file name to apply automatically.
 
 You can also add files directly for LnzLive to access from your file system:
 
 Click the "Open User Folder" button below the file tree or go to `%APPDATA%/Godot/app_userdata/LnzLive/resources/textures` (you may have to create this folder).
 
-After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree.
-
-> Note: *Loading palettes from palette BMP files directly is a **planned feature**.*
-
-## Other features
-
-While editing the LNZ:
-
-- Place the editing cursor on any line in `[Ballz Info]`, `[Add Ball]`, `[Linez]`, `[Polygons]`, `[Paintballz]`, `[Move]`, or `[Project Ball]`. You don't need to select the entire line, just place the cursor within it. Hit Ctrl+Q to make affected ballz and/or linez flash in the pet view so you can locate.
+After adding your files directly to this folder, relaunch LnzLive to load it. If your files have been loaded correctly, you will see them if you expand the `Local Textures` or `Local Palettes` part of the file tree. These will include a thumbnail preview! Custom textures will also report their dimensions in the File Tree.
