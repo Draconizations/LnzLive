@@ -630,6 +630,14 @@ custom_styles/normal = SubResource( 4 )
 custom_fonts/font = SubResource( 5 )
 text = "Apply Nudge"
 
+[node name="RotateLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 504.0
+margin_right = 463.0
+margin_bottom = 525.0
+custom_fonts/font = SubResource( 5 )
+text = "Rotate"
+align = 1
+
 [node name="RotateGrid" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 642.0
 margin_right = 463.0
