@@ -130,9 +130,9 @@ func _on_tab_changed(tab_index: int):
 	match control.name:
 		"Paint": pet_view.paintball_check_box.pressed = true
 		"AutoPaint": pet_view.auto_paintballer_check_box.pressed = true
-		"Move": pet_view.move_mode_check_box.pressed = true
-		"Line": pet_view.line_mode_check_box.pressed = true
 		"Preset": pet_view.preset_mode_check_box.pressed = true
+		"Line": pet_view.line_mode_check_box.pressed = true
+		"Move": pet_view.move_mode_check_box.pressed = true
 		"Shape": pet_view.project_mode_check_box.pressed = true
 		"Palette": pet_view.view_palette_check_box.pressed = true
 		"FileTree":
