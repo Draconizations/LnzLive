@@ -129,7 +129,6 @@ var box_start_pos = Vector2()
 var box_end_pos = Vector2()
 
 func _ready():
-	focus_mode = FOCUS_ALL
 	set_process_unhandled_key_input(true)
 	set_process(true)
 
@@ -397,13 +396,14 @@ func _draw():
 		var rect = Rect2(box_start_pos, box_end_pos - box_start_pos)
 		draw_rect(rect, Color(0.5, 1, 0.5, 0.2), true)
 		draw_rect(rect, Color(0.5, 1, 0.5, 0.8), false)
+		
+	# if selecting_on:
+	# 	var mouse_pos = get_local_mouse_position()
+	# 	draw_arc(mouse_pos, NEARBY_SCREEN_RADIUS, 0, TAU, 32, Color(1, 1, 0, 0.5), 2.0)
 
 func _gui_input(event):
 	if input_is_paused:
 		return
-
-	if event is InputEventMouseButton and event.pressed:
-		grab_focus()
 
 	if (move_mode or preset_mode or auto_paintballer_mode) and Input.is_key_pressed(KEY_CONTROL):
 		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
@@ -792,10 +792,10 @@ func _gui_input(event):
 		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
-	# if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-	# 	var focus_owner := get_focus_owner()
-	# 	if focus_owner and focus_owner is TextEdit:
-	# 		focus_owner.release_focus()
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var focus_owner := get_focus_owner()
+		if focus_owner and focus_owner is TextEdit:
+			focus_owner.release_focus()
 
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
@@ -943,12 +943,12 @@ func _gui_input(event):
 	if event is InputEventMouseMotion and not is_dragging:
 		#label.rect_global_position = event.global_position
 
-		if is_instance_valid(_last_selected_by_tab):
-			var current_mouse_pos = get_viewport().get_mouse_position()
-			if current_mouse_pos.distance_to(_tab_activation_mouse_pos) > TAB_RESET_THRESHOLD_PIXELS:
-				_reset_tab_state()
-			else:
-				pass
+		# if is_instance_valid(_last_selected_by_tab):
+		# 	var current_mouse_pos = get_viewport().get_mouse_position()
+		# 	if current_mouse_pos.distance_to(_tab_activation_mouse_pos) > TAB_RESET_THRESHOLD_PIXELS:
+		# 		_reset_tab_state()
+		# 	else:
+		# 		pass
 
 		var space_and_left = Input.is_key_pressed(KEY_SPACE) and Input.is_mouse_button_pressed(BUTTON_LEFT)
 		var middle_drag = Input.is_mouse_button_pressed(BUTTON_MIDDLE)
@@ -975,7 +975,7 @@ func _gui_input(event):
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
-	if selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab):
+	if event is InputEventMouseMotion and selecting_on and not paintball_mode and not is_instance_valid(_last_selected_by_tab):
 		var real_center = rect_position + rect_size / 2.0
 		var offset = (event.position - real_center) / tex.rect_scale
 		var screen_pos = Vector2(500, 500) + offset
@@ -1028,11 +1028,11 @@ func _unhandled_key_input(event):
 	if input_is_paused:
 		return
 
-	var focus_owner = get_focus_owner()
-	var text_edit_has_focus = focus_owner and focus_owner is TextEdit
-	
-	if text_edit_has_focus:
-		return
+	if event is InputEventKey and event.pressed and event.scancode == KEY_TAB:
+		if selecting_on:
+			get_tree().set_input_as_handled() 
+			_cycle_nearby_ballz()
+			return
 
 	if event.is_pressed() and event.scancode == KEY_ESCAPE:
 		paintball_check_box.pressed = false
@@ -1060,11 +1060,6 @@ func _unhandled_key_input(event):
 				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
 				get_tree().set_input_as_handled()
 				return
-
-	if event.is_pressed() and event.scancode == KEY_TAB:
-		get_tree().set_input_as_handled()
-		_cycle_nearby_ballz()
-		return
 		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
