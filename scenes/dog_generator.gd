@@ -613,6 +613,9 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if preloader.has_resource(lookup_key):
 				pal_texture = preloader.get_resource(lookup_key)
 
+	if pal_texture == null:
+		pal_texture = default_palette
+
 	# If we're creating everything fresh, clear out old visuals
 	if new_create:
 		for c in balls_parent.get_children():

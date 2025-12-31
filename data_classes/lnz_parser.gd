@@ -190,6 +190,8 @@ func get_palette(file: File):
 	
 	if not raw_line.empty():
 		palette = raw_line + ".png"
+	else:
+		palette = null
 
 func parse_paintballs(file: File):
 	file.seek(0)
