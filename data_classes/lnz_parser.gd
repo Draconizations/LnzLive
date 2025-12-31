@@ -419,8 +419,8 @@ func get_outline_color_override(file: File):
 	for line in parsed_lines:
 		if balls.has(line.ball):
 			var ball_data = balls[line.ball]
-			if "outline_color" in ball_data:
-				ball_data.outline_color = line.outline_color
+			if "outline_color_index" in ball_data:
+				ball_data.outline_color_index = line.outline_color
 		else:
 			print("Warning: [Outline Color Override] override for non-existent ball ", line.ball)
 
