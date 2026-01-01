@@ -1041,28 +1041,6 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			c.queue_free()
 		lines_map = {}
 		
-	# determine the default palette used
-	var default_palette = preload("res://resources/palettes/petz_palette.png")
-	if (species == KeyBallsData.Species.BABY):
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
-
-	var pal_texture: Texture = null
-	if palette != null:
-		var user_res_path = "user://resources/palettes".plus_file(palette)
-		var res_res_path = "res://resources/palettes".plus_file(palette)
-
-		if ResourceLoader.exists(user_res_path):
-			pal_texture = ResourceLoader.load(user_res_path)
-		elif ResourceLoader.exists(res_res_path):
-			pal_texture = ResourceLoader.load(res_res_path)
-		else:
-			var lookup_key = "palette_" + palette.to_lower()
-			if preloader.has_resource(lookup_key):
-				pal_texture = preloader.get_resource(lookup_key)
-
-	if pal_texture == null:
-		pal_texture = default_palette
-	
 	var i = 0
 	for line in line_data:
 		var start = ball_map.get(line.start)
@@ -1111,7 +1089,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.texture = start.texture
 			visual_line.species = species
 			visual_line.transparent_color = start.transparent_color
-			visual_line.palette = pal_texture
+			visual_line.palette = start.palette
 			if line.color_index == -1:
 				visual_line.color_index = start.color_index
 			else:
