@@ -71,6 +71,11 @@ func _ready():
 	if rename_dialog:
 		rename_dialog.popup_exclusive = true
 		rename_dialog.connect("about_to_show", self, "_on_RenameDialog_about_to_show")
+		rename_dialog.connect("popup_hide", self, "_on_RenameDialog_popup_hide")
+
+	if upload_popup:
+		upload_popup.connect("about_to_show", self, "_on_FileDialog_about_to_show")
+		upload_popup.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 
 	var dir = Directory.new()
 	var lnz_dir_path = "res://resources/lnz/"
@@ -104,12 +109,14 @@ func _ready():
 
 func _on_FileDialog_popup_hide():
 	pet_view_container.input_is_paused = false
+	release_focus()
 
 func _on_RenameDialog_about_to_show():
 	pet_view_container.input_is_paused = true
 
 func _on_RenameDialog_popup_hide():
 	pet_view_container.input_is_paused = false
+	release_focus()
 
 func _on_ImportLNZ_pressed():
 	current_import_type = ImportType.LNZ
@@ -744,6 +751,8 @@ func _on_RenameDialog_confirmed():
 
 	if new_filepath.ends_with(".lnz"):
 		emit_signal("user_file_selected", new_filepath)
+
+	release_focus()
 
 func _on_ItemPopupMenu_about_to_show():
 	var items = get_all_selected()
