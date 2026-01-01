@@ -587,17 +587,19 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	# Figure out belly position and default palette
 	var belly_position
-	var default_palette = preload("res://resources/palettes/petz_palette.png")
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
 	elif species == KeyBallsData.Species.CAT:
 		belly_position = ball_data[KeyBallsData.belly_cat].position
 	elif species == KeyBallsData.Species.BABY:
 		belly_position = ball_data[KeyBallsData.belly_bab].position
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
 
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
+
+	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	if (species == KeyBallsData.Species.BABY):
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
 
 	var pal_texture: Texture = null
 	if palette != null:
@@ -1043,7 +1045,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
 	if (species == KeyBallsData.Species.BABY):
 		default_palette = preload("res://resources/palettes/babyz_palette.png")
-	
+
 	var pal_texture: Texture = null
 	if palette != null:
 		var user_res_path = "user://resources/palettes".plus_file(palette)
@@ -1057,6 +1059,9 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			var lookup_key = "palette_" + palette.to_lower()
 			if preloader.has_resource(lookup_key):
 				pal_texture = preloader.get_resource(lookup_key)
+
+	if pal_texture == null:
+		pal_texture = default_palette
 	
 	var i = 0
 	for line in line_data:
