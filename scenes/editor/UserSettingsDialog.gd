@@ -46,19 +46,19 @@ func _setup_options():
 	delimiter_option.clear()
 
 	delimiter_option.add_item("comma-space (X, Y)", 0)
-	delimiter_option.set_item_disabled(0, true)
+	delimiter_option.set_item_disabled(0, false)
 
 	delimiter_option.add_item("comma (X,Y)", 1)
-	delimiter_option.set_item_disabled(1, true)
+	delimiter_option.set_item_disabled(1, false)
 
 	delimiter_option.add_item("comma-tab (X, Y)", 2)
-	delimiter_option.set_item_disabled(2, true)
+	delimiter_option.set_item_disabled(2, false)
 
 	delimiter_option.add_item("tab (X	Y)", 3)
-	delimiter_option.set_item_disabled(3, true)
+	delimiter_option.set_item_disabled(3, false)
 
 	delimiter_option.add_item("space (X Y)", 4)
-	delimiter_option.set_item_disabled(4, true)
+	delimiter_option.set_item_disabled(4, false)
 
 	delimiter_option.add_item("auto-detect", 5)
 	delimiter_option.set_item_disabled(5, false)

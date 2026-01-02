@@ -145,6 +145,12 @@ func _on_user_file_selected(filepath):
 		return
 	_load_file(filepath, true)
 
+func _get_user_preferred_delimiter() -> String:
+	var settings = get_tree().root.get_node_or_null("Root/SceneRoot")
+	if settings and settings.has_method("get_preferred_delimiter"):
+		return settings.get_preferred_delimiter()
+	return "auto"
+
 func _update_section_bookmarks():
 	bookmarks.clear() 
 	var lines = get_line_count() 
@@ -571,6 +577,11 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
+	# If user preference, then return preferred delimiter
+	var preferred = _get_user_preferred_delimiter()
+	if preferred != "auto":
+		return preferred
+
 	# Define join strings and the patterns to find them
 	# Check for most complex (comma + whitespace) first
 	var delim_counts = {

@@ -78,7 +78,7 @@ func get_preferred_delimiter() -> String:
 		"tab": "\t",
 		"space": " "
 	}
-	return delims.get(preferred_delimiter, ", ")
+	return delims.get(preferred_delimiter, "auto")
 
 func _process(_delta):
 	if not OS.window_fullscreen and not OS.window_maximized:
@@ -151,7 +151,7 @@ func load_settings():
 		elif is_maximized:
 			OS.window_maximized = true
 
-		preferred_delimiter = config.get_value("LNZOptions", "preferred_delimiter", "comma_space")
+		preferred_delimiter = config.get_value("LNZOptions", "preferred_delimiter", "auto-detect")
 		max_history_size = config.get_value("LNZOptions", "max_history_size", 50)
 		if lnz_text_edit:
 			lnz_text_edit.max_history_size = max_history_size
