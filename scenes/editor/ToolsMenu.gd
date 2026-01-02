@@ -264,23 +264,19 @@ func _on_ToolsMenu_about_to_show():
 		option_text += " (Start: #" + str(ball_no) + ")"
 	set_item_text(5, option_text)
 
-	# 6: Copy-Mirror (L-to-R)
-	option_text = "Copy-Mirror"
-	set_item_disabled(6, !is_ball_selected)
+	# 6/7: Copy-Mirror (L-to-R/R-to-L)
 	if is_ball_selected:
-		option_text += " (#" + str(ball_no) + ")"
-	else:
-		option_text += " (cam L-to-R, all ballz)"
-	set_item_text(6, option_text)
+		set_item_text(6, "Copy-Mirror (#" + str(ball_no) + ")")
+		set_item_disabled(6, false)
 
-	# 7: Copy-Mirror (R-to-L)
-	option_text = "Copy-Mirror"
-	set_item_disabled(7, is_ball_selected)
-	if is_ball_selected:
-		option_text += " (all ballz)"
+		set_item_text(7, "Copy-Mirror (all ballz)")
+		set_item_disabled(7, true)
 	else:
-		option_text += " (cam R-to-L, all ballz)"
-	set_item_text(7, option_text)
+		set_item_text(6, "Copy-Mirror (cam L-to-R, all ballz)")
+		set_item_disabled(6, false)
+		
+		set_item_text(7, "Copy-Mirror (cam R-to-L, all ballz)")
+		set_item_disabled(7, false)
 
 	# 8: Paintball Mode
 	option_text = "Paintball Mode"
