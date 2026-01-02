@@ -1414,6 +1414,13 @@ func _find_visual_addball_by_no(no: int) -> Spatial:
 
 func _on_affected_list_changed(ids: Array):
 	_auto_paint_affected_cache = ids
+	
+	selected_balls.clear()
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			selected_balls.append(ball)
+
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):

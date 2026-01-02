@@ -40,6 +40,7 @@ signal affected_list_changed(ball_ids)
 signal unselect_all
 
 onready var params_container = find_node("ParamsContainer")
+onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
 var _is_loading_settings = false
 
@@ -64,6 +65,7 @@ func _ready():
 	find_node("UnselectButton").connect("pressed", self, "_on_UnselectButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
+	find_node("SurpriseButton").connect("pressed", self, "_on_SurpriseButton_pressed")
 	find_node("Distribution").connect("item_selected", self, "_on_Distribution_item_selected")
 	find_node("UseSeed").connect("toggled", self, "_on_UseSeed_toggled")
 
@@ -147,15 +149,15 @@ func _on_Distribution_item_selected(index):
 	var description = ""
 
 	match index:
-		Distribution.UNIFORM:
+		Distribution.UNIFORM: # 00
 			description = "Randomly places spots over ballz."
-		Distribution.SPIRAL:
+		Distribution.SPIRAL: # 01
 			description = "Arranges spots in a spiral pattern."
-		Distribution.STAR:
+		Distribution.STAR: # 02
 			description = "Creates star-shaped patterns. 'Spots' is the number of stars. 'Point Count' and 'Ray Length' control the shape."
-		Distribution.BANDS: # 03: Consolidated Bands
+		Distribution.BANDS: # 03
 			description = "Creates bands of spots. 'Bands' controls the number of bands. Use 'Direction' to choose horizontal or vertical alignment."
-		Distribution.NOISE_FIELD: # 04: Noise
+		Distribution.NOISE_FIELD: # 04
 			description = "Places spots organically based on simplex noise."
 		Distribution.GRID: # 05
 			description = "Arranges spots in a grid. 'Grid Size' controls the density."
@@ -181,27 +183,27 @@ func _on_Distribution_item_selected(index):
 			description = "Generates natural Turing patterns like stripes and blotches using Gray-Scott reaction-diffusion. Feed/Kill rates determine density and Diffusion controls feature size."
 		Distribution.FRACTAL: # 16
 			description = "Generates fractal patterns using an L-system."
-		Distribution.VORONOI: # 17: Voronoi
+		Distribution.VORONOI: # 17
 			description = "Creates patterns based on cellular boundaries. 'Cells' controls the density of the pattern, and 'Edge Size' controls the thickness of the lines."
-		Distribution.WAVE: # 18: Wave
+		Distribution.WAVE: # 18
 			description = "Generates wave-like or banded patterns using spherical harmonics. 'Degree (L)' controls vertical frequency and 'Order (M)' controls horizontal frequency."
 
 
 	description_label.bbcode_text = description
 
 	match index:
-		Distribution.SPIRAL: # 1
+		Distribution.SPIRAL: # 01
 			params_container.get_node("SpiralTurnsContainer").show()
-		Distribution.STAR: # 2
+		Distribution.STAR: # 02
 			params_container.get_node("StarPointsContainer").show()
 			params_container.get_node("RayLengthContainer").show()
-		Distribution.BANDS: # 3: Consolidated Bands
+		Distribution.BANDS: # 03
 			params_container.get_node("BandsContainer").show()
-		Distribution.NOISE_FIELD: # 4: Noise
+		Distribution.NOISE_FIELD: # 04
 			params_container.get_node("NoiseContainer").show()
-		Distribution.GRID, Distribution.CHECKERBOARD: # 5, 6
+		Distribution.GRID, Distribution.CHECKERBOARD: # 05, 06
 			params_container.get_node("GridSizeContainer").show()
-		Distribution.CLUSTERED: # 8
+		Distribution.CLUSTERED: # 08
 			params_container.get_node("NumClustersContainer").show()
 		Distribution.HALFIE: # 11
 			params_container.get_node("HalfieContainer").show()
@@ -215,9 +217,9 @@ func _on_Distribution_item_selected(index):
 			params_container.get_node("StripesContainer").show()
 		Distribution.FRACTAL: # 16
 			params_container.get_node("FractalContainer").show()
-		Distribution.VORONOI: # 17: New Voronoi
+		Distribution.VORONOI: # 17
 			params_container.get_node("VoronoiContainer").show()
-		Distribution.WAVE: # 18: New Wave
+		Distribution.WAVE: # 18
 			params_container.get_node("WaveContainer").show()
 
 
@@ -246,637 +248,571 @@ func _on_RandomizeButton_pressed():
 	var paintballz = []
 	var distribution_mode = properties.distribution
 
-	var seed_edit = find_node("Seed")
-	if properties.use_seed:
-		if properties.seed.is_valid_integer():
-			seed(int(properties.seed))
-		else:
-			push_warning("Invalid seed value. Using a random seed.")
-			seed(OS.get_ticks_usec())
-	else:
-		var new_seed = OS.get_ticks_usec()
-		seed(new_seed)
-		seed_edit.text = str(new_seed)
+	var base_seed = int(properties.seed) if (properties.use_seed and properties.seed.is_valid_integer()) else OS.get_ticks_usec()
+	if !properties.use_seed: find_node("Seed").text = str(base_seed)
 
-	_ordered_color_index = 0
-	_ordered_outline_color_index = 0
-	_ordered_texture_index = 0
-	_ordered_ball_index = 0
+	var global_data = null
+	if distribution_mode == Distribution.STRIPES:
+		global_data = _calculate_gray_scott_grid(properties)
 
-	match distribution_mode:
-		Distribution.FRACTAL: # 16
-			paintballz = _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
-		Distribution.NOISE_FIELD: # 04: Noise 
-			paintballz = _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
-		Distribution.VORONOI: # 17: Voronoi
-			paintballz = _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
-		Distribution.WAVE: # 18: Wave (Spherical Harmonics)
-			paintballz = _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
-		Distribution.RANDOM_WALK: # 7
-			for ball_index in affected_ballz:
+	for b_idx in range(affected_ballz.size()):
+		var current_ball = affected_ballz[b_idx]
 
-				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
-				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
-				
-				if ball_index == affected_ballz.back():
-					num_spots_per_ball += spots_remainder
-				
-				var last_pos = Vector3()
-				
-				for i in range(num_spots_per_ball):
-					var position = Vector3()
-					if i == 0:
-						position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-					else:
-						var offset = Vector3(rand_range(-0.2, 0.2), rand_range(-0.2, 0.2), rand_range(-0.2, 0.2))
-						position = (last_pos + offset).normalized()
-					
-					var size = rand_range(properties.size_min, properties.size_max)
+		seed(base_seed + (b_idx * 13)) 
 
-					var paintball = _create_paintball(
-						position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-					)
-					paintballz.append(paintball)
-					last_pos = position
-		Distribution.CLUSTERED: # 8
-			for ball_index in affected_ballz:
-				var cluster_center = Vector3()
-				
-				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
-				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
-				
-				if ball_index == affected_ballz.back():
-					num_spots_per_ball += spots_remainder
-				
-				for i in range(num_spots_per_ball):
-					var num_clusters = properties.num_clusters
-					if num_clusters > 0:
-						var cluster_size = num_spots_per_ball / num_clusters
-						if cluster_size > 0 and i % int(cluster_size) == 0:
-							cluster_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-						var offset = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
-						var position = (cluster_center + offset).normalized()
+		var num_spots = int(properties.num_spots)
+		var spots_per_ball = num_spots / affected_ballz.size()
+		if b_idx < (num_spots % affected_ballz.size()):
+			spots_per_ball += 1
 
-						var size = rand_range(properties.size_min, properties.size_max)
-						
-						var paintball = _create_paintball(
-							position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-						)
-						paintballz.append(paintball)
-		Distribution.STAR: # 2
-			var num_stars = properties.num_spots
-			var num_points = int(properties.star_points)
-			var point_size = int(properties.star_point_size)
-			var ray_length = properties.ray_length
-
-			if num_points <= 1 or ray_length <= 0:
-				return
-
-			for i in range(num_stars):
-				var star_color
-				var star_outline_color
-				if properties.ordered:
-					star_color = color_list[_ordered_color_index % color_list.size()]
-					_ordered_color_index += 1
-					star_outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
-					_ordered_outline_color_index += 1
-				else:
-					star_color = color_list[randi() % color_list.size()]
-					star_outline_color = outline_color_list[randi() % outline_color_list.size()]
-				
-				var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-				
-				var basis = _get_basis_from_normal(star_center)
-				
-				for p in range(num_points):
-					var angle = (float(p) / num_points) * 2 * PI
-					var tangent_dir = (basis.x * cos(angle) + basis.z * sin(angle))
-					
-					var ray_angle_factor = 0.1
-					var tip = star_center.slerp(star_center + tangent_dir, ray_length * ray_angle_factor).normalized()
-
-					var ray_base_size = rand_range(properties.size_min, properties.size_max)
-
-					for j in range(int(ray_length)):
-						var pos = star_center.slerp(tip, float(j + 1) / ray_length)
-						
-						var progress = float(j) / ray_length
-						var progressive_size = lerp(ray_base_size, point_size, progress)
-						var final_size = max(progressive_size, point_size)
-
-						var paintball = _create_paintball(
-							pos.normalized(), final_size, properties, affected_ballz, [star_color], [star_outline_color], texture_list
-						)
-						paintballz.append(paintball)
-		Distribution.BULLSEYE: # 12
-			var num_targets = properties.num_spots
-			var num_rings = properties.num_rings
-			
-			if num_rings <= 0 or color_list.size() == 0:
-				return
-
-			for i in range(num_targets):
-				var target_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-				var start_size = rand_range(properties.size_min, properties.size_max)
-
-				for r in range(num_rings):
-					var ring_size = start_size * (1.0 - float(r) / num_rings)
-					var ring_color = color_list[r % color_list.size()]
-					
-					var paintball = _create_paintball(
-						target_center, ring_size, properties, affected_ballz, [ring_color], outline_color_list, texture_list
-					)
-					paintballz.append(paintball)
-		Distribution.STRIPES: # 15
-			var feed_rate = properties.stripe_feed_rate
-			var kill_rate = properties.stripe_kill_rate
-			var timestep = properties.stripe_timestep
-
-			var diffusion_a = properties.diffusion_a
-			var diffusion_b = properties.diffusion_b
-
-			var grid_size = 32
-			var grid = []
-			grid.resize(grid_size * grid_size)
-			for i in range(grid_size * grid_size):
-				grid[i] = {"a": 1.0, "b": 0.0}
-
-			var center = grid_size / 2
-			grid[center * grid_size + center].b = 1.0
-
-			for time in range(100):
-				var next_grid = []
-				next_grid.resize(grid_size * grid_size)
-				for i in range(grid_size * grid_size):
-					next_grid[i] = grid[i].duplicate()
-
-				for x in range(1, grid_size - 1):
-					for y in range(1, grid_size - 1):
-						var i = y * grid_size + x
-						var a = grid[i].a
-						var b = grid[i].b
-
-						var laplace_a = (grid[i-1].a + grid[i+1].a + grid[i-grid_size].a + grid[i+grid_size].a) - 4 * a
-						var laplace_b = (grid[i-1].b + grid[i+1].b + grid[i-grid_size].b + grid[i+grid_size].b) - 4 * b
-
-						var reaction = a * b * b
-						var next_a = a + (diffusion_a * laplace_a - reaction + feed_rate * (1.0 - a)) * timestep
-						var next_b = b + (diffusion_b * laplace_b + reaction - (kill_rate + feed_rate) * b) * timestep
-
-						next_grid[i].a = clamp(next_a, 0, 1)
-						next_grid[i].b = clamp(next_b, 0, 1)
-				grid = next_grid
-
-			for i in range(properties.num_spots):
-				var u = randf()
-				var v = randf()
-				
-				var grid_x = int(u * (grid_size - 1))
-				var grid_y = int(v * (grid_size - 1))
-				
-				var cell = grid[grid_y * grid_size + grid_x]
-
-				if cell.b > 0.5:
-					var theta = u * 2 * PI
-					var phi = acos(clamp(2 * v - 1, -1.0, 1.0))
-					var x = sin(phi) * cos(theta)
-					var y = sin(phi) * sin(theta)
-					var z = cos(phi)
-					var pos = Vector3(x,y,z)
-
-					var size = rand_range(properties.size_min, properties.size_max)
-					
-					var paintball = _create_paintball(
-						pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-					)
-					paintballz.append(paintball)
-		Distribution.LEOPARD: # 13
-				if color_list.size() < 2:
-					push_warning("Leopard mode requires at least 2 colors (outer and inner)")
-					return
-
-				var color_pairs = []
-				if properties.leopard_use_paired_colors:
-					for i in range(0, color_list.size() - 1, 2):
-						color_pairs.append([color_list[i], color_list[i+1]])
-					if color_pairs.empty():
-						push_warning("Paired Colors enabled, but no valid outer/inner pairs were found")
-						return
-
-				var spot_noise = OpenSimplexNoise.new()
-				spot_noise.seed = randi()
-				spot_noise.period = 2.0
-
-				var num_spots_to_make = properties.num_spots
-				for i in range(num_spots_to_make):
-					var spot_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-					if spot_center.length_squared() == 0: spot_center = Vector3.UP
-					
-					var basis = _get_basis_from_normal(spot_center)
-					
-					var spot_angle_rad = rand_range(properties.leopard_radius_min, properties.leopard_radius_max)
-					
-					var paintball_size = rand_range(properties.size_min, properties.size_max)
-
-					var color_outline = 0
-					var color_fill = 0
-					if properties.leopard_use_paired_colors:
-						var chosen_pair = color_pairs[randi() % color_pairs.size()]
-						color_outline = chosen_pair[0]
-						color_fill = chosen_pair[1]
-					else:
-						color_outline = color_list[randi() % color_list.size()]
-						color_fill = color_list[randi() % color_list.size()]
-						while color_fill == color_outline:
-							color_fill = color_list[randi() % color_list.size()]
-
-					var outline_points = 20
-					for j in range(outline_points):
-						if randf() > properties.leopard_completeness:
-							continue
-						
-						var irregularity = properties.leopard_irregularity
-						var current_radius = spot_angle_rad * rand_range(1.0 - irregularity, 1.0 + irregularity)
-						
-						var circle_angle = (float(j) / outline_points) * TAU
-						var direction = (basis.x * cos(circle_angle) + basis.z * sin(circle_angle))
-						var pos = spot_center.slerp(spot_center + direction.normalized(), current_radius)
-
-						var paintball = _create_paintball(
-							pos, paintball_size, properties, affected_ballz, [color_outline], outline_color_list, texture_list
-						)
-						paintballz.append(paintball)
-
-					var fill_points = 25
-					for j in range(fill_points):
-						var random_radius = sqrt(randf())
-						var random_angle = rand_range(0, TAU)
-						
-						var noise_val = spot_noise.get_noise_1d(random_angle * spot_noise.period)
-						var noise_radius = random_radius * (0.7 + 0.3 * noise_val)
-						
-						var fill_radius_rad = noise_radius * spot_angle_rad
-
-						var direction = (basis.x * cos(random_angle) + basis.z * sin(random_angle))
-						var pos = spot_center.slerp(spot_center + direction.normalized(), fill_radius_rad)
-						
-						var paintball = _create_paintball(
-							pos, paintball_size, properties, affected_ballz, [color_fill], outline_color_list, texture_list
-						)
-						paintballz.append(paintball)
-
-					var inner_dots = randi() % 3 + 1
-					for j in range(inner_dots):
-						var random_radius = randf() * spot_angle_rad * 0.7
-						var random_angle = rand_range(0, TAU)
-
-						var direction = (basis.x * cos(random_angle) + basis.z * sin(random_angle))
-						var pos = spot_center.slerp(spot_center + direction.normalized(), random_radius)
-
-						var paintball = _create_paintball(
-							pos, paintball_size * 0.6, properties, affected_ballz, [color_outline], outline_color_list, texture_list
-						)
-						paintballz.append(paintball)
-		Distribution.RAINBOW: # 14
-			var num_rainbows = properties.num_spots
-			
-			for i in range(num_rainbows):
-				var paintball_size = rand_range(properties.size_min, properties.size_max)
-				
-				var arc_start = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-				if arc_start.length_squared() == 0: arc_start = Vector3.FORWARD
-				
-				var basis = _get_basis_from_normal(arc_start)
-				
-				var arc_direction = basis.x
-				
-				var rotation_axis = arc_start.cross(arc_direction).normalized()
-				
-				rotation_axis = rotation_axis.slerp(arc_start, properties.rainbow_curvature)
-				
-				rotation_axis = rotation_axis.rotated(arc_start, deg2rad(properties.rainbow_angle))
-
-				for color_index in range(color_list.size()):
-					var current_color = color_list[color_index]
-					
-					var offset_axis = rotation_axis.cross(arc_start).normalized()
-					var offset_dist = (float(color_index) - float(color_list.size() - 1) / 2.0) * properties.rainbow_width
-					var band_offset_rad = atan(offset_dist * paintball_size * 0.1)
-					
-					var band_start = arc_start.rotated(offset_axis, band_offset_rad)
-					var band_axis = rotation_axis.rotated(offset_axis, band_offset_rad)
-
-					var arc_length_rad = PI * properties.rainbow_length
-					
-					var num_paintballs_in_line = 0
-					var angular_diameter = 2 * atan(paintball_size * 0.01)
-					if angular_diameter > 0:
-						num_paintballs_in_line = floor(arc_length_rad / (angular_diameter * 0.9))
-
-					for p_idx in range(num_paintballs_in_line):
-						var step_angle = (float(p_idx) / max(1, num_paintballs_in_line - 1)) * arc_length_rad
-						var pos = band_start.rotated(band_axis, step_angle)
-						
-						var paintball = _create_paintball(
-							pos, paintball_size, properties, affected_ballz, [current_color], outline_color_list, texture_list
-						)
-						paintballz.append(paintball)
-		_: # All other simple modes (UNIFORM, SPIRAL, BANDS, GRID, CHECKERBOARD, FOCUSED, HALFIE)
-			for i in range(properties.num_spots):
-				var size = rand_range(properties.size_min, properties.size_max)
-				var position = Vector3()
-
-				if distribution_mode == Distribution.UNIFORM: # 0
-					position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-				elif distribution_mode == Distribution.SPIRAL: # 1
-					var turns = properties.spiral_turns
-					var angle = i * (2 * PI * turns / properties.num_spots)
-					var y = lerp(-1, 1, float(i) / properties.num_spots)
-					var r = sqrt(1 - y*y)
-					var x = r * cos(angle)
-					var z = r * sin(angle)
-					position = Vector3(x, y, z)
-				elif distribution_mode == Distribution.BANDS: # 3: Consolidated Bands
-					var num_bands = properties.num_bands
-					if num_bands > 0:
-						var band_angle = deg2rad(properties.band_angle)
-						var band_offset = properties.band_offset
-						var band_spacing = properties.band_spacing
-						var is_vertical = properties.band_direction == 1 # 0=Horizontal, 1=Vertical
-
-						var band_index = floor(i * num_bands / properties.num_spots)
-						var total_width = (num_bands - 1) * band_spacing
-						var band_pos = lerp(-total_width / 2.0, total_width / 2.0, float(band_index) / max(1, num_bands - 1))
-
-						band_pos += band_offset
-
-						var y = band_pos
-						var angle = rand_range(0, TAU)
-						var r = sqrt(max(0, 1.0 - y*y))
-						var x = r * cos(angle)
-						var z = r * sin(angle)
-
-						var p = Vector3(x, y, z)
-
-						if is_vertical:
-							p = Vector3(y, x, z) # Swap coordinates for vertical alignment
-
-						p = p.rotated(Vector3.FORWARD, band_angle)
-						position = p
-				elif distribution_mode == Distribution.GRID: # 5
-					var grid_size = properties.grid_size
-					if grid_size > 0:
-						var u = float(i % int(grid_size)) / grid_size
-						var v = float(floor(i / grid_size)) / grid_size
-						var theta = u * 2 * PI
-						var acos_arg = clamp(2 * v - 1, -1.0, 1.0)
-						var phi = acos(acos_arg)
-						var x = sin(phi) * cos(theta)
-						var y = sin(phi) * sin(theta)
-						var z = cos(phi)
-						position = Vector3(x, y, z)
-				elif distribution_mode == Distribution.CHECKERBOARD: # 6
-					var grid_size = int(properties.grid_size)
-					if grid_size > 0 and properties.num_spots > 0:
-						var num_on_squares = ceil(grid_size * grid_size / 2.0)
-						var spots_per_square = int(ceil(properties.num_spots / num_on_squares))
-
-						for v_idx in range(grid_size):
-							for u_idx in range(grid_size):
-								if (u_idx + v_idx) % 2 == 1:
-									for _j in range(spots_per_square):
-										var u_start = float(u_idx) / grid_size
-										var u_end = float(u_idx + 1) / grid_size
-										var v_start = float(v_idx) / grid_size
-										var v_end = float(v_idx + 1) / grid_size
-
-										var rand_u = rand_range(u_start, u_end)
-										var rand_v = rand_range(v_start, v_end)
-
-										var theta = rand_u * TAU
-										var cos_phi = lerp(1.0, -1.0, rand_v)
-										var phi = acos(cos_phi)
-										
-										var x = sin(phi) * cos(theta)
-										var z = sin(phi) * sin(theta)
-										var y = cos(phi)
-										
-										var p = _create_paintball(
-											Vector3(x,y,z), size, properties, affected_ballz, color_list, outline_color_list, texture_list
-										)
-										paintballz.append(p)
-						continue 
-				elif distribution_mode == Distribution.POLE_FOCUSED: # 9
-					var y = 1.0 - pow(randf(), 2)
-					if randf() > 0.5:
-						y = -y
-					var angle = rand_range(0, 2 * PI)
-					var r = sqrt(1 - y*y)
-					var x = r * cos(angle)
-					var z = r * sin(angle)
-					position = Vector3(x, y, z)
-				elif distribution_mode == Distribution.EQUATOR_FOCUSED: # 10
-					var y = rand_range(-0.2, 0.2)
-					var angle = rand_range(0, 2 * PI)
-					var r = sqrt(1 - y*y)
-					var x = r * cos(angle)
-					var z = r * sin(angle)
-					position = Vector3(x, y, z)
-				elif distribution_mode == Distribution.HALFIE: # 11
-					var axis = properties.halfie_axis
-					var side = properties.halfie_side
-					var p = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-					if side == 0: # Positive
-						p[axis] = abs(p[axis])
-					else: # Negative
-						p[axis] = -abs(p[axis])
-					position = p.normalized()
-
-				var paintball = _create_paintball(
-					position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-				)
-				paintballz.append(paintball)
+		match distribution_mode:
+			Distribution.FRACTAL:
+				paintballz += _generate_fractal_pattern(properties, current_ball, color_list, outline_color_list, texture_list)
+			Distribution.NOISE_FIELD:
+				paintballz += _generate_noise_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.VORONOI:
+				paintballz += _generate_voronoi_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.WAVE:
+				paintballz += _generate_wave_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.STRIPES:
+				paintballz += _generate_stripes_pattern(properties, current_ball, spots_per_ball, global_data, color_list, outline_color_list, texture_list)
+			Distribution.STAR:
+				paintballz += _generate_star_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.LEOPARD:
+				paintballz += _generate_leopard_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.BULLSEYE:
+				paintballz += _generate_bullseye_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.RAINBOW:
+				paintballz += _generate_rainbow_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.RANDOM_WALK:
+				paintballz += _generate_random_walk(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			Distribution.CLUSTERED:
+				paintballz += _generate_clustered_pattern(properties, current_ball, spots_per_ball, color_list, outline_color_list, texture_list)
+			_: 
+				paintballz += _generate_simple_pattern(properties, current_ball, spots_per_ball, b_idx, affected_ballz.size(), color_list, outline_color_list, texture_list)
 
 	emit_signal("randomize_auto_paintballz", paintballz)
 
-func _create_paintball(pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list):
-	var ball_no
-	var color
-	var outline_color
-	var texture
+# UNIFORM, SPIRAL, BANDS, POLE, EQUATOR, HALFIE, GRID, CHECKERBOARD
+func _generate_simple_pattern(p, ball_no, spots, b_idx, total_balls, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var mode = p.distribution
+	for i in range(spots):
+		var pos = Vector3.UP
+		var size = rand_range(p.size_min, p.size_max)
+		
+		if mode == Distribution.UNIFORM:
+			pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		elif mode == Distribution.SPIRAL:
+			var angle = i * (TAU * p.spiral_turns / spots)
+			var y = lerp(-1, 1, float(i) / spots)
+			var r = sqrt(max(0, 1 - y*y))
+			pos = Vector3(r * cos(angle), y, r * sin(angle))
+		elif mode == Distribution.BANDS:
+			var band_idx = floor(i * p.num_bands / spots)
+			var y = lerp(-p.band_spacing, p.band_spacing, float(band_idx)/max(1, p.num_bands-1)) + p.band_offset
+			var r = sqrt(max(0, 1 - y*y))
+			var a = randf() * TAU
+			pos = Vector3(r * cos(a), y, r * sin(a))
+			if p.band_direction == 1: pos = Vector3(pos.y, pos.x, pos.z)
+			pos = pos.rotated(Vector3.FORWARD, deg2rad(p.band_angle))
+		elif mode == Distribution.POLE_FOCUSED:
+			var y = (1.0 - pow(randf(), 2)) * (1 if randf() > 0.5 else -1)
+			var a = randf() * TAU
+			var r = sqrt(max(0, 1-y*y))
+			pos = Vector3(r * cos(a), y, r * sin(a))
+		elif mode == Distribution.EQUATOR_FOCUSED:
+			var y = rand_range(-0.15, 0.15)
+			var a = randf() * TAU
+			pos = Vector3(sqrt(1-y*y)*cos(a), y, sqrt(1-y*y)*sin(a))
+		elif mode == Distribution.HALFIE:
+			pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			pos[p.halfie_axis] = abs(pos[p.halfie_axis]) * (1 if p.halfie_side == 0 else -1)
+			pos = pos.normalized()
+		elif mode == Distribution.GRID:
+			var gs = p.grid_size
+			var u = float(i % int(gs)) / gs
+			var v = float(i / int(gs)) / gs
+			var theta = u * TAU
+			var phi = acos(clamp(2 * v - 1, -1, 1))
+			pos = Vector3(sin(phi)*cos(theta), cos(phi), sin(phi)*sin(theta))
+		elif mode == Distribution.CHECKERBOARD:
+			var gs = int(p.grid_size)
+			var valid_found = false
+			var attempts = 0
+			while not valid_found and attempts < 100:
+				attempts += 1
+				var u_idx = randi() % gs
+				var v_idx = randi() % gs
+				if (u_idx + v_idx) % 2 == 1:
+					var u = (u_idx + randf()) / gs
+					var v = (v_idx + randf()) / gs
+					var theta = u * TAU
+					var phi = acos(clamp(2 * v - 1, -1, 1))
+					pos = Vector3(sin(phi)*cos(theta), cos(phi), sin(phi)*sin(theta))
+					valid_found = true
 
-	if properties.ordered:
-		ball_no = affected_ballz[_ordered_ball_index % affected_ballz.size()]
-		_ordered_ball_index += 1
-		color = color_list[_ordered_color_index % color_list.size()]
-		_ordered_color_index += 1
-		outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
-		_ordered_outline_color_index += 1
-		texture = texture_list[_ordered_texture_index % texture_list.size()]
-		_ordered_texture_index += 1
-	else:
-		ball_no = affected_ballz[randi() % affected_ballz.size()]
-		color = color_list[randi() % color_list.size()]
-		outline_color = outline_color_list[randi() % outline_color_list.size()]
-		texture = texture_list[randi() % texture_list.size()]
+		paintballz.append(_create_paintball(pos, size, ball_no, p, color_list, outline_color_list, texture_list))
+	return paintballz
 
-	return PaintBallData.new(
-		ball_no,
-		size,
-		pos,
-		color,
-		outline_color,
-		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-		floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
-		0, # z_add
-		texture,
-		1 if properties.anchored else 0,
-		properties.group
-	)
+func _generate_star_pattern(properties, ball_no, num_stars, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var num_points = int(properties.star_points)
+	var ray_length = int(properties.ray_length)
+	if num_points <= 1 or ray_length <= 0: return []
+
+	for i in range(num_stars):
+		var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var basis = _get_basis_from_normal(star_center)
+		var star_color = [color_list[randi() % color_list.size()]]
+		var star_outline = [outline_color_list[randi() % outline_color_list.size()]]
+		var base_size = rand_range(properties.size_min, properties.size_max)
+
+		for p in range(num_points):
+			var angle = (float(p) / num_points) * TAU
+			var tangent_dir = (basis.x * cos(angle) + basis.z * sin(angle))
+			var tip = star_center.slerp(star_center + tangent_dir, properties.ray_length * 0.1).normalized()
+
+			for j in range(ray_length):
+				var pos = star_center.slerp(tip, float(j + 1) / ray_length).normalized()
+				var progress = float(j) / ray_length
+				var final_size = lerp(base_size, properties.star_point_size, progress)
+
+				paintballz.append(_create_paintball(pos, final_size, ball_no, properties, star_color, star_outline, texture_list))
+	return paintballz
+
+# XX: Leopard Generator
+func _generate_leopard_pattern(properties, ball_no, num_spots, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	if color_list.size() < 2: return []
+
+	for i in range(num_spots):
+		var spot_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var basis = _get_basis_from_normal(spot_center)
+		var spot_radius = rand_range(properties.leopard_radius_min, properties.leopard_radius_max)
+		var pb_size = rand_range(properties.size_min, properties.size_max)
+		
+		var c_out = color_list[randi() % color_list.size()]
+		var c_in = color_list[randi() % color_list.size()]
+		while c_in == c_out and color_list.size() > 1: c_in = color_list[randi() % color_list.size()]
+
+		# Outline ring
+		for j in range(20):
+			if randf() > properties.leopard_completeness: continue
+			var r = spot_radius * rand_range(1.0 - properties.leopard_irregularity, 1.0 + properties.leopard_irregularity)
+			var angle = (float(j) / 20.0) * TAU
+			var dir = (basis.x * cos(angle) + basis.z * sin(angle))
+			var pos = spot_center.slerp(spot_center + dir, r).normalized()
+			paintballz.append(_create_paintball(pos, pb_size, ball_no, properties, [c_out], outline_color_list, texture_list))
+		
+		# Inner fill
+		for j in range(15):
+			var r = sqrt(randf()) * spot_radius * 0.8
+			var angle = randf() * TAU
+			var dir = (basis.x * cos(angle) + basis.z * sin(angle))
+			var pos = spot_center.slerp(spot_center + dir, r).normalized()
+			paintballz.append(_create_paintball(pos, pb_size * 0.9, ball_no, properties, [c_in], outline_color_list, texture_list))
+	return paintballz
+
+func _calculate_gray_scott_grid(properties):
+	var size = 32
+	var grid = []
+	grid.resize(size * size)
+	for i in range(size * size): grid[i] = {"a": 1.0, "b": 0.0}
+	grid[(size/2) * size + (size/2)].b = 1.0
+	
+	for t in range(100):
+		var next = []
+		next.resize(size * size)
+		for x in range(1, size - 1):
+			for y in range(1, size - 1):
+				var i = y * size + x
+				var a = grid[i].a
+				var b = grid[i].b
+				var lp_a = (grid[i-1].a + grid[i+1].a + grid[i-size].a + grid[i+size].a) - 4 * a
+				var lp_b = (grid[i-1].b + grid[i+1].b + grid[i-size].b + grid[i+size].b) - 4 * b
+				var r = a * b * b
+				next[i] = {
+					"a": clamp(a + (properties.diffusion_a * lp_a - r + properties.stripe_feed_rate * (1 - a)) * properties.stripe_timestep, 0, 1),
+					"b": clamp(b + (properties.diffusion_b * lp_b + r - (properties.stripe_kill_rate + properties.stripe_feed_rate) * b) * properties.stripe_timestep, 0, 1)
+				}
+		for i in range(size * size): if next[i]: grid[i] = next[i]
+	return grid
+
+func _generate_stripes_pattern(properties, ball_no, spots_to_make, grid, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var offset_u = randf() # Unique UV offset per ball to vary sampling
+	var offset_v = randf()
+	
+	var attempts = 0
+	while paintballz.size() < spots_to_make and attempts < spots_to_make * 20:
+		attempts += 1
+		var u = fmod(randf() + offset_u, 1.0)
+		var v = fmod(randf() + offset_v, 1.0)
+		var gx = int(u * 31)
+		var gy = int(v * 31)
+		if grid[gy * 32 + gx].b > 0.4:
+			var theta = u * TAU
+			var phi = acos(clamp(2 * v - 1, -1, 1))
+			var pos = Vector3(sin(phi)*cos(theta), cos(phi), sin(phi)*sin(theta))
+			paintballz.append(_create_paintball(pos, rand_range(properties.size_min, properties.size_max), ball_no, properties, color_list, outline_color_list, texture_list))
+	return paintballz
+
+# XX: Random Walk Generator
+func _generate_random_walk(p, ball_no, spots, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var last = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+	for i in range(spots):
+		var step = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
+		last = (last + step).normalized()
+		paintballz.append(_create_paintball(last, rand_range(p.size_min, p.size_max), ball_no, p, color_list, outline_color_list, texture_list))
+	return paintballz
+
+# XX: Cluster Generator
+func _generate_clustered_pattern(p, ball_no, spots, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	var clusters = []
+	for i in range(int(p.num_clusters)): clusters.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
+	for i in range(spots):
+		var center = clusters[randi() % clusters.size()]
+		var pos = (center + Vector3(rand_range(-0.4, 0.4), rand_range(-0.4, 0.4), rand_range(-0.4, 0.4))).normalized()
+		paintballz.append(_create_paintball(pos, rand_range(p.size_min, p.size_max), ball_no, p, color_list, outline_color_list, texture_list))
+	return paintballz
+
+# XX: Bullseye Generator
+func _generate_bullseye_pattern(p, ball_no, num_targets, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	for i in range(num_targets):
+		var center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var base_size = rand_range(p.size_min, p.size_max)
+		for r in range(int(p.num_rings)):
+			var size = base_size * (1.0 - float(r) / p.num_rings)
+			var color = [color_list[r % color_list.size()]]
+			paintballz.append(_create_paintball(center, size, ball_no, p, color, outline_color_list, texture_list))
+	return paintballz
+
+# XX: Rainbow Generator
+func _generate_rainbow_pattern(p, ball_no, num_rainbows, color_list, outline_color_list, texture_list):
+	var paintballz = []
+	for i in range(num_rainbows):
+		var start = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var basis = _get_basis_from_normal(start)
+		var rot_axis = basis.x.slerp(start, p.rainbow_curvature).rotated(start, deg2rad(p.rainbow_angle))
+		var pb_size = rand_range(p.size_min, p.size_max)
+		
+		for c_idx in range(color_list.size()):
+			var off_dist = (float(c_idx) - (color_list.size()-1)/2.0) * p.rainbow_width
+			var band_start = start.rotated(rot_axis.cross(start).normalized(), atan(off_dist * 0.05))
+			var steps = int(20 * p.rainbow_length)
+			for s in range(steps):
+				var pos = band_start.rotated(rot_axis, (float(s)/steps) * PI * p.rainbow_length)
+				paintballz.append(_create_paintball(pos.normalized(), pb_size, ball_no, p, [color_list[c_idx]], outline_color_list, texture_list))
+	return paintballz
 
 # 17: Voronoi / Cell Pattern Generator
-func _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+func _generate_voronoi_pattern(properties, ball_no, spots_to_make, color_list, outline_color_list, texture_list):
 	var paintballz = []
-	var num_cells = int(properties.voronoi_cells)
-	var edge_size = properties.voronoi_edge_size
-	
-	if num_cells < 2: return []
-	
-	var cell_centers = []
-	for i in range(num_cells):
-		cell_centers.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
+	var centers = []
+	for i in range(int(properties.voronoi_cells)):
+		centers.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
 
-	for i in range(properties.num_spots * 2): # Try twice as many random points to find spots on edges
+	var attempts = 0
+	while paintballz.size() < spots_to_make and attempts < spots_to_make * 10:
+		attempts += 1
 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		var dists = []
+		for c in centers: dists.append(pos.distance_squared_to(c))
+		dists.sort()
 		
-		# Find the two closest cell centers to 'pos'
-		var closest_centers = []
-		for center in cell_centers:
-			closest_centers.append({"center": center, "dist_sq": pos.distance_squared_to(center)})
-		
-		closest_centers.sort_custom(self, "_sort_by_dist_sq")
-		
-		var D1_sq = closest_centers[0].dist_sq
-		var D2_sq = closest_centers[1].dist_sq
-		
-		# Edge Condition: Small difference between D1 and D2 means the point is near the boundary.
-		var center_dist_diff = abs(D1_sq - D2_sq)
-		
-		# Normalize difference
-		var edge_value = center_dist_diff / max(0.001, D1_sq + D2_sq)
-		
-		# Place spot if close to the boundary defined by edge_size
-		if edge_value < edge_size: 
+		var edge_val = (dists[1] - dists[0]) / (dists[0] + dists[1] + 0.001)
+		if edge_val < properties.voronoi_edge_size:
 			var size = rand_range(properties.size_min, properties.size_max)
-			
-			var paintball = _create_paintball(
-				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-			)
-			paintballz.append(paintball)
-			
-			if paintballz.size() >= properties.num_spots:
-				break
-			
+			paintballz.append(_create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list))
 	return paintballz
+
+# func _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+# 	var paintballz = []
+# 	var num_cells = int(properties.voronoi_cells)
+# 	var edge_size = properties.voronoi_edge_size
 	
-func _sort_by_dist_sq(a, b):
-	return a.dist_sq < b.dist_sq
+# 	if num_cells < 2: return []
+	
+# 	var cell_centers = []
+# 	for i in range(num_cells):
+# 		cell_centers.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
+
+# 	for i in range(properties.num_spots * 2): # Try twice as many random points to find spots on edges
+# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		
+# 		# Find the two closest cell centers to 'pos'
+# 		var closest_centers = []
+# 		for center in cell_centers:
+# 			closest_centers.append({"center": center, "dist_sq": pos.distance_squared_to(center)})
+		
+# 		closest_centers.sort_custom(self, "_sort_by_dist_sq")
+		
+# 		var D1_sq = closest_centers[0].dist_sq
+# 		var D2_sq = closest_centers[1].dist_sq
+		
+# 		# Edge Condition: Small difference between D1 and D2 means the point is near the boundary.
+# 		var center_dist_diff = abs(D1_sq - D2_sq)
+		
+# 		# Normalize difference
+# 		var edge_value = center_dist_diff / max(0.001, D1_sq + D2_sq)
+		
+# 		# Place spot if close to the boundary defined by edge_size
+# 		if edge_value < edge_size: 
+# 			var size = rand_range(properties.size_min, properties.size_max)
+			
+# 			var paintball = _create_paintball(
+# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 			)
+# 			paintballz.append(paintball)
+			
+# 			if paintballz.size() >= properties.num_spots:
+# 				break
+			
+# 	return paintballz
+	
+# func _sort_by_dist_sq(a, b):
+# 	return a.dist_sq < b.dist_sq
 
 # 18: Wave (Spherical Harmonics) Generator
-func _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+func _generate_wave_pattern(properties, ball_no, spots_to_make, color_list, outline_color_list, texture_list):
 	var paintballz = []
-	var L = int(properties.wave_degree_l) # Degree (Vertical Frequency)
-	var M = int(properties.wave_order_m)  # Order (Horizontal Frequency)
-	var threshold = properties.wave_threshold
+	var L = int(properties.wave_degree_l)
+	var M = min(int(properties.wave_order_m), L)
 	
-	# Clamp M to L
-	M = min(M, L) 
-	
-	if L < 0 or M < 0: return []
-	
-	for i in range(properties.num_spots * 2): # Try twice as many random points
+	var attempts = 0
+	while paintballz.size() < spots_to_make and attempts < spots_to_make * 10:
+		attempts += 1
 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		
-		var x = pos.x
-		var y = pos.y
-		var z = pos.z
-		
-		# Spherical Coordinates:
-		var cos_theta = clamp(y, -1.0, 1.0) # Cosine of the polar angle (elevation)
+		var cos_theta = clamp(pos.y, -1.0, 1.0)
 		var sin_theta = sqrt(max(0.0, 1.0 - cos_theta * cos_theta))
-		var phi = atan2(z, x) # Azimuthal angle (longitude)
+		var phi = atan2(pos.z, pos.x)
 		
-		var P_lm = 0.0 
-		
-		# --- Associated Legendre Polynomial P_l^m(x) (max L=3) ---
-		if L == 0:
-			P_lm = 1.0
-		elif L == 1:
-			if M == 0: P_lm = cos_theta
-			elif M == 1: P_lm = sin_theta
+		var p_lm = 1.0
+		if L == 1: p_lm = cos_theta if M == 0 else sin_theta
 		elif L == 2:
-			if M == 0: P_lm = 0.5 * (3.0 * cos_theta * cos_theta - 1.0)
-			elif M == 1: P_lm = 3.0 * cos_theta * sin_theta
-			elif M == 2: P_lm = 3.0 * sin_theta * sin_theta
-		elif L == 3:
-			if M == 0: P_lm = 0.5 * (5.0 * pow(cos_theta, 3) - 3.0 * cos_theta)
-			elif M == 1: P_lm = 1.5 * (5.0 * cos_theta * cos_theta - 1.0) * sin_theta
-			elif M == 2: P_lm = 15.0 * cos_theta * sin_theta * sin_theta
-			elif M == 3: P_lm = 15.0 * pow(sin_theta, 3)
-		else: # For L > 3, we default to the highest implemented value to avoid math complexity
-			L = 3
-			M = min(M, L)
-			
-		# The Real Spherical Harmonic is proportional to P_l^m(cos(theta)) * cos(m * phi)
-		var Y_lm = P_lm * cos(M * phi)
-		
-		# Map value Y_lm (typically [-1, 1]) to [0, 1] density
-		var density = (Y_lm + 1.0) / 2.0
-		
-		if density > threshold:
-			var size = rand_range(properties.size_min, properties.size_max)
-			
-			var paintball = _create_paintball(
-				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-			)
-			paintballz.append(paintball)
-			
-			if paintballz.size() >= properties.num_spots:
-				break
+			if M == 0: p_lm = 0.5 * (3 * cos_theta * cos_theta - 1)
+			elif M == 1: p_lm = 3 * cos_theta * sin_theta
+			else: p_lm = 3 * sin_theta * sin_theta
+		elif L >= 3:
+			if M == 0: p_lm = 0.5 * (5 * pow(cos_theta, 3) - 3 * cos_theta)
+			elif M == 1: p_lm = 1.5 * (5 * cos_theta * cos_theta - 1) * sin_theta
+			elif M == 2: p_lm = 15 * cos_theta * sin_theta * sin_theta
+			else: p_lm = 15 * pow(sin_theta, 3)
 
+		var val = (p_lm * cos(M * phi) + 1.0) / 2.0
+		if val > properties.wave_threshold:
+			var size = rand_range(properties.size_min, properties.size_max)
+			paintballz.append(_create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list))
 	return paintballz
+
+# func _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+# 	var paintballz = []
+# 	var L = int(properties.wave_degree_l) # Degree (Vertical Frequency)
+# 	var M = int(properties.wave_order_m)  # Order (Horizontal Frequency)
+# 	var threshold = properties.wave_threshold
+	
+# 	# Clamp M to L
+# 	M = min(M, L) 
+	
+# 	if L < 0 or M < 0: return []
+	
+# 	for i in range(properties.num_spots * 2): # Try twice as many random points
+# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		
+# 		var x = pos.x
+# 		var y = pos.y
+# 		var z = pos.z
+		
+# 		# Spherical Coordinates:
+# 		var cos_theta = clamp(y, -1.0, 1.0) # Cosine of the polar angle (elevation)
+# 		var sin_theta = sqrt(max(0.0, 1.0 - cos_theta * cos_theta))
+# 		var phi = atan2(z, x) # Azimuthal angle (longitude)
+		
+# 		var P_lm = 0.0 
+		
+# 		# --- Associated Legendre Polynomial P_l^m(x) (max L=3) ---
+# 		if L == 0:
+# 			P_lm = 1.0
+# 		elif L == 1:
+# 			if M == 0: P_lm = cos_theta
+# 			elif M == 1: P_lm = sin_theta
+# 		elif L == 2:
+# 			if M == 0: P_lm = 0.5 * (3.0 * cos_theta * cos_theta - 1.0)
+# 			elif M == 1: P_lm = 3.0 * cos_theta * sin_theta
+# 			elif M == 2: P_lm = 3.0 * sin_theta * sin_theta
+# 		elif L == 3:
+# 			if M == 0: P_lm = 0.5 * (5.0 * pow(cos_theta, 3) - 3.0 * cos_theta)
+# 			elif M == 1: P_lm = 1.5 * (5.0 * cos_theta * cos_theta - 1.0) * sin_theta
+# 			elif M == 2: P_lm = 15.0 * cos_theta * sin_theta * sin_theta
+# 			elif M == 3: P_lm = 15.0 * pow(sin_theta, 3)
+# 		else: # For L > 3, we default to the highest implemented value to avoid math complexity
+# 			L = 3
+# 			M = min(M, L)
+			
+# 		# The Real Spherical Harmonic is proportional to P_l^m(cos(theta)) * cos(m * phi)
+# 		var Y_lm = P_lm * cos(M * phi)
+		
+# 		# Map value Y_lm (typically [-1, 1]) to [0, 1] density
+# 		var density = (Y_lm + 1.0) / 2.0
+		
+# 		if density > threshold:
+# 			var size = rand_range(properties.size_min, properties.size_max)
+			
+# 			var paintball = _create_paintball(
+# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 			)
+# 			paintballz.append(paintball)
+			
+# 			if paintballz.size() >= properties.num_spots:
+# 				break
+
+# 	return paintballz
 
 # 04: Noise Field Generator
-func _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-	var paintballz = []
-	var noise = OpenSimplexNoise.new()
-	
-	noise.seed = randi()
-	noise.period = properties.noise_scale
-	noise.octaves = int(properties.noise_octaves)
-	var threshold = properties.noise_threshold
-	
-	for i in range(properties.num_spots * 2):
+func _generate_noise_pattern(p, ball_no, spots, color_list, outline_color_list, texture_list):
+	var pbs = []
+	var noise = OpenSimplexNoise.new(); noise.seed = randi(); noise.period = p.noise_scale
+	var attempts = 0
+	while pbs.size() < spots and attempts < spots * 15:
+		attempts += 1
 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+		if (noise.get_noise_3d(pos.x, pos.y, pos.z) + 1.0) / 2.0 > p.noise_threshold:
+			var pb = _create_paintball(pos, rand_range(p.size_min, p.size_max), ball_no, p, color_list, outline_color_list, texture_list)
+			if pb: pbs.append(pb)
+	return pbs
+
+# func _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+# 	var paintballz = []
+# 	var noise = OpenSimplexNoise.new()
+	
+# 	noise.seed = randi()
+# 	noise.period = properties.noise_scale
+# 	noise.octaves = int(properties.noise_octaves)
+# 	var threshold = properties.noise_threshold
+	
+# 	for i in range(properties.num_spots * 2):
+# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
 		
-		# Get 3D noise value
-		var noise_value = noise.get_noise_3d(pos.x, pos.y, pos.z)
+# 		# Get 3D noise value
+# 		var noise_value = noise.get_noise_3d(pos.x, pos.y, pos.z)
 		
-		# Normalize noise from [-1, 1] to [0, 1]
-		var density = (noise_value + 1.0) / 2.0
+# 		# Normalize noise from [-1, 1] to [0, 1]
+# 		var density = (noise_value + 1.0) / 2.0
 		
-		if density > threshold:
-			var size = rand_range(properties.size_min, properties.size_max)
+# 		if density > threshold:
+# 			var size = rand_range(properties.size_min, properties.size_max)
 			
-			var paintball = _create_paintball(
-				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-			)
-			paintballz.append(paintball)
+# 			var paintball = _create_paintball(
+# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 			)
+# 			paintballz.append(paintball)
 			
-			if paintballz.size() >= properties.num_spots:
-				break
+# 			if paintballz.size() >= properties.num_spots:
+# 				break
 				
-	return paintballz
+# 	return paintballz
+
+# 16: L-System Fractal Generator
+func _generate_fractal_pattern(p, ball_no, color_list, outline_color_list, texture_list):
+	var axiom = p.fractal_axiom
+	var rules = _parse_lsystem_rules(p.fractal_rules)
+	if p.fractal_preset == FractalPreset.DRAGON_CURVE:
+		axiom = "F"
+		rules = {"F": "F+G", "G": "F-G"}
+	elif p.fractal_preset == FractalPreset.SIERPINSKI:
+		axiom = "A"
+		rules = {"A": "B-A-B", "B": "A+B+A"}
+	elif p.fractal_preset == FractalPreset.BARNSLEY_FERN:
+		axiom = "X"
+		rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
+	
+	var s = _generate_lsystem_string(axiom, rules, int(p.fractal_iterations))
+	var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+	var basis = _get_basis_from_normal(pos)
+	var state = {"pos": pos, "heading": basis.x}
+	var stack = []
+	var pbs = []
+	var size = rand_range(p.size_min, p.size_max)
+	var step = atan(size * 0.02)
+	
+	for cmd in s:
+		match cmd:
+			"F", "G", "A", "B":
+				var axis = state.heading.cross(state.pos).normalized()
+				state.pos = state.pos.rotated(axis, step).normalized()
+				state.heading = state.heading.rotated(axis, step).normalized()
+				pbs.append(_create_paintball(state.pos, size, ball_no, p, color_list, outline_color_list, texture_list))
+			"+": state.heading = state.heading.rotated(state.pos, deg2rad(-p.fractal_angle))
+			"-": state.heading = state.heading.rotated(state.pos, deg2rad(p.fractal_angle))
+			"[": stack.append(state.duplicate())
+			"]": if !stack.empty(): state = stack.pop_back()
+	return pbs
+
+# func _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
+# 	var paintballz = []
+# 	var axiom = ""
+# 	var rules = {}
+
+# 	match properties.fractal_preset:
+# 		FractalPreset.DRAGON_CURVE:
+# 			axiom = "F"
+# 			rules = {"F": "F+G", "G": "F-G"}
+# 		FractalPreset.SIERPINSKI:
+# 			axiom = "A"
+# 			rules = {"A": "B-A-B", "B": "A+B+A"}
+# 		FractalPreset.BARNSLEY_FERN:
+# 			axiom = "X"
+# 			rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
+# 		_: # Default to Custom
+# 			axiom = properties.fractal_axiom
+# 			rules = _parse_lsystem_rules(properties.fractal_rules)
+	
+# 	if axiom.empty() or rules.empty():
+# 		push_warning("Fractal generation failed: Axiom or Rules are not defined.")
+# 		return []
+
+# 	var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
+	
+# 	var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 	if start_pos.length_squared() == 0: start_pos = Vector3.FORWARD
+	
+# 	var basis = _get_basis_from_normal(start_pos)
+# 	var turtle_state = {"pos": start_pos, "heading": basis.x}
+# 	var state_stack = []
+
+# 	var paintball_size = rand_range(properties.size_min, properties.size_max)
+# 	var step_angle_rad = atan(paintball_size * 0.02) * 0.9
+
+# 	for command in fractal_string:
+# 		match command:
+# 			"F", "G", "A", "B": # Draw forward
+# 				var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
+# 				if move_axis.length_squared() > 0:
+# 					turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
+# 					turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
+					
+# 					var paintball = _create_paintball(
+# 						turtle_state.pos,
+# 						paintball_size,
+# 						properties, affected_ballz, color_list, outline_color_list, texture_list
+# 					)
+# 					paintballz.append(paintball)
+# 			"+": # Turn Right
+# 				var turn_axis = turtle_state.pos
+# 				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
+# 			"-": # Turn Left
+# 				var turn_axis = turtle_state.pos
+# 				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
+# 			"[": # Push state
+# 				state_stack.append(turtle_state.duplicate(true))
+# 			"]": # Pop state
+# 				if not state_stack.empty():
+# 					turtle_state = state_stack.pop_back()
+# 	return paintballz
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_auto_paintballz")
@@ -890,6 +826,72 @@ func _on_ClearButton_pressed():
 # func hide():
 # 	$Panel.hide()
 
+func _create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list):
+	if not properties is Dictionary:
+		push_error("AutoPaintballer: properties must be a Dictionary.")
+		return null
+
+	var color
+	var outline_color
+	var texture
+	var is_ordered = properties.get("ordered", false)
+
+	if is_ordered:
+		color = color_list[_ordered_color_index % color_list.size()]
+		_ordered_color_index += 1
+		outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+		_ordered_outline_color_index += 1
+		texture = texture_list[_ordered_texture_index % texture_list.size()]
+		_ordered_texture_index += 1
+	else:
+		color = color_list[randi() % color_list.size()]
+		outline_color = outline_color_list[randi() % outline_color_list.size()]
+		texture = texture_list[randi() % texture_list.size()]
+
+	var final_diameter = size
+
+	if properties.get("pixel_mode", false):
+		var visual_base = pet_node.ball_map.get(ball_no)
+		if visual_base:
+			var base_pixel_size = visual_base.ball_size 
+			final_diameter = (size / base_pixel_size) * 100.0
+
+	var pb = PaintBallData.new(
+		ball_no, int(round(final_diameter)), pos, color, outline_color,
+		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
+		floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
+		0, texture, 1 if properties.anchored else 0, properties.group
+	)
+	
+	if "pixel_mode" in pb:
+		pb.pixel_mode = properties.get("pixel_mode", false)
+	
+	return pb
+
+# func _create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list):
+# 	var color
+# 	var outline_color
+# 	var texture
+
+# 	if properties.ordered:
+# 		color = color_list[_ordered_color_index % color_list.size()]
+# 		_ordered_color_index += 1
+# 		outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+# 		_ordered_outline_color_index += 1
+# 		texture = texture_list[_ordered_texture_index % texture_list.size()]
+# 		_ordered_texture_index += 1
+# 	else:
+# 		color = color_list[randi() % color_list.size()]
+# 		outline_color = outline_color_list[randi() % outline_color_list.size()]
+# 		texture = texture_list[randi() % texture_list.size()]
+
+# 	return PaintBallData.new(
+# 		ball_no, size, pos, color, outline_color,
+# 		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
+# 		floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
+# 		0, texture, 1 if properties.anchored else 0, properties.group
+# 	)
+
 func _get_basis_from_normal(normal_vec):
 	var basis_y = normal_vec.normalized()
 	var cross_vec = Vector3.UP.cross(basis_y)
@@ -902,67 +904,6 @@ func _get_basis_from_normal(normal_vec):
 	
 	return Basis(basis_x, basis_y, basis_z)
 
-func _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-	var paintballz = []
-	var axiom = ""
-	var rules = {}
-
-	match properties.fractal_preset:
-		FractalPreset.DRAGON_CURVE:
-			axiom = "F"
-			rules = {"F": "F+G", "G": "F-G"}
-		FractalPreset.SIERPINSKI:
-			axiom = "A"
-			rules = {"A": "B-A-B", "B": "A+B+A"}
-		FractalPreset.BARNSLEY_FERN:
-			axiom = "X"
-			rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
-		_: # Default to Custom
-			axiom = properties.fractal_axiom
-			rules = _parse_lsystem_rules(properties.fractal_rules)
-	
-	if axiom.empty() or rules.empty():
-		push_warning("Fractal generation failed: Axiom or Rules are not defined.")
-		return []
-
-	var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
-	
-	var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-	if start_pos.length_squared() == 0: start_pos = Vector3.FORWARD
-	
-	var basis = _get_basis_from_normal(start_pos)
-	var turtle_state = {"pos": start_pos, "heading": basis.x}
-	var state_stack = []
-
-	var paintball_size = rand_range(properties.size_min, properties.size_max)
-	var step_angle_rad = atan(paintball_size * 0.02) * 0.9
-
-	for command in fractal_string:
-		match command:
-			"F", "G", "A", "B": # Draw forward
-				var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
-				if move_axis.length_squared() > 0:
-					turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
-					turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
-					
-					var paintball = _create_paintball(
-						turtle_state.pos,
-						paintball_size,
-						properties, affected_ballz, color_list, outline_color_list, texture_list
-					)
-					paintballz.append(paintball)
-			"+": # Turn Right
-				var turn_axis = turtle_state.pos
-				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
-			"-": # Turn Left
-				var turn_axis = turtle_state.pos
-				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
-			"[": # Push state
-				state_stack.append(turtle_state.duplicate(true))
-			"]": # Pop state
-				if not state_stack.empty():
-					turtle_state = state_stack.pop_back()
-	return paintballz
 
 func _parse_lsystem_rules(rules_text: String) -> Dictionary:
 	var rules = {}
@@ -1085,6 +1026,7 @@ func get_properties():
 	properties["ordered"] = find_node("Ordered").pressed
 	properties["use_seed"] = find_node("UseSeed").pressed
 	properties["seed"] = find_node("Seed").text
+	properties["pixel_mode"] = find_node("PixelMode").pressed
 	return properties
 
 func add_affected_ball(ball_no: int):
@@ -1209,6 +1151,7 @@ func load_settings():
 
 	find_node("SizeMin").value = config.get_value("AutoPaintballer", "size_min", 10.0)
 	find_node("SizeMax").value = config.get_value("AutoPaintballer", "size_max", 20.0)
+	find_node("PixelMode").pressed = config.get_value("AutoPaintballer", "pixel_mode", false)
 	find_node("ColorList").text = config.get_value("AutoPaintballer", "color_list", "")
 	find_node("TextureList").text = config.get_value("AutoPaintballer", "texture_list", "0")
 	find_node("OutlineColorList").text = config.get_value("AutoPaintballer", "outline_color_list", "244")
@@ -1350,3 +1293,622 @@ func _on_reset_defaults_pressed():
 
 	_is_loading_settings = false
 	save_settings()
+
+func _on_SurpriseButton_pressed():
+	_is_loading_settings = true
+
+	var total_modes = Distribution.size()
+	var random_mode = randi() % total_modes
+	find_node("Distribution").selected = random_mode
+	_on_Distribution_item_selected(random_mode)
+
+	if random_mode == Distribution.RAINBOW or random_mode == Distribution.FRACTAL:
+		find_node("NumSpots").value = (randi() % 2) + 1
+	elif random_mode == Distribution.STAR:
+		find_node("NumSpots").value = (randi() % 40) + 1
+	else:
+		find_node("NumSpots").value = int(rand_range(20, 150))
+	
+	var size_base = rand_range(2, 12)
+	find_node("SizeMin").value = size_base
+	find_node("SizeMax").value = min(50, size_base + rand_range(5, 25))
+	
+	find_node("PixelMode").pressed = randf() > 0.5
+
+	if randf() > 0.6: 
+		var fuzz_base = randi() % 4
+		find_node("FuzzMin").value = fuzz_base
+		find_node("FuzzMax").value = int(min(5, fuzz_base + randi() % 3))
+	else:
+		find_node("FuzzMin").value = 0
+		find_node("FuzzMax").value = 0
+
+	find_node("ColorList").text = _generate_surprise_color_string()
+	find_node("TextureList").text = _generate_surprise_texture_string()
+	find_node("OutlineColorList").text = _get_random_static_accent()
+	
+	var out_type = -1
+	if randf() < 0.3:
+		out_type = randi() % 4 - 2 
+	find_node("OutlineTypeMin").value = out_type
+	find_node("OutlineTypeMax").value = out_type
+
+	_randomize_mode_params(random_mode)
+
+	_is_loading_settings = false
+	save_settings()
+	_on_RandomizeButton_pressed()
+
+func _randomize_mode_params(mode):
+	match mode:
+		Distribution.FRACTAL:
+			if randf() > 0.4:
+				find_node("FractalPreset").selected = FractalPreset.CUSTOM
+				_on_FractalPreset_item_selected(FractalPreset.CUSTOM)
+				_on_RandomSystemButton_pressed() # Triggers the random L-system generator
+			else:
+				var preset = (randi() % 3) + 1 # Pick one of the 3 existing presets
+				find_node("FractalPreset").selected = preset
+				_on_FractalPreset_item_selected(preset)
+			
+			find_node("FractalIterations").value = (randi() % 3) + 2
+			
+		Distribution.SPIRAL:
+			find_node("SpiralTurns").value = rand_range(1.0, 15.0) 
+		Distribution.STAR:
+			find_node("StarPoints").value = randi() % 7 + 3
+			find_node("StarPointSize").value = rand_range(2.0, 8.0)
+			find_node("RayLength").value = randi() % 6 + 2
+		Distribution.BANDS:
+			find_node("BandDirection").selected = randi() % 2
+			find_node("NumBands").value = randi() % 8 + 2
+			find_node("BandSpacing").value = rand_range(0.1, 0.8)
+			find_node("BandOffset").value = rand_range(-0.5, 0.5)
+			find_node("BandAngle").value = [0, 45, 90, 135][randi() % 4]
+		Distribution.NOISE_FIELD:
+			find_node("NoiseScale").value = rand_range(2.0, 20.0)
+			find_node("NoiseThreshold").value = rand_range(0.3, 0.7)
+			find_node("NoiseOctaves").value = randi() % 4 + 1
+		Distribution.GRID, Distribution.CHECKERBOARD:
+			find_node("GridSize").value = randi() % 10 + 3
+		Distribution.CLUSTERED:
+			find_node("NumClusters").value = randi() % 5 + 1
+		Distribution.BULLSEYE:
+			find_node("NumRings").value = randi() % 5 + 2
+		Distribution.LEOPARD:
+			find_node("LeopardRadiusMin").value = rand_range(0.02, 0.08)
+			find_node("LeopardRadiusMax").value = rand_range(0.09, 0.2) 
+			find_node("LeopardIrregularity").value = rand_range(0.1, 0.5)
+			find_node("LeopardCompleteness").value = rand_range(0.4, 1.0) 
+			find_node("LeopardPairedColors").pressed = randf() > 0.5
+		Distribution.RAINBOW:
+			find_node("RainbowAngle").value = rand_range(-180, 180)
+			find_node("RainbowCurvature").value = rand_range(0.0, 1.0)
+			find_node("RainbowWidth").value = rand_range(0.5, 5.0)
+			find_node("RainbowLength").value = rand_range(0.5, 2.5)
+		Distribution.STRIPES:
+			find_node("StripeFeedRate").value = rand_range(0.01, 0.09) 
+			find_node("StripeKillRate").value = rand_range(0.03, 0.07) 
+			find_node("StripeTimestep").value = 1.0
+		Distribution.VORONOI:
+			find_node("VoronoiCells").value = randi() % 12 + 3 
+			find_node("VoronoiEdgeSize").value = rand_range(0.01, 0.1) 
+		Distribution.WAVE:
+			find_node("WaveDegreeL").value = randi() % 4 
+			find_node("WaveOrderM").value = randi() % 4 
+			find_node("WaveThreshold").value = rand_range(0.4, 0.8)
+
+func _generate_surprise_color_string() -> String:
+	var parts = []
+	for i in range(randi() % 3 + 1):
+		var base = (randi() % 19 + 1) * 10 
+		parts.append(str(base) + "-" + str(base + 9))
+	if randf() > 0.4:
+		for i in range(randi() % 3 + 1):
+			parts.append(_get_random_static_accent())
+	return PoolStringArray(parts).join(",")
+
+func _generate_surprise_texture_string() -> String:
+	var parts = []
+	var max_tex = 0
+	if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
+		max_tex = int(pet_node.lnz.texture_list.size())
+	if randf() > 0.6: 
+		parts.append("-1")
+	if max_tex > 0:
+		if randf() > 0.3:
+			var tex_start = randi() % max_tex
+			if randf() > 0.7 and tex_start < max_tex - 1:
+				var remaining = int(max_tex - 1 - tex_start)
+				var range_width = (randi() % int(min(3, remaining))) + 1
+				parts.append(str(tex_start) + "-" + str(tex_start + range_width))
+			else:
+				parts.append(str(tex_start))
+	else:
+		if parts.empty(): 
+			parts.append("0")
+	return PoolStringArray(parts).join(",")
+
+func _get_random_static_accent() -> String:
+	if randf() > 0.4:
+		return "244"
+	return str(randi() % (214 - 150 + 1) + 150)
+
+# OLD FXN with embedded generators
+# func _on_RandomizeButton_pressed():
+# 	var properties = get_properties()
+# 	var affected_ballz = LnzLiveUtils.parse_number_list(properties.affected_ballz)
+# 	if affected_ballz.empty():
+# 		return
+
+# 	var color_list = LnzLiveUtils.parse_number_list(properties.color_list)
+# 	if color_list.empty():
+# 		return
+
+# 	var outline_color_list = LnzLiveUtils.parse_number_list(properties.outline_color_list)
+# 	if outline_color_list.empty():
+# 		return
+
+# 	var texture_list_str = properties.texture_list
+# 	var texture_list = LnzLiveUtils.parse_number_list(texture_list_str, true) # Allow negatives
+# 	if texture_list.empty() and not texture_list_str.strip_edges().empty():
+# 		push_warning("Could not parse [Texture List] so using default.")
+# 		texture_list.append(-1)
+# 	elif texture_list.empty():
+# 		texture_list.append(-1)
+
+# 	var paintballz = []
+# 	var distribution_mode = properties.distribution
+
+# 	var seed_edit = find_node("Seed")
+# 	if properties.use_seed:
+# 		if properties.seed.is_valid_integer():
+# 			seed(int(properties.seed))
+# 		else:
+# 			push_warning("Invalid seed value. Using a random seed.")
+# 			seed(OS.get_ticks_usec())
+# 	else:
+# 		var new_seed = OS.get_ticks_usec()
+# 		seed(new_seed)
+# 		seed_edit.text = str(new_seed)
+
+# 	_ordered_color_index = 0
+# 	_ordered_outline_color_index = 0
+# 	_ordered_texture_index = 0
+# 	_ordered_ball_index = 0
+
+# 	match distribution_mode:
+# 		Distribution.FRACTAL: # 16
+# 			paintballz = _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
+# 		Distribution.NOISE_FIELD: # 04: Noise 
+# 			paintballz = _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
+# 		Distribution.VORONOI: # 17: Voronoi
+# 			paintballz = _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
+# 		Distribution.WAVE: # 18: Wave (Spherical Harmonics)
+# 			paintballz = _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list)
+# 		Distribution.RANDOM_WALK: # 7
+# 			for ball_index in affected_ballz:
+
+# 				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
+# 				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
+				
+# 				if ball_index == affected_ballz.back():
+# 					num_spots_per_ball += spots_remainder
+				
+# 				var last_pos = Vector3()
+				
+# 				for i in range(num_spots_per_ball):
+# 					var position = Vector3()
+# 					if i == 0:
+# 						position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 					else:
+# 						var offset = Vector3(rand_range(-0.2, 0.2), rand_range(-0.2, 0.2), rand_range(-0.2, 0.2))
+# 						position = (last_pos + offset).normalized()
+					
+# 					var size = rand_range(properties.size_min, properties.size_max)
+
+# 					var paintball = _create_paintball(
+# 						position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 					)
+# 					paintballz.append(paintball)
+# 					last_pos = position
+# 		Distribution.CLUSTERED: # 8
+# 			for ball_index in affected_ballz:
+# 				var cluster_center = Vector3()
+				
+# 				var num_spots_per_ball = int(properties.num_spots) / int(affected_ballz.size())
+# 				var spots_remainder = int(properties.num_spots) % int(affected_ballz.size())
+				
+# 				if ball_index == affected_ballz.back():
+# 					num_spots_per_ball += spots_remainder
+				
+# 				for i in range(num_spots_per_ball):
+# 					var num_clusters = properties.num_clusters
+# 					if num_clusters > 0:
+# 						var cluster_size = num_spots_per_ball / num_clusters
+# 						if cluster_size > 0 and i % int(cluster_size) == 0:
+# 							cluster_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 						var offset = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
+# 						var position = (cluster_center + offset).normalized()
+
+# 						var size = rand_range(properties.size_min, properties.size_max)
+						
+# 						var paintball = _create_paintball(
+# 							position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 						)
+# 						paintballz.append(paintball)
+# 		Distribution.STAR: # 2
+# 			var num_stars = properties.num_spots
+# 			var num_points = int(properties.star_points)
+# 			var point_size = int(properties.star_point_size)
+# 			var ray_length = properties.ray_length
+
+# 			if num_points <= 1 or ray_length <= 0:
+# 				return
+
+# 			for i in range(num_stars):
+# 				var star_color
+# 				var star_outline_color
+# 				if properties.ordered:
+# 					star_color = color_list[_ordered_color_index % color_list.size()]
+# 					_ordered_color_index += 1
+# 					star_outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+# 					_ordered_outline_color_index += 1
+# 				else:
+# 					star_color = color_list[randi() % color_list.size()]
+# 					star_outline_color = outline_color_list[randi() % outline_color_list.size()]
+				
+# 				var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+				
+# 				var basis = _get_basis_from_normal(star_center)
+				
+# 				for p in range(num_points):
+# 					var angle = (float(p) / num_points) * 2 * PI
+# 					var tangent_dir = (basis.x * cos(angle) + basis.z * sin(angle))
+					
+# 					var ray_angle_factor = 0.1
+# 					var tip = star_center.slerp(star_center + tangent_dir, ray_length * ray_angle_factor).normalized()
+
+# 					var ray_base_size = rand_range(properties.size_min, properties.size_max)
+
+# 					for j in range(int(ray_length)):
+# 						var pos = star_center.slerp(tip, float(j + 1) / ray_length)
+						
+# 						var progress = float(j) / ray_length
+# 						var progressive_size = lerp(ray_base_size, point_size, progress)
+# 						var final_size = max(progressive_size, point_size)
+
+# 						var paintball = _create_paintball(
+# 							pos.normalized(), final_size, properties, affected_ballz, [star_color], [star_outline_color], texture_list
+# 						)
+# 						paintballz.append(paintball)
+# 		Distribution.BULLSEYE: # 12
+# 			var num_targets = properties.num_spots
+# 			var num_rings = properties.num_rings
+			
+# 			if num_rings <= 0 or color_list.size() == 0:
+# 				return
+
+# 			for i in range(num_targets):
+# 				var target_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 				var start_size = rand_range(properties.size_min, properties.size_max)
+
+# 				for r in range(num_rings):
+# 					var ring_size = start_size * (1.0 - float(r) / num_rings)
+# 					var ring_color = color_list[r % color_list.size()]
+					
+# 					var paintball = _create_paintball(
+# 						target_center, ring_size, properties, affected_ballz, [ring_color], outline_color_list, texture_list
+# 					)
+# 					paintballz.append(paintball)
+# 		Distribution.STRIPES: # 15
+# 			var feed_rate = properties.stripe_feed_rate
+# 			var kill_rate = properties.stripe_kill_rate
+# 			var timestep = properties.stripe_timestep
+
+# 			var diffusion_a = properties.diffusion_a
+# 			var diffusion_b = properties.diffusion_b
+
+# 			var grid_size = 32
+# 			var grid = []
+# 			grid.resize(grid_size * grid_size)
+# 			for i in range(grid_size * grid_size):
+# 				grid[i] = {"a": 1.0, "b": 0.0}
+
+# 			var center = grid_size / 2
+# 			grid[center * grid_size + center].b = 1.0
+
+# 			for time in range(100):
+# 				var next_grid = []
+# 				next_grid.resize(grid_size * grid_size)
+# 				for i in range(grid_size * grid_size):
+# 					next_grid[i] = grid[i].duplicate()
+
+# 				for x in range(1, grid_size - 1):
+# 					for y in range(1, grid_size - 1):
+# 						var i = y * grid_size + x
+# 						var a = grid[i].a
+# 						var b = grid[i].b
+
+# 						var laplace_a = (grid[i-1].a + grid[i+1].a + grid[i-grid_size].a + grid[i+grid_size].a) - 4 * a
+# 						var laplace_b = (grid[i-1].b + grid[i+1].b + grid[i-grid_size].b + grid[i+grid_size].b) - 4 * b
+
+# 						var reaction = a * b * b
+# 						var next_a = a + (diffusion_a * laplace_a - reaction + feed_rate * (1.0 - a)) * timestep
+# 						var next_b = b + (diffusion_b * laplace_b + reaction - (kill_rate + feed_rate) * b) * timestep
+
+# 						next_grid[i].a = clamp(next_a, 0, 1)
+# 						next_grid[i].b = clamp(next_b, 0, 1)
+# 				grid = next_grid
+
+# 			for i in range(properties.num_spots):
+# 				var u = randf()
+# 				var v = randf()
+				
+# 				var grid_x = int(u * (grid_size - 1))
+# 				var grid_y = int(v * (grid_size - 1))
+				
+# 				var cell = grid[grid_y * grid_size + grid_x]
+
+# 				if cell.b > 0.5:
+# 					var theta = u * 2 * PI
+# 					var phi = acos(clamp(2 * v - 1, -1.0, 1.0))
+# 					var x = sin(phi) * cos(theta)
+# 					var y = sin(phi) * sin(theta)
+# 					var z = cos(phi)
+# 					var pos = Vector3(x,y,z)
+
+# 					var size = rand_range(properties.size_min, properties.size_max)
+					
+# 					var paintball = _create_paintball(
+# 						pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 					)
+# 					paintballz.append(paintball)
+# 		Distribution.LEOPARD: # 13
+# 				if color_list.size() < 2:
+# 					push_warning("Leopard mode requires at least 2 colors (outer and inner)")
+# 					return
+
+# 				var color_pairs = []
+# 				if properties.leopard_use_paired_colors:
+# 					for i in range(0, color_list.size() - 1, 2):
+# 						color_pairs.append([color_list[i], color_list[i+1]])
+# 					if color_pairs.empty():
+# 						push_warning("Paired Colors enabled, but no valid outer/inner pairs were found")
+# 						return
+
+# 				var spot_noise = OpenSimplexNoise.new()
+# 				spot_noise.seed = randi()
+# 				spot_noise.period = 2.0
+
+# 				var num_spots_to_make = properties.num_spots
+# 				for i in range(num_spots_to_make):
+# 					var spot_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 					if spot_center.length_squared() == 0: spot_center = Vector3.UP
+					
+# 					var basis = _get_basis_from_normal(spot_center)
+					
+# 					var spot_angle_rad = rand_range(properties.leopard_radius_min, properties.leopard_radius_max)
+					
+# 					var paintball_size = rand_range(properties.size_min, properties.size_max)
+
+# 					var color_outline = 0
+# 					var color_fill = 0
+# 					if properties.leopard_use_paired_colors:
+# 						var chosen_pair = color_pairs[randi() % color_pairs.size()]
+# 						color_outline = chosen_pair[0]
+# 						color_fill = chosen_pair[1]
+# 					else:
+# 						color_outline = color_list[randi() % color_list.size()]
+# 						color_fill = color_list[randi() % color_list.size()]
+# 						while color_fill == color_outline:
+# 							color_fill = color_list[randi() % color_list.size()]
+
+# 					var outline_points = 20
+# 					for j in range(outline_points):
+# 						if randf() > properties.leopard_completeness:
+# 							continue
+						
+# 						var irregularity = properties.leopard_irregularity
+# 						var current_radius = spot_angle_rad * rand_range(1.0 - irregularity, 1.0 + irregularity)
+						
+# 						var circle_angle = (float(j) / outline_points) * TAU
+# 						var direction = (basis.x * cos(circle_angle) + basis.z * sin(circle_angle))
+# 						var pos = spot_center.slerp(spot_center + direction.normalized(), current_radius)
+
+# 						var paintball = _create_paintball(
+# 							pos, paintball_size, properties, affected_ballz, [color_outline], outline_color_list, texture_list
+# 						)
+# 						paintballz.append(paintball)
+
+# 					var fill_points = 25
+# 					for j in range(fill_points):
+# 						var random_radius = sqrt(randf())
+# 						var random_angle = rand_range(0, TAU)
+						
+# 						var noise_val = spot_noise.get_noise_1d(random_angle * spot_noise.period)
+# 						var noise_radius = random_radius * (0.7 + 0.3 * noise_val)
+						
+# 						var fill_radius_rad = noise_radius * spot_angle_rad
+
+# 						var direction = (basis.x * cos(random_angle) + basis.z * sin(random_angle))
+# 						var pos = spot_center.slerp(spot_center + direction.normalized(), fill_radius_rad)
+						
+# 						var paintball = _create_paintball(
+# 							pos, paintball_size, properties, affected_ballz, [color_fill], outline_color_list, texture_list
+# 						)
+# 						paintballz.append(paintball)
+
+# 					var inner_dots = randi() % 3 + 1
+# 					for j in range(inner_dots):
+# 						var random_radius = randf() * spot_angle_rad * 0.7
+# 						var random_angle = rand_range(0, TAU)
+
+# 						var direction = (basis.x * cos(random_angle) + basis.z * sin(random_angle))
+# 						var pos = spot_center.slerp(spot_center + direction.normalized(), random_radius)
+
+# 						var paintball = _create_paintball(
+# 							pos, paintball_size * 0.6, properties, affected_ballz, [color_outline], outline_color_list, texture_list
+# 						)
+# 						paintballz.append(paintball)
+# 		Distribution.RAINBOW: # 14
+# 			var num_rainbows = properties.num_spots
+			
+# 			for i in range(num_rainbows):
+# 				var paintball_size = rand_range(properties.size_min, properties.size_max)
+				
+# 				var arc_start = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 				if arc_start.length_squared() == 0: arc_start = Vector3.FORWARD
+				
+# 				var basis = _get_basis_from_normal(arc_start)
+				
+# 				var arc_direction = basis.x
+				
+# 				var rotation_axis = arc_start.cross(arc_direction).normalized()
+				
+# 				rotation_axis = rotation_axis.slerp(arc_start, properties.rainbow_curvature)
+				
+# 				rotation_axis = rotation_axis.rotated(arc_start, deg2rad(properties.rainbow_angle))
+
+# 				for color_index in range(color_list.size()):
+# 					var current_color = color_list[color_index]
+					
+# 					var offset_axis = rotation_axis.cross(arc_start).normalized()
+# 					var offset_dist = (float(color_index) - float(color_list.size() - 1) / 2.0) * properties.rainbow_width
+# 					var band_offset_rad = atan(offset_dist * paintball_size * 0.1)
+					
+# 					var band_start = arc_start.rotated(offset_axis, band_offset_rad)
+# 					var band_axis = rotation_axis.rotated(offset_axis, band_offset_rad)
+
+# 					var arc_length_rad = PI * properties.rainbow_length
+					
+# 					var num_paintballs_in_line = 0
+# 					var angular_diameter = 2 * atan(paintball_size * 0.01)
+# 					if angular_diameter > 0:
+# 						num_paintballs_in_line = floor(arc_length_rad / (angular_diameter * 0.9))
+
+# 					for p_idx in range(num_paintballs_in_line):
+# 						var step_angle = (float(p_idx) / max(1, num_paintballs_in_line - 1)) * arc_length_rad
+# 						var pos = band_start.rotated(band_axis, step_angle)
+						
+# 						var paintball = _create_paintball(
+# 							pos, paintball_size, properties, affected_ballz, [current_color], outline_color_list, texture_list
+# 						)
+# 						paintballz.append(paintball)
+# 		_: # All other simple modes (UNIFORM, SPIRAL, BANDS, GRID, CHECKERBOARD, FOCUSED, HALFIE)
+# 			for i in range(properties.num_spots):
+# 				var size = rand_range(properties.size_min, properties.size_max)
+# 				var position = Vector3()
+
+# 				if distribution_mode == Distribution.UNIFORM: # 0
+# 					position = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 				elif distribution_mode == Distribution.SPIRAL: # 1
+# 					var turns = properties.spiral_turns
+# 					var angle = i * (2 * PI * turns / properties.num_spots)
+# 					var y = lerp(-1, 1, float(i) / properties.num_spots)
+# 					var r = sqrt(1 - y*y)
+# 					var x = r * cos(angle)
+# 					var z = r * sin(angle)
+# 					position = Vector3(x, y, z)
+# 				elif distribution_mode == Distribution.BANDS: # 3: Consolidated Bands
+# 					var num_bands = properties.num_bands
+# 					if num_bands > 0:
+# 						var band_angle = deg2rad(properties.band_angle)
+# 						var band_offset = properties.band_offset
+# 						var band_spacing = properties.band_spacing
+# 						var is_vertical = properties.band_direction == 1 # 0=Horizontal, 1=Vertical
+
+# 						var band_index = floor(i * num_bands / properties.num_spots)
+# 						var total_width = (num_bands - 1) * band_spacing
+# 						var band_pos = lerp(-total_width / 2.0, total_width / 2.0, float(band_index) / max(1, num_bands - 1))
+
+# 						band_pos += band_offset
+
+# 						var y = band_pos
+# 						var angle = rand_range(0, TAU)
+# 						var r = sqrt(max(0, 1.0 - y*y))
+# 						var x = r * cos(angle)
+# 						var z = r * sin(angle)
+
+# 						var p = Vector3(x, y, z)
+
+# 						if is_vertical:
+# 							p = Vector3(y, x, z) # Swap coordinates for vertical alignment
+
+# 						p = p.rotated(Vector3.FORWARD, band_angle)
+# 						position = p
+# 				elif distribution_mode == Distribution.GRID: # 5
+# 					var grid_size = properties.grid_size
+# 					if grid_size > 0:
+# 						var u = float(i % int(grid_size)) / grid_size
+# 						var v = float(floor(i / grid_size)) / grid_size
+# 						var theta = u * 2 * PI
+# 						var acos_arg = clamp(2 * v - 1, -1.0, 1.0)
+# 						var phi = acos(acos_arg)
+# 						var x = sin(phi) * cos(theta)
+# 						var y = sin(phi) * sin(theta)
+# 						var z = cos(phi)
+# 						position = Vector3(x, y, z)
+# 				elif distribution_mode == Distribution.CHECKERBOARD: # 6
+# 					var grid_size = int(properties.grid_size)
+# 					if grid_size > 0 and properties.num_spots > 0:
+# 						var num_on_squares = ceil(grid_size * grid_size / 2.0)
+# 						var spots_per_square = int(ceil(properties.num_spots / num_on_squares))
+
+# 						for v_idx in range(grid_size):
+# 							for u_idx in range(grid_size):
+# 								if (u_idx + v_idx) % 2 == 1:
+# 									for _j in range(spots_per_square):
+# 										var u_start = float(u_idx) / grid_size
+# 										var u_end = float(u_idx + 1) / grid_size
+# 										var v_start = float(v_idx) / grid_size
+# 										var v_end = float(v_idx + 1) / grid_size
+
+# 										var rand_u = rand_range(u_start, u_end)
+# 										var rand_v = rand_range(v_start, v_end)
+
+# 										var theta = rand_u * TAU
+# 										var cos_phi = lerp(1.0, -1.0, rand_v)
+# 										var phi = acos(cos_phi)
+										
+# 										var x = sin(phi) * cos(theta)
+# 										var z = sin(phi) * sin(theta)
+# 										var y = cos(phi)
+										
+# 										var p = _create_paintball(
+# 											Vector3(x,y,z), size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 										)
+# 										paintballz.append(p)
+# 						continue 
+# 				elif distribution_mode == Distribution.POLE_FOCUSED: # 9
+# 					var y = 1.0 - pow(randf(), 2)
+# 					if randf() > 0.5:
+# 						y = -y
+# 					var angle = rand_range(0, 2 * PI)
+# 					var r = sqrt(1 - y*y)
+# 					var x = r * cos(angle)
+# 					var z = r * sin(angle)
+# 					position = Vector3(x, y, z)
+# 				elif distribution_mode == Distribution.EQUATOR_FOCUSED: # 10
+# 					var y = rand_range(-0.2, 0.2)
+# 					var angle = rand_range(0, 2 * PI)
+# 					var r = sqrt(1 - y*y)
+# 					var x = r * cos(angle)
+# 					var z = r * sin(angle)
+# 					position = Vector3(x, y, z)
+# 				elif distribution_mode == Distribution.HALFIE: # 11
+# 					var axis = properties.halfie_axis
+# 					var side = properties.halfie_side
+# 					var p = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+# 					if side == 0: # Positive
+# 						p[axis] = abs(p[axis])
+# 					else: # Negative
+# 						p[axis] = -abs(p[axis])
+# 					position = p.normalized()
+
+# 				var paintball = _create_paintball(
+# 					position, size, properties, affected_ballz, color_list, outline_color_list, texture_list
+# 				)
+# 				paintballz.append(paintball)
+
+# 	emit_signal("randomize_auto_paintballz", paintballz)
