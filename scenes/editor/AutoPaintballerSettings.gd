@@ -1306,6 +1306,8 @@ func _on_SurpriseButton_pressed():
 		find_node("NumSpots").value = (randi() % 2) + 1
 	elif random_mode == Distribution.STAR:
 		find_node("NumSpots").value = (randi() % 40) + 1
+	elif random_mode == Distribution.LEOPARD:
+		find_node("NumSpots").value = (randi() % 50) + 1
 	else:
 		find_node("NumSpots").value = int(rand_range(20, 150))
 	
@@ -1345,9 +1347,9 @@ func _randomize_mode_params(mode):
 			if randf() > 0.4:
 				find_node("FractalPreset").selected = FractalPreset.CUSTOM
 				_on_FractalPreset_item_selected(FractalPreset.CUSTOM)
-				_on_RandomSystemButton_pressed() # Triggers the random L-system generator
+				_on_RandomSystemButton_pressed()
 			else:
-				var preset = (randi() % 3) + 1 # Pick one of the 3 existing presets
+				var preset = (randi() % 3) + 1
 				find_node("FractalPreset").selected = preset
 				_on_FractalPreset_item_selected(preset)
 			
