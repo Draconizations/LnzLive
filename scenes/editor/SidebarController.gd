@@ -2,6 +2,8 @@ extends VBoxContainer
 
 onready var tab_container = get_node("SidebarTabs")
 onready var tree = get_node("SidebarTabs/FileTree/Tree")
+onready var spacer = get_node("SidebarSpacer")
+onready var collapse_btn = get_node("CollapseButton")
 
 var floating_layer: CanvasLayer = null
 const UTILITY_TABS = ["FileTree", "Palette"]
@@ -32,6 +34,7 @@ func _ready():
 			get_tree().root.call_deferred("add_child", floating_layer)
 
 	tab_container.connect("tab_changed", self, "_on_tab_changed")
+	collapse_btn.connect("pressed", self, "_on_collapse_pressed")
 
 func add_tool_tab(control: Control, title: String):
 	if control == null or not is_instance_valid(control):
@@ -137,3 +140,20 @@ func _on_tab_changed(tab_index: int):
 		"Palette": pet_view.view_palette_check_box.pressed = true
 		"FileTree":
 			pass
+
+func _on_collapse_pressed():
+	if tab_container:
+		tab_container.visible = !tab_container.visible
+		spacer.visible = !tab_container.visible
+		
+		if tab_container.visible:
+			collapse_btn.text = "<< Hide Sidebar <<"
+			self.rect_min_size.x = 200
+			self.size_flags_stretch_ratio = 0.5
+		else:
+			collapse_btn.text = ">>"
+			self.rect_min_size.x = 40 
+			self.size_flags_stretch_ratio = 0.01
+		
+		property_list_changed_notify()
+		minimum_size_changed()

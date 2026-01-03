@@ -257,7 +257,7 @@ __meta__ = {
 
 [node name="SidebarTabs" type="TabContainer" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 margin_right = 378.0
-margin_bottom = 1080.0
+margin_bottom = 1051.0
 size_flags_vertical = 3
 custom_icons/increment_highlight = ExtResource( 22 )
 custom_icons/increment = ExtResource( 16 )
@@ -282,7 +282,7 @@ size_flags_vertical = 3
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
 margin_right = 376.0
-margin_bottom = 995.0
+margin_bottom = 966.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/bg = SubResource( 5 )
@@ -313,9 +313,9 @@ __meta__ = {
 }
 
 [node name="FileNavHBox1" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
-margin_top = 999.0
+margin_top = 970.0
 margin_right = 376.0
-margin_bottom = 1024.0
+margin_bottom = 995.0
 alignment = 1
 
 [node name="ImportButtonPalPNG" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox1"]
@@ -343,9 +343,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "Import Texture"
 
 [node name="FileNavHBox2" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
-margin_top = 1028.0
+margin_top = 999.0
 margin_right = 376.0
-margin_bottom = 1053.0
+margin_bottom = 1024.0
 alignment = 1
 
 [node name="ImportButtonLNZ" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2"]
@@ -371,6 +371,27 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Open User Folder"
+
+[node name="SidebarSpacer" type="Control" parent="SceneRoot/HSplitContainer/VBoxContainer"]
+visible = false
+margin_top = 1055.0
+margin_right = 378.0
+margin_bottom = 1055.0
+size_flags_vertical = 3
+
+[node name="CollapseButton" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer"]
+margin_top = 1059.0
+margin_right = 378.0
+margin_bottom = 1084.0
+rect_min_size = Vector2( 0, 25 )
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 2 )
+custom_styles/disabled = SubResource( 2 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = ExtResource( 27 )
+text = "<< Hide Sidebar <<"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SceneRoot/HSplitContainer"]
 margin_left = 390.0
@@ -1315,7 +1336,7 @@ margin_right = 759.0
 margin_bottom = 74.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-20"
+text = "PB-beta-v1.4.6-preview-21"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
