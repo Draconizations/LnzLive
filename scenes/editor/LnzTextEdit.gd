@@ -4084,6 +4084,66 @@ func apply_batch_moves(pending_moves: Dictionary):
 	save_file(true)
 	commit_visual_change("Batch Moved Ballz")
 
+func set_batch_moves(moves_dict: Dictionary):
+	if moves_dict.empty():
+		return
+	
+	save_backup()
+	
+	var move_section_tag = "[Move]"
+	var move_sec = search(move_section_tag, 0, 0, 0)
+	
+	if move_sec.empty():
+		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+		var all_lines = get_text().split("\n")
+		all_lines.insert(first_section_line, "[Move]")
+		all_lines.insert(first_section_line + 1, "")
+		text = all_lines.join("\n")
+		_set_text_preserve(text)
+		move_sec = search(move_section_tag, 0, 0, 0)
+	
+	var move_start = move_sec[SEARCH_RESULT_LINE] + 1
+	var move_end = search("[", 0, move_start, 0)[SEARCH_RESULT_LINE]
+	if move_end == -1: move_end = get_line_count()
+	
+	var delim = _detect_delimiter(move_start, move_end)
+	
+	var existing_moves_lines = {}
+	for i in range(move_start, move_end):
+		var raw = get_line(i).strip_edges()
+		if raw == "" or raw.begins_with(";"): continue
+		var parts = _split_line(raw)
+		if parts.size() > 0:
+			existing_moves_lines[parts[0].to_int()] = i
+			
+	var new_lines_to_add = []
+	
+	for ball_no in moves_dict.keys():
+		var offset = moves_dict[ball_no]
+		var x = int(round(offset.x))
+		var y = int(round(offset.y))
+		var z = int(round(offset.z))
+		
+		if existing_moves_lines.has(ball_no):
+			var line_idx = existing_moves_lines[ball_no]
+			var raw = get_line(line_idx).strip_edges()
+			var parts = _split_line(raw)
+			if parts.size() >= 4:
+				parts[1] = str(x)
+				parts[2] = str(y)
+				parts[3] = str(z)
+				set_line(line_idx, _join_array(parts, delim))
+		else:
+			var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, x, delim, y, delim, z]
+			new_lines_to_add.append(line_txt)
+			
+	if not new_lines_to_add.empty():
+		var insert_at = _find_insertion_line(move_start, move_end)
+		_insert_text_at_cursor_at_line(insert_at, _join_array(new_lines_to_add, "\n") + "\n")
+		
+	save_file(true)
+	commit_visual_change("Randomized [Move] entries")
+
 func _escape_regex(pattern_str: String) -> String:
 	var special_chars = ".+*?()[]{}|^$\\/"
 	var escaped_str = ""

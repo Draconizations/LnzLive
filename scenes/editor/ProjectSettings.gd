@@ -1,19 +1,24 @@
 extends DraggablePanel
 ## ProjectSettings.gd
-## Manages the UI panel and logic for the Project Mode settings
-## This script combines two key LNZ editing features:
-## 1. Project Ball Editor (`[Project Ball]`)
-## Controls a Tree UI for creating and editing ball projections. It provides methods to:
-## - Load: Copy existing projections from the LNZ or load defaults based on species
-## - Edit: Add, remove, reorder, lock, and edit projection values (Fixed/Project Ball, Min/Max/Value)
-## - Randomize: Generate random projection values within the defined Min/Max range, respecting locked or mirrored projections
-## - Apply: Gather all projections (and auto-generate symmetrical mirrors if needed) and emit the `apply_projections` signal
+## Manages the UI panel and logic for the Project Mode settings and Shape Mode
+## This script combines three key LNZ editing features:
+## 1. Project Ball Randomizer
+##     Controls a Tree UI for creating and editing `[Project Ball]`. It provides methods to:
+##         - Load: Copy existing projections from the LNZ or load defaults based on species
+##         - Edit: Add, remove, reorder, lock, and edit projection values (Fixed/Project Ball, Min/Max/Value)
+##         - Randomize: Generate random projection values within the defined Min/Max range, respecting locked or mirrored projections
+##         - Apply: Gather all projections (and auto-generate symmetrical mirrors if needed) and emit the `apply_projections` signal
 ## 2. Body Proportion Randomizer
-## Manages UI spinboxes for defining Min/Max ranges for LNZ body proportion sections (e.g., `[Leg Extension]`, `[Head Enlargement]`)
-## and emits the `randomize_body_proportions` signal to apply random values within those ranges
+##     Manages UI spinboxes for defining Min/Max ranges for LNZ body proportion sections (e.g., `[Leg Extension]`, `[Head Enlargement]`)
+##     and emits the `randomize_body_proportions` signal to apply random values within those ranges
+## 3. Move Randomizer
+##    Offers two methods for randomizing `[Move]` entries of base ballz by body group:
+##        - randomly sample in defined box coordinates around base position
+##        - jitter in radius around ball
 
 signal apply_projections(projections)
 signal randomize_body_proportions(settings)
+signal randomize_moves(settings)
 
 var _is_loading_settings = false
 
@@ -27,10 +32,15 @@ func _ready():
 	find_node("RestoreDefaultsButton").connect("pressed", self, "_on_RestoreDefaultsButton_pressed")
 	find_node("CopyFromLNZButton").connect("pressed", self, "_on_CopyFromLNZButton_pressed")
 	find_node("RandomizeProjectionsButton").connect("pressed", self, "_on_RandomizeProjectionsButton_pressed")
-	find_node("RandomizeBodyButton").connect("pressed", self, "_on_RandomizeBodyButton_pressed")
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("MoveUpButton").connect("pressed", self, "_on_MoveUpButton_pressed")
 	find_node("MoveDownButton").connect("pressed", self, "_on_MoveDownButton_pressed")
+	
+	find_node("RandomizeBodyButton").connect("pressed", self, "_on_RandomizeBodyButton_pressed")
+	find_node("RandomizeMovesButton").connect("pressed", self, "_on_RandomizeMovesButton_pressed")
+	find_node("JitterButton").connect("pressed", self, "_on_JitterButton_pressed")
+	find_node("RandomizeShapeButton").connect("pressed", self, "_on_RandomizeShapeButton_pressed")
+
 	projections_tree.connect("item_edited", self, "_on_ProjectionsTree_item_edited")
 	projections_tree.connect("button_pressed", self, "_on_ProjectionsTree_button_pressed")
 	projections_tree.connect("column_title_pressed", self, "_on_ProjectionsTree_column_title_pressed")
@@ -165,7 +175,7 @@ func _on_RestoreDefaultsButton_pressed():
 	_populate_projections_tree()
 
 func _on_CopyFromLNZButton_pressed():
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/LnzTextEdit")
+	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	var projections = lnz_text_edit.get_project_ball_section()
 
 	projections_tree.clear()
@@ -290,6 +300,44 @@ func _on_RandomizeBodyButton_pressed():
 	}
 	emit_signal("randomize_body_proportions", settings)
 
+func _get_move_settings_dict(type: String) -> Dictionary:
+	var groups = []
+	if find_node("HeadCheckBox").pressed: groups.append("Head")
+	if find_node("BodyCheckBox").pressed: groups.append("Body")
+	if find_node("LegsCheckBox").pressed: groups.append("Legs")
+	if find_node("TailCheckBox").pressed: groups.append("Tail")
+	if find_node("EarsCheckBox").pressed: groups.append("Ears")
+	if find_node("EyesCheckBox").pressed: groups.append("Eyes")
+	
+	var settings = {
+		"type": type,
+		"groups": groups,
+		"mirror_x": find_node("MirrorXCheckBox").pressed,
+		"range_min": Vector3(find_node("MoveXMin").value, find_node("MoveYMin").value, find_node("MoveZMin").value),
+		"range_max": Vector3(find_node("MoveXMax").value, find_node("MoveYMax").value, find_node("MoveZMax").value),
+		"jitter_radius": find_node("JitterRadius").value
+	}
+	return settings
+
+func _on_RandomizeMovesButton_pressed():
+	var settings = _get_move_settings_dict("range")
+	emit_signal("randomize_moves", settings)
+
+func _on_JitterButton_pressed():
+	var settings = _get_move_settings_dict("jitter")
+	emit_signal("randomize_moves", settings)
+
+func _on_RandomizeShapeButton_pressed():
+	if find_node("IncludeProjCheckBox").pressed:
+		_on_RandomizeProjectionsButton_pressed()
+		_on_ApplyButton_pressed()
+		
+	if find_node("IncludeBodyCheckBox").pressed:
+		_on_RandomizeBodyButton_pressed()
+		
+	if find_node("IncludeMovesCheckBox").pressed:
+		_on_RandomizeMovesButton_pressed()
+
 func _on_ApplyButton_pressed():
 	var root = projections_tree.get_root()
 	if not root:
@@ -407,11 +455,24 @@ func _connect_settings_signals():
 		"Scales2MinSpinBox", "Scales2MaxSpinBox",
 		"BodyExtMinSpinBox", "BodyExtMaxSpinBox",
 		"FaceExtMinSpinBox", "FaceExtMaxSpinBox",
-		"EarExtMinSpinBox", "EarExtMaxSpinBox"
+		"EarExtMinSpinBox", "EarExtMaxSpinBox",
+		"MoveXMin", "MoveXMax",
+		"MoveYMin", "MoveYMax",
+		"MoveZMin", "MoveZMax",
+		"JitterRadius"
 	]
 
 	for s in spinners:
 		find_node(s).connect("value_changed", self, "_on_setting_changed")
+		
+	var checkboxes = [
+		"IncludeProjCheckBox", "IncludeBodyCheckBox", "IncludeMovesCheckBox",
+		"HeadCheckBox", "BodyCheckBox", "LegsCheckBox", "TailCheckBox", "EarsCheckBox", "EyesCheckBox",
+		"MirrorXCheckBox"
+	]
+	
+	for c in checkboxes:
+		find_node(c).connect("toggled", self, "_on_setting_changed")
 
 	var reset_btn = find_node("ResetDefaultsButton")
 	if reset_btn:
@@ -457,6 +518,27 @@ func save_settings():
 
 	config.set_value("ProjectProperties", "ear_ext_min", find_node("EarExtMinSpinBox").value)
 	config.set_value("ProjectProperties", "ear_ext_max", find_node("EarExtMaxSpinBox").value)
+	
+	# Move Mode Settings
+	config.set_value("ProjectProperties", "move_x_min", find_node("MoveXMin").value)
+	config.set_value("ProjectProperties", "move_x_max", find_node("MoveXMax").value)
+	config.set_value("ProjectProperties", "move_y_min", find_node("MoveYMin").value)
+	config.set_value("ProjectProperties", "move_y_max", find_node("MoveYMax").value)
+	config.set_value("ProjectProperties", "move_z_min", find_node("MoveZMin").value)
+	config.set_value("ProjectProperties", "move_z_max", find_node("MoveZMax").value)
+	config.set_value("ProjectProperties", "jitter_radius", find_node("JitterRadius").value)
+	
+	config.set_value("ProjectProperties", "include_proj", find_node("IncludeProjCheckBox").pressed)
+	config.set_value("ProjectProperties", "include_body", find_node("IncludeBodyCheckBox").pressed)
+	config.set_value("ProjectProperties", "include_moves", find_node("IncludeMovesCheckBox").pressed)
+	
+	config.set_value("ProjectProperties", "grp_head", find_node("HeadCheckBox").pressed)
+	config.set_value("ProjectProperties", "grp_body", find_node("BodyCheckBox").pressed)
+	config.set_value("ProjectProperties", "grp_legs", find_node("LegsCheckBox").pressed)
+	config.set_value("ProjectProperties", "grp_tail", find_node("TailCheckBox").pressed)
+	config.set_value("ProjectProperties", "grp_ears", find_node("EarsCheckBox").pressed)
+	config.set_value("ProjectProperties", "grp_eyes", find_node("EyesCheckBox").pressed)
+	config.set_value("ProjectProperties", "mirror_x", find_node("MirrorXCheckBox").pressed)
 
 	var save_err = config.save(SETTINGS_PATH)
 	if save_err != OK:
@@ -498,6 +580,26 @@ func load_settings():
 
 	find_node("EarExtMinSpinBox").value = config.get_value("ProjectProperties", "ear_ext_min", 50.0)
 	find_node("EarExtMaxSpinBox").value = config.get_value("ProjectProperties", "ear_ext_max", 100.0)
+	
+	find_node("MoveXMin").value = config.get_value("ProjectProperties", "move_x_min", -10.0)
+	find_node("MoveXMax").value = config.get_value("ProjectProperties", "move_x_max", 10.0)
+	find_node("MoveYMin").value = config.get_value("ProjectProperties", "move_y_min", -10.0)
+	find_node("MoveYMax").value = config.get_value("ProjectProperties", "move_y_max", 10.0)
+	find_node("MoveZMin").value = config.get_value("ProjectProperties", "move_z_min", -10.0)
+	find_node("MoveZMax").value = config.get_value("ProjectProperties", "move_z_max", 10.0)
+	find_node("JitterRadius").value = config.get_value("ProjectProperties", "jitter_radius", 10.0)
+	
+	find_node("IncludeProjCheckBox").pressed = config.get_value("ProjectProperties", "include_proj", true)
+	find_node("IncludeBodyCheckBox").pressed = config.get_value("ProjectProperties", "include_body", true)
+	find_node("IncludeMovesCheckBox").pressed = config.get_value("ProjectProperties", "include_moves", true)
+	
+	find_node("HeadCheckBox").pressed = config.get_value("ProjectProperties", "grp_head", true)
+	find_node("BodyCheckBox").pressed = config.get_value("ProjectProperties", "grp_body", true)
+	find_node("LegsCheckBox").pressed = config.get_value("ProjectProperties", "grp_legs", true)
+	find_node("TailCheckBox").pressed = config.get_value("ProjectProperties", "grp_tail", true)
+	find_node("EarsCheckBox").pressed = config.get_value("ProjectProperties", "grp_ears", true)
+	find_node("EyesCheckBox").pressed = config.get_value("ProjectProperties", "grp_eyes", true)
+	find_node("MirrorXCheckBox").pressed = config.get_value("ProjectProperties", "mirror_x", true)
 
 	_is_loading_settings = false
 
@@ -532,6 +634,26 @@ func _on_reset_defaults_pressed():
 
 	find_node("EarExtMinSpinBox").value = 50.0
 	find_node("EarExtMaxSpinBox").value = 100.0
+	
+	find_node("MoveXMin").value = -10.0
+	find_node("MoveXMax").value = 10.0
+	find_node("MoveYMin").value = -10.0
+	find_node("MoveYMax").value = 10.0
+	find_node("MoveZMin").value = -10.0
+	find_node("MoveZMax").value = 10.0
+	find_node("JitterRadius").value = 10.0
+	
+	find_node("IncludeProjCheckBox").pressed = true
+	find_node("IncludeBodyCheckBox").pressed = true
+	find_node("IncludeMovesCheckBox").pressed = true
+	
+	find_node("HeadCheckBox").pressed = true
+	find_node("BodyCheckBox").pressed = true
+	find_node("LegsCheckBox").pressed = true
+	find_node("TailCheckBox").pressed = true
+	find_node("EarsCheckBox").pressed = true
+	find_node("EyesCheckBox").pressed = true
+	find_node("MirrorXCheckBox").pressed = true
 
 	_is_loading_settings = false
 	save_settings()

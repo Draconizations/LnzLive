@@ -195,6 +195,7 @@ func _ready():
 	if is_instance_valid(lnz_text_edit):
 		project_settings_instance.connect("apply_projections", lnz_text_edit, "write_project_ball_section")
 	project_settings_instance.connect("randomize_body_proportions", self, "_on_randomize_body_proportions")
+	project_settings_instance.connect("randomize_moves", self, "_on_randomize_moves")
 
 	if is_instance_valid(pet_node):
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
@@ -1545,6 +1546,120 @@ func _on_randomize_body_proportions(settings: Dictionary):
 	yield(get_tree().create_timer(0.1), "timeout")
 	lnz_text_edit.save_file()
 	print("Randomized Body Proportions and applied to LNZ.")
+
+func _on_randomize_moves(settings: Dictionary):
+	var target_groups = settings.groups
+	var mirror_x = settings.mirror_x
+	var type = settings.type
+	var range_min = settings.range_min
+	var range_max = settings.range_max
+	var jitter_radius_percent = settings.jitter_radius
+	
+	var moves_to_apply = {}
+	
+	var target_balls = []
+	for group_name in target_groups:
+		target_balls.append_array(KeyBallsData.get_group_balls(group_name))
+	
+	var unique_targets = {}
+	for b in target_balls:
+		unique_targets[b] = true
+	target_balls = unique_targets.keys()
+	
+	var symmetry_dict = {}
+	if KeyBallsData.species == KeyBallsData.Species.DOG:
+		symmetry_dict = KeyBallsData.dog_body_part_symmetry
+	elif KeyBallsData.species == KeyBallsData.Species.CAT:
+		symmetry_dict = KeyBallsData.cat_body_part_symmetry
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+		
+	var eye_iris_pairs = {} # iris_id -> eye_id
+	var eye_pairs_source = {}
+	if KeyBallsData.species == KeyBallsData.Species.DOG:
+		eye_pairs_source = KeyBallsData.eyes_dog
+	elif KeyBallsData.species == KeyBallsData.Species.CAT:
+		eye_pairs_source = KeyBallsData.eyes_cat
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		eye_pairs_source = KeyBallsData.eyes_bab
+		
+	for iris in eye_pairs_source:
+		eye_iris_pairs[iris] = eye_pairs_source[iris]
+
+	var assigned_offsets = {}
+	
+	randomize()
+	
+	for ball_no in target_balls:
+		if assigned_offsets.has(ball_no):
+			continue
+			
+		var offset = Vector3.ZERO
+		
+		# iris, check if eye already has offset
+		if eye_iris_pairs.has(ball_no):
+			var parent_eye = eye_iris_pairs[ball_no]
+			if assigned_offsets.has(parent_eye):
+				offset = assigned_offsets[parent_eye]
+				assigned_offsets[ball_no] = offset
+				moves_to_apply[ball_no] = offset
+				continue
+		
+		# random offset
+		if type == "range":
+			var rx = rand_range(range_min.x, range_max.x)
+			var ry = rand_range(range_min.y, range_max.y)
+			var rz = rand_range(range_min.z, range_max.z)
+			offset = Vector3(rx, ry, rz)
+		elif type == "jitter":
+			# % radius offset from ball size
+			var ball_size = 10.0
+			if pet_node.bhd and ball_no < pet_node.bhd.ball_sizes.size():
+				ball_size = pet_node.bhd.ball_sizes[ball_no]
+			elif pet_node.lnz.addballs.has(ball_no):
+				var ab = pet_node.lnz.addballs[ball_no]
+				if typeof(ab) == TYPE_OBJECT: ball_size = ab.size
+				elif typeof(ab) == TYPE_DICTIONARY: ball_size = ab.get("size", 10)
+			
+			var radius = ball_size / 2.0
+			var jitter_amount = radius * (jitter_radius_percent / 100.0)
+			
+			var v = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			offset = v * jitter_amount
+			
+		assigned_offsets[ball_no] = offset
+		moves_to_apply[ball_no] = offset
+		
+		# Symmetry
+		if mirror_x:
+			var mirrored_ball = KeyBallsData.get_mirrored_ball(ball_no, symmetry_dict)
+			
+			if mirrored_ball != -1:
+				var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
+				assigned_offsets[mirrored_ball] = mirror_offset
+				moves_to_apply[mirrored_ball] = mirror_offset
+			else:
+				# zero out if center ball
+				offset.x = 0
+				assigned_offsets[ball_no] = offset
+				moves_to_apply[ball_no] = offset
+				
+		# Find iris for eye
+		for iris in eye_iris_pairs:
+			if eye_iris_pairs[iris] == ball_no:
+				assigned_offsets[iris] = offset
+				moves_to_apply[iris] = offset
+				
+				if mirror_x:
+					var mirrored_iris = KeyBallsData.get_mirrored_ball(iris, symmetry_dict)
+					if mirrored_iris != -1:
+						var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
+						assigned_offsets[mirrored_iris] = mirror_offset
+						moves_to_apply[mirrored_iris] = mirror_offset
+
+	if not moves_to_apply.empty():
+		lnz_text_edit.set_batch_moves(moves_to_apply)
+		print("Randomized Moves applied to %d balls." % moves_to_apply.size())
 
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:

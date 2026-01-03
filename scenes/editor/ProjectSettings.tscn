@@ -65,41 +65,48 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="HBoxContainer" type="VBoxContainer" parent="."]
-anchor_right = 0.5
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
 margin_left = 15.0
 margin_top = 15.0
-margin_right = 235.0
-margin_bottom = 915.0
+margin_right = -15.0
+margin_bottom = -15.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TitleLabel" type="Label" parent="HBoxContainer"]
+[node name="HBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+margin_right = 470.0
+margin_bottom = 1430.0
+size_flags_horizontal = 3
+custom_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="ScrollContainer/HBoxContainer"]
 margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Shape Mode"
 
-[node name="SettingsProjectBall" type="VBoxContainer" parent="HBoxContainer"]
-margin_top = 29.0
+[node name="SettingsProjectBall" type="VBoxContainer" parent="ScrollContainer/HBoxContainer"]
+margin_top = 45.0
 margin_right = 470.0
-margin_bottom = 390.0
+margin_bottom = 437.0
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="HBoxContainer/SettingsProjectBall"]
+[node name="Label" type="Label" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "Projection Randomizer"
 align = 1
 
-[node name="HSeparator" type="HSeparator" parent="HBoxContainer/SettingsProjectBall"]
+[node name="HSeparator" type="HSeparator" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 29.0
 margin_right = 470.0
 margin_bottom = 33.0
 
-[node name="ProjectionsTree" type="Tree" parent="HBoxContainer/SettingsProjectBall"]
+[node name="ProjectionsTree" type="Tree" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 37.0
 margin_right = 470.0
 margin_bottom = 287.0
@@ -108,7 +115,7 @@ size_flags_horizontal = 3
 columns = 9
 hide_root = true
 
-[node name="OrderNoteLabel" type="Label" parent="HBoxContainer/SettingsProjectBall"]
+[node name="OrderNoteLabel" type="Label" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 291.0
 margin_right = 470.0
 margin_bottom = 309.0
@@ -117,12 +124,12 @@ text = "Note: The order of entries matters."
 align = 1
 autowrap = true
 
-[node name="ButtonsHBox" type="HBoxContainer" parent="HBoxContainer/SettingsProjectBall"]
+[node name="ButtonsHBox" type="HBoxContainer" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 313.0
 margin_right = 470.0
 margin_bottom = 335.0
 
-[node name="AddButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="AddButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_right = 62.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
@@ -134,7 +141,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Add"
 
-[node name="RemoveButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="RemoveButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 66.0
 margin_right = 129.0
 margin_bottom = 22.0
@@ -147,7 +154,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Remove"
 
-[node name="MoveUpButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="MoveUpButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 133.0
 margin_right = 196.0
 margin_bottom = 22.0
@@ -160,7 +167,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Move Up"
 
-[node name="MoveDownButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="MoveDownButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 200.0
 margin_right = 280.0
 margin_bottom = 22.0
@@ -173,7 +180,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Move Down"
 
-[node name="ClearAllButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="ClearAllButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 284.0
 margin_right = 353.0
 margin_bottom = 22.0
@@ -186,7 +193,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Clear All"
 
-[node name="RestoreDefaultsButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ButtonsHBox"]
+[node name="RestoreDefaultsButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ButtonsHBox"]
 margin_left = 357.0
 margin_right = 470.0
 margin_bottom = 22.0
@@ -199,12 +206,12 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Reset Defaults"
 
-[node name="ActionButtonsHBox" type="HBoxContainer" parent="HBoxContainer/SettingsProjectBall"]
+[node name="ActionButtonsHBox" type="HBoxContainer" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 339.0
 margin_right = 470.0
 margin_bottom = 361.0
 
-[node name="CopyFromLNZButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
+[node name="CopyFromLNZButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_right = 151.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
@@ -216,7 +223,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Copy from LNZ"
 
-[node name="RandomizeProjectionsButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
+[node name="RandomizeProjectionsButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_left = 155.0
 margin_right = 314.0
 margin_bottom = 22.0
@@ -229,7 +236,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Randomize Projections"
 
-[node name="ApplyButton" type="Button" parent="HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
+[node name="ApplyButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_left = 318.0
 margin_right = 470.0
 margin_bottom = 22.0
@@ -242,44 +249,52 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Apply to LNZ"
 
-[node name="VSeparator" type="HSeparator" parent="HBoxContainer"]
-margin_top = 394.0
+[node name="IncludeProjCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsProjectBall"]
+margin_top = 365.0
 margin_right = 470.0
-margin_bottom = 398.0
+margin_bottom = 392.0
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Include in Randomize Shape"
 
-[node name="SettingsExtensionScale" type="VBoxContainer" parent="HBoxContainer"]
-margin_top = 402.0
+[node name="VSeparator" type="HSeparator" parent="ScrollContainer/HBoxContainer"]
+margin_top = 457.0
 margin_right = 470.0
-margin_bottom = 905.0
+margin_bottom = 461.0
+
+[node name="SettingsExtensionScale" type="VBoxContainer" parent="ScrollContainer/HBoxContainer"]
+margin_top = 481.0
+margin_right = 470.0
+margin_bottom = 980.0
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="HBoxContainer/SettingsExtensionScale"]
+[node name="Label" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "Extensions Randomizer"
 align = 1
 
-[node name="HSeparator" type="HSeparator" parent="HBoxContainer/SettingsExtensionScale"]
+[node name="HSeparator" type="HSeparator" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 29.0
 margin_right = 470.0
 margin_bottom = 33.0
 
-[node name="GridContainer" type="GridContainer" parent="HBoxContainer/SettingsExtensionScale"]
+[node name="GridContainer" type="GridContainer" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 37.0
 margin_right = 470.0
-margin_bottom = 451.0
-custom_constants/vseparation = 12
+margin_bottom = 413.0
+custom_constants/vseparation = 8
 columns = 3
 
-[node name="HeaderLabel1" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeaderLabel1" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_right = 154.0
 margin_bottom = 18.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Setting"
 
-[node name="HeaderLabel2" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeaderLabel2" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
 margin_right = 312.0
 margin_bottom = 18.0
@@ -288,7 +303,7 @@ custom_fonts/font = SubResource( 3 )
 text = "Min"
 align = 1
 
-[node name="HeaderLabel3" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeaderLabel3" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
 margin_right = 470.0
 margin_bottom = 18.0
@@ -297,337 +312,337 @@ custom_fonts/font = SubResource( 3 )
 text = "Max"
 align = 1
 
-[node name="LabelLegExt1" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 33.0
+[node name="LabelLegExt1" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 29.0
 margin_right = 154.0
-margin_bottom = 51.0
+margin_bottom = 47.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Leg Extension 1"
 
-[node name="LegExt1MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="LegExt1MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 30.0
+margin_top = 26.0
 margin_right = 312.0
-margin_bottom = 54.0
+margin_bottom = 50.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
 
-[node name="LegExt1MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="LegExt1MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 30.0
+margin_top = 26.0
 margin_right = 470.0
-margin_bottom = 54.0
+margin_bottom = 50.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
 
-[node name="LabelLegExt2" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 69.0
+[node name="LabelLegExt2" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 61.0
 margin_right = 154.0
-margin_bottom = 87.0
+margin_bottom = 79.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Leg Extension 2"
 
-[node name="LegExt2MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="LegExt2MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 66.0
+margin_top = 58.0
 margin_right = 312.0
-margin_bottom = 90.0
+margin_bottom = 82.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
 
-[node name="LegExt2MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="LegExt2MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 66.0
+margin_top = 58.0
 margin_right = 470.0
-margin_bottom = 90.0
+margin_bottom = 82.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
 
-[node name="LabelHeadEnl1" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 105.0
+[node name="LabelHeadEnl1" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 93.0
 margin_right = 154.0
-margin_bottom = 123.0
+margin_bottom = 111.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Head Enlarge 1"
 
-[node name="HeadEnl1MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeadEnl1MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 102.0
+margin_top = 90.0
 margin_right = 312.0
-margin_bottom = 126.0
+margin_bottom = 114.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 100.0
 
-[node name="HeadEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeadEnl1MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 102.0
+margin_top = 90.0
 margin_right = 470.0
-margin_bottom = 126.0
+margin_bottom = 114.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 120.0
 
-[node name="LabelHeadEnl2" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 141.0
+[node name="LabelHeadEnl2" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 125.0
 margin_right = 154.0
-margin_bottom = 159.0
+margin_bottom = 143.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Head Enlarge 2"
 
-[node name="HeadEnl2MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeadEnl2MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 138.0
+margin_top = 122.0
 margin_right = 312.0
-margin_bottom = 162.0
+margin_bottom = 146.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 
-[node name="HeadEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="HeadEnl2MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 138.0
+margin_top = 122.0
 margin_right = 470.0
-margin_bottom = 162.0
+margin_bottom = 146.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 
-[node name="LabelFeetEnl1" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 177.0
+[node name="LabelFeetEnl1" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 157.0
 margin_right = 154.0
-margin_bottom = 195.0
+margin_bottom = 175.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Feet Enlarge 1"
 
-[node name="FeetEnl1MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FeetEnl1MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 174.0
+margin_top = 154.0
 margin_right = 312.0
-margin_bottom = 198.0
+margin_bottom = 178.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 50.0
 
-[node name="FeetEnl1MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FeetEnl1MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 174.0
+margin_top = 154.0
 margin_right = 470.0
-margin_bottom = 198.0
+margin_bottom = 178.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 150.0
 
-[node name="LabelFeetEnl2" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 213.0
+[node name="LabelFeetEnl2" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 189.0
 margin_right = 154.0
-margin_bottom = 231.0
+margin_bottom = 207.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Feet Enlarge 2"
 
-[node name="FeetEnl2MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FeetEnl2MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 210.0
+margin_top = 186.0
 margin_right = 312.0
-margin_bottom = 234.0
+margin_bottom = 210.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 
-[node name="FeetEnl2MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FeetEnl2MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 210.0
+margin_top = 186.0
 margin_right = 470.0
-margin_bottom = 234.0
+margin_bottom = 210.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 20.0
 
-[node name="LabelScales1" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 249.0
+[node name="LabelScales1" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 221.0
 margin_right = 154.0
-margin_bottom = 267.0
+margin_bottom = 239.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Default Scale 1"
 
-[node name="Scales1MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="Scales1MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 246.0
+margin_top = 218.0
 margin_right = 312.0
-margin_bottom = 270.0
+margin_bottom = 242.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 120.0
 
-[node name="Scales1MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="Scales1MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 246.0
+margin_top = 218.0
 margin_right = 470.0
-margin_bottom = 270.0
+margin_bottom = 242.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -400.0
 max_value = 400.0
 value = 120.0
 
-[node name="LabelScales2" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="LabelScales2" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 253.0
+margin_right = 154.0
+margin_bottom = 271.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+text = "Default Scale 2"
+
+[node name="Scales2MinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_left = 158.0
+margin_top = 250.0
+margin_right = 312.0
+margin_bottom = 274.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -400.0
+max_value = 400.0
+value = 100.0
+
+[node name="Scales2MaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_left = 316.0
+margin_top = 250.0
+margin_right = 470.0
+margin_bottom = 274.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -400.0
+max_value = 400.0
+value = 100.0
+
+[node name="LabelBodyExt" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_top = 285.0
 margin_right = 154.0
 margin_bottom = 303.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
-text = "Default Scale 2"
-
-[node name="Scales2MinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_left = 158.0
-margin_top = 282.0
-margin_right = 312.0
-margin_bottom = 306.0
-size_flags_horizontal = 3
-custom_icons/updown = ExtResource( 4 )
-min_value = -400.0
-max_value = 400.0
-value = 100.0
-
-[node name="Scales2MaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_left = 316.0
-margin_top = 282.0
-margin_right = 470.0
-margin_bottom = 306.0
-size_flags_horizontal = 3
-custom_icons/updown = ExtResource( 4 )
-min_value = -400.0
-max_value = 400.0
-value = 100.0
-
-[node name="LabelBodyExt" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 321.0
-margin_right = 154.0
-margin_bottom = 339.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
 text = "Body Extension"
 
-[node name="BodyExtMinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="BodyExtMinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 318.0
+margin_top = 282.0
 margin_right = 312.0
-margin_bottom = 342.0
+margin_bottom = 306.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -20.0
 
-[node name="BodyExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="BodyExtMaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 318.0
+margin_top = 282.0
 margin_right = 470.0
-margin_bottom = 342.0
+margin_bottom = 306.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 60.0
 
-[node name="LabelFaceExt" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 357.0
+[node name="LabelFaceExt" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 317.0
 margin_right = 154.0
-margin_bottom = 375.0
+margin_bottom = 335.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Face Extension"
 
-[node name="FaceExtMinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FaceExtMinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 354.0
+margin_top = 314.0
 margin_right = 312.0
-margin_bottom = 378.0
+margin_bottom = 338.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = -30.0
 
-[node name="FaceExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="FaceExtMaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 354.0
+margin_top = 314.0
 margin_right = 470.0
-margin_bottom = 378.0
+margin_bottom = 338.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 30.0
 
-[node name="LabelEarExt" type="Label" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
-margin_top = 393.0
+[node name="LabelEarExt" type="Label" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
+margin_top = 349.0
 margin_right = 154.0
-margin_bottom = 411.0
+margin_bottom = 367.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 text = "Ear Extension"
 
-[node name="EarExtMinSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="EarExtMinSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 158.0
-margin_top = 390.0
+margin_top = 346.0
 margin_right = 312.0
-margin_bottom = 414.0
+margin_bottom = 370.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 50.0
 
-[node name="EarExtMaxSpinBox" type="SpinBox" parent="HBoxContainer/SettingsExtensionScale/GridContainer"]
+[node name="EarExtMaxSpinBox" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale/GridContainer"]
 margin_left = 316.0
-margin_top = 390.0
+margin_top = 346.0
 margin_right = 470.0
-margin_bottom = 414.0
+margin_bottom = 370.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = -200.0
 max_value = 200.0
 value = 100.0
 
-[node name="RandomizeBodyButton" type="Button" parent="HBoxContainer/SettingsExtensionScale"]
-margin_top = 455.0
+[node name="RandomizeBodyButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
+margin_top = 417.0
 margin_right = 470.0
-margin_bottom = 477.0
+margin_bottom = 439.0
 size_flags_vertical = 10
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
@@ -637,10 +652,10 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Randomize Extensions"
 
-[node name="ResetDefaultsButton" type="Button" parent="HBoxContainer/SettingsExtensionScale"]
-margin_top = 481.0
+[node name="ResetDefaultsButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
+margin_top = 443.0
 margin_right = 470.0
-margin_bottom = 503.0
+margin_bottom = 465.0
 size_flags_vertical = 10
 custom_styles/hover = SubResource( 4 )
 custom_styles/pressed = SubResource( 4 )
@@ -650,29 +665,293 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 3 )
 text = "Reset Defaults"
 
-[node name="SettingsMove" type="VBoxContainer" parent="HBoxContainer"]
-margin_top = 909.0
+[node name="IncludeBodyCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsExtensionScale"]
+margin_top = 469.0
 margin_right = 470.0
-margin_bottom = 942.0
+margin_bottom = 496.0
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Include in Randomize Shape"
+
+[node name="VSeparator2" type="HSeparator" parent="ScrollContainer/HBoxContainer"]
+margin_top = 1000.0
+margin_right = 470.0
+margin_bottom = 1004.0
+
+[node name="SettingsMove" type="VBoxContainer" parent="ScrollContainer/HBoxContainer"]
+margin_top = 1024.0
+margin_right = 470.0
+margin_bottom = 1353.0
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="HBoxContainer/SettingsMove"]
+[node name="Label" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove"]
 margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 2 )
 text = "Move Randomizer"
 align = 1
 
-[node name="HSeparator" type="HSeparator" parent="HBoxContainer/SettingsMove"]
+[node name="HSeparator" type="HSeparator" parent="ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 29.0
 margin_right = 470.0
 margin_bottom = 33.0
 
-[node name="Label" type="Label" parent="HBoxContainer/SettingsMove/HSeparator"]
-margin_right = 40.0
-margin_bottom = 14.0
-custom_fonts/font = SubResource( 2 )
-text = "Coming soon!"
-__meta__ = {
-"_edit_use_anchors_": false
-}
+[node name="MoveGroupsGrid" type="GridContainer" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 37.0
+margin_right = 470.0
+margin_bottom = 99.0
+columns = 3
+
+[node name="HeadCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_right = 154.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Head"
+
+[node name="BodyCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_left = 158.0
+margin_right = 312.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Body"
+
+[node name="LegsCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_left = 316.0
+margin_right = 470.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Legs"
+
+[node name="TailCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_top = 31.0
+margin_right = 154.0
+margin_bottom = 58.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Tail"
+
+[node name="EarsCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_left = 158.0
+margin_top = 31.0
+margin_right = 312.0
+margin_bottom = 58.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Ears"
+
+[node name="EyesCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveGroupsGrid"]
+margin_left = 316.0
+margin_top = 31.0
+margin_right = 470.0
+margin_bottom = 58.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Eyes"
+
+[node name="MoveRangesGrid" type="GridContainer" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 103.0
+margin_right = 470.0
+margin_bottom = 191.0
+custom_constants/vseparation = 8
+columns = 4
+
+[node name="LabelXMin" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_top = 3.0
+margin_right = 60.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 3 )
+text = "X Min"
+
+[node name="MoveXMin" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 64.0
+margin_right = 233.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = -10.0
+
+[node name="LabelXMax" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 237.0
+margin_top = 3.0
+margin_right = 297.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 3 )
+text = "X Max"
+
+[node name="MoveXMax" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 301.0
+margin_right = 470.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = 10.0
+
+[node name="LabelYMin" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_top = 35.0
+margin_right = 60.0
+margin_bottom = 53.0
+custom_fonts/font = SubResource( 3 )
+text = "Y Min"
+
+[node name="MoveYMin" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 64.0
+margin_top = 32.0
+margin_right = 233.0
+margin_bottom = 56.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = -10.0
+
+[node name="LabelYMax" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 237.0
+margin_top = 35.0
+margin_right = 297.0
+margin_bottom = 53.0
+custom_fonts/font = SubResource( 3 )
+text = "Y Max"
+
+[node name="MoveYMax" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 301.0
+margin_top = 32.0
+margin_right = 470.0
+margin_bottom = 56.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = 10.0
+
+[node name="LabelZMin" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_top = 67.0
+margin_right = 60.0
+margin_bottom = 85.0
+custom_fonts/font = SubResource( 3 )
+text = "Z Min"
+
+[node name="MoveZMin" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 64.0
+margin_top = 64.0
+margin_right = 233.0
+margin_bottom = 88.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = -10.0
+
+[node name="LabelZMax" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 237.0
+margin_top = 67.0
+margin_right = 297.0
+margin_bottom = 85.0
+custom_fonts/font = SubResource( 3 )
+text = "Z Max"
+
+[node name="MoveZMax" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/MoveRangesGrid"]
+margin_left = 301.0
+margin_top = 64.0
+margin_right = 470.0
+margin_bottom = 88.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = -100.0
+max_value = 100.0
+value = 10.0
+
+[node name="JitterHBox" type="HBoxContainer" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 195.0
+margin_right = 470.0
+margin_bottom = 219.0
+
+[node name="Label" type="Label" parent="ScrollContainer/HBoxContainer/SettingsMove/JitterHBox"]
+margin_top = 3.0
+margin_right = 117.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 3 )
+text = "Jitter %"
+
+[node name="JitterRadius" type="SpinBox" parent="ScrollContainer/HBoxContainer/SettingsMove/JitterHBox"]
+margin_left = 121.0
+margin_right = 231.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+min_value = 0.0
+max_value = 500.0
+value = 10.0
+
+[node name="JitterButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsMove/JitterHBox"]
+margin_left = 235.0
+margin_right = 470.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Jitter"
+
+[node name="MirrorXCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 223.0
+margin_right = 470.0
+margin_bottom = 250.0
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Mirror X"
+
+[node name="RandomizeMovesButton" type="Button" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 254.0
+margin_right = 470.0
+margin_bottom = 276.0
+size_flags_vertical = 10
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "Randomize Moves"
+
+[node name="IncludeMovesCheckBox" type="CheckBox" parent="ScrollContainer/HBoxContainer/SettingsMove"]
+margin_top = 280.0
+margin_right = 470.0
+margin_bottom = 307.0
+custom_fonts/font = SubResource( 3 )
+pressed = true
+text = "Include in Randomize Shape"
+
+[node name="VSeparator3" type="HSeparator" parent="ScrollContainer/HBoxContainer"]
+margin_top = 1373.0
+margin_right = 470.0
+margin_bottom = 1377.0
+
+[node name="RandomizeShapeButton" type="Button" parent="ScrollContainer/HBoxContainer"]
+margin_top = 1397.0
+margin_right = 470.0
+margin_bottom = 1429.0
+rect_min_size = Vector2( 0, 32 )
+size_flags_vertical = 10
+custom_styles/hover = SubResource( 4 )
+custom_styles/pressed = SubResource( 4 )
+custom_styles/focus = SubResource( 5 )
+custom_styles/disabled = SubResource( 6 )
+custom_styles/normal = SubResource( 5 )
+custom_fonts/font = SubResource( 3 )
+text = "RANDOMIZE SHAPE"
