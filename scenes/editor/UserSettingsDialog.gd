@@ -51,10 +51,10 @@ func _setup_options():
 	delimiter_option.add_item("comma (X,Y)", 1)
 	delimiter_option.set_item_disabled(1, false)
 
-	delimiter_option.add_item("comma-tab (X, Y)", 2)
+	delimiter_option.add_item("comma-tab (X,    Y)", 2)
 	delimiter_option.set_item_disabled(2, false)
 
-	delimiter_option.add_item("tab (X	Y)", 3)
+	delimiter_option.add_item("tab (X    Y)", 3)
 	delimiter_option.set_item_disabled(3, false)
 
 	delimiter_option.add_item("space (X Y)", 4)
