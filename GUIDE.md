@@ -37,6 +37,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `left-click drag` | Rotate Camera View |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
 | **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top |
+| **Viewport** | `CTRL` + `Z` | Undo last committed action |
+| **Viewport** | `CTRL` + `Y` | Redo last committed action |
 | **Viewport** | `ESCAPE` | Exit Current Mode |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
