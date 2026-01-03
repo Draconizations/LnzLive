@@ -13,6 +13,7 @@ signal rotate_selection(rotation_degrees, pivot_id)
 signal select_balls_by_ids(ids)
 signal flip_selection(axis_vector, pivot_id)
 signal pivot_changed
+signal apply_scale(factor, scale_dist, scale_size, pivot_id)
 
 var _is_loading_settings = false
 
@@ -87,6 +88,7 @@ func _ready():
 		use_pivot_cb.connect("toggled", self, "_on_pivot_ui_changed")
 
 	find_node("ApplyRotate").connect("pressed", self, "_on_ApplyRotate_pressed")
+	find_node("ApplyScale").connect("pressed", self, "_on_ApplyScale_pressed")
 	
 	var affected_ballz_input = find_node("AffectedBallz")
 	if affected_ballz_input:
@@ -220,6 +222,17 @@ func _on_ApplyRotate_pressed():
 	
 	emit_signal("rotate_selection", Vector3(pitch, yaw, roll), pivot_id)
 
+func _on_ApplyScale_pressed():
+	var factor = find_node("ScaleFactor").value
+	var scale_dist = find_node("ScaleDist").pressed
+	var scale_size = find_node("ScaleSize").pressed
+
+	var pivot_id = -1
+	if find_node("UsePivotCheckBox").pressed:
+		pivot_id = int(find_node("PivotBall").value)
+
+	emit_signal("apply_scale", factor, scale_dist, scale_size, pivot_id)
+
 func _on_Flip_pressed(axis):
 	var vec = Vector3.ONE
 	if axis == "x": vec.x = -1.0
@@ -302,6 +315,10 @@ func _connect_settings_signals():
 	find_node("RotatePitch").connect("value_changed", self, "_on_setting_changed")
 	find_node("RotateYaw").connect("value_changed", self, "_on_setting_changed")
 
+	find_node("ScaleFactor").connect("value_changed", self, "_on_setting_changed")
+	find_node("ScaleDist").connect("toggled", self, "_on_setting_changed")
+	find_node("ScaleSize").connect("toggled", self, "_on_setting_changed")
+
 	var reset_btn = find_node("ResetDefaultsButton")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
@@ -328,6 +345,10 @@ func save_settings():
 	config.set_value("MoveProperties", "rotate_roll", find_node("RotateRoll").value)
 	config.set_value("MoveProperties", "rotate_pitch", find_node("RotatePitch").value)
 	config.set_value("MoveProperties", "rotate_yaw", find_node("RotateYaw").value)
+
+	config.set_value("MoveProperties", "scale_factor", find_node("ScaleFactor").value)
+	config.set_value("MoveProperties", "scale_dist", find_node("ScaleDist").pressed)
+	config.set_value("MoveProperties", "scale_size", find_node("ScaleSize").pressed)
 
 	config.set_value("MoveProperties", "mirror_x", find_node("MirrorX").pressed)
 	config.set_value("MoveProperties", "mirror_y", find_node("MirrorY").pressed)
@@ -361,6 +382,10 @@ func load_settings():
 	find_node("RotatePitch").value = config.get_value("MoveProperties", "rotate_pitch", 0.0)
 	find_node("RotateYaw").value = config.get_value("MoveProperties", "rotate_yaw", 0.0)
 
+	find_node("ScaleFactor").value = config.get_value("MoveProperties", "scale_factor", 1.0)
+	find_node("ScaleDist").pressed = config.get_value("MoveProperties", "scale_dist", true)
+	find_node("ScaleSize").pressed = config.get_value("MoveProperties", "scale_size", true)
+
 	find_node("MirrorX").pressed = config.get_value("MoveProperties", "mirror_x", false)
 	find_node("MirrorY").pressed = config.get_value("MoveProperties", "mirror_y", false)
 	find_node("MirrorZ").pressed = config.get_value("MoveProperties", "mirror_z", false)
@@ -384,6 +409,10 @@ func _on_reset_defaults_pressed():
 	find_node("RotateRoll").value = 0.0
 	find_node("RotatePitch").value = 0.0
 	find_node("RotateYaw").value = 0.0
+
+	find_node("ScaleFactor").value = 1.0
+	find_node("ScaleDist").pressed = true
+	find_node("ScaleSize").pressed = true
 
 	find_node("MirrorX").pressed = false
 	find_node("MirrorY").pressed = false

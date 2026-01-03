@@ -3985,6 +3985,17 @@ func apply_batch_moves(pending_moves: Dictionary):
 	
 	save_backup()
 	
+	var size_changes = {}
+	for ball_no in pending_moves.keys():
+		var data = pending_moves[ball_no]
+		if data.has("new_size"):
+			var target_visual = data.new_size
+			var size_dif = pet_view.get_lnz_size_difference(1.0, pet_view._find_visual_ball_by_no(ball_no), pet_node)
+			size_changes[ball_no] = size_dif
+
+	if not size_changes.empty():
+		_apply_batch_sizes(size_changes)
+
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
 	
@@ -4082,7 +4093,48 @@ func apply_batch_moves(pending_moves: Dictionary):
 					count += 1
 	
 	save_file(true)
-	commit_visual_change("Batch Moved Ballz")
+	commit_visual_change("Batch Moved/Sized Ballz")
+
+func _apply_batch_sizes(size_changes: Dictionary):
+	var ballz_bounds = _get_section_bounds("[Ballz Info]")
+	var add_bounds = _get_section_bounds("[Add Ball]")
+
+	var ballz_start = ballz_bounds.get("start", -1)
+	var ballz_end = ballz_bounds.get("end", -1)
+
+	var add_start = add_bounds.get("start", -1)
+	var add_end = add_bounds.get("end", -1)
+
+	for ball_no in size_changes.keys():
+		var size_val = size_changes[ball_no]
+
+		if ball_no < KeyBallsData.max_base_ball_num:
+			if ballz_start != -1:
+				var count = 0
+				for i in range(ballz_start, ballz_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					if count == ball_no:
+						var parts = _split_line(raw)
+						if parts.size() > 5:
+							parts[5] = str(size_val)
+							set_line(i, _join_array(parts, " "))
+						break
+					count += 1
+		else:
+			if add_start != -1:
+				var idx = ball_no - KeyBallsData.max_base_ball_num
+				var count = 0
+				for i in range(add_start, add_end):
+					var raw = get_line(i).strip_edges()
+					if raw == "" or raw.begins_with(";"): continue
+					if count == idx:
+						var parts = _split_line(raw)
+						if parts.size() > 10:
+							parts[10] = str(size_val)
+							set_line(i, _join_array(parts, " "))
+						break
+					count += 1
 
 func set_batch_moves(moves_dict: Dictionary):
 	if moves_dict.empty():

@@ -57,6 +57,9 @@ var original_lnz_size = 0
 var original_scale = 1.0
 var drag_start_pos = Vector2()
 
+var _scale_group_pivot = Vector3.ZERO
+var _scale_group_initial_data = {}
+
 var sidebar_controller = null
 
 var linez_mode = false
@@ -216,6 +219,7 @@ func _ready():
 	move_mode_settings_instance.connect("select_balls_by_ids", self, "_on_select_balls_by_ids")
 	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
+	move_mode_settings_instance.connect("apply_scale", self, "_on_apply_scale")
 
 	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
@@ -456,15 +460,37 @@ func _gui_input(event):
 			if event.button_index == BUTTON_LEFT:
 				if event.pressed:
 					if Input.is_key_pressed(KEY_ALT):
-						var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-						var hover_ball = get_intended_ball(hover_pos)
-						if hover_ball:
-							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
-							var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-							for b in all_balls:
-								if is_instance_valid(b) and b.has_method("apply_outline_state"):
-									b.apply_outline_state(get_visual_state_for_ball(b))
+						if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
+							is_resizing = true 
+							is_dragging = true
+							drag_start_pos = event.position
+							drag_ball = selected_balls[0]
+
+							var pivot_id = -1
+							if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
+								pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+							_scale_group_pivot = _get_rotation_pivot_origin(pivot_id)
+
+							_scale_group_initial_data.clear()
+							for b in selected_balls:
+								if is_instance_valid(b):
+									_scale_group_initial_data[b.ball_no] = {
+										"pos": b.global_transform.origin,
+										"size": b.ball_size
+									}
+
+							Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 							return
+						else:
+							var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+							var hover_ball = get_intended_ball(hover_pos)
+							if hover_ball:
+								move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
+								var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+								for b in all_balls:
+									if is_instance_valid(b) and b.has_method("apply_outline_state"):
+										b.apply_outline_state(get_visual_state_for_ball(b))
+								return
 
 					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
 					
@@ -510,6 +536,7 @@ func _gui_input(event):
 					# Mouse release
 					if is_dragging: # Only commit if we were actually dragging
 						is_dragging = false
+						is_resizing = false
 						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 						drag_ball = null
 						
@@ -529,6 +556,33 @@ func _gui_input(event):
 						return # Consume drag release
 
 		elif event is InputEventMouseMotion and is_dragging and drag_ball:
+			if is_resizing:
+				var mouse_delta = event.position - drag_start_pos
+				var change_amount = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
+				var scale_factor = max(0.1, 1.0 + change_amount)
+				
+				Input.set_custom_mouse_cursor(hand_stretch if change_amount > 0 else hand_pinch, 0, Vector2(30, 31))
+
+				var engine_scale = pet_node.lnz.scales[1]
+				for b_no in _scale_group_initial_data:
+					var b = _find_visual_ball_by_no(b_no)
+					if not is_instance_valid(b): continue
+					
+					var initial = _scale_group_initial_data[b_no]
+					
+					var offset_from_pivot = initial.pos - _scale_group_pivot
+					b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
+					
+					var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
+					var bhd_s = pet_node.bhd.ball_sizes[b_no] if b_no < KeyBallsData.max_base_ball_num else 0
+					var req_total = (target_visual / (engine_scale / 255.0)) + 2
+					var final_lnz = round(req_total - bhd_s)
+					var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+					snapped_visual -= 1 - fmod(snapped_visual, 2)
+					
+					b.set_ball_size(snapped_visual)
+				return
+
 			var real_center = rect_position + rect_size / 2.0
 			var offset = event.position - real_center
 			offset /= tex.rect_scale
@@ -851,7 +905,7 @@ func _gui_input(event):
 		return
 	
 	# Update ball position or scale during moving or resizing:
-	if event is InputEventMouseMotion and is_dragging and drag_ball and not move_mode:
+	if event is InputEventMouseMotion and is_dragging and drag_ball:
 		if is_resizing:
 			var delta = event.position - drag_start_pos
 			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
@@ -1868,14 +1922,20 @@ func _restore_all_balls():
 		area.set_collision_layer_bit(1, false)
 
 func _track_pending_move(ball):
+	var current_size = ball.ball_size
 	if not pending_moves.has(ball.ball_no):
+		var orig_pos = ball.global_transform.origin
 		if pet_node._orig_world_pos.has(ball.ball_no):
-			pending_moves[ball.ball_no] = {
-				"orig_pos": pet_node._orig_world_pos[ball.ball_no], 
-				"new_pos": ball.global_transform.origin
-			}
+			orig_pos = pet_node._orig_world_pos[ball.ball_no]
+
+		pending_moves[ball.ball_no] = {
+			"orig_pos": orig_pos,
+			"new_pos": ball.global_transform.origin,
+			"new_size": current_size
+		}
 	else:
 		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
+		pending_moves[ball.ball_no]["new_size"] = current_size
 	
 	ball.apply_outline_state(get_visual_state_for_ball(ball))
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
@@ -2148,6 +2208,27 @@ func _on_move_mode_select_group(group_name: String):
 				b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
 	_update_selected_ballz_in_settings()
 
+func _apply_eye_iris_binding(ball, delta):
+	# Check for eye -> iris binding
+	var eye_pairs_source = {}
+	if KeyBallsData.species == KeyBallsData.Species.DOG:
+		eye_pairs_source = KeyBallsData.eyes_dog
+	elif KeyBallsData.species == KeyBallsData.Species.CAT:
+		eye_pairs_source = KeyBallsData.eyes_cat
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		eye_pairs_source = KeyBallsData.eyes_bab
+
+	for iris_id in eye_pairs_source:
+		var eye_id = eye_pairs_source[iris_id]
+		if eye_id == ball.ball_no:
+			# ball is an Eye, so move its Iris if not already selected
+			var iris_visual = _find_visual_ball_by_no(iris_id)
+			if iris_visual and is_instance_valid(iris_visual):
+				if not (iris_visual in selected_balls):
+					# Iris not manually selected, so move it along with the eye
+					iris_visual.global_transform.origin += delta
+					_track_pending_move(iris_visual)
+
 func _apply_mirror_move(balls_moved, delta):
 	var mirror_mult = move_mode_settings_instance.get_mirror_vector()
 	
@@ -2375,6 +2456,61 @@ func _on_pivot_changed():
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 ###
+func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
+	if selected_balls.empty():
+		return
+
+	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
+
+	for b in selected_balls:
+		if not is_instance_valid(b):
+			continue
+
+		var addballz_base_selected = false
+		var p = b.get_parent()
+		while is_instance_valid(p) and p != get_tree().root:
+			if p in selected_balls:
+				addballz_base_selected = true
+				break
+			p = p.get_parent()
+
+		if scale_dist:
+			if not addballz_base_selected:
+				var current_pos = b.global_transform.origin
+				var rel_pos = current_pos - pivot_origin
+				var new_rel_pos = rel_pos * factor
+				var new_pos = pivot_origin + new_rel_pos
+
+				if not pet_node._orig_world_pos.has(b.ball_no):
+					pet_node._orig_world_pos[b.ball_no] = current_pos
+
+				var delta = new_pos - current_pos
+				b.global_transform.origin = new_pos
+
+				_apply_eye_iris_binding(b, delta)
+
+		if scale_size:
+			var original_s = b.ball_size
+			var target_visual = original_s * factor
+			target_visual = clamp(target_visual, 1.0, 500.0)
+
+			var is_ab = b.ball_no >= KeyBallsData.max_base_ball_num
+			var bhd_s = pet_node.bhd.ball_sizes[b.ball_no] if not is_ab else 0
+			var engine_scale = pet_node.lnz.scales[1]
+
+			var req_total = (target_visual / (engine_scale / 255.0)) + 2
+			var final_lnz = round(req_total - bhd_s)
+
+			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+			snapped_visual -= 1 - fmod(snapped_visual, 2)
+
+			b.set_ball_size(snapped_visual)
+
+			pass
+
+	for b in selected_balls:
+		if is_instance_valid(b):
+			_track_pending_move(b)
 
 func _on_paintball_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Paintball Mode")
