@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/ico_tab_recolort.png-32f508f1d03528ab83fc3389500348d6.stex"
+path="res://.import/ico_tab_recolor.png-95b60c29ce11d0ba1a4bd6bafb2822df.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resources/icons/ico_tab_recolort.png"
-dest_files=[ "res://.import/ico_tab_recolort.png-32f508f1d03528ab83fc3389500348d6.stex" ]
+source_file="res://resources/icons/ico_tab_recolor.png"
+dest_files=[ "res://.import/ico_tab_recolor.png-95b60c29ce11d0ba1a4bd6bafb2822df.stex" ]
 
 [params]
 
