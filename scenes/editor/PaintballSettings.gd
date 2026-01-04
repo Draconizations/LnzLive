@@ -458,6 +458,13 @@ func _on_RemoveSlotButton_pressed():
 func _on_setting_changed(_arg = null):
 	if _is_loading_settings:
 		return
+
+	var design_canvas = find_node("DesignCanvas")
+	var spacing_spinbox = find_node("Spacing") 
+	
+	if design_canvas and spacing_spinbox:
+		design_canvas.spacing = spacing_spinbox.value
+
 	save_settings()
 	update_preview()
 
@@ -523,8 +530,9 @@ func update_preview():
 
 	base_visual_ball.rotation = _preview_ball_rotation
 
-	var base_size = 50 
+	var base_size = 50.0 
 	base_visual_ball.ball_size = base_size
+
 	base_visual_ball.color_index = 244
 	base_visual_ball.palette = active_palette
 	base_visual_ball.transform.origin = Vector3.ZERO
@@ -532,9 +540,10 @@ func update_preview():
 	base_visual_ball.visible = true
 	base_visual_ball.transform.origin = Vector3.ZERO
 
+	var current_footprint = find_node("DiameterMax").value
 	var center_dir = Vector3(0, 0, 1) 
 	var basis = Basis() 
-	var pb_list = paste_paintball_design(center_dir, basis, 0, float(base_size), 50.0)
+	var pb_list = paste_paintball_design(Vector3(0, 0, 1), Basis(), 0, base_size, current_footprint)
 
 	var z_add_counter = 0.0
 	for pb_data in pb_list:
@@ -618,6 +627,7 @@ func load_settings():
 	find_node("Target").selected = config.get_value("PaintballProperties", "target", 0)
 	find_node("FreelineCheckBox").pressed = config.get_value("PaintballProperties", "freeline", false)
 	find_node("Spacing").value = config.get_value("PaintballProperties", "spacing", 5.0)
+	find_node("DesignCanvas").spacing = find_node("Spacing").value
 	find_node("Jitter").value = config.get_value("PaintballProperties", "jitter", 0.0)
 	find_node("Ordered").pressed = config.get_value("PaintballProperties", "ordered", false)
 	find_node("Repeat").pressed = config.get_value("PaintballProperties", "repeat", false)

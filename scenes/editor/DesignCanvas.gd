@@ -8,6 +8,8 @@ var brush_size = 30
 var current_color_slot = 1
 var is_drawing = false
 var coordinate_multiplier = 1.0
+var spacing = 5.0
+var last_draw_pos = Vector2.ZERO
 
 var slot_data_ref = []
 
@@ -20,13 +22,16 @@ func _gui_input(event):
 		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
 				is_drawing = true
+				last_draw_pos = event.position
 				_add_paintball(event.position)
 			else:
 				is_drawing = false
 
 	elif event is InputEventMouseMotion:
 		if is_drawing:
-			_add_paintball(event.position)
+			if event.position.distance_to(last_draw_pos) >= spacing:
+				_add_paintball(event.position)
+				last_draw_pos = event.position
 
 func _add_paintball(pos):
 	var rect_size = get_rect().size

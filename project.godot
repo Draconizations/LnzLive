@@ -29,6 +29,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/bhd_parser.gd"
 }, {
+"base": "Control",
+"class": "DesignCanvas",
+"language": "GDScript",
+"path": "res://scenes/editor/DesignCanvas.gd"
+}, {
 "base": "Panel",
 "class": "DraggablePanel",
 "language": "GDScript",
@@ -69,6 +74,7 @@ _global_script_class_icons={
 "BallData": "",
 "BdtParser": "",
 "BhdParser": "",
+"DesignCanvas": "",
 "DraggablePanel": "",
 "LineData": "",
 "LnzLiveUtils": "",
