@@ -137,7 +137,13 @@ var paint_redo_stack = []
 var move_history = []
 var move_redo_stack = []
 
+var hotkey_overlay_scene = preload("res://scenes/editor/HotkeyOverlay.tscn")
+var hotkey_overlay_instance = null
+
 func _ready():
+	hotkey_overlay_instance = hotkey_overlay_scene.instance()
+	add_child(hotkey_overlay_instance)
+
 	set_process_unhandled_key_input(true)
 	set_process(true)
 
