@@ -291,7 +291,7 @@ func _process(_delta):
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 		
 	elif paintball_mode:
-		paintball_settings_instance.sync_camera(camera.global_transform)
+		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:

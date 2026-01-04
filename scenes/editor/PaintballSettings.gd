@@ -14,6 +14,10 @@ signal delete_mode_toggled(is_on)
 
 var _is_loading_settings = false
 
+var _preview_ball_rotation = Vector3.ZERO
+var _is_dragging_preview = false
+var _last_mouse_pos = Vector2.ZERO
+
 onready var paintballz_tree = find_node("PaintballzTree")
 onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
 onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
@@ -92,10 +96,26 @@ func _ready():
 
 	preview_viewport.size = Vector2(200, 200)
 
+	var preview_container = find_node("PreviewContainer")
+	preview_container.connect("gui_input", self, "_on_PreviewContainer_gui_input")
+
 	_setup_slots_tree()
 	load_settings()
 
 	call_deferred("update_preview")
+
+func _on_PreviewContainer_gui_input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
+			_is_dragging_preview = event.pressed
+			_last_mouse_pos = event.position
+	
+	elif event is InputEventMouseMotion and _is_dragging_preview:
+		var diff = event.position - _last_mouse_pos
+		_preview_ball_rotation.y += diff.x * 0.01
+		_preview_ball_rotation.x += diff.y * 0.01
+		_last_mouse_pos = event.position
+		update_preview()
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_paintballz")
@@ -170,20 +190,18 @@ func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float)
 					cleared += 1
 	return cleared
 
-func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float) -> Array:
+func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0) -> Array:
 	var design_canvas = find_node("DesignCanvas")
 	var paintballs = design_canvas.design_paintballs
 	var output = []
 
-	var footprint_percent = find_node("DiameterMax").value
-
+	var footprint_percent = override_footprint if override_footprint > 0 else find_node("DiameterMax").value
 	var footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
 
 	var tangent_x = basis.x
 	var tangent_y = basis.z
 
 	for pb in paintballs:
-
 		if pb.color_slot - 1 >= design_color_slots.size():
 			continue
 
@@ -191,7 +209,6 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		var dy = -pb.y * (footprint_lnz / 2.0)
 
 		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy
-
 		var slot_data = design_color_slots[pb.color_slot - 1]
 		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
 
@@ -490,7 +507,6 @@ func sync_camera(main_camera_transform: Transform):
 
 func update_preview():
 	if not preview_viewport or not preview_world: 
-		print("DEBUG: Preview nodes missing!") 
 		return
 
 	preview_camera.projection = Camera.PROJECTION_ORTHOGONAL
@@ -504,7 +520,8 @@ func update_preview():
 	var base_visual_ball = ball_scene.instance()
 	base_visual_ball.add_to_group("preview_objects")
 	preview_world.add_child(base_visual_ball)
-	print("DEBUG: Instanced Base Ball: ", base_visual_ball.name)
+
+	base_visual_ball.rotation = _preview_ball_rotation
 
 	var base_size = 50 
 	base_visual_ball.ball_size = base_size
@@ -517,7 +534,7 @@ func update_preview():
 
 	var center_dir = Vector3(0, 0, 1) 
 	var basis = Basis() 
-	var pb_list = paste_paintball_design(center_dir, basis, 0, float(base_size))
+	var pb_list = paste_paintball_design(center_dir, basis, 0, float(base_size), 50.0)
 
 	var z_add_counter = 0.0
 	for pb_data in pb_list:
