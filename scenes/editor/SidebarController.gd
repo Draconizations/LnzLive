@@ -12,10 +12,11 @@ const TAB_ICONS = {
 	"FileTree": "res://resources/icons/ico_tab_file.png",
 	"Palette": "res://resources/icons/ico_tab_palette.png",
 	"Paint": "res://resources/icons/ico_tab_paint.png",
+	"Recolor": "res://resources/icons/ico_tab_recolor.png",
 	"AutoPaint": "res://resources/icons/ico_tab_autopaint.png",
+	"Preset": "res://resources/icons/ico_tab_preset.png",
 	"Move": "res://resources/icons/ico_tab_move.png",
 	"Line": "res://resources/icons/ico_tab_line.png",
-	"Preset": "res://resources/icons/ico_tab_preset.png",
 	"Shape": "res://resources/icons/ico_tab_shape.png"
 }
 
@@ -131,13 +132,14 @@ func _on_tab_changed(tab_index: int):
 	if not pet_view or not is_instance_valid(pet_view): return
 
 	match control.name:
-		"Paint": pet_view.paintball_check_box.pressed = true
-		"AutoPaint": pet_view.auto_paintballer_check_box.pressed = true
-		"Preset": pet_view.preset_mode_check_box.pressed = true
-		"Line": pet_view.line_mode_check_box.pressed = true
-		"Move": pet_view.move_mode_check_box.pressed = true
-		"Shape": pet_view.project_mode_check_box.pressed = true
 		"Palette": pet_view.view_palette_check_box.pressed = true
+		"Recolor": pet_view.recolor_mode_check_box.pressed = true
+		"Paint": pet_view.paintball_check_box.pressed = true
+		"Move": pet_view.move_mode_check_box.pressed = true
+		"Line": pet_view.line_mode_check_box.pressed = true
+		"Preset": pet_view.preset_mode_check_box.pressed = true
+		"AutoPaint": pet_view.auto_paintballer_check_box.pressed = true
+		"Shape": pet_view.project_mode_check_box.pressed = true
 		"FileTree":
 			pass
 

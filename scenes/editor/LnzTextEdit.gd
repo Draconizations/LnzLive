@@ -2584,6 +2584,20 @@ func apply_batch_presets(balls_list, properties):
 		save_file(true)
 		commit_visual_change("Batch Applied Preset to %d Ballz" % balls_list.size())
 
+func apply_batch_bucket_changes(changes: Dictionary):
+	if changes.empty(): return
+	save_backup()
+	var applied_something = false
+
+	for ball_no in changes:
+		var props = changes[ball_no]
+		apply_preset_to_ball(ball_no, props, false)
+		applied_something = true
+
+	if applied_something:
+		save_file(true)
+		commit_visual_change("Batch Applied Bucket to %d Ballz" % changes.size())
+
 func _apply_paintball_preset_no_save(ball_no, properties):
 	var paintballz = properties.paintballz
 	if paintballz.size() > 0:

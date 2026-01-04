@@ -798,6 +798,23 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="RecolorModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
+margin_top = 138.0
+margin_right = 185.0
+margin_bottom = 157.0
+hint_tooltip = "Hotkey G to activate Recolor Mode"
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Recolor Mode"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
 margin_left = 244.0
 margin_right = 314.0
@@ -1764,7 +1781,7 @@ anchor_bottom = 1.0
 margin_left = 8.0
 margin_top = 39.0
 margin_right = -8.0
-margin_bottom = -36.0
+margin_bottom = -25.0
 size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false

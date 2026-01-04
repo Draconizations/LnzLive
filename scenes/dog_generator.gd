@@ -77,6 +77,8 @@ const EYELID_ICONS  = [
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
+var current_palette_texture = null
+
 signal animation_loaded(num_of_frames)
 signal bhd_loaded(num_of_animations)
 signal ball_mouse_enter(ball_info)
@@ -271,6 +273,28 @@ func generate_pet(file_path):
 	
 	init_visual_balls(lnz_info, full_rebuild)
 	emit_signal("palette_changed", lnz.palette)
+
+func generate_color_icon(color_index: int) -> ImageTexture:
+	if not current_palette_texture:
+		return null
+
+	if color_index < 0 or color_index > 255:
+		return null
+
+	var img = current_palette_texture.get_data()
+	if not img: return null
+
+	img.lock()
+	var color = img.get_pixel(color_index, 0)
+	img.unlock()
+
+	var icon_img = Image.new()
+	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
+	icon_img.fill(color)
+
+	var tex = ImageTexture.new()
+	tex.create_from_image(icon_img)
+	return tex
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()
@@ -617,6 +641,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 	if pal_texture == null:
 		pal_texture = default_palette
+
+	current_palette_texture = pal_texture
 
 	# If we're creating everything fresh, clear out old visuals
 	if new_create:
@@ -1601,3 +1627,27 @@ func unhide_all_balls():
 
 func is_ball_hidden(ball_no):
 	return _hidden_balls.has(ball_no)
+
+func restore_ball_visual_states(ball_nos: Array):
+	if lnz == null: return
+	
+	for b_no in ball_nos:
+		var visual_node = ball_map.get(b_no)
+		if not is_instance_valid(visual_node): continue
+		
+		var data = lnz.balls.get(b_no)
+		if data == null: data = lnz.addballs.get(b_no)
+		if data == null: continue
+		
+		visual_node.color_index = data.color_index
+		visual_node.outline_color_index = data.outline_color_index
+		visual_node.outline = data.outline
+		visual_node.fuzz_amount = clamp(data.fuzz / 2, 0, 5)
+		
+		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
+			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
+		else:
+			visual_node.texture = null
+			
+		if visual_node.has_method("update_ball"):
+			visual_node.update_ball()

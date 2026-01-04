@@ -20,11 +20,12 @@ onready var view_palette_check_box = find_node("ViewPaletteButton")
 
 onready var select_check_box = find_node("SelectCheckBox")
 
+onready var recolor_mode_check_box = find_node("RecolorModeCheckBox")
 onready var paintball_check_box = find_node("PaintballModeCheckBox")
+onready var move_mode_check_box = find_node("MoveModeCheckBox")
+onready var line_mode_check_box = find_node("LineModeCheckBox")
 onready var project_mode_check_box = find_node("ProjectModeCheckBox")
 onready var preset_mode_check_box = find_node("PresetModeCheckBox")
-onready var line_mode_check_box = find_node("LineModeCheckBox")
-onready var move_mode_check_box = find_node("MoveModeCheckBox")
 
 onready var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 
@@ -70,6 +71,8 @@ var paintball_mode = false
 var project_mode = false
 var auto_paintballer_mode = false
 var move_mode = false
+var recolor_mode = false
+var preset_mode = false
 
 var paintball_target_ball = null
 var ray_intersect_paintball = null
@@ -91,15 +94,14 @@ var _ordered_texture_index = 0
 # onready var move_mode_settings_instance = preload("res://scenes/editor/MoveModeSettings.tscn").instance()
 # onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 
+var palette_viewer_instance: Control
+var recolor_settings_instance: Control
 var paintball_settings_instance: Control
+var move_mode_settings_instance: Control
+var line_mode_settings_instance: Control
 var project_settings_instance: Control
 var preset_settings_instance: Control
 var auto_paintballer_settings_instance: Control
-var palette_viewer_instance: Control
-var move_mode_settings_instance: Control
-var line_mode_settings_instance: Control
-
-var preset_mode = false
 
 #var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x_64px.png")
@@ -154,6 +156,7 @@ func _ready():
 	palette_viewer_instance = load("res://scenes/editor/PaletteViewer.tscn").instance()
 	move_mode_settings_instance = load("res://scenes/editor/MoveModeSettings.tscn").instance()
 	line_mode_settings_instance = load("res://scenes/editor/LineModeSettings.tscn").instance()
+	recolor_settings_instance = load("res://scenes/editor/RecolorSettings.tscn").instance()
 
 	var sidebar_node = get_tree().root.find_node("VBoxContainer", true, false)
 	var sidebars = get_tree().get_nodes_in_group("SidebarController")
@@ -163,22 +166,25 @@ func _ready():
 		sidebar_controller = sidebar_node
 	
 	if sidebar_controller:
-		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
 		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
+		sidebar_controller.call_deferred("add_tool_tab", recolor_settings_instance, "Recolor")
 		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
-		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
 		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
+		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
 		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
+		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
 		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Shape")
+		
 	else:
 		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", recolor_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
@@ -191,6 +197,7 @@ func _ready():
 
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
+	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
 
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
@@ -232,6 +239,10 @@ func _ready():
 	move_mode_settings_instance.connect("flip_selection", self, "_on_flip_selection")
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
 	move_mode_settings_instance.connect("apply_scale", self, "_on_apply_scale")
+
+	if is_instance_valid(lnz_text_edit):
+		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
+		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_bucket_changes")
 
 	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
@@ -332,6 +343,10 @@ func _process(_delta):
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 	
+	elif recolor_mode:
+		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes."
+		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+
 	elif selecting_on:
 		body = "Select Mode: when hovering, cycle ballz using TAB..."
 	
@@ -1097,6 +1112,13 @@ func _gui_input(event):
 			get_tree().set_input_as_handled() 
 			return
 
+	if recolor_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if target_ball:
+			recolor_settings_instance.queue_bucket_change(target_ball)
+			get_tree().set_input_as_handled()
+			return
+
 func _unhandled_key_input(event):
 	if input_is_paused:
 		return
@@ -1112,6 +1134,7 @@ func _unhandled_key_input(event):
 		line_mode_check_box.pressed = false
 		move_mode_check_box.pressed = false
 		preset_mode_check_box.pressed = false
+		recolor_mode_check_box.pressed = false
 		project_mode_check_box.pressed = false
 		auto_paintballer_check_box.pressed = false
 		
@@ -1170,6 +1193,11 @@ func _unhandled_key_input(event):
 		tools_menu.popup()
 		return
 	
+	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_R:
+		recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+		get_tree().set_input_as_handled()
+		return
+
 	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_B:
 		paintball_check_box.pressed = !paintball_check_box.pressed
 		get_tree().set_input_as_handled()
@@ -1231,10 +1259,7 @@ func _unhandled_key_input(event):
 				get_tree().set_input_as_handled()
 				return
 			KEY_G:
-				if recolor_popup.visible:
-					recolor_popup.hide()
-				else:
-					recolor_popup.popup_centered()
+				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
 				get_tree().set_input_as_handled()
 				return
 			KEY_H:
@@ -2728,7 +2753,6 @@ func _on_move_mode_toggled(is_on):
 # 		_on_unselect_all()
 # 		_on_move_mode_clear() # Revert any pending moves visuals
 
-
 func _on_preset_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Preset Mode")
 	preset_mode = is_on
@@ -2867,6 +2891,21 @@ func _deactivate_other_modes(active_mode_name: String):
 	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
 	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
 	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
+	if active_mode_name != "Recolor Mode": recolor_mode_check_box.pressed = false
+
+func _on_recolor_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Recolor Mode")
+	recolor_mode = is_on
+	_update_mode_panel_visibility(recolor_settings_instance, is_on)
+
+	if is_on:
+		mouse_default_cursor_shape = CURSOR_ARROW
+		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+	else:
+		recolor_settings_instance._on_ClearBucket_pressed()
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+		recolor_settings_instance._on_ClearBucket_pressed()
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	if is_active:
