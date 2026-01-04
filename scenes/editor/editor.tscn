@@ -274,7 +274,7 @@ tab_align = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 1.0
-margin_top = 26.0
+margin_top = 25.0
 margin_right = -1.0
 margin_bottom = -1.0
 size_flags_horizontal = 3
@@ -282,7 +282,7 @@ size_flags_vertical = 3
 
 [node name="Tree" type="Tree" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
 margin_right = 376.0
-margin_bottom = 966.0
+margin_bottom = 969.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_styles/bg = SubResource( 5 )
@@ -313,15 +313,15 @@ __meta__ = {
 }
 
 [node name="FileNavHBox1" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
-margin_top = 970.0
+margin_top = 973.0
 margin_right = 376.0
-margin_bottom = 995.0
+margin_bottom = 997.0
 alignment = 1
 
 [node name="ImportButtonPalPNG" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox1"]
-margin_left = 49.0
+margin_left = 59.0
 margin_right = 187.0
-margin_bottom = 25.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -332,8 +332,8 @@ text = "Import Palette "
 
 [node name="ImportButtonTexBMP" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox1"]
 margin_left = 191.0
-margin_right = 327.0
-margin_bottom = 25.0
+margin_right = 316.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -343,15 +343,15 @@ custom_fonts/font = ExtResource( 27 )
 text = "Import Texture"
 
 [node name="FileNavHBox2" type="HBoxContainer" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree"]
-margin_top = 999.0
+margin_top = 1001.0
 margin_right = 376.0
-margin_bottom = 1024.0
+margin_bottom = 1025.0
 alignment = 1
 
 [node name="ImportButtonLNZ" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2"]
-margin_left = 62.0
-margin_right = 160.0
-margin_bottom = 25.0
+margin_left = 72.0
+margin_right = 163.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -361,9 +361,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "Import LNZ"
 
 [node name="OpenUserFolder" type="Button" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/FileNavHBox2"]
-margin_left = 164.0
-margin_right = 313.0
-margin_bottom = 25.0
+margin_left = 167.0
+margin_right = 304.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -427,8 +427,8 @@ rect_min_size = Vector2( 0, 25 )
 alignment = 1
 
 [node name="FileOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 47.0
-margin_right = 107.0
+margin_left = 52.0
+margin_right = 112.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -577,8 +577,8 @@ margin_right = 20.0
 margin_bottom = 20.0
 
 [node name="ToolOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 111.0
-margin_right = 171.0
+margin_left = 116.0
+margin_right = 176.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -671,8 +671,8 @@ custom_fonts/font = ExtResource( 28 )
 text = "Capture Head Shot"
 
 [node name="ModeOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 175.0
-margin_right = 235.0
+margin_left = 180.0
+margin_right = 240.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -799,8 +799,8 @@ __meta__ = {
 }
 
 [node name="RenderOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 239.0
-margin_right = 309.0
+margin_left = 244.0
+margin_right = 314.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
@@ -975,8 +975,8 @@ custom_fonts/font = ExtResource( 28 )
 text = "Unhide Ballz"
 
 [node name="ExportOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 313.0
-margin_right = 383.0
+margin_left = 318.0
+margin_right = 388.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 70, 0 )
 size_flags_horizontal = 0
@@ -1029,8 +1029,8 @@ text = "Export to Clothes CLZ"
 script = ExtResource( 38 )
 
 [node name="HelpOptionButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 387.0
-margin_right = 447.0
+margin_left = 392.0
+margin_right = 452.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 60, 0 )
 size_flags_horizontal = 0
@@ -1096,8 +1096,8 @@ script = ExtResource( 13 )
 url = "https://tabbzi.github.io/petz-paletteiare/"
 
 [node name="BackgroundColorPickerButton" type="ColorPickerButton" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 451.0
-margin_right = 476.0
+margin_left = 456.0
+margin_right = 481.0
 margin_bottom = 25.0
 rect_min_size = Vector2( 25, 25 )
 hint_tooltip = "Change viewer background color"
@@ -1112,24 +1112,24 @@ color = Color( 0.168627, 0.45098, 0.45098, 1 )
 edit_alpha = false
 
 [node name="EyeLidButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 480.0
-margin_right = 508.0
+margin_left = 485.0
+margin_right = 513.0
 margin_bottom = 25.0
 icon = ExtResource( 15 )
 flat = true
 
 [node name="ShrinkLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 512.0
+margin_left = 517.0
 margin_top = 2.0
-margin_right = 634.0
-margin_bottom = 23.0
+margin_right = 629.0
+margin_bottom = 22.0
 custom_fonts/font = ExtResource( 27 )
 text = "Expand Screen:"
 align = 2
 
 [node name="ShrinkSpinBox" type="SpinBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu"]
-margin_left = 638.0
-margin_right = 712.0
+margin_left = 633.0
+margin_right = 707.0
 margin_bottom = 25.0
 min_value = 1.0
 max_value = 2.0
@@ -1139,16 +1139,16 @@ value = 1.0
 [node name="AnimationContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
 margin_top = 29.0
 margin_right = 759.0
-margin_bottom = 52.0
+margin_bottom = 51.0
 mouse_filter = 0
 
 [node name="RichTextLabel" type="RichTextLabel" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_bottom = 23.0
+margin_bottom = 22.0
 
 [node name="PrevAnim" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 4.0
 margin_right = 29.0
-margin_bottom = 23.0
+margin_bottom = 22.0
 rect_min_size = Vector2( 25, 20 )
 size_flags_vertical = 0
 custom_styles/hover = ExtResource( 19 )
@@ -1177,7 +1177,7 @@ __meta__ = {
 [node name="NextAnim" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 87.0
 margin_right = 112.0
-margin_bottom = 23.0
+margin_bottom = 22.0
 rect_min_size = Vector2( 25, 20 )
 size_flags_vertical = 0
 custom_styles/hover = ExtResource( 19 )
@@ -1190,7 +1190,7 @@ text = ">"
 
 [node name="FrameSlider" type="HSlider" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
 margin_left = 116.0
-margin_right = 587.0
+margin_right = 593.0
 margin_bottom = 16.0
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -1200,9 +1200,9 @@ rounded = true
 script = ExtResource( 5 )
 
 [node name="Button" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 591.0
-margin_right = 641.0
-margin_bottom = 23.0
+margin_left = 597.0
+margin_right = 647.0
+margin_bottom = 22.0
 rect_min_size = Vector2( 50, 20 )
 mouse_filter = 1
 size_flags_horizontal = 3
@@ -1221,18 +1221,18 @@ script = ExtResource( 6 )
 wait_time = 0.06
 
 [node name="FPSLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 645.0
+margin_left = 651.0
 margin_top = 4.0
-margin_right = 677.0
+margin_right = 683.0
 margin_bottom = 18.0
 mouse_filter = 1
 size_flags_horizontal = 3
 script = ExtResource( 7 )
 
 [node name="TPoseCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer"]
-margin_left = 681.0
+margin_left = 687.0
 margin_right = 759.0
-margin_bottom = 23.0
+margin_bottom = 22.0
 focus_mode = 0
 custom_styles/hover = ExtResource( 19 )
 custom_styles/pressed = ExtResource( 19 )
@@ -1244,9 +1244,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "T-Pose"
 
 [node name="HelperContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 56.0
+margin_top = 55.0
 margin_right = 759.0
-margin_bottom = 206.0
+margin_bottom = 205.0
 rect_min_size = Vector2( 0, 150 )
 size_flags_vertical = 0
 
@@ -1302,7 +1302,7 @@ __meta__ = {
 }
 
 [node name="BottomSpacer" type="Control" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer"]
-margin_top = 210.0
+margin_top = 209.0
 margin_right = 759.0
 margin_bottom = 1002.0
 mouse_filter = 2
@@ -1336,7 +1336,7 @@ margin_right = 759.0
 margin_bottom = 74.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-21"
+text = "PB-beta-v1.4.6-preview-22"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1357,13 +1357,13 @@ margin_bottom = 1079.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_right = 757.0
-margin_bottom = 25.0
+margin_bottom = 24.0
 rect_clip_content = true
 size_flags_horizontal = 3
 
 [node name="FontToggleButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_right = 91.0
-margin_bottom = 25.0
+margin_right = 85.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -1373,9 +1373,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "Font: Pixel"
 
 [node name="DecreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 95.0
-margin_right = 115.0
-margin_bottom = 25.0
+margin_left = 89.0
+margin_right = 109.0
+margin_bottom = 24.0
 rect_min_size = Vector2( 20, 20 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -1386,9 +1386,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "-"
 
 [node name="IncreaseFontButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 119.0
-margin_right = 141.0
-margin_bottom = 25.0
+margin_left = 113.0
+margin_right = 135.0
+margin_bottom = 24.0
 rect_min_size = Vector2( 22, 20 )
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -1399,9 +1399,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "+"
 
 [node name="AutowrapButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 145.0
-margin_right = 231.0
-margin_bottom = 25.0
+margin_left = 139.0
+margin_right = 220.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -1411,9 +1411,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "Wrap: Off"
 
 [node name="FindReplaceButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 235.0
-margin_right = 351.0
-margin_bottom = 25.0
+margin_left = 224.0
+margin_right = 332.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -1423,9 +1423,9 @@ custom_fonts/font = ExtResource( 27 )
 text = "Find/Replace"
 
 [node name="TextModeButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 355.0
-margin_right = 452.0
-margin_bottom = 25.0
+margin_left = 336.0
+margin_right = 425.0
+margin_bottom = 24.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -1448,10 +1448,10 @@ custom_fonts/font = ExtResource( 27 )
 text = "Table Editor"
 
 [node name="BallNo" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer"]
-margin_left = 456.0
+margin_left = 429.0
 margin_top = 2.0
-margin_right = 456.0
-margin_bottom = 23.0
+margin_right = 429.0
+margin_bottom = 22.0
 custom_fonts/font = ExtResource( 27 )
 script = ExtResource( 8 )
 
@@ -1572,7 +1572,7 @@ custom_fonts/font = ExtResource( 27 )
 text = "Close"
 
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
-margin_top = 29.0
+margin_top = 28.0
 margin_right = 757.0
 margin_bottom = 1078.0
 size_flags_horizontal = 3
@@ -2017,12 +2017,12 @@ __meta__ = {
 [connection signal="ball_translation_changed" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translation_changed"]
 [connection signal="ball_translations_done" from="PetRoot/Node" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Node_ball_translations_done"]
 [connection signal="backup_file" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_Tree_backup_file"]
-[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_example_file_selected"]
+[connection signal="example_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="item_activated" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_activated"]
 [connection signal="item_rmb_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_Tree_item_rmb_selected"]
-[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_user_file_selected"]
+[connection signal="user_file_selected" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" to="PetRoot/Node" method="generate_pet"]
 [connection signal="about_to_show" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_about_to_show"]
 [connection signal="id_pressed" from="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree/ItemPopupMenu" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_ItemPopupMenu_id_pressed"]
 [connection signal="resized" from="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_PetViewContainer_resized"]
@@ -2059,8 +2059,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]

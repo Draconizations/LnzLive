@@ -13,11 +13,17 @@ onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer
 onready var lnz_text_edit = self
 onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-onready var camera_holder = get_tree().root.find_node("CameraHolder", true, false)
+
+onready var camera_holder = get_tree().root.get_node(
+	"Root/SceneRoot/ViewportContainer/Viewport/CameraHolder"
+) as Spatial
+
+onready var frame_slider = get_tree().root.get_node(
+	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/FrameSlider"
+) as HSlider
 
 onready var console_log = pet_view.find_node("ConsoleLog", true, false)
 onready var apply_changes_button = pet_view.find_node("ApplyChangesButton", true, false)
-onready var frame_slider = pet_view.find_node("FrameSlider", true, false)
 
 onready var find_panel = get_node("../FindPanel")
 
