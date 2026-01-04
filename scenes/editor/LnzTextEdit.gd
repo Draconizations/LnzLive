@@ -164,12 +164,9 @@ func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
 		save_file(false)
 
-	if Input.is_key_pressed(KEY_CONTROL) and event.pressed:
+	if Input.is_key_pressed(KEY_CONTROL) and not event.shift and event.pressed:
 		if event.scancode == KEY_Z:
-			if Input.is_key_pressed(KEY_SHIFT):
-				redo_visual_edit() # Ctrl+Shift+Z
-			else:
-				undo_visual_edit() # Ctrl+Z
+			undo_visual_edit() # Ctrl+Z
 		elif event.scancode == KEY_Y:
 			redo_visual_edit() # Ctrl+Y
 

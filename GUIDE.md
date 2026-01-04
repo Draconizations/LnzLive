@@ -36,7 +36,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `SPACE` + `left-click drag` or `middle/wheel drag` | Pan Camera View |
 | **Viewport** | `left-click drag` | Rotate Camera View |
 | **Viewport** | `1` through `6` | Set Orthogonal Views (Front, Bottom, Top, Right, Left, Back) |
-| **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top |
+| **Viewport** | `7` through `0` | Set Isometric Views (Right-Bottom, Right-Top, Left-Bottom, Left-Top) |
 | **Viewport** | `CTRL` + `Z` | Undo last committed action |
 | **Viewport** | `CTRL` + `Y` | Redo last committed action |
 | **Viewport** | `ESCAPE` | Exit Current Mode |
@@ -65,6 +65,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `CTRL` + `left-click` | **Eraser**: Delete nearest queued paintballz |
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `Down` | **Scale/Resize**: Resize diameter of paintballz |
+| **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
 | **Preset Mode** | left-click | **Apply Preset**: Apply current Preset to ball |
 | **Preset Mode** | `ALT` + left-click | **Eyedropper**: Sample properties from ball |
@@ -79,10 +80,11 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
 | **Move Mode** | `X`, `Y`, and/or `Z` (hold during drag) | Lock movement to specific axis or plane |
+| **Move Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued move/scale action |
 
 ### History System
 
-LnzLive uses a Undo/Redo history system to track visual and text edits as saved actions (default: 25 saved actions). It uses "Logical Commits" for specific line changes (like moving a ball) and "Snapshots" for major operations. Use `CTRL` + `Z` to undo and `CTRL` + `Y` while focused to redo while the viewport is focused.
+LnzLive uses a Undo/Redo history system to track visual and text edits as saved actions (default: 25 saved actions). It uses "Logical Commits" for specific line changes (like moving a ball) and "Snapshots" for major operations. Use `CTRL` + `Z` to undo and `CTRL` + `Y` while focused to redo while the viewport is focused. There are "mini" history systems for Paintball Mode and Move Mode in which using `CTRL` + `SHIFT` + `Z` undoes and `CTRL` + `SHIFT` + `X` redoes any queued (but not yet applied) changes.
 
 ### User Config
 

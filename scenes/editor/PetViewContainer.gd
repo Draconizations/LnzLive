@@ -131,6 +131,12 @@ var box_selecting = false
 var box_start_pos = Vector2()
 var box_end_pos = Vector2()
 
+var paint_history = []
+var paint_redo_stack = []
+
+var move_history = []
+var move_redo_stack = []
+
 func _ready():
 	set_process_unhandled_key_input(true)
 	set_process(true)
@@ -519,6 +525,8 @@ func _gui_input(event):
 							drag_ball = hover # Just as a reference for plane intersection
 							drag_start_pos = event.position
 							
+							_record_move_start_state()
+
 							# Record original positions for this drag session
 							for b in selected_balls:
 								if not pet_node._orig_world_pos.has(b.ball_no):
@@ -553,6 +561,7 @@ func _gui_input(event):
 									pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
 						
 						move_mode_settings_instance.set_queued_count(pending_moves.size())
+						_record_move_end_state("Drag Move")
 						return # Consume drag release
 
 		elif event is InputEventMouseMotion and is_dragging and drag_ball:
@@ -843,7 +852,9 @@ func _gui_input(event):
 
 		if target_ball:
 			var screen_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-			_create_paintball_at_position(screen_pos, target_ball)
+			var result = _create_paintball_at_position(screen_pos, target_ball)
+			if result:
+				_record_paint_action([result])
 		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
@@ -1100,6 +1111,27 @@ func _unhandled_key_input(event):
 		get_tree().set_input_as_handled()
 		return
 
+	# Mini-history for Paintball and Move modes
+	if event is InputEventKey and event.pressed and event.control and event.shift:
+		if event.scancode == KEY_Z: # Undo
+			if paintball_mode:
+				_undo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+			elif move_mode:
+				_undo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+		elif event.scancode == KEY_X: # Redo
+			if paintball_mode:
+				_redo_queued_paintball()
+				get_tree().set_input_as_handled()
+				return
+			elif move_mode:
+				_redo_queued_move()
+				get_tree().set_input_as_handled()
+				return
+
 	if move_mode and event.pressed:
 		var nudge_axis = ""
 		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
@@ -1108,11 +1140,15 @@ func _unhandled_key_input(event):
 		
 		if nudge_axis != "":
 			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
+				_record_move_start_state() # Before change
 				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				_record_move_end_state("Nudge +")
 				get_tree().set_input_as_handled()
 				return
 			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
+				_record_move_start_state() # Before change
 				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
 				return
 		
@@ -1812,8 +1848,13 @@ func _finalize_freeline():
 	if props.get("shuffle", false):
 		stroke.shuffle()
 
+	var added_paintballs = []
 	for data in stroke:
-		_create_paintball_at_position(data.pos, data.ball, data.diam)
+		var result = _create_paintball_at_position(data.pos, data.ball, data.diam)
+		if result:
+			added_paintballs.append(result)
+
+	_record_paint_action(added_paintballs)
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
 	var from = camera.project_ray_origin(screen_pos)
@@ -1892,6 +1933,8 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
+		return paintball_info
+	return null
 
 func _isolate_target_ball(target_ball):
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -2039,6 +2082,8 @@ func _on_align_selection(axis, mode):
 	if selected_balls.empty():
 		return
 		
+	_record_move_start_state()
+
 	_align_ball_list(selected_balls, axis, mode)
 
 	if move_mode_settings_instance.is_mirror_x_active():
@@ -2060,6 +2105,8 @@ func _on_align_selection(axis, mode):
 				elif mode == 2: target_mode = 0
 				
 			_align_ball_list(mirrored_group, axis, target_mode)
+
+	_record_move_end_state("Align " + axis)
 
 func _align_ball_list(ball_list, axis, mode):
 	var reference_val = 0.0
@@ -2170,6 +2217,8 @@ func _on_nudge_selection(vector: Vector3):
 	if selected_balls.empty():
 		return
 
+	_record_move_start_state()
+
 	var px_scale = pet_node.pixel_world_size
 	var lnz_scale = pet_node.lnz.scales.x / 255.0
 	
@@ -2190,6 +2239,8 @@ func _on_nudge_selection(vector: Vector3):
 			b.global_transform.origin += world_delta
 
 		_track_pending_move(b)
+
+	_record_move_end_state("Nudge")
 
 func _on_move_mode_select_group(group_name: String):
 	if not Input.is_key_pressed(KEY_CONTROL):
@@ -2293,6 +2344,8 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 	if selected_balls.empty():
 		return
 
+	_record_move_start_state()
+
 	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
 	
 	var rot_rad = Vector3(deg2rad(rotation_degrees.x), deg2rad(rotation_degrees.y), deg2rad(rotation_degrees.z))
@@ -2327,10 +2380,14 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 	for b in selected_balls:
 		if is_instance_valid(b):
 			_track_pending_move(b)
+	
+	_record_move_end_state("Rotate")
 
 func _on_flip_selection(axis_vector, pivot_id):
 	if selected_balls.empty():
 		return
+
+	_record_move_start_state()
 
 	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
 	
@@ -2360,6 +2417,8 @@ func _on_flip_selection(axis_vector, pivot_id):
 	for b in selected_balls:
 		if is_instance_valid(b):
 			_track_pending_move(b)
+
+	_record_move_end_state("Flip")
 
 func _update_selected_ballz_in_settings():
 	var ids = []
@@ -2455,10 +2514,11 @@ func _on_pivot_changed():
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
-###
 func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
 	if selected_balls.empty():
 		return
+
+	_record_move_start_state()
 
 	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
 
@@ -2511,6 +2571,8 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 	for b in selected_balls:
 		if is_instance_valid(b):
 			_track_pending_move(b)
+
+	_record_move_end_state("Scale")
 
 func _on_paintball_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Paintball Mode")
@@ -2811,3 +2873,88 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	
 	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
 		sidebar_controller._update_tab_visibilities()
+
+func _capture_pending_state_snapshot():
+	var snapshot = {}
+	for b_no in pending_moves.keys():
+		snapshot[b_no] = pending_moves[b_no].duplicate()
+	return snapshot
+
+func _record_move_history_entry(old_snapshot, new_snapshot):
+	if old_snapshot.hash() == new_snapshot.hash(): return
+
+	move_history.append({
+		"old": old_snapshot,
+		"new": new_snapshot
+	})
+	move_redo_stack.clear()
+
+func _restore_move_snapshot(snapshot):
+	pending_moves = snapshot.duplicate(true)
+
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if not "ball_no" in b: continue
+
+		if pending_moves.has(b.ball_no):
+			var data = pending_moves[b.ball_no]
+			b.global_transform.origin = data.new_pos
+			if data.has("new_size"):
+				b.set_ball_size(data.new_size)
+			b.apply_outline_state(get_visual_state_for_ball(b))
+		else:
+			if pet_node._orig_world_pos.has(b.ball_no):
+				b.global_transform.origin = pet_node._orig_world_pos[b.ball_no]
+
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
+
+func _undo_queued_move():
+	if move_history.empty(): return
+	var entry = move_history.pop_back()
+	move_redo_stack.append(entry)
+	_restore_move_snapshot(entry.old)
+
+func _redo_queued_move():
+	if move_redo_stack.empty(): return
+	var entry = move_redo_stack.pop_back()
+	move_history.append(entry)
+	_restore_move_snapshot(entry.new)
+
+func _record_paint_action(paintballs_added):
+	if paintballs_added.empty(): return
+	paint_history.append(paintballs_added)
+	paint_redo_stack.clear()
+
+func _undo_queued_paintball():
+	if paint_history.empty():
+		var data = pet_node.remove_last_pending_paintball()
+		if data:
+			paint_redo_stack.append([data])
+		return
+
+	var last_action = paint_history.pop_back()
+	paint_redo_stack.append(last_action)
+
+	for i in range(last_action.size()):
+		pet_node.remove_last_pending_paintball()
+
+func _redo_queued_paintball():
+	if paint_redo_stack.empty():
+		return
+
+	var action_to_redo = paint_redo_stack.pop_back()
+	paint_history.append(action_to_redo)
+
+	for pb_data in action_to_redo:
+		pet_node.add_pending_paintball(pb_data)
+
+var _pre_move_state = {}
+
+func _record_move_start_state():
+	_pre_move_state = _capture_pending_state_snapshot()
+
+func _record_move_end_state(action_name):
+	var current_state = _capture_pending_state_snapshot()
+	_record_move_history_entry(_pre_move_state, current_state)
