@@ -124,8 +124,6 @@ var eraser = load("res://resources/icons/ico_eraser_2x_64px.png")
 
 const ZOOM_STEP := 1.2
 
-const MAX_MINI_HISTORY := 50
-
 var selected_balls = []
 var pending_moves = {} # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
 
@@ -2889,7 +2887,7 @@ func _capture_pending_state_snapshot():
 				"new_pos": b.global_transform.origin,
 				"new_size": b.ball_size
 			}
-
+			
 	return snapshot
 
 func _record_move_history_entry(old_snapshot, new_snapshot):
@@ -2899,10 +2897,6 @@ func _record_move_history_entry(old_snapshot, new_snapshot):
 		"old": old_snapshot,
 		"new": new_snapshot
 	})
-
-	if move_history.size() > MAX_MINI_HISTORY:
-		move_history.pop_front()
-
 	move_redo_stack.clear()
 
 func _restore_move_snapshot(snapshot):
@@ -2940,12 +2934,7 @@ func _redo_queued_move():
 
 func _record_paint_action(paintballs_added):
 	if paintballs_added.empty(): return
-
 	paint_history.append(paintballs_added)
-
-	if paint_history.size() > MAX_MINI_HISTORY:
-		paint_history.pop_front()
-		
 	paint_redo_stack.clear()
 
 func _undo_queued_paintball():
