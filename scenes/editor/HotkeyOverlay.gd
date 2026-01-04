@@ -8,23 +8,23 @@ func _ready():
 
 	hide()
 	
-	$Panel/Label.text = """HOTKEYS
-
-Viewport:
-Rotate: Left Click Drag | Pan: Space + Drag | Zoom: Scroll | Views: 1-0
-
-Edit:
-Undo: Ctrl+Z | Redo: Ctrl+Y | Save/Apply Changes: Ctrl+S
-Mini-Undo/Redo (Move/Paint): Ctrl+Shift+Z/X
-
-Move Mode:
-Move: Drag | Scale: Shift+Alt+Drag
-Lock Axis: Hold X/Y/Z
-
-Paintball:
-Draw: Click | Freeline: Shift+Drag | Erase: Ctrl+Click
-
-Toggle Overlay: F1"""
+#	$Panel/Label.text = """HOTKEYS
+#
+#Viewport:
+#Rotate: Left Click Drag | Pan: Space + Drag | Zoom: Scroll | Views: 1-0
+#
+#Edit:
+#Undo: Ctrl+Z | Redo: Ctrl+Y | Save/Apply Changes: Ctrl+S
+#Mini-Undo/Redo (Move/Paint): Ctrl+Shift+Z/X
+#
+#Move Mode:
+#Move: Drag | Scale: Shift+Alt+Drag
+#Lock Axis: Hold X/Y/Z
+#
+#Paintball:
+#Draw: Click | Freeline: Shift+Drag | Erase: Ctrl+Click
+#
+#Toggle Overlay: F1"""
 
 func _input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_F1:
