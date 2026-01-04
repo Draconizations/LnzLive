@@ -1980,6 +1980,7 @@ func _track_pending_move(ball):
 
 		pending_moves[ball.ball_no] = {
 			"orig_pos": orig_pos,
+			"orig_size": current_size,
 			"new_pos": ball.global_transform.origin,
 			"new_size": current_size
 		}
@@ -2057,8 +2058,14 @@ func _on_move_mode_clear():
 	for b in all_balls:
 		if not "ball_no" in b:
 			continue
+			
 		if pending_moves.has(b.ball_no):
-			b.global_transform.origin = pending_moves[b.ball_no].orig_pos
+			var move_data = pending_moves[b.ball_no]
+			
+			b.global_transform.origin = move_data.orig_pos
+
+			if move_data.has("orig_size"):
+				b.set_ball_size(move_data.orig_size)
 	
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
