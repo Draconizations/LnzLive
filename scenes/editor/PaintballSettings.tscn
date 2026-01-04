@@ -548,7 +548,7 @@ margin_top = 205.0
 margin_right = 462.0
 margin_bottom = 226.0
 
-[node name="Label" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
+[node name="BrushSizeLabel" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
 margin_right = 87.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 2 )
@@ -560,7 +560,23 @@ margin_right = 416.0
 margin_bottom = 16.0
 size_flags_horizontal = 3
 min_value = 1.0
+max_value = 100.0
 value = 30.0
+
+[node name="BrushSpaceLabel" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
+margin_right = 87.0
+margin_bottom = 21.0
+custom_fonts/font = SubResource( 2 )
+text = "Brush Spacing"
+
+[node name="BrushSpaceSlider" type="HSlider" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
+margin_left = 91.0
+margin_right = 416.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 30.0
+value = 10.0
 
 [node name="ClearGridButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
 margin_left = 420.0
@@ -600,6 +616,7 @@ custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 2 )
 text = "Add Slot"
 
 [node name="RemoveSlotButton" type="Button" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
@@ -612,6 +629,7 @@ custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 2 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/TabContainer/Design"]

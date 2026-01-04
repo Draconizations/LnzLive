@@ -19,6 +19,7 @@ var _is_dragging_preview = false
 var _last_mouse_pos = Vector2.ZERO
 
 onready var paintballz_tree = find_node("PaintballzTree")
+onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
 onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
 onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
 onready var preview_camera = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld/Camera
@@ -29,7 +30,6 @@ var default_palette = preload("res://resources/palettes/petz_palette.png")
 var active_palette = default_palette
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
-var ball_texture_list = []
 
 var design_color_slots = [
 	{
@@ -94,10 +94,12 @@ func _ready():
 	_connect_settings_signals()
 	_connect_design_signals()
 
-	preview_viewport.size = Vector2(200, 200)
+	preview_viewport.size = preview_container.rect_size
 
 	var preview_container = find_node("PreviewContainer")
 	preview_container.connect("gui_input", self, "_on_PreviewContainer_gui_input")
+
+	find_node("BrushSpaceSlider").connect("value_changed", self, "_on_brush_space_changed")
 
 	_setup_slots_tree()
 	load_settings()
@@ -195,8 +197,18 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var paintballs = design_canvas.design_paintballs
 	var output = []
 
-	var footprint_percent = override_footprint if override_footprint > 0 else find_node("DiameterMax").value
-	var footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
+	var pixel_mode = find_node("PixelMode").pressed 
+	var d_min = find_node("DiameterMin").value
+	var d_max = find_node("DiameterMax").value
+
+	var sampled_scale = rand_range(d_min, d_max)
+	var footprint_lnz: float
+
+	if pixel_mode:
+		footprint_lnz = sampled_scale
+	else:
+		var footprint_percent = override_footprint if override_footprint > 0 else sampled_scale
+		footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
 
 	var tangent_x = basis.x
 	var tangent_y = basis.z
@@ -273,6 +285,9 @@ func _connect_design_signals():
 
 func _on_brush_size_changed(value):
 	find_node("DesignCanvas").brush_size = value
+
+func _on_brush_space_changed(value):
+	find_node("DesignCanvas").brush_spacing = value
 
 func _refresh_slot_buttons():
 	_populate_slots_tree()
@@ -459,66 +474,15 @@ func _on_setting_changed(_arg = null):
 	if _is_loading_settings:
 		return
 
-	var design_canvas = find_node("DesignCanvas")
-	var spacing_spinbox = find_node("Spacing") 
-	
-	if design_canvas and spacing_spinbox:
-		design_canvas.spacing = spacing_spinbox.value
-
 	save_settings()
 	update_preview()
 
-func _load_texture(texture_filename: String) -> Texture:
-	var texture = null
-	var base_name = texture_filename.get_basename()
-	var extension = texture_filename.get_extension()
-	var filename_variants = []
-	filename_variants.append(texture_filename)
-	filename_variants.append(texture_filename.to_upper())
-	filename_variants.append(texture_filename.to_lower())
-	filename_variants.append(base_name + "." + extension.to_upper())
-	filename_variants.append(base_name + "." + extension.to_lower())
-	filename_variants.append(base_name.to_upper() + "." + extension)
-	filename_variants.append(base_name.to_lower() + "." + extension)
-	filename_variants.append(base_name.to_upper() + "." + extension.to_upper())
-	filename_variants.append(base_name.to_lower() + "." + extension.to_lower())
-
-	var deduped = []
-	for v in filename_variants:
-		if not (v in deduped):
-			deduped.append(v)
-	filename_variants = deduped
-
-	for variant in filename_variants:
-		var resource_path = "res://resources/textures/" + variant
-		var user_resource_path = "user://resources/textures/" + variant
-
-		if ResourceLoader.exists(resource_path):
-			texture = ResourceLoader.load(resource_path)
-			break
-		elif ResourceLoader.exists(user_resource_path):
-			texture = ResourceLoader.load(user_resource_path)
-			break
-
-	return texture
-
-func sync_camera(main_camera_transform: Transform):
-	if preview_camera and is_instance_valid(preview_camera):
-		var rot = main_camera_transform.basis.get_euler()
-
-		var dist = 3.0
-		var pos = main_camera_transform.basis.xform(Vector3(0, 0, dist))
-
-		preview_camera.transform.origin = pos
-		preview_camera.look_at(Vector3.ZERO, Vector3.UP)
-
 func update_preview():
-	if not preview_viewport or not preview_world: 
-		return
+	if not preview_viewport or not preview_world: return
 
-	preview_camera.projection = Camera.PROJECTION_ORTHOGONAL
-	preview_camera.size = 1.2 
-	preview_camera.far = 100.0
+	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
+	preview_camera.fov = 35.0
+	preview_camera.transform.origin = Vector3(0, 0, 0.4)
 
 	for child in preview_world.get_children():
 		if child.is_in_group("preview_objects") or child.name.begins_with("Paintball"):
@@ -527,43 +491,32 @@ func update_preview():
 	var base_visual_ball = ball_scene.instance()
 	base_visual_ball.add_to_group("preview_objects")
 	preview_world.add_child(base_visual_ball)
-
 	base_visual_ball.rotation = _preview_ball_rotation
 
 	var base_size = 50.0 
 	base_visual_ball.ball_size = base_size
-
-	base_visual_ball.color_index = 244
 	base_visual_ball.palette = active_palette
-	base_visual_ball.transform.origin = Vector3.ZERO
-
-	base_visual_ball.visible = true
-	base_visual_ball.transform.origin = Vector3.ZERO
 
 	var current_footprint = find_node("DiameterMax").value
 	var center_dir = Vector3(0, 0, 1) 
-	var basis = Basis() 
-	var pb_list = paste_paintball_design(Vector3(0, 0, 1), Basis(), 0, base_size, current_footprint)
+	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
+	var pb_list = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint)
 
 	var z_add_counter = 0.0
 	for pb_data in pb_list:
 		var pb_visual = paintball_scene.instance()
 		base_visual_ball.add_child(pb_visual)
 
+		pb_visual.ball_size = pb_data.diameter
 		pb_visual.base_ball_size = base_size
 		pb_visual.color_index = pb_data.color
-		pb_visual.outline_color_index = pb_data.outline_color
-		pb_visual.outline = pb_data.outline_type
-		pb_visual.fuzz_amount = pb_data.fuzz
 		pb_visual.palette = active_palette
 		pb_visual.z_add = z_add_counter
 		z_add_counter += 1.0
 
-		var pixel_world_size = 0.002
 		var radius = float(base_size) / 2.0
-		
-		var pb_pos = pb_data.pos_normalized * Vector3(1, -1, 1) * radius * pixel_world_size
-		
+		var pixel_world_size = 0.002
+		var pb_pos = pb_data.pos_normalized * Vector3(1, 1, 1) * radius * pixel_world_size
 		pb_visual.transform.origin = pb_pos
 
 func save_settings():
@@ -627,7 +580,6 @@ func load_settings():
 	find_node("Target").selected = config.get_value("PaintballProperties", "target", 0)
 	find_node("FreelineCheckBox").pressed = config.get_value("PaintballProperties", "freeline", false)
 	find_node("Spacing").value = config.get_value("PaintballProperties", "spacing", 5.0)
-	find_node("DesignCanvas").spacing = find_node("Spacing").value
 	find_node("Jitter").value = config.get_value("PaintballProperties", "jitter", 0.0)
 	find_node("Ordered").pressed = config.get_value("PaintballProperties", "ordered", false)
 	find_node("Repeat").pressed = config.get_value("PaintballProperties", "repeat", false)
