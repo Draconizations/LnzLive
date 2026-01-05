@@ -695,7 +695,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
 margin_right = 119.0
-margin_bottom = 134.0
+margin_bottom = 157.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_right = 185.0
@@ -1353,7 +1353,7 @@ margin_right = 759.0
 margin_bottom = 74.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-22"
+text = "PB-beta-v1.4.6-preview-24"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1781,7 +1781,7 @@ anchor_bottom = 1.0
 margin_left = 8.0
 margin_top = 39.0
 margin_right = -8.0
-margin_bottom = -25.0
+margin_bottom = -36.0
 size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
