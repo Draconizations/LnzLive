@@ -36,6 +36,11 @@ uniform float tiling_unit = 128.0;                // global tiling scale (Reflet
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
 
+uniform int highlight_color_index = -1;           // -1 for none
+
+uniform bool hide_fill = false;
+uniform bool hide_outline = false;
+
 varying flat vec2 center_fragcoord;               // coordinate of ball center
 varying flat vec4 center_view;                    // view angle for billboarding textures
 varying flat float z_center_ball;                 // depth at ball center for z-shading
@@ -122,9 +127,20 @@ void fragment() {
 
     // DRAWING
     vec2 vector_from_center = st - c;
-    float pct = step(length(vector_from_center), (float(ball_size) / 2.0 - float(modified_outline)));
+    float outdist = length(vector_from_center);
+    float ball_radius = float(ball_size) / 2.0;
+    float pct = step(outdist, (ball_radius - float(modified_outline)));
     if (outline != -1) {
         pct2 -= pct;
+    }
+
+    // HIGHLIGHT OUTLINE
+    float highlight_pct = 0.0;
+
+    if (highlight_color_index != -1) {
+        float h_inner = ball_radius + 0.5;
+        float h_outer = h_inner + 2.0; 
+        highlight_pct = step(outdist, h_outer) - step(outdist, h_inner);
     }
 
     // TEXTURING & QUANTIZING
@@ -231,13 +247,23 @@ void fragment() {
         ALBEDO = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
-    // TRANSPARENCY
-    float alpha_value = 1.0 - step(pct + pct2, 0.0);
-    if (is_transparent && transparency_on) {
-        alpha_value = 0.0;
+    // DRAW HIGHLIGHT
+    vec3 final_color;
+    if (outline == -3) {
+        final_color = vec3(pct * vec3(1.0) + pct2 * vec3(0.0));
+    } else {
+        vec3 outline_color = texture(palette, vec2(float(outline_color_index) / 255.0, 0.0)).rgb;
+        final_color = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
+    }
+
+    if (pct + pct2 <= 0.0 && highlight_pct > 0.0) {
+        vec3 h_color = texture(palette, vec2(float(highlight_color_index) / 255.0, 0.0)).rgb;
+        ALBEDO = h_color;
+    } else {
+        ALBEDO = final_color;
     }
     
-    // EYELIDS
+    // DRAW EYELIDS
     if (eyelid_color != -1) {
         vec2 vc    = mesh_pos * (float(ball_size) * 0.5);
         float half = float(ball_size) * 0.5;
@@ -258,6 +284,31 @@ void fragment() {
                 ALBEDO = lid_col;
             }
         }
+    }
+
+    // SET TRANSPARENCY
+    float alpha_value = 1.0 - step(pct + pct2, 0.0);
+
+    if (highlight_pct > 0.0) {
+        alpha_value = 1.0;
+    }
+
+    if (is_transparent && transparency_on) {
+        if (highlight_pct <= 0.0) {
+            alpha_value = 0.0;
+        }
+    }
+
+    if (outline == -4 && highlight_pct <= 0.0) {
+        alpha_value = 0.0;
+    }
+
+    if (hide_fill && highlight_pct <= 0.0) {
+        pct = 0.0;
+    }
+    
+    if (hide_outline && highlight_pct <= 0.0) {
+        pct2 = 0.0;
     }
 
     ALPHA = alpha_value;
@@ -287,7 +338,8 @@ void vertex() {
     // Push vertices outwards by half ball size and fuzz amount
 	vert_in_clip_space.z = center_clip_space.z;
 	vert_in_clip_space.z += z_add * 0.001;
-	float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
+	// float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
+    float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0); // extra space for higlight
 	vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
 	vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
 

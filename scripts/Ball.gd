@@ -120,7 +120,9 @@ func set_fuzz_amount(new_value):
 	
 func set_outline(new_value):
 	outline = new_value
-	$MeshInstance.material_override.set_shader_param("outline", new_value)
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("outline", new_value)
+		_update_visibility_params()
 
 func set_color_index(new_value):
 	color_index = new_value
@@ -203,34 +205,37 @@ func _on_Area_mouse_entered():
 	emit_signal("ball_mouse_enter", {ball_no = ball_no})
 
 func apply_outline_state(state: int):
-	if current_outline_state == OutlineState.NONE:
-		old_outline = outline
-		old_outline_color = outline_color_index
-
 	current_outline_state = state
+	var highlight_idx = -1 # -1 hides the extra ring
 
 	match state:
 		OutlineState.HOVER:
-			set_outline(3)
-			set_outline_color_index(0)  # WHITE
+			highlight_idx = 0  # WHITE
 		OutlineState.ACTIVE_SELECTED:
-			set_outline(3)
-			set_outline_color_index(2)  # GREEN
+			highlight_idx = 2  # GREEN
 		OutlineState.LINEZ_START:
-			set_outline(3)
-			set_outline_color_index(1)  # RED
+			highlight_idx = 1  # RED
 		OutlineState.LINEZ_TARGET:
-			set_outline(3)
-			set_outline_color_index(4)  # BLUE
+			highlight_idx = 4  # BLUE
 		OutlineState.MODIFIED:
-			set_outline(3)
-			set_outline_color_index(248) # GRAY
+			highlight_idx = 248 # GRAY
 		OutlineState.PIVOT:
-			set_outline(3)
-			set_outline_color_index(1) # RED
+			highlight_idx = 1 # RED
 		OutlineState.NONE:
-			set_outline(old_outline)
-			set_outline_color_index(old_outline_color)
+			highlight_idx = -1
+
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("highlight_color_index", highlight_idx)
+	
+	_update_visibility_params()
+
+func _update_visibility_params():
+	if not $MeshInstance.material_override: return
+	
+	var is_currently_invisible = (outline == -4)
+
+	$MeshInstance.material_override.set_shader_param("hide_fill", is_currently_invisible)
+	$MeshInstance.material_override.set_shader_param("hide_outline", is_currently_invisible)
 
 func turn_on_highlight():
 	apply_outline_state(OutlineState.HOVER)
