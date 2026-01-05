@@ -1271,6 +1271,11 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var raw_color = reference_ball.color_index
 	var raw_outline_color = reference_ball.outline_color_index
 
+	var raw_outline = reference_ball.outline
+	if reference_ball.get("current_outline_state") != 0: 
+		raw_outline = reference_ball.old_outline
+		raw_outline_color = reference_ball.old_outline_color
+
 	if reference_ball.get("current_outline_state") != 0: 
 		raw_outline_color = reference_ball.old_outline_color
 
@@ -1327,7 +1332,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 		"0",
 		str(fuzz_amount),
 		"0",
-		"0",
+		str(raw_outline),
 		str(lnz_size),
 		str(bodyarea),
 		"0",
