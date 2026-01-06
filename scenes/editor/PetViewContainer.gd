@@ -2446,8 +2446,10 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 				continue
 
 			var current_pos = b.global_transform.origin
-			var rel_pos = current_pos - pivot_origin
+			var current_basis = b.global_transform.basis
+			_track_pending_move(b)
 			
+			var rel_pos = current_pos - pivot_origin
 			var rotated_rel = basis.xform(rel_pos)
 			var new_pos = pivot_origin + rotated_rel
 			
@@ -2485,6 +2487,11 @@ func _on_flip_selection(axis_vector, pivot_id):
 				continue
 
 			var current_pos = b.global_transform.origin
+			var current_basis = b.global_transform.basis
+
+			if not pending_moves.has(b.ball_no):
+				_track_pending_move(b)
+
 			var rel_pos = current_pos - pivot_origin
 			var flipped_rel = rel_pos * axis_vector
 			var new_pos = pivot_origin + flipped_rel
@@ -2496,6 +2503,17 @@ func _on_flip_selection(axis_vector, pivot_id):
 			
 			var scale_basis = Basis().scaled(axis_vector)
 			b.global_transform.basis = scale_basis * b.global_transform.basis
+
+			if scale_basis.determinant() < 0:
+				var mesh_instance = b.get_node_or_null("MeshInstance")
+				if mesh_instance:
+					mesh_instance.scale.x *= -1.0
+				
+				for child in b.get_children():
+					if child.is_in_group("paintballs"):
+						var pb_mesh = child.get_node_or_null("MeshInstance")
+						if pb_mesh:
+							pb_mesh.scale.x *= -1.0
 
 	for b in selected_balls:
 		if is_instance_valid(b):
