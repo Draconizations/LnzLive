@@ -397,38 +397,6 @@ func _process(_delta):
 
 	helper_label.text = final_text
 
-func set_active_selected_ball(ball):
-	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
-		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
-	active_selected_ball = ball
-	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
-	_update_selected_ballz_in_settings()
-
-func clear_active_selected_ball():
-	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
-		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
-	active_selected_ball = null
-	_update_selected_ballz_in_settings()
-
-func get_visual_state_for_ball(b):
-	if not "ball_no" in b:
-		return
-	else:
-		if move_mode:
-			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
-				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
-				if b.ball_no == pivot_id:
-					return b.OutlineState.PIVOT
-
-		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
-			return b.OutlineState.ACTIVE_SELECTED
-		elif move_mode and pending_moves.has(b.ball_no):
-			return b.OutlineState.MODIFIED
-		else:
-			if b == active_selected_ball:
-				return b.OutlineState.ACTIVE_SELECTED
-			return b.OutlineState.NONE
-
 func _draw():
 	# BOX SELECTION
 	if box_selecting:
@@ -537,6 +505,8 @@ func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origi
 
 	draw_line(origin_2d, neg_end, color, width, true)
 	_draw_axis_label(neg_end, neg_label, color)
+
+### INPUT HANDLING ###
 
 # TBD: refactor _gui_input with separate functions:
 func _handle_box_selection(event: InputEvent):
@@ -1478,24 +1448,32 @@ func _unhandled_key_input(event):
 			last_selected._input(event)
 	##################################################
 
+func _set_camera_view(view_name: String):
+	camera_holder.rotation = Vector3.ZERO
+	
+	match view_name:
+		"front":
+			camera_holder.rotation_degrees = Vector3(0, 0, 0)
+		"back":
+			camera_holder.rotation_degrees = Vector3(0, 180, 0)
+		"right":
+			camera_holder.rotation_degrees = Vector3(0, 90, 0)
+		"left":
+			camera_holder.rotation_degrees = Vector3(0, -90, 0)
+		"bottom":
+			camera_holder.rotation_degrees = Vector3(-90, 0, 0)
+		"top":
+			camera_holder.rotation_degrees = Vector3(90, 0, 0)
+		"isorightbottom":
+			camera_holder.rotation_degrees = Vector3(-35, 45, 0)
+		"isorighttop":
+			camera_holder.rotation_degrees = Vector3(35, 45, 0)
+		"isoleftbottom":
+			camera_holder.rotation_degrees = Vector3(-35, -45, 0)
+		"isolefttop":
+			camera_holder.rotation_degrees = Vector3(35, -45, 0)
 
-
-func last_selected_is_valid():
-	return last_selected != null and is_instance_valid(last_selected)
-
-func deal_with_last_selected():
-	if last_selected != null and is_instance_valid(last_selected):
-		last_selected._on_Area_mouse_exited()
-				
-func _on_Node_ball_mouse_enter(ball_info):
-	if selecting_on:
-		ball_label.text = str(ball_info.ball_no)
-		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
-		ball_label.show()
-
-func _on_SelectCheckBox_toggled(button_pressed):
-	pass
-
+# MODES
 func _on_ModePopup_about_to_show():
 	select_check_box.pressed = selecting_on
 
@@ -1528,12 +1506,79 @@ func _on_PetViewContainer_resized():
 func _on_PetViewContainer_sort_children():
 	_on_PetViewContainer_resized()
 
+# VISUALS
+func set_active_selected_ball(ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = ball
+	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
+
+func clear_active_selected_ball():
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = null
+	_update_selected_ballz_in_settings()
+
+func get_visual_state_for_ball(b):
+	if not "ball_no" in b:
+		return
+	else:
+		if move_mode:
+			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
+				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+				if b.ball_no == pivot_id:
+					return b.OutlineState.PIVOT
+
+		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
+			return b.OutlineState.ACTIVE_SELECTED
+		elif move_mode and pending_moves.has(b.ball_no):
+			return b.OutlineState.MODIFIED
+		else:
+			if b == active_selected_ball:
+				return b.OutlineState.ACTIVE_SELECTED
+			return b.OutlineState.NONE
+
+func last_selected_is_valid():
+	return last_selected != null and is_instance_valid(last_selected)
+
+func deal_with_last_selected():
+	if last_selected != null and is_instance_valid(last_selected):
+		last_selected._on_Area_mouse_exited()
+				
+func _on_Node_ball_mouse_enter(ball_info):
+	if selecting_on:
+		ball_label.text = str(ball_info.ball_no)
+		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
+		ball_label.show()
+
 func _find_visual_ball_by_no(no: int) -> Spatial:
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
 		if b.ball_no == no:
 			return b
 	return null
+
+func _find_visual_addball_by_no(no: int) -> Spatial:
+	for b in get_tree().get_nodes_in_group("addballs"):
+		if b.has_method("get"): # safety if some nodes aren't the ball script
+			if b.ball_no == no:
+				return b
+	return null
+
+func _on_affected_list_changed(ids: Array):
+	_auto_paint_affected_cache = ids
+	
+	selected_balls.clear()
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			selected_balls.append(ball)
+
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from = camera.project_ray_origin(screen_pos)
@@ -1687,6 +1732,266 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 			
 	return lnz_value
 
+func _isolate_target_ball(target_ball):
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		if ball != target_ball:
+			area.set_collision_layer_bit(0, false)
+			area.set_collision_layer_bit(1, true)
+		else:
+			area.set_collision_layer_bit(0, true)
+			area.set_collision_layer_bit(1, false)
+
+func _restore_all_balls():
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		area.set_collision_layer_bit(0, true)
+		area.set_collision_layer_bit(1, false)
+
+func _on_unselect_all():
+	var to_update = selected_balls.duplicate()
+	selected_balls.clear()
+	
+	if auto_paintballer_mode:
+		_auto_paint_affected_cache.clear() 
+	
+	for b in to_update:
+		if is_instance_valid(b) and "ball_no" in b:
+			b.apply_outline_state(get_visual_state_for_ball(b)) 
+			
+	_update_selected_ballz_in_settings()
+
+func _on_unselect_side(side: String):
+	if selected_balls.empty():
+		return
+
+	var symmetry_dict = {}
+	match KeyBallsData.species:
+		KeyBallsData.Species.CAT:
+			symmetry_dict = KeyBallsData.cat_body_part_symmetry
+		KeyBallsData.Species.DOG:
+			symmetry_dict = KeyBallsData.dog_body_part_symmetry
+		KeyBallsData.Species.BABY:
+			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+
+	var left_lookup = {}
+	var right_lookup = {}
+	for main_part in symmetry_dict:
+		for sub_part in symmetry_dict[main_part]:
+			var part_info = symmetry_dict[main_part][sub_part]
+			if part_info.has("left"):
+				for id in part_info.left: left_lookup[id] = true
+			if part_info.has("right"):
+				for id in part_info.right: right_lookup[id] = true
+
+	var to_remove = []
+	for b in selected_balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+			
+		var ball_no = b.ball_no
+		var is_left = left_lookup.has(ball_no)
+		var is_right = right_lookup.has(ball_no)
+		var is_center = not is_left and not is_right
+		
+		var should_unselect = false
+		match side:
+			"left":   should_unselect = is_left
+			"right":  should_unselect = is_right
+			"center": should_unselect = is_center
+
+		if should_unselect:
+			to_remove.append(b)
+
+	for b in to_remove:
+		selected_balls.erase(b)
+		if b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
+func _update_selected_ballz_in_settings():
+	var ids = []
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	
+	var filter = []
+	if exclude_eyes:
+		filter += KeyBallsData.get_group_balls("Eyes")
+
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in filter:
+				ids.append(b.ball_no)
+				
+	move_mode_settings_instance.update_selected_balls_text(ids)
+	preset_settings_instance.update_selected_balls_text(ids)
+
+	if auto_paintballer_mode:
+		auto_paintballer_settings_instance.update_selected_balls_text(ids)
+
+func _on_select_balls_by_ids(ids: Array):
+	_on_unselect_all()
+	
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			if "ball_no" in ball:
+				selected_balls.append(ball)
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+				
+	_update_selected_ballz_in_settings()
+
+func _commit_box_selection():
+	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
+	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
+
+	for b in all_balls:
+		#if not is_instance_valid(b) or not b.is_inside_tree(): 
+		if not is_instance_valid(b) or not b.visible: 
+			continue
+
+		if b.get("omitted") == true and not pet_node.draw_omitted_balls:
+			continue
+		
+		if not ("ball_no" in b): 
+			continue
+			
+		if b.ball_no in eye_ids: 
+			continue
+
+		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
+		var relative_pos = projected_pos_local - Vector2(500, 500)
+		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
+
+		if rect.has_point(pos_in_container):
+			if not (b in selected_balls):
+				selected_balls.append(b)
+				if b.has_method("apply_outline_state"):
+					b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
+# HISTORY
+func _capture_pending_state_snapshot():
+	var snapshot = {}
+
+	for b_no in pending_moves.keys():
+		snapshot[b_no] = pending_moves[b_no].duplicate()
+
+	for b in selected_balls:
+		if is_instance_valid(b) and not snapshot.has(b.ball_no):
+			snapshot[b.ball_no] = {
+				"new_pos": b.global_transform.origin,
+				"new_size": b.ball_size,
+				"new_basis": b.global_transform.basis
+			}
+			
+	return snapshot
+
+func _record_move_history_entry(old_snapshot, new_snapshot):
+	if old_snapshot.hash() == new_snapshot.hash(): return
+
+	move_history.append({
+		"old": old_snapshot,
+		"new": new_snapshot
+	})
+	move_redo_stack.clear()
+
+func _restore_move_snapshot(snapshot):
+	pending_moves = snapshot.duplicate(true)
+
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if not "ball_no" in b: continue
+
+		if pending_moves.has(b.ball_no):
+			var data = pending_moves[b.ball_no]
+			b.global_transform.origin = data.new_pos
+			if data.has("new_size"):
+				b.set_ball_size(data.new_size)
+			b.apply_outline_state(get_visual_state_for_ball(b))
+		else:
+			if pet_node._orig_world_pos.has(b.ball_no):
+				b.global_transform.origin = pet_node._orig_world_pos[b.ball_no]
+
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
+
+func _undo_queued_move():
+	if move_history.empty(): return
+	var entry = move_history.pop_back()
+	move_redo_stack.append(entry)
+	_restore_move_snapshot(entry.old)
+
+func _redo_queued_move():
+	if move_redo_stack.empty(): return
+	var entry = move_redo_stack.pop_back()
+	move_history.append(entry)
+	_restore_move_snapshot(entry.new)
+
+func _record_paint_action(paintballs_added):
+	if paintballs_added.empty(): return
+	paint_history.append(paintballs_added)
+	paint_redo_stack.clear()
+
+func _undo_queued_paintball():
+	if paint_history.empty():
+		var data = pet_node.remove_last_pending_paintball()
+		if data:
+			paint_redo_stack.append([data])
+		return
+
+	var last_action = paint_history.pop_back()
+	paint_redo_stack.append(last_action)
+
+	for i in range(last_action.size()):
+		pet_node.remove_last_pending_paintball()
+
+func _redo_queued_paintball():
+	if paint_redo_stack.empty():
+		return
+
+	var action_to_redo = paint_redo_stack.pop_back()
+	paint_history.append(action_to_redo)
+
+	for pb_data in action_to_redo:
+		pet_node.add_pending_paintball(pb_data)
+
+func _record_move_start_state():
+	_pre_move_state = _capture_pending_state_snapshot()
+
+func _record_move_end_state(action_name):
+	var current_state = _capture_pending_state_snapshot()
+	_record_move_history_entry(_pre_move_state, current_state)
+
+# HELPERS
+func _flatten_symmetry_dict(dict: Dictionary) -> Array:
+	var flat_list = []
+	for main_part in dict:
+		for sub_part in dict[main_part]:
+			var part_info = dict[main_part][sub_part]
+			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
+				flat_list.append(part_info)
+	return flat_list
+
 func begin_auto_move_for_ball(ball: Spatial) -> void:
 	if not ball: return
 	drag_ball = ball
@@ -1711,26 +2016,156 @@ func _wait_for_addball_then_autodrag() -> void:
 			return
 		tries -= 1
 
-func _find_visual_addball_by_no(no: int) -> Spatial:
-	for b in get_tree().get_nodes_in_group("addballs"):
-		if b.has_method("get"): # safety if some nodes aren't the ball script
-			if b.ball_no == no:
-				return b
-	return null
+### MODE MANAGEMENT ###
+func _deactivate_other_modes(active_mode_name: String):
+	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
+	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false
+	if active_mode_name != "Move Mode": move_mode_check_box.pressed = false
+	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
+	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
+	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
+	if active_mode_name != "Recolor Mode": recolor_mode_check_box.pressed = false
 
-func _on_affected_list_changed(ids: Array):
-	_auto_paint_affected_cache = ids
+func _update_mode_panel_visibility(panel: Control, is_active: bool):
+	if is_active:
+		if panel.is_docked:
+			sidebar_controller.dock_panel(panel)
+			sidebar_controller.switch_to_tab(panel) 
+		else:
+			panel.show()
+			panel.raise()
+	else:
+		if not panel.is_docked:
+			panel.hide()
+		
+		if sidebar_controller:
+			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
+			if tree_tab:
+				sidebar_controller.switch_to_tab(tree_tab) 
 	
-	selected_balls.clear()
-	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
-		if ball and is_instance_valid(ball):
-			selected_balls.append(ball)
+	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
+		sidebar_controller._update_tab_visibilities()
 
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if is_instance_valid(b) and b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
+func _on_recolor_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Recolor Mode")
+	recolor_mode = is_on
+	_update_mode_panel_visibility(recolor_settings_instance, is_on)
+
+	if is_on:
+		mouse_default_cursor_shape = CURSOR_ARROW
+		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+	else:
+		recolor_settings_instance._on_ClearBucket_pressed()
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+		recolor_settings_instance._on_ClearBucket_pressed()
+
+func _on_paintball_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Paintball Mode")
+	paintball_mode = is_on
+	_update_mode_panel_visibility(paintball_settings_instance, is_on)
+	
+	if not is_on:
+		paintball_target_ball = null
+		close_paintball_on_apply = false
+		_restore_all_balls()
+	else:
+		_restore_all_balls()
+		_ordered_color_index = 0
+		_ordered_outline_color_index = 0
+		_ordered_texture_index = 0
+		paintball_settings_instance.find_node("Target").selected = 0
+		
+	_update_paintball_mode_ui()
+
+func _on_move_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Move Mode")
+	move_mode = is_on
+	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
+	
+	if is_on:
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		ball_label.hide()
+		_reset_tab_state()
+	else:
+		_on_unselect_all()
+		_on_move_mode_clear()
+
+func _on_line_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Line Mode")
+	linez_mode = is_on
+	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
+	
+	if is_on:
+		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
+	else:
+		line_mode_close = false
+		if is_instance_valid(linez_start_ball):
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+		linez_start_ball = null
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+
+func _on_preset_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Preset Mode")
+	preset_mode = is_on
+	_update_mode_panel_visibility(preset_settings_instance, is_on)
+	
+	if is_on:
+		if pet_node and pet_node.lnz:
+			if pet_node.lnz.texture_list:
+				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+			if pet_node.lnz.palette:
+				preset_settings_instance.set_palette(pet_node.lnz.palette)
+		
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_ARROW
+	else:
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+
+func _on_auto_paintballer_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Auto Paintballer")
+	auto_paintballer_mode = is_on
+	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
+	
+	if not is_on:
+		pet_node._on_clear_auto_paintballz()
+		_on_unselect_all()
+		_auto_paint_affected_cache.clear()
+		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+		for b in all_balls:
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
+				b.apply_outline_state(b.OutlineState.NONE)
+
+func _on_project_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Project Mode")
+	project_mode = is_on
+	_update_mode_panel_visibility(project_settings_instance, is_on)
+
+### PALETTE VIEWER ###
+
+func _on_view_palette_check_box_toggled(is_on):
+	palette_viewer_instance.visible = is_on
+	
+	if is_on:
+		if palette_viewer_instance is WindowDialog or palette_viewer_instance is Popup:
+			palette_viewer_instance.popup() 
+		palette_viewer_instance.populate_colors()
+	else:
+		palette_viewer_instance.hide()
+
+func _on_palette_popup_closed():
+	if view_palette_check_box.pressed:
+		view_palette_check_box.pressed = false
+
+func _on_palette_visibility_changed():
+	if view_palette_check_box.pressed != palette_viewer_instance.visible:
+		view_palette_check_box.pressed = palette_viewer_instance.visible
+
+### RECOLOR MODE ###
+
+### PAINT MODE ###
 
 func _update_paintball_mode_ui():
 	if paintball_mode:
@@ -1767,32 +2202,144 @@ func _on_paintball_mode_for_ball_toggled(ball):
 		_update_paintball_mode_ui()
 	_isolate_target_ball(ball)
 
-func _on_view_palette_check_box_toggled(is_on):
-	palette_viewer_instance.visible = is_on
+func close_paintball_mode():
+	paintball_check_box.pressed = false
+
+func _finalize_freeline():
+	var props = paintball_settings_instance.get_properties()
+	var jitter = props.jitter
+	var stroke = []
+
+	# Determine if there is a single target for the entire stroke
+	var stroke_target_ball = null
+	if paintball_target_ball and is_instance_valid(paintball_target_ball):
+		stroke_target_ball = paintball_target_ball
+	elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
+		stroke_target_ball = active_selected_ball
+
+	var path_len = freeline_path.size()
+	for i in range(path_len):
+		var point = freeline_path[i]
+		var jittered_point = point + Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
+		var screen_pos = (jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+
+		var point_target_ball = stroke_target_ball
+		if not point_target_ball: # If no stroke-wide target, use hover mode
+			point_target_ball = get_intended_ball(screen_pos)
+		
+		var current_diameter = -1 # default = random
+		if props.tapered:
+			var min_diam = props.diameter_min
+			var max_diam = props.diameter_max
+			
+			if path_len == 1:
+				current_diameter = min_diam
+			else:
+				var t = float(i) / (path_len - 1)
+				var pingpong_t = 1.0 - abs(t * 2.0 - 1.0) # 0 -> 1 -> 0
+				var calculated_diameter = lerp(min_diam, max_diam, pingpong_t)
 	
-	if is_on:
-		if palette_viewer_instance is WindowDialog or palette_viewer_instance is Popup:
-			palette_viewer_instance.popup() 
-		palette_viewer_instance.populate_colors()
-	else:
-		palette_viewer_instance.hide()
+				current_diameter = int(round(calculated_diameter))
 
-func _on_palette_popup_closed():
-	if view_palette_check_box.pressed:
-		view_palette_check_box.pressed = false
+		if point_target_ball:
+			stroke.append({
+				"pos": screen_pos,
+				"ball": point_target_ball,
+				"diam": current_diameter
+			})
 
-func _on_palette_visibility_changed():
-	if view_palette_check_box.pressed != palette_viewer_instance.visible:
-		view_palette_check_box.pressed = palette_viewer_instance.visible
+	if props.get("shuffle", false):
+		stroke.shuffle()
 
-func _flatten_symmetry_dict(dict: Dictionary) -> Array:
-	var flat_list = []
-	for main_part in dict:
-		for sub_part in dict[main_part]:
-			var part_info = dict[main_part][sub_part]
-			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
-				flat_list.append(part_info)
-	return flat_list
+	var added_paintballs = []
+	for data in stroke:
+		var result = _create_paintball_at_position(data.pos, data.ball, data.diam)
+		if result:
+			added_paintballs.append(result)
+
+	_record_paint_action(added_paintballs)
+
+func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
+	var from = camera.project_ray_origin(screen_pos)
+	var to = from + camera.project_ray_normal(screen_pos) * 10000
+	var space_state = camera.get_world().direct_space_state
+	var result = space_state.intersect_ray(from, to, [self], 1, true, true)
+
+	if result and result.collider and result.collider.get_parent() == target_ball:
+		var intersection_point = result.position
+		var props = paintball_settings_instance.get_properties()
+
+		var color_list = LnzLiveUtils.parse_number_list(props.color)
+		if color_list.empty():
+			push_warning("Invalid color list format.")
+			return
+
+		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color)
+		if outline_color_list.empty():
+			push_warning("Invalid outline color list format.")
+			return
+		
+		var texture_list = LnzLiveUtils.parse_number_list(props.texture, true)
+		if texture_list.empty():
+			texture_list.append(-1)
+
+		var local_relative_pos = target_ball.to_local(intersection_point)
+		var world_relative_pos = intersection_point - target_ball.global_transform.origin
+		var px_scale = pet_node.pixel_world_size
+		var lnz_scale = pet_node.lnz.scales.x / 255.0
+		var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
+		relative_pos_lnz.y *= -1
+
+		var color
+		var outline_color
+		var texture
+		if props.ordered:
+			color = color_list[_ordered_color_index % color_list.size()]
+			_ordered_color_index += 1
+			outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
+			_ordered_outline_color_index += 1
+			texture = texture_list[_ordered_texture_index % texture_list.size()]
+			_ordered_texture_index += 1
+		else:
+			color = color_list[randi() % color_list.size()]
+			outline_color = outline_color_list[randi() % outline_color_list.size()]
+			texture = texture_list[randi() % texture_list.size()]
+
+		var diameter
+		if diameter_override != -1:
+			diameter = diameter_override
+			if props.get("pixel_mode", false):
+				var base_size = float(target_ball.ball_size)
+				if base_size == 0: base_size = 1.0
+				diameter = int(ceil((diameter / base_size) * 100.0))
+		else:
+			if props.get("pixel_mode", false):
+				var base_size = float(target_ball.ball_size)
+				if base_size == 0: base_size = 1.0
+				var rand_px = rand_range(props["diameter_min"], props["diameter_max"])
+				diameter = int(ceil((rand_px / base_size) * 100.0))
+			else:
+				diameter = int(round(rand_range(props["diameter_min"], props["diameter_max"])))
+
+		var paintball_info = {
+			"base_ball_no": target_ball.ball_no,
+			"relative_pos_local": local_relative_pos,
+			"relative_pos_lnz": relative_pos_lnz,
+			"diameter": int(diameter),
+			"color": color,
+			"outline_color": outline_color,
+			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),
+			"fuzz": floor(rand_range(props.fuzz_min, props.fuzz_max)),
+			"texture": texture,
+			"group": props.group,
+			"anchored": props.anchored,
+		}
+
+		pet_node.add_pending_paintball(paintball_info)
+		return paintball_info
+	return null
+
+### SHAPE MODE ###
 
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()
@@ -1966,6 +2513,8 @@ func _on_randomize_moves(settings: Dictionary):
 		lnz_text_edit.set_batch_moves(moves_to_apply)
 		print("Randomized Moves applied to %d balls." % moves_to_apply.size())
 
+### LINE MODE ###
+
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
@@ -1983,263 +2532,37 @@ func _handle_line_mode_input(event) -> bool:
 			return true
 	return false
 
+### PRESET MODE ###
+
 func _on_eyedropper_toggled(is_on):
 	if is_on:
 		Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 	else:
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 
-func _set_camera_view(view_name: String):
-	camera_holder.rotation = Vector3.ZERO
-	
-	match view_name:
-		"front":
-			camera_holder.rotation_degrees = Vector3(0, 0, 0)
-		"back":
-			camera_holder.rotation_degrees = Vector3(0, 180, 0)
-		"right":
-			camera_holder.rotation_degrees = Vector3(0, 90, 0)
-		"left":
-			camera_holder.rotation_degrees = Vector3(0, -90, 0)
-		"bottom":
-			camera_holder.rotation_degrees = Vector3(-90, 0, 0)
-		"top":
-			camera_holder.rotation_degrees = Vector3(90, 0, 0)
-		"isorightbottom":
-			camera_holder.rotation_degrees = Vector3(-35, 45, 0)
-		"isorighttop":
-			camera_holder.rotation_degrees = Vector3(35, 45, 0)
-		"isoleftbottom":
-			camera_holder.rotation_degrees = Vector3(-35, -45, 0)
-		"isolefttop":
-			camera_holder.rotation_degrees = Vector3(35, -45, 0)
-
-func close_paintball_mode():
-	paintball_check_box.pressed = false
-
-func _finalize_freeline():
-	var props = paintball_settings_instance.get_properties()
-	var jitter = props.jitter
-	var stroke = []
-
-	# Determine if there is a single target for the entire stroke
-	var stroke_target_ball = null
-	if paintball_target_ball and is_instance_valid(paintball_target_ball):
-		stroke_target_ball = paintball_target_ball
-	elif props.target_mode == 1 and active_selected_ball and is_instance_valid(active_selected_ball):
-		stroke_target_ball = active_selected_ball
-
-	var path_len = freeline_path.size()
-	for i in range(path_len):
-		var point = freeline_path[i]
-		var jittered_point = point + Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
-		var screen_pos = (jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-
-		var point_target_ball = stroke_target_ball
-		if not point_target_ball: # If no stroke-wide target, use hover mode
-			point_target_ball = get_intended_ball(screen_pos)
-		
-		var current_diameter = -1 # default = random
-		if props.tapered:
-			var min_diam = props.diameter_min
-			var max_diam = props.diameter_max
-			
-			if path_len == 1:
-				current_diameter = min_diam
-			else:
-				var t = float(i) / (path_len - 1)
-				var pingpong_t = 1.0 - abs(t * 2.0 - 1.0) # 0 -> 1 -> 0
-				var calculated_diameter = lerp(min_diam, max_diam, pingpong_t)
-	
-				current_diameter = int(round(calculated_diameter))
-
-		if point_target_ball:
-			stroke.append({
-				"pos": screen_pos,
-				"ball": point_target_ball,
-				"diam": current_diameter
-			})
-
-	if props.get("shuffle", false):
-		stroke.shuffle()
-
-	var added_paintballs = []
-	for data in stroke:
-		var result = _create_paintball_at_position(data.pos, data.ball, data.diam)
-		if result:
-			added_paintballs.append(result)
-
-	_record_paint_action(added_paintballs)
-
-func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
-	var from = camera.project_ray_origin(screen_pos)
-	var to = from + camera.project_ray_normal(screen_pos) * 10000
-	var space_state = camera.get_world().direct_space_state
-	var result = space_state.intersect_ray(from, to, [self], 1, true, true)
-
-	if result and result.collider and result.collider.get_parent() == target_ball:
-		var intersection_point = result.position
-		var props = paintball_settings_instance.get_properties()
-
-		var color_list = LnzLiveUtils.parse_number_list(props.color)
-		if color_list.empty():
-			push_warning("Invalid color list format.")
-			return
-
-		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color)
-		if outline_color_list.empty():
-			push_warning("Invalid outline color list format.")
-			return
-		
-		var texture_list = LnzLiveUtils.parse_number_list(props.texture, true)
-		if texture_list.empty():
-			texture_list.append(-1)
-
-		var local_relative_pos = target_ball.to_local(intersection_point)
-		var world_relative_pos = intersection_point - target_ball.global_transform.origin
-		var px_scale = pet_node.pixel_world_size
-		var lnz_scale = pet_node.lnz.scales.x / 255.0
-		var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
-		relative_pos_lnz.y *= -1
-
-		var color
-		var outline_color
-		var texture
-		if props.ordered:
-			color = color_list[_ordered_color_index % color_list.size()]
-			_ordered_color_index += 1
-			outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
-			_ordered_outline_color_index += 1
-			texture = texture_list[_ordered_texture_index % texture_list.size()]
-			_ordered_texture_index += 1
-		else:
-			color = color_list[randi() % color_list.size()]
-			outline_color = outline_color_list[randi() % outline_color_list.size()]
-			texture = texture_list[randi() % texture_list.size()]
-
-		var diameter
-		if diameter_override != -1:
-			diameter = diameter_override
-			if props.get("pixel_mode", false):
-				var base_size = float(target_ball.ball_size)
-				if base_size == 0: base_size = 1.0
-				diameter = int(ceil((diameter / base_size) * 100.0))
-		else:
-			if props.get("pixel_mode", false):
-				var base_size = float(target_ball.ball_size)
-				if base_size == 0: base_size = 1.0
-				var rand_px = rand_range(props["diameter_min"], props["diameter_max"])
-				diameter = int(ceil((rand_px / base_size) * 100.0))
-			else:
-				diameter = int(round(rand_range(props["diameter_min"], props["diameter_max"])))
-
-		var paintball_info = {
-			"base_ball_no": target_ball.ball_no,
-			"relative_pos_local": local_relative_pos,
-			"relative_pos_lnz": relative_pos_lnz,
-			"diameter": int(diameter),
-			"color": color,
-			"outline_color": outline_color,
-			"outline_type": floor(rand_range(props.outline_type_min, props.outline_type_max)),
-			"fuzz": floor(rand_range(props.fuzz_min, props.fuzz_max)),
-			"texture": texture,
-			"group": props.group,
-			"anchored": props.anchored,
-		}
-
-		pet_node.add_pending_paintball(paintball_info)
-		return paintball_info
-	return null
-
-func _isolate_target_ball(target_ball):
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for ball in all_balls:
-		if not is_instance_valid(ball):
-			continue
-		var area = ball.get_node_or_null("Area")
-		if not area:
-			continue
-
-		if ball != target_ball:
-			area.set_collision_layer_bit(0, false)
-			area.set_collision_layer_bit(1, true)
-		else:
-			area.set_collision_layer_bit(0, true)
-			area.set_collision_layer_bit(1, false)
-
-func _restore_all_balls():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for ball in all_balls:
-		if not is_instance_valid(ball):
-			continue
-		var area = ball.get_node_or_null("Area")
-		if not area:
-			continue
-
-		area.set_collision_layer_bit(0, true)
-		area.set_collision_layer_bit(1, false)
-
-func _on_unselect_all():
-	var to_update = selected_balls.duplicate()
-	selected_balls.clear()
-	
-	if auto_paintballer_mode:
-		_auto_paint_affected_cache.clear() 
-	
-	for b in to_update:
-		if is_instance_valid(b) and "ball_no" in b:
-			b.apply_outline_state(get_visual_state_for_ball(b)) 
-			
-	_update_selected_ballz_in_settings()
-
-func _on_unselect_side(side: String):
+func _on_preset_apply_selection():
 	if selected_balls.empty():
 		return
 
-	var symmetry_dict = {}
-	match KeyBallsData.species:
-		KeyBallsData.Species.CAT:
-			symmetry_dict = KeyBallsData.cat_body_part_symmetry
-		KeyBallsData.Species.DOG:
-			symmetry_dict = KeyBallsData.dog_body_part_symmetry
-		KeyBallsData.Species.BABY:
-			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var properties = preset_settings_instance.get_properties()
+	var ball_ids = []
+	
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	print(exclude_eyes)
+	var exclusion_list = []
+	if exclude_eyes:
+		exclusion_list = KeyBallsData.get_group_balls("Eyes")
+		print(exclusion_list)
 
-	var left_lookup = {}
-	var right_lookup = {}
-	for main_part in symmetry_dict:
-		for sub_part in symmetry_dict[main_part]:
-			var part_info = symmetry_dict[main_part][sub_part]
-			if part_info.has("left"):
-				for id in part_info.left: left_lookup[id] = true
-			if part_info.has("right"):
-				for id in part_info.right: right_lookup[id] = true
-
-	var to_remove = []
 	for b in selected_balls:
-		if not is_instance_valid(b) or not "ball_no" in b:
-			continue
-			
-		var ball_no = b.ball_no
-		var is_left = left_lookup.has(ball_no)
-		var is_right = right_lookup.has(ball_no)
-		var is_center = not is_left and not is_right
-		
-		var should_unselect = false
-		match side:
-			"left":   should_unselect = is_left
-			"right":  should_unselect = is_right
-			"center": should_unselect = is_center
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in exclusion_list:
+				ball_ids.append(b.ball_no)
 
-		if should_unselect:
-			to_remove.append(b)
+	if not ball_ids.empty():
+		lnz_text_edit.apply_batch_presets(ball_ids, properties)
 
-	for b in to_remove:
-		selected_balls.erase(b)
-		if b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-	_update_selected_ballz_in_settings()
+### MOVE MODE ###
 
 func _on_move_mode_clear():
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
@@ -2744,498 +3067,3 @@ func _on_pivot_changed():
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
-
-func _update_selected_ballz_in_settings():
-	var ids = []
-	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
-	
-	var filter = []
-	if exclude_eyes:
-		filter += KeyBallsData.get_group_balls("Eyes")
-
-	for b in selected_balls:
-		if is_instance_valid(b) and "ball_no" in b:
-			if not b.ball_no in filter:
-				ids.append(b.ball_no)
-				
-	move_mode_settings_instance.update_selected_balls_text(ids)
-	preset_settings_instance.update_selected_balls_text(ids)
-
-	if auto_paintballer_mode:
-		auto_paintballer_settings_instance.update_selected_balls_text(ids)
-
-func _on_select_balls_by_ids(ids: Array):
-	_on_unselect_all()
-	
-	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
-		if ball and is_instance_valid(ball):
-			if "ball_no" in ball:
-				selected_balls.append(ball)
-				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
-				
-	_update_selected_ballz_in_settings()
-
-func _commit_box_selection():
-	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	
-	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
-	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
-
-	for b in all_balls:
-		#if not is_instance_valid(b) or not b.is_inside_tree(): 
-		if not is_instance_valid(b) or not b.visible: 
-			continue
-
-		if b.get("omitted") == true and not pet_node.draw_omitted_balls:
-			continue
-		
-		if not ("ball_no" in b): 
-			continue
-			
-		if b.ball_no in eye_ids: 
-			continue
-
-		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
-		var relative_pos = projected_pos_local - Vector2(500, 500)
-		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
-
-		if rect.has_point(pos_in_container):
-			if not (b in selected_balls):
-				selected_balls.append(b)
-				if b.has_method("apply_outline_state"):
-					b.apply_outline_state(get_visual_state_for_ball(b))
-
-	_update_selected_ballz_in_settings()
-
-func _on_preset_apply_selection():
-	if selected_balls.empty():
-		return
-
-	var properties = preset_settings_instance.get_properties()
-	var ball_ids = []
-	
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
-	print(exclude_eyes)
-	var exclusion_list = []
-	if exclude_eyes:
-		exclusion_list = KeyBallsData.get_group_balls("Eyes")
-		print(exclusion_list)
-
-	for b in selected_balls:
-		if is_instance_valid(b) and "ball_no" in b:
-			if not b.ball_no in exclusion_list:
-				ball_ids.append(b.ball_no)
-
-	if not ball_ids.empty():
-		lnz_text_edit.apply_batch_presets(ball_ids, properties)
-
-func _on_paintball_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Paintball Mode")
-	paintball_mode = is_on
-	_update_mode_panel_visibility(paintball_settings_instance, is_on)
-	
-	if not is_on:
-		paintball_target_ball = null
-		close_paintball_on_apply = false
-		_restore_all_balls()
-	else:
-		_restore_all_balls()
-		_ordered_color_index = 0
-		_ordered_outline_color_index = 0
-		_ordered_texture_index = 0
-		paintball_settings_instance.find_node("Target").selected = 0
-		
-	_update_paintball_mode_ui()
-	
-# func _on_paintball_mode_toggled(is_on):
-# 	paintball_mode = is_on
-# 	if not is_on:
-# 		paintball_target_ball = null
-# 		close_paintball_on_apply = false
-# 		_restore_all_balls()
-# 	else:
-# 		_restore_all_balls()
-# 		_ordered_color_index = 0
-# 		_ordered_outline_color_index = 0
-# 		_ordered_texture_index = 0
-# 		paintball_settings_instance.find_node("Target").selected = 0
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	_update_paintball_mode_ui()
-
-
-func _on_line_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Line Mode")
-	linez_mode = is_on
-	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
-	
-	if is_on:
-		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-	else:
-		line_mode_close = false
-		if is_instance_valid(linez_start_ball):
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-		linez_start_ball = null
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-
-# func _on_line_mode_toggled(is_on):
-# 	linez_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(line_mode_settings_instance)
-# 		line_mode_settings_instance.show()
-# 		Input.set_custom_mouse_cursor(rope)
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		line_mode_close = false
-# 		line_mode_settings_instance.hide()
-# 		if is_instance_valid(linez_start_ball):
-# 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-# 		linez_start_ball = null
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-
-
-func _on_move_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Move Mode")
-	move_mode = is_on
-	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
-	
-	if is_on:
-		move_mode_settings_instance.set_queued_count(pending_moves.size())
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		ball_label.hide()
-		_reset_tab_state()
-	else:
-		_on_unselect_all()
-		_on_move_mode_clear()
-
-# func _on_move_mode_toggled(is_on):
-# 	move_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(move_mode_settings_instance)
-# 		move_mode_settings_instance.show()
-# 		move_mode_settings_instance.set_queued_count(pending_moves.size())
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-		
-# 		# Disable other modes
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-			
-# 		# Hide ball label and clear tab selection
-# 		ball_label.hide()
-# 		_reset_tab_state()
-		
-# 	else:
-# 		move_mode_settings_instance.hide()
-# 		# Clear visual state of selected balls
-# 		_on_unselect_all()
-# 		_on_move_mode_clear() # Revert any pending moves visuals
-
-func _on_preset_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Preset Mode")
-	preset_mode = is_on
-	_update_mode_panel_visibility(preset_settings_instance, is_on)
-	
-	if is_on:
-		if pet_node and pet_node.lnz:
-			if pet_node.lnz.texture_list:
-				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-			if pet_node.lnz.palette:
-				preset_settings_instance.set_palette(pet_node.lnz.palette)
-		
-		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_ARROW
-	else:
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-
-# func _on_preset_mode_toggled(is_on):
-# 	preset_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(preset_settings_instance)
-# 		preset_settings_instance.show()
-
-# 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-# 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
-# 			preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-		
-# 		if pet_node and pet_node.lnz and pet_node.lnz.palette:
-# 			preset_settings_instance.set_palette(pet_node.lnz.palette)
-
-# 		Input.set_custom_mouse_cursor(smallbrush)
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 		mouse_default_cursor_shape = CURSOR_ARROW
-# 	else:
-# 		preset_settings_instance.hide()
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-# 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-
-
-func _on_project_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Project Mode")
-	project_mode = is_on
-	_update_mode_panel_visibility(project_settings_instance, is_on)
-
-# func _on_project_mode_toggled(is_on):
-# 	project_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(project_settings_instance)
-# 		project_settings_instance.show()
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		project_settings_instance.hide()
-
-
-func _on_auto_paintballer_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Auto Paintballer")
-	auto_paintballer_mode = is_on
-	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
-	
-	if not is_on:
-		pet_node._on_clear_auto_paintballz()
-		_on_unselect_all()
-		_auto_paint_affected_cache.clear()
-		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-		for b in all_balls:
-			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-				b.apply_outline_state(b.OutlineState.NONE)
-
-# func _on_auto_paintballer_mode_toggled(is_on):
-# 	auto_paintballer_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(auto_paintballer_settings_instance)
-# 		auto_paintballer_settings_instance.show()
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		auto_paintballer_settings_instance.hide()
-# 		pet_node._on_clear_auto_paintballz()
-# 		_on_unselect_all()
-# 		_auto_paint_affected_cache.clear()
-# 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-# 		for b in all_balls:
-# 			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-# 				b.apply_outline_state(b.OutlineState.NONE)
-
-func _deactivate_other_modes(active_mode_name: String):
-	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
-	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false
-	if active_mode_name != "Move Mode": move_mode_check_box.pressed = false
-	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
-	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
-	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
-	if active_mode_name != "Recolor Mode": recolor_mode_check_box.pressed = false
-
-func _on_recolor_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Recolor Mode")
-	recolor_mode = is_on
-	_update_mode_panel_visibility(recolor_settings_instance, is_on)
-
-	if is_on:
-		mouse_default_cursor_shape = CURSOR_ARROW
-		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
-	else:
-		recolor_settings_instance._on_ClearBucket_pressed()
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-		recolor_settings_instance._on_ClearBucket_pressed()
-
-func _update_mode_panel_visibility(panel: Control, is_active: bool):
-	if is_active:
-		if panel.is_docked:
-			sidebar_controller.dock_panel(panel)
-			sidebar_controller.switch_to_tab(panel) 
-		else:
-			panel.show()
-			panel.raise()
-	else:
-		if not panel.is_docked:
-			panel.hide()
-		
-		if sidebar_controller:
-			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
-			if tree_tab:
-				sidebar_controller.switch_to_tab(tree_tab) 
-	
-	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
-		sidebar_controller._update_tab_visibilities()
-
-func _capture_pending_state_snapshot():
-	var snapshot = {}
-
-	for b_no in pending_moves.keys():
-		snapshot[b_no] = pending_moves[b_no].duplicate()
-
-	for b in selected_balls:
-		if is_instance_valid(b) and not snapshot.has(b.ball_no):
-			snapshot[b.ball_no] = {
-				"new_pos": b.global_transform.origin,
-				"new_size": b.ball_size,
-				"new_basis": b.global_transform.basis
-			}
-			
-	return snapshot
-
-func _record_move_history_entry(old_snapshot, new_snapshot):
-	if old_snapshot.hash() == new_snapshot.hash(): return
-
-	move_history.append({
-		"old": old_snapshot,
-		"new": new_snapshot
-	})
-	move_redo_stack.clear()
-
-func _restore_move_snapshot(snapshot):
-	pending_moves = snapshot.duplicate(true)
-
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if not "ball_no" in b: continue
-
-		if pending_moves.has(b.ball_no):
-			var data = pending_moves[b.ball_no]
-			b.global_transform.origin = data.new_pos
-			if data.has("new_size"):
-				b.set_ball_size(data.new_size)
-			b.apply_outline_state(get_visual_state_for_ball(b))
-		else:
-			if pet_node._orig_world_pos.has(b.ball_no):
-				b.global_transform.origin = pet_node._orig_world_pos[b.ball_no]
-
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
-
-func _undo_queued_move():
-	if move_history.empty(): return
-	var entry = move_history.pop_back()
-	move_redo_stack.append(entry)
-	_restore_move_snapshot(entry.old)
-
-func _redo_queued_move():
-	if move_redo_stack.empty(): return
-	var entry = move_redo_stack.pop_back()
-	move_history.append(entry)
-	_restore_move_snapshot(entry.new)
-
-func _record_paint_action(paintballs_added):
-	if paintballs_added.empty(): return
-	paint_history.append(paintballs_added)
-	paint_redo_stack.clear()
-
-func _undo_queued_paintball():
-	if paint_history.empty():
-		var data = pet_node.remove_last_pending_paintball()
-		if data:
-			paint_redo_stack.append([data])
-		return
-
-	var last_action = paint_history.pop_back()
-	paint_redo_stack.append(last_action)
-
-	for i in range(last_action.size()):
-		pet_node.remove_last_pending_paintball()
-
-func _redo_queued_paintball():
-	if paint_redo_stack.empty():
-		return
-
-	var action_to_redo = paint_redo_stack.pop_back()
-	paint_history.append(action_to_redo)
-
-	for pb_data in action_to_redo:
-		pet_node.add_pending_paintball(pb_data)
-
-func _record_move_start_state():
-	_pre_move_state = _capture_pending_state_snapshot()
-
-func _record_move_end_state(action_name):
-	var current_state = _capture_pending_state_snapshot()
-	_record_move_history_entry(_pre_move_state, current_state)
