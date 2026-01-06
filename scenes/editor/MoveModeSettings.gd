@@ -80,6 +80,7 @@ func _ready():
 	var pivot_ball = find_node("PivotBall")
 	if pivot_ball:
 		pivot_ball.min_value = 0
+		pivot_ball.max_value = 999
 		pivot_ball.value = 0 # Default to 0
 		pivot_ball.connect("value_changed", self, "_on_pivot_ui_changed")
 
@@ -199,6 +200,11 @@ func _on_ApplyNudge_pressed():
 	var dy = find_node("NudgeY").value
 	var dz = find_node("NudgeZ").value
 	emit_signal("nudge_selection", Vector3(dx, dy, dz))
+
+func update_pivot_max(max_balls: int):
+	var pivot_ball = find_node("PivotBall")
+	if pivot_ball:
+		pivot_ball.max_value = max(0, max_balls - 1)
 
 func change_nudge_value(axis, delta):
 	var node_name = ""

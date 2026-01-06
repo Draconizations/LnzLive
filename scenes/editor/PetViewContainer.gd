@@ -2100,6 +2100,13 @@ func _on_move_mode_clear():
 			continue
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
+func _update_pivot_limit():
+	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
+		var total_balls = get_tree().get_nodes_in_group("balls").size() + \
+		                  get_tree().get_nodes_in_group("addballs").size()
+		
+		move_mode_settings_instance.update_pivot_max(total_balls)
+
 func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
