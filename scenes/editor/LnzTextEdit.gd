@@ -906,15 +906,12 @@ func _transform_paintballz_section(transforms: Dictionary):
 		if transforms.has(ball_no):
 			var trans = transforms[ball_no]
 			var basis_delta = trans.basis
-			var scale_delta = trans.scale
 			
 			var rel_pos = Vector3(float(parts[2]), float(parts[3]) * -1.0, float(parts[4]))
 			
-			var updated_pos = basis_delta.xform(rel_pos) * scale_delta
+			var updated_pos = basis_delta.xform(rel_pos)
 			
 			var old_diam = int(parts[1])
-			parts[1] = str(round(old_diam * scale_delta))
-			
 			parts[2] = str(round(updated_pos.x))
 			parts[3] = str(round(updated_pos.y * -1.0))
 			parts[4] = str(round(updated_pos.z))
@@ -4040,7 +4037,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 	save_backup()
 	
 	var size_changes = {}
-	var paintball_transforms = {} # ball_no -> {basis_delta: Basis, scale_delta: float}
+	var paintball_transforms = {}
 
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
@@ -4055,10 +4052,9 @@ func apply_batch_moves(pending_moves: Dictionary):
 		if data.has("new_basis") and data.has("orig_basis"):
 			basis_delta = data.new_basis * data.orig_basis.inverse()
 		
-		if basis_delta != Basis.IDENTITY or scale_delta != 1.0:
+		if basis_delta != Basis.IDENTITY:
 			paintball_transforms[ball_no] = {
-				"basis": basis_delta,
-				"scale": scale_delta
+				"basis": basis_delta
 			}
 
 	if not size_changes.empty():
