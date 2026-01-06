@@ -129,6 +129,8 @@ const ZOOM_STEP := 1.2
 var selected_balls = []
 var pending_moves = {} # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
 
+var _pre_move_state = {}
+
 var box_selecting = false
 var box_start_pos = Vector2()
 var box_end_pos = Vector2()
@@ -1352,6 +1354,13 @@ func _on_PetViewContainer_resized():
 func _on_PetViewContainer_sort_children():
 	_on_PetViewContainer_resized()
 
+func _find_visual_ball_by_no(no: int) -> Spatial:
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if b.ball_no == no:
+			return b
+	return null
+
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 10000
@@ -1996,26 +2005,6 @@ func _restore_all_balls():
 		area.set_collision_layer_bit(0, true)
 		area.set_collision_layer_bit(1, false)
 
-func _track_pending_move(ball):
-	var current_size = ball.ball_size
-	if not pending_moves.has(ball.ball_no):
-		var orig_pos = ball.global_transform.origin
-		if pet_node._orig_world_pos.has(ball.ball_no):
-			orig_pos = pet_node._orig_world_pos[ball.ball_no]
-
-		pending_moves[ball.ball_no] = {
-			"orig_pos": orig_pos,
-			"orig_size": current_size,
-			"new_pos": ball.global_transform.origin,
-			"new_size": current_size
-		}
-	else:
-		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
-		pending_moves[ball.ball_no]["new_size"] = current_size
-	
-	ball.apply_outline_state(get_visual_state_for_ball(ball))
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
-
 func _on_unselect_all():
 	var to_update = selected_balls.duplicate()
 	selected_balls.clear()
@@ -2106,6 +2095,30 @@ func _update_pivot_limit():
 		                  get_tree().get_nodes_in_group("addballs").size()
 		
 		move_mode_settings_instance.update_pivot_max(total_balls)
+
+func _track_pending_move(ball):
+	var current_size = ball.ball_size
+	if not pending_moves.has(ball.ball_no):
+		var orig_pos = ball.global_transform.origin
+		if pet_node._orig_world_pos.has(ball.ball_no):
+			orig_pos = pet_node._orig_world_pos[ball.ball_no]
+
+		pending_moves[ball.ball_no] = {
+			"orig_pos": orig_pos,
+			"orig_size": current_size,
+			"orig_basis": ball.global_transform.basis,
+			"new_pos": ball.global_transform.origin,
+			"new_size": current_size,
+			"new_basis": ball.global_transform.basis
+		}
+		print(current_size)
+	else:
+		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
+		pending_moves[ball.ball_no]["new_size"] = current_size
+		pending_moves[ball.ball_no]["new_basis"] = ball.global_transform.basis
+	
+	ball.apply_outline_state(get_visual_state_for_ball(ball))
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
 
 func _on_move_mode_apply():
 	if pending_moves.empty():
@@ -2359,13 +2372,6 @@ func _apply_mirror_move(balls_moved, delta):
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
 
-func _find_visual_ball_by_no(no: int) -> Spatial:
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if b.ball_no == no:
-			return b
-	return null
-
 func _get_rotation_pivot_origin(pivot_id):
 	var pivot_origin = Vector3.ZERO
 	var pivot_visual = null
@@ -2466,6 +2472,72 @@ func _on_flip_selection(axis_vector, pivot_id):
 
 	_record_move_end_state("Flip")
 
+func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
+	if selected_balls.empty():
+		return
+
+	_record_move_start_state()
+
+	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
+
+	for b in selected_balls:
+		if not is_instance_valid(b):
+			continue
+
+		var addballz_base_selected = false
+		var p = b.get_parent()
+		while is_instance_valid(p) and p != get_tree().root:
+			if p in selected_balls:
+				addballz_base_selected = true
+				break
+			p = p.get_parent()
+
+		if scale_dist:
+			if not addballz_base_selected:
+				var current_pos = b.global_transform.origin
+				var rel_pos = current_pos - pivot_origin
+				var new_rel_pos = rel_pos * factor
+				var new_pos = pivot_origin + new_rel_pos
+
+				if not pet_node._orig_world_pos.has(b.ball_no):
+					pet_node._orig_world_pos[b.ball_no] = current_pos
+
+				var delta = new_pos - current_pos
+				b.global_transform.origin = new_pos
+
+				_apply_eye_iris_binding(b, delta)
+
+		if scale_size:
+			var original_s = b.ball_size
+			var target_visual = original_s * factor
+			target_visual = clamp(target_visual, 1.0, 500.0)
+
+			var is_ab = b.ball_no >= KeyBallsData.max_base_ball_num
+			var bhd_s = pet_node.bhd.ball_sizes[b.ball_no] if not is_ab else 0
+			var engine_scale = pet_node.lnz.scales[1]
+
+			var req_total = (target_visual / (engine_scale / 255.0)) + 2
+			var final_lnz = round(req_total - bhd_s)
+
+			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+			snapped_visual -= 1 - fmod(snapped_visual, 2)
+
+			b.set_ball_size(snapped_visual)
+
+			pass
+
+	for b in selected_balls:
+		if is_instance_valid(b):
+			_track_pending_move(b)
+
+	_record_move_end_state("Scale")
+
+func _on_pivot_changed():
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
 func _update_selected_ballz_in_settings():
 	var ids = []
 	var properties = preset_settings_instance.get_properties()
@@ -2553,72 +2625,6 @@ func _on_preset_apply_selection():
 
 	if not ball_ids.empty():
 		lnz_text_edit.apply_batch_presets(ball_ids, properties)
-
-func _on_pivot_changed():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if is_instance_valid(b) and b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
-	if selected_balls.empty():
-		return
-
-	_record_move_start_state()
-
-	var pivot_origin = _get_rotation_pivot_origin(pivot_id)
-
-	for b in selected_balls:
-		if not is_instance_valid(b):
-			continue
-
-		var addballz_base_selected = false
-		var p = b.get_parent()
-		while is_instance_valid(p) and p != get_tree().root:
-			if p in selected_balls:
-				addballz_base_selected = true
-				break
-			p = p.get_parent()
-
-		if scale_dist:
-			if not addballz_base_selected:
-				var current_pos = b.global_transform.origin
-				var rel_pos = current_pos - pivot_origin
-				var new_rel_pos = rel_pos * factor
-				var new_pos = pivot_origin + new_rel_pos
-
-				if not pet_node._orig_world_pos.has(b.ball_no):
-					pet_node._orig_world_pos[b.ball_no] = current_pos
-
-				var delta = new_pos - current_pos
-				b.global_transform.origin = new_pos
-
-				_apply_eye_iris_binding(b, delta)
-
-		if scale_size:
-			var original_s = b.ball_size
-			var target_visual = original_s * factor
-			target_visual = clamp(target_visual, 1.0, 500.0)
-
-			var is_ab = b.ball_no >= KeyBallsData.max_base_ball_num
-			var bhd_s = pet_node.bhd.ball_sizes[b.ball_no] if not is_ab else 0
-			var engine_scale = pet_node.lnz.scales[1]
-
-			var req_total = (target_visual / (engine_scale / 255.0)) + 2
-			var final_lnz = round(req_total - bhd_s)
-
-			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-			snapped_visual -= 1 - fmod(snapped_visual, 2)
-
-			b.set_ball_size(snapped_visual)
-
-			pass
-
-	for b in selected_balls:
-		if is_instance_valid(b):
-			_track_pending_move(b)
-
-	_record_move_end_state("Scale")
 
 func _on_paintball_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Paintball Mode")
@@ -2944,7 +2950,8 @@ func _capture_pending_state_snapshot():
 		if is_instance_valid(b) and not snapshot.has(b.ball_no):
 			snapshot[b.ball_no] = {
 				"new_pos": b.global_transform.origin,
-				"new_size": b.ball_size
+				"new_size": b.ball_size,
+				"new_basis": b.global_transform.basis
 			}
 			
 	return snapshot
@@ -3018,8 +3025,6 @@ func _redo_queued_paintball():
 
 	for pb_data in action_to_redo:
 		pet_node.add_pending_paintball(pb_data)
-
-var _pre_move_state = {}
 
 func _record_move_start_state():
 	_pre_move_state = _capture_pending_state_snapshot()

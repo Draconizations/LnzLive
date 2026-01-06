@@ -889,6 +889,38 @@ func _on_ApplyChangesButton_pressed():
 	save_backup()
 	save_file(false) # User Manual Save = History Snapshot
 
+func _transform_paintballz_section(transforms: Dictionary):
+	var bounds = _get_section_bounds("[Paint Ballz]")
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"): continue
+		
+		var parts = _split_line(line)
+		if parts.size() < 5: continue
+		
+		var ball_no = int(parts[0])
+		if transforms.has(ball_no):
+			var trans = transforms[ball_no]
+			var basis_delta = trans.basis
+			var scale_delta = trans.scale
+			
+			var rel_pos = Vector3(float(parts[2]), float(parts[3]) * -1.0, float(parts[4]))
+			
+			var updated_pos = basis_delta.xform(rel_pos) * scale_delta
+			
+			var old_diam = int(parts[1])
+			parts[1] = str(round(old_diam * scale_delta))
+			
+			parts[2] = str(round(updated_pos.x))
+			parts[3] = str(round(updated_pos.y * -1.0))
+			parts[4] = str(round(updated_pos.z))
+			
+			set_line(i, _join_array(parts, delim))
+
 func _on_apply_paintballz():
 	save_backup()
 
@@ -4008,15 +4040,32 @@ func apply_batch_moves(pending_moves: Dictionary):
 	save_backup()
 	
 	var size_changes = {}
+	var paintball_transforms = {} # ball_no -> {basis_delta: Basis, scale_delta: float}
+
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
-		if data.has("new_size"):
-			var target_visual = data.new_size
+		
+		var scale_delta = 1.0
+		if data.has("new_size") and data.has("orig_size") and data.orig_size > 0:
+			scale_delta = float(data.new_size) / float(data.orig_size)
 			var size_dif = pet_view.get_lnz_size_difference(1.0, pet_view._find_visual_ball_by_no(ball_no), pet_node)
 			size_changes[ball_no] = size_dif
 
+		var basis_delta = Basis.IDENTITY
+		if data.has("new_basis") and data.has("orig_basis"):
+			basis_delta = data.new_basis * data.orig_basis.inverse()
+		
+		if basis_delta != Basis.IDENTITY or scale_delta != 1.0:
+			paintball_transforms[ball_no] = {
+				"basis": basis_delta,
+				"scale": scale_delta
+			}
+
 	if not size_changes.empty():
 		_apply_batch_sizes(size_changes)
+
+	if not paintball_transforms.empty():
+		_transform_paintballz_section(paintball_transforms)
 
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
@@ -4115,7 +4164,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					count += 1
 	
 	save_file(true)
-	commit_visual_change("Batch Moved/Sized Ballz")
+	commit_visual_change("Batch Moved/Rotated/Scaled Ballz/Paintballz")
 
 func _apply_batch_sizes(size_changes: Dictionary):
 	var ballz_bounds = _get_section_bounds("[Ballz Info]")
