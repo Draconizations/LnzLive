@@ -566,6 +566,7 @@ func _gui_input(event):
 				else:
 					# Mouse release
 					if is_dragging: # Only commit if we were actually dragging
+						var was_resizing = is_resizing
 						is_dragging = false
 						is_resizing = false
 						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
@@ -575,15 +576,30 @@ func _gui_input(event):
 						for b in selected_balls:
 							if is_instance_valid(b):
 								if not pending_moves.has(b.ball_no):
+									var orig_p = b.global_transform.origin
 									if pet_node._orig_world_pos.has(b.ball_no):
-										pending_moves[b.ball_no] = {
-											"orig_pos": pet_node._orig_world_pos[b.ball_no], 
-											"new_pos": b.global_transform.origin
-										}
+										orig_p = pet_node._orig_world_pos[b.ball_no]
+									
+									var orig_s = b.ball_size
+									if was_resizing and _scale_group_initial_data.has(b.ball_no):
+										orig_s = _scale_group_initial_data[b.ball_no].size
+
+									pending_moves[b.ball_no] = {
+										"orig_pos": orig_p,
+										"new_pos": b.global_transform.origin,
+										"orig_size": orig_s,
+										"new_size": b.ball_size,
+										"orig_basis": b.global_transform.basis,
+										"new_basis": b.global_transform.basis
+									}
 								else:
 									pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
 									pending_moves[b.ball_no]["new_size"] = b.ball_size
-						
+									# If we just resized, ensure we captured the original size before the resize started
+									if was_resizing and _scale_group_initial_data.has(b.ball_no):
+										if not pending_moves[b.ball_no].has("orig_size") or pending_moves[b.ball_no]["orig_size"] == pending_moves[b.ball_no]["new_size"]:
+											pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
+
 						move_mode_settings_instance.set_queued_count(pending_moves.size())
 						_record_move_end_state("Drag Move")
 						return # Consume drag release
@@ -2124,7 +2140,19 @@ func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
 		
-	pet_node.set_skip_next_rebuild(true)
+	var needs_rebuild = false
+	for b_no in pending_moves:
+		var data = pending_moves[b_no]
+		if data.has("orig_basis") and data.has("new_basis"):
+			if data.orig_basis != data.new_basis:
+				needs_rebuild = true
+				break
+		if data.has("orig_size") and data.has("new_size"):
+			if data.orig_size != data.new_size:
+				needs_rebuild = true
+				break
+
+	pet_node.set_skip_next_rebuild(!needs_rebuild)
 	lnz_text_edit.apply_batch_moves(pending_moves)
 	
 	pending_moves.clear()
@@ -2465,6 +2493,9 @@ func _on_flip_selection(axis_vector, pivot_id):
 				pet_node._orig_world_pos[b.ball_no] = current_pos 
 			
 			b.global_transform.origin = new_pos
+			
+			var scale_basis = Basis().scaled(axis_vector)
+			b.global_transform.basis = scale_basis * b.global_transform.basis
 
 	for b in selected_balls:
 		if is_instance_valid(b):
