@@ -2003,20 +2003,20 @@ func begin_auto_move_for_ball(ball: Spatial) -> void:
 	Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
 
-# func schedule_autodrag_for_addball(ball_no: int) -> void:
-# 	pending_autodrag_addball_no = ball_no
-# 	_wait_for_addball_then_autodrag()
+func schedule_autodrag_for_addball(ball_no: int) -> void:
+	pending_autodrag_addball_no = ball_no
+	_wait_for_addball_then_autodrag()
 
-# func _wait_for_addball_then_autodrag() -> void:
-# 	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
-# 	while tries > 0 and pending_autodrag_addball_no != -1:
-# 		yield(get_tree(), "idle_frame")
-# 		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
-# 		if visual:
-# 			begin_auto_move_for_ball(visual)
-# 			pending_autodrag_addball_no = -1
-# 			return
-# 		tries -= 1
+func _wait_for_addball_then_autodrag() -> void:
+	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
+	while tries > 0 and pending_autodrag_addball_no != -1:
+		yield(get_tree(), "idle_frame")
+		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
+		if visual:
+			begin_auto_move_for_ball(visual)
+			pending_autodrag_addball_no = -1
+			return
+		tries -= 1
 
 ### MODE MANAGEMENT ###
 func _deactivate_other_modes(active_mode_name: String):
