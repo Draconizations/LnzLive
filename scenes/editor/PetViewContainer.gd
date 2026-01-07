@@ -94,6 +94,13 @@ var _ordered_color_index = 0
 var _ordered_outline_color_index = 0
 var _ordered_texture_index = 0
 
+var gizmo_3d_root: Spatial
+var gizmo_x: MeshInstance
+var gizmo_y: MeshInstance
+var gizmo_z: MeshInstance
+var labels_3d = {}
+const GIZMO_OPACITY = 0.5
+
 # onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 # onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 # onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
@@ -266,6 +273,8 @@ func _ready():
 	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
 
+	_setup_3d_gizmos()
+
 func _ensure_panel_visible(panel):
 	if panel.is_docked:
 		if sidebar_controller and sidebar_controller.tab_container.current_tab != panel.get_index():
@@ -284,6 +293,10 @@ func _reset_tab_state():
 	_tab_activation_mouse_pos = Vector2.ZERO
 
 func _process(_delta):
+	# AXIS GIZMO
+	_update_3d_gizmo_visibility()
+
+	# HELPER TEXT
 	var header = ""
 	var body = "" 
 	var footer = ""
@@ -359,7 +372,8 @@ func _process(_delta):
 		body = "Select Mode: when hovering, cycle ballz using TAB..."
 
 	elif is_dragging:
-		update()
+		pass
+		#update() # AXIS GIZMO
 	
 	else:
 		if Input.is_key_pressed(KEY_CONTROL):
@@ -410,20 +424,156 @@ func _draw():
 	# 	draw_arc(mouse_pos, NEARBY_SCREEN_RADIUS, 0, TAU, 32, Color(1, 1, 0, 0.5), 2.0)
 
 	# AXIS GIZMOS
+	# var reference_ball = null
+	
+	# if is_dragging and is_instance_valid(drag_ball):
+	# 	reference_ball = drag_ball
+	# elif move_mode and not selected_balls.empty():
+	# 	if is_instance_valid(selected_balls[0]):
+	# 		reference_ball = selected_balls[0]
+
+	# if reference_ball:
+	# 	_draw_axis_gizmos(reference_ball)
+
+
+# too many draw calls
+
+# func _draw_axis_gizmos(reference_ball: Spatial):
+# 	if not is_instance_valid(reference_ball):
+# 		return
+
+# 	var hotkey_x = Input.is_key_pressed(KEY_X)
+# 	var hotkey_y = Input.is_key_pressed(KEY_Y)
+# 	var hotkey_z = Input.is_key_pressed(KEY_Z)
+# 	var any_hotkey = hotkey_x or hotkey_y or hotkey_z
+
+# 	var ui_active_x = false
+# 	var ui_active_y = false
+# 	var ui_active_z = false
+
+# 	if move_mode and is_instance_valid(move_mode_settings_instance):
+# 		match move_mode_settings_instance.current_constraint_mode:
+# 			"LockX": ui_active_x = true
+# 			"LockY": ui_active_y = true
+# 			"LockZ": ui_active_z = true
+# 			"LockXY": 
+# 				ui_active_x = true
+# 				ui_active_y = true
+# 			"LockXZ": 
+# 				ui_active_x = true
+# 				ui_active_z = true
+# 			"LockYZ": 
+# 				ui_active_y = true
+# 				ui_active_z = true
+# 			"Free":
+# 				ui_active_x = false
+# 				ui_active_y = false
+# 				ui_active_z = false
+
+# 	var show_x = hotkey_x if any_hotkey else ui_active_x
+# 	var show_y = hotkey_y if any_hotkey else ui_active_y
+# 	var show_z = hotkey_z if any_hotkey else ui_active_z
+
+# 	if not is_dragging and not any_hotkey:
+# 		return
+
+# 	var origin_3d = reference_ball.global_transform.origin
+# 	if camera.is_position_behind(origin_3d):
+# 		return
+
+# 	var origin_2d_raw = camera.unproject_position(origin_3d)
+# 	var origin_2d = (origin_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+
+# 	var length = 150.0
+# 	var width = 2.0
+
+# 	if show_x:
+# 		_draw_gizmo_line(origin_3d, Vector3(1, 0, 0), Color.red, origin_2d, length, width, "X", false)
+# 	if show_y:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 1, 0), Color.green, origin_2d, length, width, "Y", true)
+# 	if show_z:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 0, 1), Color.blue, origin_2d, length, width, "Z", false)
+
+# func _get_projected_end_point(origin_3d: Vector3, dir_3d: Vector3, origin_2d: Vector2, length: float) -> Vector2:
+# 	var target_3d = origin_3d + (dir_3d * 0.1) 
+# 	var target_2d_raw = camera.unproject_position(target_3d)
+# 	var target_2d = (target_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+	
+# 	var dir_2d = (target_2d - origin_2d).normalized()
+# 	return origin_2d + (dir_2d * length)
+
+# func _draw_axis_label(pos: Vector2, text: String, color: Color):
+# 	var font = get_font("font")
+# 	var text_size = font.get_string_size(text)
+# 	var text_pos = pos - (text_size / 2.0) + Vector2(0, -10)
+	
+# 	draw_string(font, text_pos + Vector2(1, 1), text, Color.black)
+# 	draw_string(font, text_pos, text, color)
+
+# func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origin_2d: Vector2, length: float, width: float, label: String, invert_labels: bool):
+# 	var pos_end = _get_projected_end_point(origin_3d, axis_dir, origin_2d, length)
+# 	var neg_end = _get_projected_end_point(origin_3d, -axis_dir, origin_2d, length)
+	
+# 	var pos_label = "-" + label if invert_labels else label
+# 	var neg_label = label if invert_labels else "-" + label
+
+# 	draw_line(origin_2d, pos_end, color, width, true)
+# 	_draw_axis_label(pos_end, pos_label, color)
+
+# 	draw_line(origin_2d, neg_end, color, width, true)
+# 	_draw_axis_label(neg_end, neg_label, color)
+
+func _setup_3d_gizmos():
+	gizmo_3d_root = Spatial.new()
+	pet_node.add_child(gizmo_3d_root)
+	gizmo_3d_root.visible = false
+
+	gizmo_x = _create_gizmo_line(Color.red, Vector3(1, 0, 0))
+	gizmo_y = _create_gizmo_line(Color.green, Vector3(0, 1, 0))
+	gizmo_z = _create_gizmo_line(Color.blue, Vector3(0, 0, 1))
+	
+	gizmo_3d_root.add_child(gizmo_x)
+	gizmo_3d_root.add_child(gizmo_y)
+	gizmo_3d_root.add_child(gizmo_z)
+
+func _create_gizmo_line(color: Color, direction: Vector3) -> MeshInstance:
+	var mi = MeshInstance.new()
+	var cylinder = CylinderMesh.new()
+	cylinder.top_radius = 0.001
+	cylinder.bottom_radius = 0.001
+	cylinder.height = 0.5
+	
+	var mat = SpatialMaterial.new()
+	mat.flags_unshaded = true
+	mat.flags_transparent = true
+	mat.albedo_color = Color(color.r, color.g, color.b, GIZMO_OPACITY)
+	mat.flags_no_depth_test = true
+	
+	mi.mesh = cylinder
+	mi.material_override = mat
+
+	if direction.x != 0:
+		mi.rotation_degrees = Vector3(0, 0, 90)
+	elif direction.z != 0:
+		mi.rotation_degrees = Vector3(90, 0, 0)
+
+	return mi
+
+func _update_3d_gizmo_visibility():
 	var reference_ball = null
 	
 	if is_dragging and is_instance_valid(drag_ball):
 		reference_ball = drag_ball
 	elif move_mode and not selected_balls.empty():
-		if is_instance_valid(selected_balls[0]):
-			reference_ball = selected_balls[0]
+		reference_ball = selected_balls[0]
+	elif selecting_on and is_instance_valid(last_selected):
+		reference_ball = last_selected
 
-	if reference_ball:
-		_draw_axis_gizmos(reference_ball)
-
-func _draw_axis_gizmos(reference_ball: Spatial):
-	if not is_instance_valid(reference_ball):
+	if not reference_ball:
+		gizmo_3d_root.visible = false
 		return
+
+	gizmo_3d_root.global_transform.origin = reference_ball.global_transform.origin
 
 	var hotkey_x = Input.is_key_pressed(KEY_X)
 	var hotkey_y = Input.is_key_pressed(KEY_Y)
@@ -449,62 +599,23 @@ func _draw_axis_gizmos(reference_ball: Spatial):
 				ui_active_y = true
 				ui_active_z = true
 			"Free":
-				ui_active_x = true
-				ui_active_y = true
-				ui_active_z = true
+				ui_active_x = false
+				ui_active_y = false
+				ui_active_z = false
 
 	var show_x = hotkey_x if any_hotkey else ui_active_x
 	var show_y = hotkey_y if any_hotkey else ui_active_y
 	var show_z = hotkey_z if any_hotkey else ui_active_z
 
 	if not is_dragging and not any_hotkey:
+		gizmo_3d_root.visible = false
 		return
 
-	var origin_3d = reference_ball.global_transform.origin
-	if camera.is_position_behind(origin_3d):
-		return
+	gizmo_x.visible = show_x
+	gizmo_y.visible = show_y
+	gizmo_z.visible = show_z
 
-	var origin_2d_raw = camera.unproject_position(origin_3d)
-	var origin_2d = (origin_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
-
-	var length = 150.0
-	var width = 2.0
-
-	if show_x:
-		_draw_gizmo_line(origin_3d, Vector3(1, 0, 0), Color.red, origin_2d, length, width, "X", false)
-	if show_y:
-		_draw_gizmo_line(origin_3d, Vector3(0, 1, 0), Color.green, origin_2d, length, width, "Y", true)
-	if show_z:
-		_draw_gizmo_line(origin_3d, Vector3(0, 0, 1), Color.blue, origin_2d, length, width, "Z", false)
-
-func _get_projected_end_point(origin_3d: Vector3, dir_3d: Vector3, origin_2d: Vector2, length: float) -> Vector2:
-	var target_3d = origin_3d + (dir_3d * 0.1) 
-	var target_2d_raw = camera.unproject_position(target_3d)
-	var target_2d = (target_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
-	
-	var dir_2d = (target_2d - origin_2d).normalized()
-	return origin_2d + (dir_2d * length)
-
-func _draw_axis_label(pos: Vector2, text: String, color: Color):
-	var font = get_font("font")
-	var text_size = font.get_string_size(text)
-	var text_pos = pos - (text_size / 2.0) + Vector2(0, -10)
-	
-	draw_string(font, text_pos + Vector2(1, 1), text, Color.black)
-	draw_string(font, text_pos, text, color)
-
-func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origin_2d: Vector2, length: float, width: float, label: String, invert_labels: bool):
-	var pos_end = _get_projected_end_point(origin_3d, axis_dir, origin_2d, length)
-	var neg_end = _get_projected_end_point(origin_3d, -axis_dir, origin_2d, length)
-	
-	var pos_label = "-" + label if invert_labels else label
-	var neg_label = label if invert_labels else "-" + label
-
-	draw_line(origin_2d, pos_end, color, width, true)
-	_draw_axis_label(pos_end, pos_label, color)
-
-	draw_line(origin_2d, neg_end, color, width, true)
-	_draw_axis_label(neg_end, neg_label, color)
+	gizmo_3d_root.visible = show_x or show_y or show_z
 
 ### INPUT HANDLING ###
 
@@ -669,7 +780,7 @@ func _gui_input(event):
 						is_dragging = false
 						is_resizing = false
 						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-						update()
+						#update() # AXIS GIZMO
 						drag_ball = null
 						
 						# Commit pending moves for visual feedback (gray outline)
@@ -801,7 +912,7 @@ func _gui_input(event):
 					if move_mode_settings_instance.is_mirror_x_active():
 						_apply_mirror_move(selected_balls, delta)
 			
-			update()
+			#update() # AXIS GIZMO
 			return
 	##################################################
 
@@ -1132,7 +1243,7 @@ func _gui_input(event):
 		is_dragging = false
 		is_resizing = false
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		update()
+		#update() # AXIS GIZMO
 		drag_ball = null
 		return
 
@@ -1222,7 +1333,7 @@ func _gui_input(event):
 			is_resizing = false
 			drag_started_via_code = false
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-			update()
+			#update() # AXIS GIZMO
 			drag_ball = null
 			return
 	
