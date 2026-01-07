@@ -607,6 +607,14 @@ func _update_3d_gizmo_visibility():
 	var show_y = hotkey_y if any_hotkey else ui_active_y
 	var show_z = hotkey_z if any_hotkey else ui_active_z
 
+	if not is_dragging:
+		gizmo_3d_root.visible = false
+		return
+
+	gizmo_x.visible = show_x
+	gizmo_y.visible = show_y
+	gizmo_z.visible = show_z
+
 	if not is_dragging and not any_hotkey:
 		gizmo_3d_root.visible = false
 		return
