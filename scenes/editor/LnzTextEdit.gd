@@ -707,72 +707,130 @@ func find_line_in_addball_section(ball_no):
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
-func find_line_in_move_section(ball_no):
+func find_line_in_move_section(ball_no, start_from = -1):
 	var section_find = search('[Move]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
 	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 
 		var parts = _split_line(line)
 		if parts.size() > 0 and parts[0] == str(ball_no):
-			return start_of_section + i
+			return current_line_idx
 		i += 1
-	return -1
+	
+	if start_from != -1:
+		var top_match = find_line_in_move_section(ball_no, -1)
+		return top_match
+			
+	return header_idx
 
-func find_line_in_project_section(ball_no):
+func find_line_in_project_section(ball_no, start_from = -1):
 	var section_find = search('[Project Ball]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
 		var parts = _split_line(line)
 		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
-			return looped
+			return current_line_idx
 		i += 1
-	return -1
 	
-func find_line_in_linez_section(ball_no):
+	if start_from != -1:
+		return find_line_in_project_section(ball_no, -1)
+	
+	return header_idx
+	
+func find_line_in_linez_section(ball_no, start_from = -1):
 	var section_find = search('[Linez]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
+		var parsed_line = _split_line(line)
+		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
+			return current_line_idx
+		i += 1
+	
+	if start_from != -1:
+		return find_line_in_linez_section(ball_no, -1)
+
+	return header_idx
+
+func find_line_in_paintball_section(ball_no, start_from = -1):
+	var section_find = search('[Paint Ballz]', 0, 0, 0)
+	if section_find.empty(): return -1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
+	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
+	while true:
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
+		
+		var line = get_line(current_line_idx)
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
-		var parsed_line = _split_line(line)
-		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
-			return looped
+		var parts = _split_line(line)
+		if parts.size() > 0 and parts[0] == str(ball_no):
+			return current_line_idx
 		i += 1
-	return -1
+		
+	if start_from != -1:
+		return find_line_in_paintball_section(ball_no, -1)
+
+	return header_idx
 
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
@@ -1586,8 +1644,9 @@ func _update_paintballz_section(header: String, ball_no: int):
 		i += 1
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
-	# need to find line number for the ball
 	var actual_start_point
+	var current_line = cursor_get_line()
+
 	if section == Section.Section.BALL:
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
@@ -1597,13 +1656,15 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		else:
-			actual_start_point = find_line_in_move_section(ball_no)
+			actual_start_point = find_line_in_move_section(ball_no, current_line)
 	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no)
+		actual_start_point = find_line_in_project_section(ball_no, current_line)
 	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no)
+		actual_start_point = find_line_in_linez_section(ball_no, current_line)
+
 	if actual_start_point == -1:
 		return
+
 	cursor_set_line(actual_start_point)
 	cursor_set_column(0)
 	center_viewport_to_cursor()
