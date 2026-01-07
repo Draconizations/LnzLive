@@ -1,10 +1,10 @@
 extends Control
 
-# PetViewContainer.gd – TBD
-# - TBD
-
-# TBD:
-# rename paintball_mode to paint_mode
+# PetViewContainer.gd – manages 3D viewport interaction, modes, tools, and states
+# - Translates 2D mouse input into 3D world interactions (raycasting/selection)
+# - Manages Modes (Move, Paint, Line, etc.)
+# - Handles coordinate conversion between spatial world and LNZ units
+# - Coordinates viewport visuals (gizmos, labels, and cursors)
 
 onready var default_font = get_font("font")
 
@@ -1554,17 +1554,19 @@ func _on_Node_ball_mouse_enter(ball_info):
 
 func _find_visual_ball_by_no(no: int) -> Spatial:
 	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	
 	for b in all_balls:
-		if b.ball_no == no:
-			return b
-	return null
-
-func _find_visual_addball_by_no(no: int) -> Spatial:
-	for b in get_tree().get_nodes_in_group("addballs"):
-		if b.has_method("get"): # safety if some nodes aren't the ball script
+		if is_instance_valid(b) and "ball_no" in b:
 			if b.ball_no == no:
 				return b
 	return null
+
+# func _find_visual_addball_by_no(no: int) -> Spatial:
+# 	for b in get_tree().get_nodes_in_group("addballs"):
+# 		if b.has_method("get"): # safety if some nodes aren't the ball script
+# 			if b.ball_no == no:
+# 				return b
+# 	return null
 
 func _on_affected_list_changed(ids: Array):
 	_auto_paint_affected_cache = ids
@@ -2001,20 +2003,20 @@ func begin_auto_move_for_ball(ball: Spatial) -> void:
 	Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
 
-func schedule_autodrag_for_addball(ball_no: int) -> void:
-	pending_autodrag_addball_no = ball_no
-	_wait_for_addball_then_autodrag()
+# func schedule_autodrag_for_addball(ball_no: int) -> void:
+# 	pending_autodrag_addball_no = ball_no
+# 	_wait_for_addball_then_autodrag()
 
-func _wait_for_addball_then_autodrag() -> void:
-	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
-	while tries > 0 and pending_autodrag_addball_no != -1:
-		yield(get_tree(), "idle_frame")
-		var visual := _find_visual_addball_by_no(pending_autodrag_addball_no)
-		if visual:
-			begin_auto_move_for_ball(visual)
-			pending_autodrag_addball_no = -1
-			return
-		tries -= 1
+# func _wait_for_addball_then_autodrag() -> void:
+# 	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
+# 	while tries > 0 and pending_autodrag_addball_no != -1:
+# 		yield(get_tree(), "idle_frame")
+# 		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
+# 		if visual:
+# 			begin_auto_move_for_ball(visual)
+# 			pending_autodrag_addball_no = -1
+# 			return
+# 		tries -= 1
 
 ### MODE MANAGEMENT ###
 func _deactivate_other_modes(active_mode_name: String):
