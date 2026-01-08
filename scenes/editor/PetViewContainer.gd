@@ -2291,16 +2291,22 @@ func _on_palette_visibility_changed():
 func _update_paintball_mode_ui():
 	if paintball_mode:
 		_ensure_panel_visible(paintball_settings_instance)
+
+		_set_pending_paintballs_visible(true)
+
 		paintball_settings_instance.show()
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_ARROW
+
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			paintball_settings_instance.find_node("Target").disabled = true
 		else:
 			paintball_settings_instance.find_node("Target").disabled = false
-		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
-		if pet_node:
-			pet_node.clear_pending_paintballs()
+		# used to clear on exit
+		#if pet_node:
+		#	pet_node.clear_pending_paintballs()
+		_set_pending_paintballs_visible(false)
 
 		paintball_settings_instance.hide()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
@@ -2311,6 +2317,13 @@ func _on_delete_mode_toggled(is_on):
 		Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 	else:
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+
+func _set_pending_paintballs_visible(is_visible: bool):
+	if is_instance_valid(pet_node):
+		var pending = pet_node.get_pending_paintball_nodes()
+		for pb in pending:
+			if is_instance_valid(pb):
+				pb.visible = is_visible
 
 func _on_paintball_mode_for_ball_toggled(ball):
 	close_paintball_on_apply = true
