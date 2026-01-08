@@ -1413,6 +1413,15 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.set_owner(get_root())
 	pb_visual_ball.add_to_group("paintballs")
 
+	var target_layer = 1
+	var base_mesh = base_ball_node.get_node_or_null("MeshInstance")
+	if base_mesh and base_mesh is VisualInstance:
+		target_layer = base_mesh.layers
+
+	var pb_mesh = pb_visual_ball.get_node_or_null("MeshInstance")
+	if pb_mesh and pb_mesh is VisualInstance:
+		pb_mesh.layers = target_layer
+
 	var final_size = base_ball_node.ball_size * (float(paintball_info.diameter) / 100.0)
 	final_size -= 1 - fmod(final_size, 2)
 	pb_visual_ball.ball_size = final_size

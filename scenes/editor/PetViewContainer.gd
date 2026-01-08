@@ -159,6 +159,11 @@ var move_redo_stack = []
 var hotkey_overlay_scene = preload("res://scenes/editor/HotkeyOverlay.tscn")
 var hotkey_overlay_instance = null
 
+var _overlay_viewport_container: ViewportContainer = null
+var _overlay_viewport: Viewport = null
+var _overlay_camera: Camera = null
+var _dimmer_rect: ColorRect = null
+
 func _ready():
 	hotkey_overlay_instance = hotkey_overlay_scene.instance()
 	add_child(hotkey_overlay_instance)
@@ -293,6 +298,9 @@ func _reset_tab_state():
 	_tab_activation_mouse_pos = Vector2.ZERO
 
 func _process(_delta):
+	if is_instance_valid(_overlay_camera):
+		_sync_overlay()
+
 	# AXIS GIZMO
 	_update_3d_gizmo_visibility()
 
@@ -1843,6 +1851,9 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 	return lnz_value
 
 func _isolate_target_ball(target_ball):
+	_create_overlay()
+	camera.cull_mask = 1
+
 	var all_balls = _get_all_visual_balls()
 	for ball in all_balls:
 		if not is_instance_valid(ball):
@@ -1857,18 +1868,91 @@ func _isolate_target_ball(target_ball):
 		else:
 			area.set_collision_layer_bit(0, true)
 			area.set_collision_layer_bit(1, false)
+			_set_visual_layer_recursive(ball, 2)
 
 func _restore_all_balls():
 	var all_balls = _get_all_visual_balls()
 	for ball in all_balls:
 		if not is_instance_valid(ball):
 			continue
+
+		_set_visual_layer_recursive(ball, 1)
+
 		var area = ball.get_node_or_null("Area")
 		if not area:
 			continue
 
 		area.set_collision_layer_bit(0, true)
 		area.set_collision_layer_bit(1, false)
+
+	camera.cull_mask = 1048575
+
+	if is_instance_valid(_overlay_viewport_container):
+		_overlay_viewport_container.queue_free()
+	if is_instance_valid(_dimmer_rect):
+		_dimmer_rect.queue_free()
+
+func _create_overlay():
+	var scene_root = tex.get_parent()
+	var bg_rect = scene_root.get_node("BackgroundColorRect")
+
+	_dimmer_rect = ColorRect.new()
+	_dimmer_rect.color = bg_rect.color
+	_dimmer_rect.color.a = 0.5
+	_dimmer_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_overlay_viewport_container = ViewportContainer.new()
+	_overlay_viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay_viewport_container.stretch = true
+
+	_overlay_viewport = Viewport.new()
+	_overlay_viewport.transparent_bg = true
+	_overlay_viewport.handle_input_locally = false
+	_overlay_viewport.render_target_update_mode = Viewport.UPDATE_ALWAYS
+	_overlay_viewport.world = tex.get_child(0).world
+
+	_overlay_camera = Camera.new()
+	_overlay_camera.cull_mask = 2
+
+	_overlay_viewport.add_child(_overlay_camera)
+	_overlay_viewport_container.add_child(_overlay_viewport)
+
+	scene_root.add_child(_dimmer_rect)
+	scene_root.add_child(_overlay_viewport_container)
+
+	var tex_idx = tex.get_index()
+	scene_root.move_child(_dimmer_rect, tex_idx + 1)
+	scene_root.move_child(_overlay_viewport_container, tex_idx + 2)
+
+	_sync_overlay()
+
+func _sync_overlay():
+	if not is_instance_valid(_overlay_viewport_container): return
+
+	_overlay_viewport_container.rect_position = tex.rect_position
+	_overlay_viewport_container.rect_size = tex.rect_size
+	_overlay_viewport_container.rect_scale = tex.rect_scale
+	_overlay_viewport_container.rect_pivot_offset = tex.rect_pivot_offset
+
+	_dimmer_rect.rect_position = tex.rect_position
+	_dimmer_rect.rect_size = tex.rect_size
+	_dimmer_rect.rect_scale = tex.rect_scale
+	_dimmer_rect.rect_pivot_offset = tex.rect_pivot_offset
+
+	if is_instance_valid(_overlay_camera) and is_instance_valid(camera):
+		_overlay_camera.global_transform = camera.global_transform
+		_overlay_camera.projection = camera.projection
+		_overlay_camera.fov = camera.fov
+		_overlay_camera.size = camera.size
+		_overlay_camera.near = camera.near
+		_overlay_camera.far = camera.far
+		_overlay_camera.keep_aspect = camera.keep_aspect
+
+func _set_visual_layer_recursive(node: Node, layer_value: int):
+	if node is VisualInstance:
+		node.layers = layer_value
+	for child in node.get_children():
+		_set_visual_layer_recursive(child, layer_value)
 
 func _on_unselect_all():
 	var to_update = selected_balls.duplicate()
