@@ -65,7 +65,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `Down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
-| **Recolor Mode** | `G` or `ALT` + `R` | **Open/Close Recolor Mode** |
+| **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
 | **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
 | **Preset Mode** | `left-click` | **Apply Preset**: Apply current Preset to ball |

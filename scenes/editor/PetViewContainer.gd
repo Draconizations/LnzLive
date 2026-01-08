@@ -627,307 +627,263 @@ func _update_3d_gizmo_visibility():
 
 ### INPUT HANDLING ###
 
+func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
+	return (screen_pos - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+
 # TBD: refactor _gui_input with separate functions:
-func _handle_box_selection(event: InputEvent):
-	pass
-	# TBD
+func _handle_box_selection(event: InputEvent) -> bool:
+	if not (move_mode or preset_mode or auto_paintballer_mode) or not Input.is_key_pressed(KEY_CONTROL):
+		return false
 
-func _initialize_move_drag(event: InputEventMouseButton):
-	pass
-	# TBD
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		if event.pressed:
+			box_selecting = true
+			box_start_pos = event.position
+			box_end_pos = event.position
+			return true
+		elif box_selecting:
+			box_selecting = false
+			update()
+			if box_start_pos.distance_to(event.position) < 5.0:
+				var viewport_pos = _get_viewport_pos_from_screen_pos(event.position)
+				var hover = get_intended_ball(viewport_pos)
+				if hover:
+					if hover in selected_balls:
+						selected_balls.erase(hover)
+					else:
+						selected_balls.append(hover)
+					if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
+						hover.apply_outline_state(get_visual_state_for_ball(hover))
+					_update_selected_ballz_in_settings()
+			else:
+				_commit_box_selection()
+			return true
 
-func _handle_move_mode_gui_input(event: InputEvent):
-	pass
-	# TBD
+	if event is InputEventMouseMotion and box_selecting:
+		box_end_pos = event.position
+		update()
+		return true
 
-func _handle_preset_mode_gui_input(event: InputEvent):
-	pass
-	# TBD
+	return false
 
-func _handle_paint_mode_gui_input(event: InputEvent):
-	pass
-	# TBD
-
-func _gui_input(event):
-	if input_is_paused:
-		return
+func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizing: bool = false):
+	is_dragging = true
+	drag_ball = drag_target_ball
+	drag_start_pos = start_pos
+	is_resizing = resizing
 	
-	##################################################
-	# TBD: replace with _handle_box_selection()
-	if (move_mode or preset_mode or auto_paintballer_mode) and Input.is_key_pressed(KEY_CONTROL):
-		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+	if resizing:
+		_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
+
+		_scale_group_initial_data.clear()
+		for b in selected_balls:
+			if is_instance_valid(b):
+				_scale_group_initial_data[b.ball_no] = {
+					"pos": b.global_transform.origin,
+					"size": b.ball_size
+				}
+		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
+	else:
+		_record_move_start_state()
+		for b in selected_balls:
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
+
+func _handle_move_mode_gui_input(event: InputEvent) -> bool:
+	if not move_mode:
+		return false
+
+	# Check for Nudge hotkey via Scroll
+	if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+		var nudge_axis = ""
+		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+
+		if nudge_axis != "":
+			var delta = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
+			move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+			get_tree().set_input_as_handled()
+			return true
+
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
-				box_selecting = true
-				box_start_pos = event.position
-				box_end_pos = event.position
-				return
-			elif box_selecting:
-				box_selecting = false
-				update()
-				if box_start_pos.distance_to(event.position) < 5.0:
-					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-					if hover:
+				if Input.is_key_pressed(KEY_ALT):
+					if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
+						_initialize_move_drag(selected_balls[0], event.position, true)
+						return true
+					else:
+						var hover_pos = _get_viewport_pos_from_screen_pos(event.position)
+						var hover_ball = get_intended_ball(hover_pos)
+						if hover_ball:
+							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
+							var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+							for b in all_balls:
+								if is_instance_valid(b) and b.has_method("apply_outline_state"):
+									b.apply_outline_state(get_visual_state_for_ball(b))
+							return true
+
+				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+
+				if hover:
+					if Input.is_key_pressed(KEY_CONTROL):
+						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
+							hover.apply_outline_state(get_visual_state_for_ball(hover))
 						else:
 							selected_balls.append(hover)
-						if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
-							hover.apply_outline_state(get_visual_state_for_ball(hover))
-						_update_selected_ballz_in_settings()
-				else:
-					_commit_box_selection()
-				return
-
-		if event is InputEventMouseMotion and box_selecting:
-			box_end_pos = event.position
-			update()
-			return
-	##################################################
-
-	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode and not linez_mode:
-		_reset_tab_state()
-
-	##################################################
-	# TBD: replace with _handle_move_mode_gui_input()
-	if move_mode:
-		# Check for Nudge hotkey via Scroll
-		if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-			var nudge_axis = ""
-			if Input.is_key_pressed(KEY_X): nudge_axis = "x"
-			elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
-			elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
-			
-			if nudge_axis != "":
-				var delta = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
-				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
-				get_tree().set_input_as_handled()
-				return
-
-		if event is InputEventMouseButton:
-			if event.button_index == BUTTON_LEFT:
-				if event.pressed:
-					if Input.is_key_pressed(KEY_ALT):
-						if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
-							is_resizing = true 
-							is_dragging = true
-							drag_start_pos = event.position
-							drag_ball = selected_balls[0]
-
-							var pivot_id = -1
-							if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
-								pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
-							_scale_group_pivot = _get_rotation_pivot_origin(pivot_id)
-
-							_scale_group_initial_data.clear()
-							for b in selected_balls:
-								if is_instance_valid(b):
-									_scale_group_initial_data[b.ball_no] = {
-										"pos": b.global_transform.origin,
-										"size": b.ball_size
-									}
-
-							Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
-							return
-						else:
-							var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-							var hover_ball = get_intended_ball(hover_pos)
-							if hover_ball:
-								move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
-								var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-								for b in all_balls:
-									if is_instance_valid(b) and b.has_method("apply_outline_state"):
-										b.apply_outline_state(get_visual_state_for_ball(b))
-								return
-
-					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-					
-					if hover:
-						if Input.is_key_pressed(KEY_CONTROL):
-							# Toggle selection
-							if hover in selected_balls:
-								selected_balls.erase(hover)
-								hover.apply_outline_state(get_visual_state_for_ball(hover))
-							else:
-								selected_balls.append(hover)
-								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-						else:
-							# If not holding CTRL, and ball is not already selected, select only this one
-							# If ball IS selected, we might be starting a drag, so don't clear others yet
-							if not (hover in selected_balls):
-								_on_unselect_all()
-								selected_balls.append(hover)
-								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-
-						_update_selected_ballz_in_settings()
-						
-						# Prepare for dragging if we have a selection
-						if selected_balls.size() > 0:
-							is_dragging = true
-							drag_ball = hover # Just as a reference for plane intersection
-							drag_start_pos = event.position
-							
-							_record_move_start_state()
-
-							# Record original positions for this drag session
-							for b in selected_balls:
-								if not pet_node._orig_world_pos.has(b.ball_no):
-									pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
-									
-							Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
-							return # Consume click on ball
-
+							hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
 					else:
-						# Clicked empty space
-						if not move_mode:
+						if not (hover in selected_balls):
 							_on_unselect_all()
-						# Do NOT return here, allow pass-through to rotation logic
+							selected_balls.append(hover)
+							hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+
+					_update_selected_ballz_in_settings()
+					
+					if selected_balls.size() > 0:
+						_initialize_move_drag(hover, event.position, false)
+						return true
+
 				else:
-					# Mouse release
-					if is_dragging: # Only commit if we were actually dragging
-						var was_resizing = is_resizing
-						is_dragging = false
-						is_resizing = false
-						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-						#update() # AXIS GIZMO
-						drag_ball = null
-						
-						# Commit pending moves for visual feedback (gray outline)
-						for b in selected_balls:
-							if is_instance_valid(b):
-								if not pending_moves.has(b.ball_no):
-									var orig_p = b.global_transform.origin
-									if pet_node._orig_world_pos.has(b.ball_no):
-										orig_p = pet_node._orig_world_pos[b.ball_no]
-									
-									var orig_s = b.ball_size
-									if was_resizing and _scale_group_initial_data.has(b.ball_no):
-										orig_s = _scale_group_initial_data[b.ball_no].size
+					if not move_mode:
+						_on_unselect_all()
+			else:
+				# Mouse release
+				if is_dragging:
+					var was_resizing = is_resizing
+					is_dragging = false
+					is_resizing = false
+					Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+					drag_ball = null
 
-									pending_moves[b.ball_no] = {
-										"orig_pos": orig_p,
-										"new_pos": b.global_transform.origin,
-										"orig_size": orig_s,
-										"new_size": b.ball_size,
-										"orig_basis": b.global_transform.basis,
-										"new_basis": b.global_transform.basis
-									}
-								else:
-									pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
-									pending_moves[b.ball_no]["new_size"] = b.ball_size
-									# If we just resized, ensure we captured the original size before the resize started
-									if was_resizing and _scale_group_initial_data.has(b.ball_no):
-										if not pending_moves[b.ball_no].has("orig_size") or pending_moves[b.ball_no]["orig_size"] == pending_moves[b.ball_no]["new_size"]:
-											pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
-
-						move_mode_settings_instance.set_queued_count(pending_moves.size())
-						_record_move_end_state("Drag Move")
-						return # Consume drag release
-
-		elif event is InputEventMouseMotion and is_dragging and drag_ball:
-			if is_resizing:
-				var mouse_delta = event.position - drag_start_pos
-				var change_amount = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
-				var scale_factor = max(0.1, 1.0 + change_amount)
-				
-				Input.set_custom_mouse_cursor(hand_stretch if change_amount > 0 else hand_pinch, 0, Vector2(30, 31))
-
-				var engine_scale = pet_node.lnz.scales[1]
-				for b_no in _scale_group_initial_data:
-					var b = _find_visual_ball_by_no(b_no)
-					if not is_instance_valid(b): continue
-					
-					var initial = _scale_group_initial_data[b_no]
-					
-					var offset_from_pivot = initial.pos - _scale_group_pivot
-					b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
-					
-					var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
-					var bhd_s = pet_node.bhd.ball_sizes[b_no] if b_no < KeyBallsData.max_base_ball_num else 0
-					var req_total = (target_visual / (engine_scale / 255.0)) + 2
-					var final_lnz = round(req_total - bhd_s)
-					var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-					snapped_visual -= 1 - fmod(snapped_visual, 2)
-					
-					b.set_ball_size(snapped_visual)
-				return
-
-			var real_center = rect_position + rect_size / 2.0
-			var offset = event.position - real_center
-			offset /= tex.rect_scale
-			var screen_pos = Vector2(500, 500) + offset
-			var ray_o = camera.project_ray_origin(screen_pos)
-			var ray_d = camera.project_ray_normal(screen_pos)
-			
-			# Drag plane based on the reference ball's position
-			var plane_n = camera.global_transform.basis.z.normalized()
-			var plane_p = drag_ball.global_transform.origin
-			var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
-			
-			if intersect:
-				var drag_current_pos = intersect
-				
-				# Get the previous intersection point to calculate delta
-				var prev_offset = (event.position - event.relative) - real_center
-				prev_offset /= tex.rect_scale
-				var prev_screen_pos = Vector2(500, 500) + prev_offset
-				var prev_ray_o = camera.project_ray_origin(prev_screen_pos)
-				var prev_ray_d = camera.project_ray_normal(prev_screen_pos)
-				var prev_intersect = LnzLiveUtils.intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
-				
-				if prev_intersect:
-					var delta = drag_current_pos - prev_intersect
-					
-					# Apply constraints
-					var constraints = move_mode_settings_instance.get_constraints()
-					
-					var constrain_x = Input.is_key_pressed(KEY_X)
-					var constrain_y = Input.is_key_pressed(KEY_Y)
-					var constrain_z = Input.is_key_pressed(KEY_Z)
-					
-					var final_lock_x = constraints.x
-					var final_lock_y = constraints.y
-					var final_lock_z = constraints.z
-					
-					# Override UI with Hotkeys if pressed
-					if constrain_x or constrain_y or constrain_z:
-						# If using hotkeys, treat them as "Allow movement on Axis"
-						# So if X is pressed, we Lock Y and Z.
-						final_lock_x = not constrain_x
-						final_lock_y = not constrain_y
-						final_lock_z = not constrain_z
-					
-					if final_lock_x: delta.x = 0
-					if final_lock_y: delta.y = 0
-					if final_lock_z: delta.z = 0
-					
-					# Apply to all selected balls
 					for b in selected_balls:
 						if is_instance_valid(b):
-							var addballz_base_selected = false
-							var p = b.get_parent()
-							while is_instance_valid(p) and p != get_tree().root:
-								if p in selected_balls:
-									addballz_base_selected = true
-									break
-								p = p.get_parent()
-							
-							if not addballz_base_selected:
-								b.global_transform.origin += delta
+							if not pending_moves.has(b.ball_no):
+								var orig_p = b.global_transform.origin
+								if pet_node._orig_world_pos.has(b.ball_no):
+									orig_p = pet_node._orig_world_pos[b.ball_no]
 
-							_track_pending_move(b)
-					
-					# Handle Mirroring
-					if move_mode_settings_instance.is_mirror_x_active():
-						_apply_mirror_move(selected_balls, delta)
+								var orig_s = b.ball_size
+								if was_resizing and _scale_group_initial_data.has(b.ball_no):
+									orig_s = _scale_group_initial_data[b.ball_no].size
+
+								pending_moves[b.ball_no] = {
+									"orig_pos": orig_p,
+									"new_pos": b.global_transform.origin,
+									"orig_size": orig_s,
+									"new_size": b.ball_size,
+									"orig_basis": b.global_transform.basis,
+									"new_basis": b.global_transform.basis
+								}
+							else:
+								pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
+								pending_moves[b.ball_no]["new_size"] = b.ball_size
+								if was_resizing and _scale_group_initial_data.has(b.ball_no):
+									if not pending_moves[b.ball_no].has("orig_size") or pending_moves[b.ball_no]["orig_size"] == pending_moves[b.ball_no]["new_size"]:
+										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
+
+					move_mode_settings_instance.set_queued_count(pending_moves.size())
+					_record_move_end_state("Drag Move")
+					return true
+
+	elif event is InputEventMouseMotion and is_dragging and drag_ball:
+		if is_resizing:
+			var mouse_delta = event.position - drag_start_pos
+			var change_amount = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
+			var scale_factor = max(0.1, 1.0 + change_amount)
+
+			Input.set_custom_mouse_cursor(hand_stretch if change_amount > 0 else hand_pinch, 0, Vector2(30, 31))
+
+			var engine_scale = pet_node.lnz.scales[1]
+			for b_no in _scale_group_initial_data:
+				var b = _find_visual_ball_by_no(b_no)
+				if not is_instance_valid(b): continue
+
+				var initial = _scale_group_initial_data[b_no]
+
+				var offset_from_pivot = initial.pos - _scale_group_pivot
+				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
+
+				var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
+				var bhd_s = pet_node.bhd.ball_sizes[b_no] if b_no < KeyBallsData.max_base_ball_num else 0
+				var req_total = (target_visual / (engine_scale / 255.0)) + 2
+				var final_lnz = round(req_total - bhd_s)
+				var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+				snapped_visual -= 1 - fmod(snapped_visual, 2)
+
+				b.set_ball_size(snapped_visual)
+			return true
+
+		var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+		var ray_o = camera.project_ray_origin(screen_pos)
+		var ray_d = camera.project_ray_normal(screen_pos)
+
+		var plane_n = camera.global_transform.basis.z.normalized()
+		var plane_p = drag_ball.global_transform.origin
+		var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+
+		if intersect:
+			var drag_current_pos = intersect
 			
-			#update() # AXIS GIZMO
-			return
-	##################################################
+			var prev_screen_pos = _get_viewport_pos_from_screen_pos(event.position - event.relative)
+			var prev_ray_o = camera.project_ray_origin(prev_screen_pos)
+			var prev_ray_d = camera.project_ray_normal(prev_screen_pos)
+			var prev_intersect = LnzLiveUtils.intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
+			
+			if prev_intersect:
+				var delta = drag_current_pos - prev_intersect
+				
+				var constraints = move_mode_settings_instance.get_constraints()
+				
+				var constrain_x = Input.is_key_pressed(KEY_X)
+				var constrain_y = Input.is_key_pressed(KEY_Y)
+				var constrain_z = Input.is_key_pressed(KEY_Z)
 
-	##################################################
-	# TBD: replace with _handle_preset_mode_gui_input()
-	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+				var final_lock_x = constraints.x
+				var final_lock_y = constraints.y
+				var final_lock_z = constraints.z
+
+				if constrain_x or constrain_y or constrain_z:
+					final_lock_x = not constrain_x
+					final_lock_y = not constrain_y
+					final_lock_z = not constrain_z
+
+				if final_lock_x: delta.x = 0
+				if final_lock_y: delta.y = 0
+				if final_lock_z: delta.z = 0
+
+				for b in selected_balls:
+					if is_instance_valid(b):
+						var addballz_base_selected = false
+						var p = b.get_parent()
+						while is_instance_valid(p) and p != get_tree().root:
+							if p in selected_balls:
+								addballz_base_selected = true
+								break
+							p = p.get_parent()
+
+						if not addballz_base_selected:
+							b.global_transform.origin += delta
+
+						_track_pending_move(b)
+
+				if move_mode_settings_instance.is_mirror_x_active():
+					_apply_mirror_move(selected_balls, delta)
+
+		return true
+
+	return false
+
+func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
+	if not preset_mode:
+		return false
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
 			if is_eyedropper_active:
@@ -1030,12 +986,15 @@ func _gui_input(event):
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
-		return
-	##################################################
+		return true
 
-	##################################################
-	# TBD: replace with _handle_paint_mode_gui_input()
-	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+	return false
+
+func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
+	if not paintball_mode:
+		return false
+
+	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 		var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 		if event.button_index == BUTTON_WHEEL_UP:
@@ -1044,9 +1003,9 @@ func _gui_input(event):
 		else:
 			diameter_min_spinbox.value -= 1
 			diameter_max_spinbox.value -= 1
-		return
+		return true
 
-	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		var props = paintball_settings_instance.get_properties()
 		var freeline_mode = props.freeline or (event.shift and not (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN))
 		if freeline_mode:
@@ -1061,22 +1020,22 @@ func _gui_input(event):
 			else:
 				freeline_active = false
 				_finalize_freeline()
-			return
+			return true
 
-	if paintball_mode and event is InputEventMouseMotion and freeline_active:
+	if event is InputEventMouseMotion and freeline_active:
 		var props = paintball_settings_instance.get_properties()
 		var current_pos = event.position
 		if current_pos.distance_to(last_freeline_point) > props.spacing:
 			freeline_path.append(current_pos)
 			last_freeline_point = current_pos
-		return
+		return true
 
-	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
 			var pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
-				return
+				return true
 
 			var closest_paintball = null
 			var min_dist_sq = INF
@@ -1102,7 +1061,7 @@ func _gui_input(event):
 			
 			if closest_paintball and min_dist_sq < 25*25: # 25px threshold
 				pet_node.remove_specific_pending_paintball(closest_paintball)
-			return
+			return true
 
 		var target_ball
 
@@ -1111,18 +1070,38 @@ func _gui_input(event):
 		else:
 			var target_mode = paintball_settings_instance.find_node("Target").selected
 			if target_mode == 0: # Hovered Ball
-				target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+				target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 			else: # Selected Ball
 				if active_selected_ball and is_instance_valid(active_selected_ball):
 					target_ball = active_selected_ball
 
 		if target_ball:
-			var screen_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
 			var result = _create_paintball_at_position(screen_pos, target_ball)
 			if result:
 				_record_paint_action([result])
+		return true
+
+	return false
+
+func _gui_input(event):
+	if input_is_paused:
 		return
-	##################################################
+
+	if _handle_box_selection(event):
+		return
+
+	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode and not linez_mode:
+		_reset_tab_state()
+
+	if _handle_move_mode_gui_input(event):
+		return
+
+	if _handle_preset_mode_gui_input(event):
+		return
+
+	if _handle_paint_mode_gui_input(event):
+		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
@@ -1299,8 +1278,8 @@ func _gui_input(event):
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
 			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-			var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+			var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			for b in _get_all_visual_balls():
 				if b != linez_start_ball and b.has_method("apply_outline_state"):
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
@@ -1366,18 +1345,139 @@ func _gui_input(event):
 			get_tree().set_input_as_handled()
 			return
 
-# TBD: refactor _unhandled_key_input() with separate functions:
-func _handle_camera_view_key_input(scancode: int):
-	pass
-	# TBD
+func _handle_camera_view_key_input(event: InputEventKey) -> bool:
+	if not event.pressed: return false
 
-func _handle_mode_shortcut_key_input(scancode: int):
-	pass
-	# TBD
+	match event.scancode:
+		KEY_1:
+			_set_camera_view("front")
+			return true
+		KEY_2:
+			_set_camera_view("bottom")
+			return true
+		KEY_3:
+			_set_camera_view("top")
+			return true
+		KEY_4:
+			_set_camera_view("right")
+			return true
+		KEY_5:
+			_set_camera_view("left")
+			return true
+		KEY_6:
+			_set_camera_view("back")
+			return true
+		KEY_7:
+			_set_camera_view("isorightbottom")
+			return true
+		KEY_8:
+			_set_camera_view("isorighttop")
+			return true
+		KEY_9:
+			_set_camera_view("isoleftbottom")
+			return true
+		KEY_0:
+			_set_camera_view("isolefttop")
+			return true
+	return false
 
-func _handle_move_nudge_key_input(event: InputEventKey):
-	pass
-	# TBD
+func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
+	if not event.pressed: return false
+
+	if event.alt:
+		match event.scancode:
+			KEY_F:
+				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_B:
+				paintball_check_box.pressed = !paintball_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_L:
+				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_G:
+				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_M:
+				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_P:
+				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+
+	if not event.control and not event.alt and not event.shift:
+		match event.scancode:
+			KEY_S:
+				select_check_box.pressed = !select_check_box.pressed
+				_on_SelectCheckBox_pressed()
+				get_tree().set_input_as_handled()
+				return true
+			KEY_W:
+				paintball_check_box.pressed = !paintball_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_E:
+				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_R:
+				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_U:
+				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_D:
+				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_A:
+				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_T:
+				view_palette_check_box.pressed = !view_palette_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_G:
+				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_H:
+				lnz_text_edit._on_HeadShotButton_pressed()
+				get_tree().set_input_as_handled()
+				return true
+
+	return false
+
+func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
+	if move_mode and event.pressed:
+		var nudge_axis = ""
+		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+
+		if nudge_axis != "":
+			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
+				_record_move_start_state() # Before change
+				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				_record_move_end_state("Nudge +")
+				get_tree().set_input_as_handled()
+				return true
+			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
+				_record_move_start_state() # Before change
+				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				_record_move_end_state("Nudge -")
+				get_tree().set_input_as_handled()
+				return true
+	return false
 
 func _unhandled_key_input(event):
 	if input_is_paused:
@@ -1422,28 +1522,8 @@ func _unhandled_key_input(event):
 				get_tree().set_input_as_handled()
 				return
 	
-	##################################################
-	# TBD: replace with _handle_move_nudge_key_input(event: InputEventKey)
-	if move_mode and event.pressed:
-		var nudge_axis = ""
-		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
-		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
-		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
-		
-		if nudge_axis != "":
-			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
-				_record_move_start_state() # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
-				_record_move_end_state("Nudge +")
-				get_tree().set_input_as_handled()
-				return
-			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
-				_record_move_start_state() # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
-				_record_move_end_state("Nudge -")
-				get_tree().set_input_as_handled()
-				return
-	##################################################
+	if _handle_move_nudge_key_input(event):
+		return
 		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
@@ -1456,116 +1536,14 @@ func _unhandled_key_input(event):
 		tools_menu.popup()
 		return
 	
-	##################################################
-	# TBD: replace with _handle_mode_shortcut_key_input(scancode: int)
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_R:
-		recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
-		get_tree().set_input_as_handled()
+	if _handle_mode_shortcut_key_input(event):
 		return
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_B:
-		paintball_check_box.pressed = !paintball_check_box.pressed
-		get_tree().set_input_as_handled()
+	if _handle_camera_view_key_input(event):
 		return
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_L:
-		line_mode_check_box.pressed = !line_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
-
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_G:
-		preset_mode_check_box.pressed = !preset_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
-
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_M:
-		move_mode_check_box.pressed = !move_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
-
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_P:
-		project_mode_check_box.pressed = !project_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
-
-	if event.pressed and not event.control and not event.alt and not event.shift:
-		match event.scancode:
-			KEY_S:
-				select_check_box.pressed = !select_check_box.pressed
-				_on_SelectCheckBox_pressed()
-				get_tree().set_input_as_handled()
-				return
-			KEY_W:
-				paintball_check_box.pressed = !paintball_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_E:
-				line_mode_check_box.pressed = !line_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_R:
-				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_U:
-				move_mode_check_box.pressed = !move_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_D:
-				project_mode_check_box.pressed = !project_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_A:
-				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_T:
-				view_palette_check_box.pressed = !view_palette_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_G:
-				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_H:
-				lnz_text_edit._on_HeadShotButton_pressed()
-				get_tree().set_input_as_handled()
-				return
-	##################################################
-
-	##################################################
-	# TBD: replace with _handle_camera_view_key_input(scancode: int)
-	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
-		linez_mode = true
-		linez_start_ball = last_selected
-		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
-	else:
-		if event.pressed:
-			match event.scancode:
-				KEY_1:
-					_set_camera_view("front")
-				KEY_2:
-					_set_camera_view("bottom")
-				KEY_3:
-					_set_camera_view("top")
-				KEY_4:
-					_set_camera_view("right")
-				KEY_5:
-					_set_camera_view("left")
-				KEY_6:
-					_set_camera_view("back")
-				KEY_7:
-					_set_camera_view("isorightbottom")
-				KEY_8:
-					_set_camera_view("isorighttop")
-				KEY_9:
-					_set_camera_view("isoleftbottom")
-				KEY_0:
-					_set_camera_view("isolefttop")
-
-		if event.pressed and last_selected_is_valid():
-			last_selected._input(event)
-	##################################################
+	if event.pressed and last_selected_is_valid():
+		last_selected._input(event)
 
 func _set_camera_view(view_name: String):
 	camera_holder.rotation = Vector3.ZERO
@@ -1604,7 +1582,7 @@ func _on_SelectCheckBox_pressed():
 		last_selected = null
 		clear_active_selected_ball()
 		ball_label.hide()
-		for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+		for b in _get_all_visual_balls():
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
 		tex.update()
@@ -1672,8 +1650,14 @@ func _on_Node_ball_mouse_enter(ball_info):
 		ball_label.show()
 
 func _find_visual_ball_by_no(no: int) -> Spatial:
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	if is_instance_valid(pet_node) and pet_node.ball_map:
+		if pet_node.ball_map.has(no):
+			var b = pet_node.ball_map[no]
+			if is_instance_valid(b):
+				return b
+		return null
 	
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
 	for b in all_balls:
 		if is_instance_valid(b) and "ball_no" in b:
 			if b.ball_no == no:
@@ -1687,6 +1671,11 @@ func _find_visual_ball_by_no(no: int) -> Spatial:
 # 				return b
 # 	return null
 
+func _get_all_visual_balls() -> Array:
+	if is_instance_valid(pet_node) and pet_node.ball_map:
+		return pet_node.ball_map.values()
+	return get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+
 func _on_affected_list_changed(ids: Array):
 	_auto_paint_affected_cache = ids
 	
@@ -1696,7 +1685,7 @@ func _on_affected_list_changed(ids: Array):
 		if ball and is_instance_valid(ball):
 			selected_balls.append(ball)
 
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
@@ -1726,7 +1715,7 @@ func _sort_by_distance(a, b):
 	return a.distance < b.distance
 
 func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
-	var balls_list = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var balls_list = _get_all_visual_balls()
 	var nearby_balls = []
 	
 	var viewport_global_offset = tex.get_global_transform().origin
@@ -1854,7 +1843,7 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 	return lnz_value
 
 func _isolate_target_ball(target_ball):
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for ball in all_balls:
 		if not is_instance_valid(ball):
 			continue
@@ -1870,7 +1859,7 @@ func _isolate_target_ball(target_ball):
 			area.set_collision_layer_bit(1, false)
 
 func _restore_all_balls():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for ball in all_balls:
 		if not is_instance_valid(ball):
 			continue
@@ -1977,7 +1966,7 @@ func _on_select_balls_by_ids(ids: Array):
 
 func _commit_box_selection():
 	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	
 	var properties = preset_settings_instance.get_properties()
 	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
@@ -2038,7 +2027,7 @@ func _record_move_history_entry(old_snapshot, new_snapshot):
 func _restore_move_snapshot(snapshot):
 	pending_moves = snapshot.duplicate(true)
 
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if not "ball_no" in b: continue
 
@@ -2127,7 +2116,7 @@ func schedule_autodrag_for_addball(ball_no: int) -> void:
 	_wait_for_addball_then_autodrag()
 
 func _wait_for_addball_then_autodrag() -> void:
-	var tries := 90  # ~1.5s @ 60fps
+	var tries := 10
 	while tries > 0 and pending_autodrag_addball_no != -1:
 		yield(get_tree(), "idle_frame")
 		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
@@ -2254,7 +2243,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 		pet_node._on_clear_auto_paintballz()
 		_on_unselect_all()
 		_auto_paint_affected_cache.clear()
-		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+		var all_balls = _get_all_visual_balls()
 		for b in all_balls:
 			if is_instance_valid(b) and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
@@ -2699,7 +2688,7 @@ func _on_preset_apply_selection():
 ### MOVE MODE ###
 
 func _on_move_mode_clear():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if not "ball_no" in b:
 			continue
@@ -2722,7 +2711,11 @@ func _on_move_mode_clear():
 
 func _update_pivot_limit():
 	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
-		var total_balls = get_tree().get_nodes_in_group("balls").size() + \
+		var total_balls = 0
+		if pet_node.ball_map:
+			total_balls = pet_node.ball_map.size()
+		else:
+			total_balls = get_tree().get_nodes_in_group("balls").size() + \
 						  get_tree().get_nodes_in_group("addballs").size()
 		
 		move_mode_settings_instance.update_pivot_max(total_balls)
@@ -2773,7 +2766,7 @@ func _on_move_mode_apply():
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
 	
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if not "ball_no" in b:
 			continue
@@ -2854,7 +2847,7 @@ func _on_snap_selection(axis, direction):
 	if selected_balls.empty():
 		return
 
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	var target_val = 0.0
 	var first = true
 	
@@ -3197,7 +3190,7 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 	_record_move_end_state("Scale")
 
 func _on_pivot_changed():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
