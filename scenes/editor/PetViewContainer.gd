@@ -569,7 +569,7 @@ func _update_3d_gizmo_visibility():
 	elif selecting_on and is_instance_valid(last_selected):
 		reference_ball = last_selected
 
-	if not reference_ball:
+	if not reference_ball or not is_instance_valid(reference_ball):
 		gizmo_3d_root.visible = false
 		return
 
