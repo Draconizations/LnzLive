@@ -2127,7 +2127,7 @@ func schedule_autodrag_for_addball(ball_no: int) -> void:
 	_wait_for_addball_then_autodrag()
 
 func _wait_for_addball_then_autodrag() -> void:
-	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
+	var tries := 90  # ~1.5s @ 60fps
 	while tries > 0 and pending_autodrag_addball_no != -1:
 		yield(get_tree(), "idle_frame")
 		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
