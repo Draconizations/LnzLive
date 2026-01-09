@@ -198,6 +198,7 @@ custom_fonts/font = SubResource( 2 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -490,23 +491,22 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 32.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 27.0
+margin_right = -5.0
+margin_bottom = -2.0
 custom_constants/separation = 5
 
 [node name="GridContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Design"]
-margin_right = 462.0
+margin_right = 460.0
 margin_bottom = 200.0
 alignment = 1
 
 [node name="DesignCanvasContainer" type="VBoxContainer" parent="VBoxContainer/TabContainer/Design/GridContainer"]
-margin_left = 29.0
-margin_right = 229.0
+margin_left = 28.0
+margin_right = 228.0
 margin_bottom = 200.0
 
 [node name="DesignCanvas" type="Control" parent="VBoxContainer/TabContainer/Design/GridContainer/DesignCanvasContainer"]
@@ -516,8 +516,8 @@ rect_min_size = Vector2( 200, 200 )
 script = ExtResource( 5 )
 
 [node name="PreviewContainer" type="ViewportContainer" parent="VBoxContainer/TabContainer/Design/GridContainer"]
-margin_left = 233.0
-margin_right = 433.0
+margin_left = 232.0
+margin_right = 432.0
 margin_bottom = 200.0
 rect_min_size = Vector2( 200, 200 )
 stretch = true
@@ -527,7 +527,7 @@ size = Vector2( 200, 200 )
 own_world = true
 transparent_bg = true
 handle_input_locally = false
-render_target_update_mode = 0
+render_target_update_mode = 3
 
 [node name="PreviewWorld" type="Spatial" parent="VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport"]
 
@@ -545,33 +545,35 @@ environment = SubResource( 5 )
 
 [node name="DesignOptions" type="HBoxContainer" parent="VBoxContainer/TabContainer/Design"]
 margin_top = 205.0
-margin_right = 462.0
-margin_bottom = 226.0
+margin_right = 460.0
+margin_bottom = 230.0
 
 [node name="BrushSizeLabel" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
+margin_top = 2.0
 margin_right = 87.0
-margin_bottom = 21.0
+margin_bottom = 23.0
 custom_fonts/font = SubResource( 2 )
 text = "Brush Size"
 
 [node name="BrushSizeSlider" type="HSlider" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
 margin_left = 91.0
-margin_right = 416.0
+margin_right = 184.0
 margin_bottom = 16.0
 size_flags_horizontal = 3
 min_value = 1.0
-max_value = 100.0
 value = 30.0
 
 [node name="BrushSpaceLabel" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
-margin_right = 87.0
-margin_bottom = 21.0
+margin_left = 188.0
+margin_top = 2.0
+margin_right = 304.0
+margin_bottom = 23.0
 custom_fonts/font = SubResource( 2 )
 text = "Brush Spacing"
 
 [node name="BrushSpaceSlider" type="HSlider" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
-margin_left = 91.0
-margin_right = 416.0
+margin_left = 308.0
+margin_right = 401.0
 margin_bottom = 16.0
 size_flags_horizontal = 3
 min_value = 1.0
@@ -579,37 +581,39 @@ max_value = 30.0
 value = 10.0
 
 [node name="ClearGridButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
-margin_left = 420.0
-margin_right = 462.0
-margin_bottom = 21.0
+margin_left = 405.0
+margin_right = 460.0
+margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 2 )
 text = "Clear"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/TabContainer/Design"]
-margin_top = 231.0
-margin_right = 462.0
-margin_bottom = 235.0
+margin_top = 235.0
+margin_right = 460.0
+margin_bottom = 239.0
 
 [node name="SlotActionContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Design"]
-margin_top = 240.0
-margin_right = 462.0
-margin_bottom = 261.0
+margin_top = 244.0
+margin_right = 460.0
+margin_bottom = 269.0
 
 [node name="Label" type="Label" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_right = 151.0
-margin_bottom = 21.0
+margin_top = 2.0
+margin_right = 150.0
+margin_bottom = 23.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 2 )
 text = "Color Slots"
 
 [node name="AddSlotButton" type="Button" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 155.0
-margin_right = 306.0
-margin_bottom = 21.0
+margin_left = 154.0
+margin_right = 305.0
+margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -620,9 +624,9 @@ custom_fonts/font = SubResource( 2 )
 text = "Add Slot"
 
 [node name="RemoveSlotButton" type="Button" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
-margin_left = 310.0
-margin_right = 462.0
-margin_bottom = 21.0
+margin_left = 309.0
+margin_right = 460.0
+margin_bottom = 25.0
 size_flags_horizontal = 3
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -633,9 +637,9 @@ custom_fonts/font = SubResource( 2 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/TabContainer/Design"]
-margin_top = 266.0
-margin_right = 462.0
-margin_bottom = 382.0
+margin_top = 274.0
+margin_right = 460.0
+margin_bottom = 389.0
 size_flags_vertical = 3
 columns = 8
 hide_root = true
