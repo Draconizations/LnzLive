@@ -164,6 +164,9 @@ var _overlay_viewport: Viewport = null
 var _overlay_camera: Camera = null
 var _dimmer_rect: ColorRect = null
 
+var design_rotation_angle: float = 0.0
+var design_scale_multiplier: float = 1.0
+
 func _ready():
 	hotkey_overlay_instance = hotkey_overlay_scene.instance()
 	add_child(hotkey_overlay_instance)
@@ -334,11 +337,19 @@ func _process(_delta):
 		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
+		var is_design_mode = paintball_settings_instance.is_design_mode_active()
+		
 		if delete_mode:
 			body = "Paintball Mode: Left-click to erase nearest paintball."
 		elif temp_eraser_active:
-			body = "Paintball Mode: Left-click to erase nearest paintball."
-			Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
+			if is_design_mode:
+				body = "Design Mode: Ctrl+Scroll to Scale | Left-Click to Stamp."
+			else:
+				body = "Paintball Mode: Left-click to erase nearest paintball."
+				Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
+		elif is_design_mode:
+			body = "Design Mode: Stamp pattern onto ball.\nScroll to Rotate | Ctrl+Scroll to Scale."
+			Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		else:
 			var freeline_on = paintball_settings_instance.find_node("FreelineCheckBox").pressed or Input.is_key_pressed(KEY_SHIFT)
 			if freeline_on:
@@ -349,6 +360,7 @@ func _process(_delta):
 		
 		if paintball_target_ball and is_instance_valid(paintball_target_ball):
 			body += "\nPainting on ball " + str(paintball_target_ball.ball_no)
+
 
 	elif auto_paintballer_mode:
 		body = "Auto Paintballer: Use the panel to generate random paintballz patterns. Click ballz to affect. Hit 'Apply' to save changes."
@@ -1020,6 +1032,23 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			diameter_min_spinbox.value -= 1
 			diameter_max_spinbox.value -= 1
 		return true
+
+	if paintball_settings_instance.is_design_mode_active():
+		if event is InputEventMouseButton and event.pressed:
+			if event.button_index == BUTTON_WHEEL_UP:
+				if event.control:
+					design_scale_multiplier += 0.1
+				else:
+					design_rotation_angle += 0.1
+				get_tree().set_input_as_handled() 
+				return true
+			elif event.button_index == BUTTON_WHEEL_DOWN:
+				if event.control:
+					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
+				else:
+					design_rotation_angle -= 0.1
+				get_tree().set_input_as_handled()
+				return true
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		var props = paintball_settings_instance.get_properties()
@@ -2494,7 +2523,10 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			var tangent_right = tangent_up.cross(normal).normalized()
 			var basis = Basis(tangent_right, normal, tangent_up)
 
-			var pattern_pbs = paintball_settings_instance.paste_paintball_design(normal, basis, target_ball.ball_no, lnz_diam)
+			var current_footprint = paintball_settings_instance.find_node("DiameterMax").value
+			var scaled_footprint = current_footprint * design_scale_multiplier
+
+			var pattern_pbs = paintball_settings_instance.paste_paintball_design(normal, basis, target_ball.ball_no, lnz_diam, scaled_footprint, design_rotation_angle)
 
 			var px_scale = pet_node.pixel_world_size
 			var lnz_scale = pet_node.lnz.scales.x / 255.0

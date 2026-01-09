@@ -192,7 +192,7 @@ func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float)
 					cleared += 1
 	return cleared
 
-func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0) -> Array:
+func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Array:
 	var design_canvas = find_node("DesignCanvas")
 	var paintballs = design_canvas.design_paintballs
 	var output = []
@@ -210,8 +210,12 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		var footprint_percent = override_footprint if override_footprint > 0 else sampled_scale
 		footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
 
-	var tangent_x = basis.x
-	var tangent_y = basis.z
+	# Apply rotation to basis
+	var rotated_basis = basis.rotated(center_dir, design_rotation_angle)
+	var tangent_x = rotated_basis.x
+	var tangent_y = rotated_basis.z
+
+	var design_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
 
 	for pb in paintballs:
 		if pb.color_slot - 1 >= design_color_slots.size():
@@ -220,12 +224,23 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		var dx = pb.x * (footprint_lnz / 2.0)
 		var dy = -pb.y * (footprint_lnz / 2.0)
 
+		# Jitter position relative to design
+		if design_jitter > 0:
+			var j_amt = (design_jitter / 100.0) * (footprint_lnz / 2.0)
+			dx += rand_range(-j_amt, j_amt)
+			dy += rand_range(-j_amt, j_amt)
+
 		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy
 		var slot_data = design_color_slots[pb.color_slot - 1]
 		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
 
 		var ratio = float(pb.diameter) / DESIGN_CANVAS_SIZE
 		var pb_diam_lnz = footprint_lnz * ratio
+
+		# Jitter diameter
+		if design_jitter > 0:
+			var j_scale = 1.0 + rand_range(-design_jitter/100.0, design_jitter/100.0)
+			pb_diam_lnz *= j_scale
 
 		var pb_info = {
 			"base_ball_no": ball_no,
@@ -278,10 +293,99 @@ func _connect_design_signals():
 	find_node("AddSlotButton").connect("pressed", self, "_on_AddSlotButton_pressed")
 	find_node("RemoveSlotButton").connect("pressed", self, "_on_RemoveSlotButton_pressed")
 
+	find_node("MirrorX").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("MirrorY").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("CanvasEraser").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("ImportPatternButton").connect("pressed", self, "_on_import_pattern_pressed")
+	find_node("ExportPatternButton").connect("pressed", self, "_on_export_pattern_pressed")
+	find_node("DesignJitter").connect("value_changed", self, "_on_setting_changed")
+
 	var tree = find_node("SlotsTree")
 	tree.connect("item_edited", self, "_on_SlotsTree_item_edited")
 	tree.connect("cell_selected", self, "_on_SlotsTree_cell_selected")
 	tree.connect("item_selected", self, "_on_SlotsTree_cell_selected")
+
+func _on_design_tool_toggled(_arg):
+	var canvas = find_node("DesignCanvas")
+	canvas.mirror_x = find_node("MirrorX").pressed
+	canvas.mirror_y = find_node("MirrorY").pressed
+	canvas.eraser_mode = find_node("CanvasEraser").pressed
+	canvas.update()
+	save_settings()
+
+func _on_import_pattern_pressed():
+	if OS.has_feature("HTML5"):
+		JavaScript.eval("window.alert('Importing patterns is not yet supported in web version.');")
+		return
+
+	var file_dialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.json ; JSON Pattern"]
+	file_dialog.connect("file_selected", self, "_load_pattern_file")
+	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
+
+func _load_pattern_file(path):
+	var file = File.new()
+	if file.open(path, File.READ) == OK:
+		var text = file.get_as_text()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK:
+			var data = json_res.result
+			if data.has("paintballs") and data.has("slots"):
+				find_node("DesignCanvas").design_paintballs = data.paintballs
+
+				if data.slots is Array:
+					design_color_slots.clear()
+					for s in data.slots:
+						if s.has("display_color_r"):
+							s["display_color"] = Color(s["display_color_r"], s["display_color_g"], s["display_color_b"])
+							s.erase("display_color_r")
+							s.erase("display_color_g")
+							s.erase("display_color_b")
+						design_color_slots.append(s)
+
+				_refresh_slot_buttons()
+				find_node("DesignCanvas").update()
+				find_node("DesignCanvas").emit_signal("design_changed")
+		file.close()
+
+func _on_export_pattern_pressed():
+	if OS.has_feature("HTML5"):
+		JavaScript.eval("window.alert('Exporting patterns is not yet supported in web version.');")
+		return
+
+	var file_dialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_SAVE_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.json ; JSON Pattern"]
+	file_dialog.connect("file_selected", self, "_save_pattern_file")
+	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
+
+func _save_pattern_file(path):
+	var data = {
+		"paintballs": find_node("DesignCanvas").design_paintballs,
+		"slots": []
+	}
+
+	for s in design_color_slots:
+		var slot_copy = s.duplicate()
+		if slot_copy.has("display_color") and slot_copy["display_color"] is Color:
+			var col = slot_copy["display_color"]
+			slot_copy["display_color_r"] = col.r
+			slot_copy["display_color_g"] = col.g
+			slot_copy["display_color_b"] = col.b
+			slot_copy.erase("display_color")
+		data.slots.append(slot_copy)
+
+	var file = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
 
 func _on_brush_size_changed(value):
 	find_node("DesignCanvas").brush_size = value
@@ -552,6 +656,11 @@ func save_settings():
 	config.set_value("DesignMode", "brush_size", find_node("BrushSizeSlider").value)
 	config.set_value("DesignMode", "color_slots_v2", design_color_slots)
 
+	config.set_value("DesignMode", "mirror_x", find_node("MirrorX").pressed)
+	config.set_value("DesignMode", "mirror_y", find_node("MirrorY").pressed)
+	config.set_value("DesignMode", "canvas_eraser", find_node("CanvasEraser").pressed)
+	config.set_value("DesignMode", "design_jitter", find_node("DesignJitter").value)
+
 	var save_err = config.save(SETTINGS_PATH)
 	if save_err != OK:
 		print("Error saving PaintballSettings: ", save_err)
@@ -609,6 +718,13 @@ func load_settings():
 				design_color_slots[i].texture = old_slot.texture
 				design_color_slots[i].outline_type = old_slot.outline_type
 
+	find_node("MirrorX").pressed = config.get_value("DesignMode", "mirror_x", false)
+	find_node("MirrorY").pressed = config.get_value("DesignMode", "mirror_y", false)
+	find_node("CanvasEraser").pressed = config.get_value("DesignMode", "canvas_eraser", false)
+	find_node("DesignJitter").value = config.get_value("DesignMode", "design_jitter", 0.0)
+
+	_on_design_tool_toggled(null)
+
 	_refresh_slot_buttons()
 	_is_loading_settings = false
 
@@ -636,6 +752,11 @@ func _on_reset_defaults_pressed():
 	find_node("Repeat").pressed = false
 	find_node("Shuffle").pressed = false
 	find_node("EraserCheckBox").pressed = false
+
+	find_node("MirrorX").pressed = false
+	find_node("MirrorY").pressed = false
+	find_node("CanvasEraser").pressed = false
+	find_node("DesignJitter").value = 0.0
 
 	find_node("DesignCanvas").clear()
 	find_node("BrushSizeSlider").value = 30.0
@@ -683,6 +804,7 @@ func _on_reset_defaults_pressed():
 		}
 	]
 	_refresh_slot_buttons()
+	_on_design_tool_toggled(null)
 
 	_is_loading_settings = false
 	save_settings()
