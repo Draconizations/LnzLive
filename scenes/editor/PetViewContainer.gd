@@ -430,7 +430,8 @@ func _process(_delta):
 	if footer != "":
 		final_text += footer
 
-	helper_label.text = final_text
+	if helper_label.text != final_text:
+		helper_label.text = final_text
 
 func _draw():
 	# BOX SELECTION

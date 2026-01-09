@@ -90,6 +90,7 @@ config/name="LnzLive"
 config/description="A visual editor for P.F. Magic game files"
 run/main_scene="res://scenes/bootsplash.tscn"
 run/low_processor_mode=true
+run/low_processor_mode_sleep_usec=10000
 boot_splash/image="res://launcher/images/launcher_roll_still1.png"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0.168627, 0.45098, 0.45098, 1 )
@@ -143,8 +144,14 @@ texture={
 "svg/scale": 1.0
 }
 
+[logging]
+
+file_logging/enable_file_logging=true
+file_logging/log_path="user://logs/lnzlive_debug.log"
+
 [physics]
 
+common/physics_fps=5
 3d/physics_engine="Bullet"
 3d/active_soft_world=false
 

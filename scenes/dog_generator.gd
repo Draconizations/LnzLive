@@ -647,13 +647,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	# If we're creating everything fresh, clear out old visuals
 	if new_create:
 		for c in balls_parent.get_children():
-			balls_parent.remove_child(c)
+			# balls_parent.remove_child(c)
 			c.queue_free()
 		for c in paintballs_parent.get_children():
-			paintballs_parent.remove_child(c)
+			# paintballs_parent.remove_child(c)
 			c.queue_free()
 		for c in addballs_parent.get_children():
-			addballs_parent.remove_child(c)
+			# addballs_parent.remove_child(c)
 			c.queue_free()
 
 		ball_map.clear()
@@ -989,7 +989,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 
 	if new_create:
 		for c in parent.get_children():
-			parent.remove_child(c)
+			# parent.remove_child(c)
 			c.queue_free()
 		polygons_map = {}
 	
@@ -1076,7 +1076,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	var parent = root.get_node("petholder/lines")
 	if new_create:
 		for c in parent.get_children():
-			parent.remove_child(c)
+			# parent.remove_child(c)
 			c.queue_free()
 		lines_map = {}
 		
