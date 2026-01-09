@@ -331,6 +331,7 @@ func _process(_delta):
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 		
 	elif paintball_mode:
+		#paintball_settings_instance.sync_camera(camera.global_transform)
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed
 		var temp_eraser_active = Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
@@ -2479,6 +2480,41 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 	if result and result.collider and result.collider.get_parent() == target_ball:
 		var intersection_point = result.position
+		
+		if paintball_settings_instance.is_design_mode_active():
+			var visual_radius = (intersection_point - target_ball.global_transform.origin).length()
+			var engine_scale = pet_node.lnz.scales[1]
+			var lnz_diam = (visual_radius * 2.0 / pixel_world_size) / (engine_scale / 255.0)
+
+			var normal = (intersection_point - target_ball.global_transform.origin).normalized()
+			var cam_up = camera.global_transform.basis.y
+			var tangent_up = (cam_up - normal * cam_up.dot(normal)).normalized()
+			if tangent_up.length_squared() < 0.001: 
+				tangent_up = camera.global_transform.basis.x.cross(normal).normalized()
+			var tangent_right = tangent_up.cross(normal).normalized()
+			var basis = Basis(tangent_right, normal, tangent_up)
+
+			var pattern_pbs = paintball_settings_instance.paste_paintball_design(normal, basis, target_ball.ball_no, lnz_diam)
+
+			var px_scale = pet_node.pixel_world_size
+			var lnz_scale = pet_node.lnz.scales.x / 255.0
+
+			for pb in pattern_pbs:
+				var spot_world_rel = pb.pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
+				
+				var spot_local_rel = target_ball.global_transform.basis.xform_inv(spot_world_rel)
+				
+				var relative_pos_lnz = spot_local_rel / (px_scale * lnz_scale)
+				relative_pos_lnz.y *= -1 # Flip Y for LNZ format
+
+				pb["relative_pos_local"] = spot_local_rel
+				pb["relative_pos_lnz"] = relative_pos_lnz
+				
+				pb.erase("pos_normalized") 
+
+				pet_node.add_pending_paintball(pb)
+			return
+
 		var props = paintball_settings_instance.get_properties()
 
 		var color_list = LnzLiveUtils.parse_number_list(props.color)
