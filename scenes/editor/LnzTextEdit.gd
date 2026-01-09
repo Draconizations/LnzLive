@@ -1683,7 +1683,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
-	elif species == KeyBallsData.Species.BAB:
+	elif species == KeyBallsData.Species.BABY:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
@@ -1782,7 +1782,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			balls_to_exclude.append_array(KeyBallsData.tongue_dog)
 		if intended_part != "NOSE":
 			balls_to_exclude.append_array(KeyBallsData.nose_dog)
-	elif species == KeyBallsData.Species.BAB:
+	elif species == KeyBallsData.Species.BABY:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		if intended_part != "TONGUE":
@@ -2936,7 +2936,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 		balls_to_exclude.append_array(KeyBallsData.eyes_dog.values())
 		balls_to_exclude.append_array(KeyBallsData.nose_dog)
 		balls_to_exclude.append_array(KeyBallsData.tongue_dog)
-	elif species == KeyBallsData.Species.BAB:
+	elif species == KeyBallsData.Species.BABY:
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
