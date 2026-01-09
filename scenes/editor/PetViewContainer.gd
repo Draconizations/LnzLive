@@ -817,8 +817,15 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
 
 				var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
-				var bhd_s = pet_node.bhd.ball_sizes[b_no] if b_no < KeyBallsData.max_base_ball_num else 0
-				var req_total = (target_visual / (engine_scale / 255.0)) + 2
+				var is_addball = b_no >= KeyBallsData.max_base_ball_num
+				var bhd_s = pet_node.bhd.ball_sizes[b_no] if not is_addball else 0
+
+				var req_total
+				if is_addball:
+					req_total = (target_visual / (engine_scale / 255.0))
+				else:
+					req_total = (target_visual / (engine_scale / 255.0)) + 2
+
 				var final_lnz = round(req_total - bhd_s)
 				var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
 				snapped_visual -= 1 - fmod(snapped_visual, 2)
@@ -1829,15 +1836,13 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
 	var ball_no = drag_ball.ball_no
 	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
-	
-	var bhd_size = 0
-	if not is_addball:
-		bhd_size = pet_node.bhd.ball_sizes[ball_no]
-	
-	var scale = pet_node.lnz.scales[1] # 
+
+	var bhd_size = pet_node.bhd.ball_sizes[ball_no] if not is_addball else 0
+	var scale = pet_node.lnz.scales[1]
 	var desired_visual = drag_ball.ball_size
 	
-	var req_total_size = (desired_visual / (scale / 255.0)) + 2
+	var offset = 0 if is_addball else 2
+	var req_total_size = (desired_visual / (scale / 255.0)) + offset
 	var lnz_value = int(round(req_total_size - bhd_size))
 	
 	for i in range(-1, 2):
