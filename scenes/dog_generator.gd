@@ -808,19 +808,32 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if !draw_balls:
 				ball_map[ball.ball_no].visible_override = false
 
-	# Generate addballz
+	# Declare addballz
 	for key in addball_data:
 		var add_ball = addball_data[key]
 		var add_visual_ball
 
 		if new_create:
 			add_visual_ball = ball_scene.instance()
+			add_visual_ball.ball_no = add_ball.ball_no
+			ball_map[add_ball.ball_no] = add_visual_ball
 		else:
 			add_visual_ball = ball_map.get(key, null)
 
+	# Generate addballz
+	for key in addball_data:
+		var add_ball = addball_data[key]
+		var add_visual_ball = ball_map[key]
+		
+		if add_visual_ball == null: continue
+
 		if new_create:
-			# Parent the addball under its base ball to preserve relative offsets
-			ball_map[add_ball.base].add_child(add_visual_ball)
+			var parent_node = ball_map.get(add_ball.base)
+			if parent_node:
+				parent_node.add_child(add_visual_ball)
+			else:
+				addballs_parent.add_child(add_visual_ball)
+				
 			add_visual_ball.set_owner(root)
 			add_visual_ball.add_to_group("addballs")
 			add_visual_ball.z_add = add_ball.size / 10.0
