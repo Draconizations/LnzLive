@@ -46,6 +46,7 @@ func _ready():
 	add_item("Hide Ballz")                      # index 10
 	add_item("Apply Global Fuzz")               # index 11
 	add_item("Copy Ballz Colors to Clipboard")  # index 12
+	add_item("Ball Info")                       # index 13
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -213,18 +214,35 @@ func _on_ToolsMenu_index_pressed(index):
 		# options.popup_centered()
 	elif index == 12: # Print Ballz Colors
 		emit_signal("print_ball_colors")
+	elif index == 13: # Jump to ball
+		if is_ball_selected:
+			var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+			if is_instance_valid(lnz_text_edit):
+				lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
+		return
 
 func _on_ToolsMenu_about_to_show():
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
 	var is_ball_selected = false
+	var b_name = "Unknown Ball"
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = is_instance_valid(selected_visual_ball)
+
+		var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+		if is_instance_valid(lnz_text_edit):
+			b_name = lnz_text_edit.get_ball_name(ball_no)
+
 		is_addball = ball_no > KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
+
+	if is_ball_selected:
+		set_item_text(13, "Jump to #%d (%s)" % [b_name, ball_no])
+	else:
+		set_item_text(13, "No Ballz Selected")
 
 	var option_text = ""
 
