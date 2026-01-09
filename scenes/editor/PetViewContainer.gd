@@ -1,5 +1,13 @@
 extends Control
 
+# PetViewContainer.gd – manages 3D viewport interaction, modes, tools, and states
+# - Translates 2D mouse input into 3D world interactions (raycasting/selection)
+# - Manages Modes (Move, Paint, Line, etc.)
+# - Handles coordinate conversion between spatial world and LNZ units
+# - Coordinates viewport visuals (gizmos, labels, and cursors)
+
+onready var default_font = get_font("font")
+
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
 onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 onready var pet_view = self
@@ -20,11 +28,12 @@ onready var view_palette_check_box = find_node("ViewPaletteButton")
 
 onready var select_check_box = find_node("SelectCheckBox")
 
+onready var recolor_mode_check_box = find_node("RecolorModeCheckBox")
 onready var paintball_check_box = find_node("PaintballModeCheckBox")
+onready var move_mode_check_box = find_node("MoveModeCheckBox")
+onready var line_mode_check_box = find_node("LineModeCheckBox")
 onready var project_mode_check_box = find_node("ProjectModeCheckBox")
 onready var preset_mode_check_box = find_node("PresetModeCheckBox")
-onready var line_mode_check_box = find_node("LineModeCheckBox")
-onready var move_mode_check_box = find_node("MoveModeCheckBox")
 
 onready var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 
@@ -70,6 +79,8 @@ var paintball_mode = false
 var project_mode = false
 var auto_paintballer_mode = false
 var move_mode = false
+var recolor_mode = false
+var preset_mode = false
 
 var paintball_target_ball = null
 var ray_intersect_paintball = null
@@ -83,6 +94,13 @@ var _ordered_color_index = 0
 var _ordered_outline_color_index = 0
 var _ordered_texture_index = 0
 
+var gizmo_3d_root: Spatial
+var gizmo_x: MeshInstance
+var gizmo_y: MeshInstance
+var gizmo_z: MeshInstance
+var labels_3d = {}
+const GIZMO_OPACITY = 0.5
+
 # onready var paintball_settings_instance = preload("res://scenes/editor/PaintballSettings.tscn").instance()
 # onready var project_settings_instance = preload("res://scenes/editor/ProjectSettings.tscn").instance()
 # onready var preset_settings_instance = preload("res://scenes/editor/PresetSettings.tscn").instance()
@@ -91,15 +109,14 @@ var _ordered_texture_index = 0
 # onready var move_mode_settings_instance = preload("res://scenes/editor/MoveModeSettings.tscn").instance()
 # onready var line_mode_settings_instance = preload("res://scenes/editor/LineModeSettings.tscn").instance()
 
+var palette_viewer_instance: Control
+var recolor_settings_instance: Control
 var paintball_settings_instance: Control
+var move_mode_settings_instance: Control
+var line_mode_settings_instance: Control
 var project_settings_instance: Control
 var preset_settings_instance: Control
 var auto_paintballer_settings_instance: Control
-var palette_viewer_instance: Control
-var move_mode_settings_instance: Control
-var line_mode_settings_instance: Control
-
-var preset_mode = false
 
 #var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x_64px.png")
@@ -127,6 +144,8 @@ const ZOOM_STEP := 1.2
 var selected_balls = []
 var pending_moves = {} # ball_no -> {orig_pos: Vector3, new_pos: Vector3}
 
+var _pre_move_state = {}
+
 var box_selecting = false
 var box_start_pos = Vector2()
 var box_end_pos = Vector2()
@@ -139,6 +158,11 @@ var move_redo_stack = []
 
 var hotkey_overlay_scene = preload("res://scenes/editor/HotkeyOverlay.tscn")
 var hotkey_overlay_instance = null
+
+var _overlay_viewport_container: ViewportContainer = null
+var _overlay_viewport: Viewport = null
+var _overlay_camera: Camera = null
+var _dimmer_rect: ColorRect = null
 
 func _ready():
 	hotkey_overlay_instance = hotkey_overlay_scene.instance()
@@ -154,6 +178,7 @@ func _ready():
 	palette_viewer_instance = load("res://scenes/editor/PaletteViewer.tscn").instance()
 	move_mode_settings_instance = load("res://scenes/editor/MoveModeSettings.tscn").instance()
 	line_mode_settings_instance = load("res://scenes/editor/LineModeSettings.tscn").instance()
+	recolor_settings_instance = load("res://scenes/editor/RecolorSettings.tscn").instance()
 
 	var sidebar_node = get_tree().root.find_node("VBoxContainer", true, false)
 	var sidebars = get_tree().get_nodes_in_group("SidebarController")
@@ -163,22 +188,25 @@ func _ready():
 		sidebar_controller = sidebar_node
 	
 	if sidebar_controller:
-		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
 		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
+		sidebar_controller.call_deferred("add_tool_tab", recolor_settings_instance, "Recolor")
 		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
-		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
 		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
+		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
 		sidebar_controller.call_deferred("add_tool_tab", preset_settings_instance, "Preset")
+		sidebar_controller.call_deferred("add_tool_tab", auto_paintballer_settings_instance, "AutoPaint")
 		sidebar_controller.call_deferred("add_tool_tab", project_settings_instance, "Shape")
+		
 	else:
 		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
-		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", recolor_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
 	
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
@@ -191,6 +219,7 @@ func _ready():
 
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
+	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
 
 	tools_menu.connect("paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled")
 
@@ -233,12 +262,14 @@ func _ready():
 	move_mode_settings_instance.connect("pivot_changed", self, "_on_pivot_changed")
 	move_mode_settings_instance.connect("apply_scale", self, "_on_apply_scale")
 
+	if is_instance_valid(lnz_text_edit):
+		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
+		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_bucket_changes")
+
 	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_CROSS, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_POINTING_HAND, Vector2(30, 31))
-
-	# flip_camera_view()
 
 	helper_label.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 
@@ -246,6 +277,8 @@ func _ready():
 
 	var mode_popup = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel")
 	mode_popup.connect("about_to_show", self, "_on_ModePopup_about_to_show")
+
+	_setup_3d_gizmos()
 
 func _ensure_panel_visible(panel):
 	if panel.is_docked:
@@ -265,6 +298,13 @@ func _reset_tab_state():
 	_tab_activation_mouse_pos = Vector2.ZERO
 
 func _process(_delta):
+	if is_instance_valid(_overlay_camera):
+		_sync_overlay()
+
+	# AXIS GIZMO
+	_update_3d_gizmo_visibility()
+
+	# HELPER TEXT
 	var header = ""
 	var body = "" 
 	var footer = ""
@@ -333,8 +373,16 @@ func _process(_delta):
 			if not preset_settings_instance.find_node("EyedropperToggle").pressed:
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 	
+	elif recolor_mode:
+		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes."
+		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+
 	elif selecting_on:
 		body = "Select Mode: when hovering, cycle ballz using TAB..."
+
+	elif is_dragging:
+		pass
+		#update() # AXIS GIZMO
 	
 	else:
 		if Input.is_key_pressed(KEY_CONTROL):
@@ -372,307 +420,486 @@ func _process(_delta):
 
 	helper_label.text = final_text
 
-func set_active_selected_ball(ball):
-	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
-		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
-	active_selected_ball = ball
-	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
-	_update_selected_ballz_in_settings()
-
-func clear_active_selected_ball():
-	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
-		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
-	active_selected_ball = null
-	_update_selected_ballz_in_settings()
-
-func get_visual_state_for_ball(b):
-	if not "ball_no" in b:
-		return
-	else:
-		if move_mode:
-			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
-				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
-				if b.ball_no == pivot_id:
-					return b.OutlineState.PIVOT
-
-		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
-			return b.OutlineState.ACTIVE_SELECTED
-		elif move_mode and pending_moves.has(b.ball_no):
-			return b.OutlineState.MODIFIED
-		else:
-			if b == active_selected_ball:
-				return b.OutlineState.ACTIVE_SELECTED
-			return b.OutlineState.NONE
-
-func flip_camera_view():
-	var camera_transform = camera.transform
-	camera_transform.basis.x *= -1
-	camera.transform = camera_transform
-
 func _draw():
+	# BOX SELECTION
 	if box_selecting:
 		var rect = Rect2(box_start_pos, box_end_pos - box_start_pos)
 		draw_rect(rect, Color(0.5, 1, 0.5, 0.2), true)
 		draw_rect(rect, Color(0.5, 1, 0.5, 0.8), false)
-		
+
+	# TAB RADIUS
 	# if selecting_on:
 	# 	var mouse_pos = get_local_mouse_position()
 	# 	draw_arc(mouse_pos, NEARBY_SCREEN_RADIUS, 0, TAU, 32, Color(1, 1, 0, 0.5), 2.0)
 
-func _gui_input(event):
-	if input_is_paused:
+	# AXIS GIZMOS
+	# var reference_ball = null
+	
+	# if is_dragging and is_instance_valid(drag_ball):
+	# 	reference_ball = drag_ball
+	# elif move_mode and not selected_balls.empty():
+	# 	if is_instance_valid(selected_balls[0]):
+	# 		reference_ball = selected_balls[0]
+
+	# if reference_ball:
+	# 	_draw_axis_gizmos(reference_ball)
+
+
+# too many draw calls
+
+# func _draw_axis_gizmos(reference_ball: Spatial):
+# 	if not is_instance_valid(reference_ball):
+# 		return
+
+# 	var hotkey_x = Input.is_key_pressed(KEY_X)
+# 	var hotkey_y = Input.is_key_pressed(KEY_Y)
+# 	var hotkey_z = Input.is_key_pressed(KEY_Z)
+# 	var any_hotkey = hotkey_x or hotkey_y or hotkey_z
+
+# 	var ui_active_x = false
+# 	var ui_active_y = false
+# 	var ui_active_z = false
+
+# 	if move_mode and is_instance_valid(move_mode_settings_instance):
+# 		match move_mode_settings_instance.current_constraint_mode:
+# 			"LockX": ui_active_x = true
+# 			"LockY": ui_active_y = true
+# 			"LockZ": ui_active_z = true
+# 			"LockXY": 
+# 				ui_active_x = true
+# 				ui_active_y = true
+# 			"LockXZ": 
+# 				ui_active_x = true
+# 				ui_active_z = true
+# 			"LockYZ": 
+# 				ui_active_y = true
+# 				ui_active_z = true
+# 			"Free":
+# 				ui_active_x = false
+# 				ui_active_y = false
+# 				ui_active_z = false
+
+# 	var show_x = hotkey_x if any_hotkey else ui_active_x
+# 	var show_y = hotkey_y if any_hotkey else ui_active_y
+# 	var show_z = hotkey_z if any_hotkey else ui_active_z
+
+# 	if not is_dragging and not any_hotkey:
+# 		return
+
+# 	var origin_3d = reference_ball.global_transform.origin
+# 	if camera.is_position_behind(origin_3d):
+# 		return
+
+# 	var origin_2d_raw = camera.unproject_position(origin_3d)
+# 	var origin_2d = (origin_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+
+# 	var length = 150.0
+# 	var width = 2.0
+
+# 	if show_x:
+# 		_draw_gizmo_line(origin_3d, Vector3(1, 0, 0), Color.red, origin_2d, length, width, "X", false)
+# 	if show_y:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 1, 0), Color.green, origin_2d, length, width, "Y", true)
+# 	if show_z:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 0, 1), Color.blue, origin_2d, length, width, "Z", false)
+
+# func _get_projected_end_point(origin_3d: Vector3, dir_3d: Vector3, origin_2d: Vector2, length: float) -> Vector2:
+# 	var target_3d = origin_3d + (dir_3d * 0.1) 
+# 	var target_2d_raw = camera.unproject_position(target_3d)
+# 	var target_2d = (target_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+	
+# 	var dir_2d = (target_2d - origin_2d).normalized()
+# 	return origin_2d + (dir_2d * length)
+
+# func _draw_axis_label(pos: Vector2, text: String, color: Color):
+# 	var font = get_font("font")
+# 	var text_size = font.get_string_size(text)
+# 	var text_pos = pos - (text_size / 2.0) + Vector2(0, -10)
+	
+# 	draw_string(font, text_pos + Vector2(1, 1), text, Color.black)
+# 	draw_string(font, text_pos, text, color)
+
+# func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origin_2d: Vector2, length: float, width: float, label: String, invert_labels: bool):
+# 	var pos_end = _get_projected_end_point(origin_3d, axis_dir, origin_2d, length)
+# 	var neg_end = _get_projected_end_point(origin_3d, -axis_dir, origin_2d, length)
+	
+# 	var pos_label = "-" + label if invert_labels else label
+# 	var neg_label = label if invert_labels else "-" + label
+
+# 	draw_line(origin_2d, pos_end, color, width, true)
+# 	_draw_axis_label(pos_end, pos_label, color)
+
+# 	draw_line(origin_2d, neg_end, color, width, true)
+# 	_draw_axis_label(neg_end, neg_label, color)
+
+func _setup_3d_gizmos():
+	gizmo_3d_root = Spatial.new()
+	pet_node.add_child(gizmo_3d_root)
+	gizmo_3d_root.visible = false
+
+	gizmo_x = _create_gizmo_line(Color.red, Vector3(1, 0, 0))
+	gizmo_y = _create_gizmo_line(Color.green, Vector3(0, 1, 0))
+	gizmo_z = _create_gizmo_line(Color.blue, Vector3(0, 0, 1))
+	
+	gizmo_3d_root.add_child(gizmo_x)
+	gizmo_3d_root.add_child(gizmo_y)
+	gizmo_3d_root.add_child(gizmo_z)
+
+func _create_gizmo_line(color: Color, direction: Vector3) -> MeshInstance:
+	var mi = MeshInstance.new()
+	var cylinder = CylinderMesh.new()
+	cylinder.top_radius = 0.001
+	cylinder.bottom_radius = 0.001
+	cylinder.height = 0.5
+	
+	var mat = SpatialMaterial.new()
+	mat.flags_unshaded = true
+	mat.flags_transparent = true
+	mat.albedo_color = Color(color.r, color.g, color.b, GIZMO_OPACITY)
+	mat.flags_no_depth_test = true
+	
+	mi.mesh = cylinder
+	mi.material_override = mat
+
+	if direction.x != 0:
+		mi.rotation_degrees = Vector3(0, 0, 90)
+	elif direction.z != 0:
+		mi.rotation_degrees = Vector3(90, 0, 0)
+
+	return mi
+
+func _update_3d_gizmo_visibility():
+	var reference_ball = null
+	
+	if is_dragging and is_instance_valid(drag_ball):
+		reference_ball = drag_ball
+	elif move_mode and not selected_balls.empty():
+		reference_ball = selected_balls[0]
+	elif selecting_on and is_instance_valid(last_selected):
+		reference_ball = last_selected
+
+	if not reference_ball or not is_instance_valid(reference_ball):
+		gizmo_3d_root.visible = false
 		return
 
-	if (move_mode or preset_mode or auto_paintballer_mode) and Input.is_key_pressed(KEY_CONTROL):
-		if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+	gizmo_3d_root.global_transform.origin = reference_ball.global_transform.origin
+
+	var hotkey_x = Input.is_key_pressed(KEY_X)
+	var hotkey_y = Input.is_key_pressed(KEY_Y)
+	var hotkey_z = Input.is_key_pressed(KEY_Z)
+	var any_hotkey = hotkey_x or hotkey_y or hotkey_z
+
+	var ui_active_x = false
+	var ui_active_y = false
+	var ui_active_z = false
+
+	if move_mode and is_instance_valid(move_mode_settings_instance):
+		match move_mode_settings_instance.current_constraint_mode:
+			"LockX": ui_active_x = true
+			"LockY": ui_active_y = true
+			"LockZ": ui_active_z = true
+			"LockXY": 
+				ui_active_x = true
+				ui_active_y = true
+			"LockXZ": 
+				ui_active_x = true
+				ui_active_z = true
+			"LockYZ": 
+				ui_active_y = true
+				ui_active_z = true
+			"Free":
+				ui_active_x = false
+				ui_active_y = false
+				ui_active_z = false
+
+	var show_x = hotkey_x if any_hotkey else ui_active_x
+	var show_y = hotkey_y if any_hotkey else ui_active_y
+	var show_z = hotkey_z if any_hotkey else ui_active_z
+
+	if not is_dragging:
+		gizmo_3d_root.visible = false
+		return
+
+	gizmo_x.visible = show_x
+	gizmo_y.visible = show_y
+	gizmo_z.visible = show_z
+
+	if not is_dragging and not any_hotkey:
+		gizmo_3d_root.visible = false
+		return
+
+	gizmo_x.visible = show_x
+	gizmo_y.visible = show_y
+	gizmo_z.visible = show_z
+
+	gizmo_3d_root.visible = show_x or show_y or show_z
+
+### INPUT HANDLING ###
+
+func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
+	return (screen_pos - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+
+# TBD: refactor _gui_input with separate functions:
+func _handle_box_selection(event: InputEvent) -> bool:
+	if not (move_mode or preset_mode or auto_paintballer_mode) or not Input.is_key_pressed(KEY_CONTROL):
+		return false
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+		if event.pressed:
+			box_selecting = true
+			box_start_pos = event.position
+			box_end_pos = event.position
+			return true
+		elif box_selecting:
+			box_selecting = false
+			update()
+			if box_start_pos.distance_to(event.position) < 5.0:
+				var viewport_pos = _get_viewport_pos_from_screen_pos(event.position)
+				var hover = get_intended_ball(viewport_pos)
+				if hover:
+					if hover in selected_balls:
+						selected_balls.erase(hover)
+					else:
+						selected_balls.append(hover)
+					if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
+						hover.apply_outline_state(get_visual_state_for_ball(hover))
+					_update_selected_ballz_in_settings()
+			else:
+				_commit_box_selection()
+			return true
+
+	if event is InputEventMouseMotion and box_selecting:
+		box_end_pos = event.position
+		update()
+		return true
+
+	return false
+
+func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizing: bool = false):
+	is_dragging = true
+	drag_ball = drag_target_ball
+	drag_start_pos = start_pos
+	is_resizing = resizing
+	
+	if resizing:
+		_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
+
+		_scale_group_initial_data.clear()
+		for b in selected_balls:
+			if is_instance_valid(b):
+				_scale_group_initial_data[b.ball_no] = {
+					"pos": b.global_transform.origin,
+					"size": b.ball_size
+				}
+		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
+	else:
+		_record_move_start_state()
+		for b in selected_balls:
+			if not pet_node._orig_world_pos.has(b.ball_no):
+				pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
+
+func _handle_move_mode_gui_input(event: InputEvent) -> bool:
+	if not move_mode:
+		return false
+
+	# Check for Nudge hotkey via Scroll
+	if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+		var nudge_axis = ""
+		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+
+		if nudge_axis != "":
+			var delta = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
+			move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
+			get_tree().set_input_as_handled()
+			return true
+
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_LEFT:
 			if event.pressed:
-				box_selecting = true
-				box_start_pos = event.position
-				box_end_pos = event.position
-				return
-			elif box_selecting:
-				box_selecting = false
-				update()
-				if box_start_pos.distance_to(event.position) < 5.0:
-					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-					if hover:
+				if Input.is_key_pressed(KEY_ALT):
+					if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
+						_initialize_move_drag(selected_balls[0], event.position, true)
+						return true
+					else:
+						var hover_pos = _get_viewport_pos_from_screen_pos(event.position)
+						var hover_ball = get_intended_ball(hover_pos)
+						if hover_ball:
+							move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
+							var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+							for b in all_balls:
+								if is_instance_valid(b) and b.has_method("apply_outline_state"):
+									b.apply_outline_state(get_visual_state_for_ball(b))
+							return true
+
+				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+
+				if hover:
+					if Input.is_key_pressed(KEY_CONTROL):
+						# Toggle selection
 						if hover in selected_balls:
 							selected_balls.erase(hover)
+							hover.apply_outline_state(get_visual_state_for_ball(hover))
 						else:
 							selected_balls.append(hover)
-						if is_instance_valid(hover) and hover.has_method("apply_outline_state"):
-							hover.apply_outline_state(get_visual_state_for_ball(hover))
-						_update_selected_ballz_in_settings()
-				else:
-					_commit_box_selection()
-				return
-
-		if event is InputEventMouseMotion and box_selecting:
-			box_end_pos = event.position
-			update()
-			return
-
-	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode and not linez_mode:
-		_reset_tab_state()
-
-	if move_mode:
-		# Check for Nudge hotkey via Scroll
-		if event is InputEventMouseButton and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-			var nudge_axis = ""
-			if Input.is_key_pressed(KEY_X): nudge_axis = "x"
-			elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
-			elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
-			
-			if nudge_axis != "":
-				var delta = 1.0 if event.button_index == BUTTON_WHEEL_UP else -1.0
-				move_mode_settings_instance.change_nudge_value(nudge_axis, delta)
-				get_tree().set_input_as_handled()
-				return
-
-		if event is InputEventMouseButton:
-			if event.button_index == BUTTON_LEFT:
-				if event.pressed:
-					if Input.is_key_pressed(KEY_ALT):
-						if Input.is_key_pressed(KEY_SHIFT) and selected_balls.size() > 0:
-							is_resizing = true 
-							is_dragging = true
-							drag_start_pos = event.position
-							drag_ball = selected_balls[0]
-
-							var pivot_id = -1
-							if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
-								pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
-							_scale_group_pivot = _get_rotation_pivot_origin(pivot_id)
-
-							_scale_group_initial_data.clear()
-							for b in selected_balls:
-								if is_instance_valid(b):
-									_scale_group_initial_data[b.ball_no] = {
-										"pos": b.global_transform.origin,
-										"size": b.ball_size
-									}
-
-							Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
-							return
-						else:
-							var hover_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-							var hover_ball = get_intended_ball(hover_pos)
-							if hover_ball:
-								move_mode_settings_instance.set_pivot_ball(hover_ball.ball_no)
-								var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-								for b in all_balls:
-									if is_instance_valid(b) and b.has_method("apply_outline_state"):
-										b.apply_outline_state(get_visual_state_for_ball(b))
-								return
-
-					var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-					
-					if hover:
-						if Input.is_key_pressed(KEY_CONTROL):
-							# Toggle selection
-							if hover in selected_balls:
-								selected_balls.erase(hover)
-								hover.apply_outline_state(get_visual_state_for_ball(hover))
-							else:
-								selected_balls.append(hover)
-								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-						else:
-							# If not holding CTRL, and ball is not already selected, select only this one
-							# If ball IS selected, we might be starting a drag, so don't clear others yet
-							if not (hover in selected_balls):
-								_on_unselect_all()
-								selected_balls.append(hover)
-								hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
-
-						_update_selected_ballz_in_settings()
-						
-						# Prepare for dragging if we have a selection
-						if selected_balls.size() > 0:
-							is_dragging = true
-							drag_ball = hover # Just as a reference for plane intersection
-							drag_start_pos = event.position
-							
-							_record_move_start_state()
-
-							# Record original positions for this drag session
-							for b in selected_balls:
-								if not pet_node._orig_world_pos.has(b.ball_no):
-									pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
-									
-							Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
-							return # Consume click on ball
-
+							hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
 					else:
-						# Clicked empty space
-						if not move_mode:
+						if not (hover in selected_balls):
 							_on_unselect_all()
-						# Do NOT return here, allow pass-through to rotation logic
+							selected_balls.append(hover)
+							hover.apply_outline_state(hover.OutlineState.ACTIVE_SELECTED)
+
+					_update_selected_ballz_in_settings()
+					
+					if selected_balls.size() > 0:
+						_initialize_move_drag(hover, event.position, false)
+						return true
+
 				else:
-					# Mouse release
-					if is_dragging: # Only commit if we were actually dragging
-						is_dragging = false
-						is_resizing = false
-						Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-						drag_ball = null
-						
-						# Commit pending moves for visual feedback (gray outline)
-						for b in selected_balls:
-							if is_instance_valid(b):
-								if not pending_moves.has(b.ball_no):
-									if pet_node._orig_world_pos.has(b.ball_no):
-										pending_moves[b.ball_no] = {
-											"orig_pos": pet_node._orig_world_pos[b.ball_no], 
-											"new_pos": b.global_transform.origin
-										}
-								else:
-									pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
-									pending_moves[b.ball_no]["new_size"] = b.ball_size
-						
-						move_mode_settings_instance.set_queued_count(pending_moves.size())
-						_record_move_end_state("Drag Move")
-						return # Consume drag release
+					if not move_mode:
+						_on_unselect_all()
+			else:
+				# Mouse release
+				if is_dragging:
+					var was_resizing = is_resizing
+					is_dragging = false
+					is_resizing = false
+					Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+					drag_ball = null
 
-		elif event is InputEventMouseMotion and is_dragging and drag_ball:
-			if is_resizing:
-				var mouse_delta = event.position - drag_start_pos
-				var change_amount = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
-				var scale_factor = max(0.1, 1.0 + change_amount)
-				
-				Input.set_custom_mouse_cursor(hand_stretch if change_amount > 0 else hand_pinch, 0, Vector2(30, 31))
-
-				var engine_scale = pet_node.lnz.scales[1]
-				for b_no in _scale_group_initial_data:
-					var b = _find_visual_ball_by_no(b_no)
-					if not is_instance_valid(b): continue
-					
-					var initial = _scale_group_initial_data[b_no]
-					
-					var offset_from_pivot = initial.pos - _scale_group_pivot
-					b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
-					
-					var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
-					var bhd_s = pet_node.bhd.ball_sizes[b_no] if b_no < KeyBallsData.max_base_ball_num else 0
-					var req_total = (target_visual / (engine_scale / 255.0)) + 2
-					var final_lnz = round(req_total - bhd_s)
-					var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-					snapped_visual -= 1 - fmod(snapped_visual, 2)
-					
-					b.set_ball_size(snapped_visual)
-				return
-
-			var real_center = rect_position + rect_size / 2.0
-			var offset = event.position - real_center
-			offset /= tex.rect_scale
-			var screen_pos = Vector2(500, 500) + offset
-			var ray_o = camera.project_ray_origin(screen_pos)
-			var ray_d = camera.project_ray_normal(screen_pos)
-			
-			# Drag plane based on the reference ball's position
-			var plane_n = camera.global_transform.basis.z.normalized()
-			var plane_p = drag_ball.global_transform.origin
-			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
-			
-			if intersect:
-				var drag_current_pos = intersect
-				
-				# Get the previous intersection point to calculate delta
-				var prev_offset = (event.position - event.relative) - real_center
-				prev_offset /= tex.rect_scale
-				var prev_screen_pos = Vector2(500, 500) + prev_offset
-				var prev_ray_o = camera.project_ray_origin(prev_screen_pos)
-				var prev_ray_d = camera.project_ray_normal(prev_screen_pos)
-				var prev_intersect = intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
-				
-				if prev_intersect:
-					var delta = drag_current_pos - prev_intersect
-					
-					# Apply constraints
-					var constraints = move_mode_settings_instance.get_constraints()
-					
-					var constrain_x = Input.is_key_pressed(KEY_X)
-					var constrain_y = Input.is_key_pressed(KEY_Y)
-					var constrain_z = Input.is_key_pressed(KEY_Z)
-					
-					var final_lock_x = constraints.x
-					var final_lock_y = constraints.y
-					var final_lock_z = constraints.z
-					
-					# Override UI with Hotkeys if pressed
-					if constrain_x or constrain_y or constrain_z:
-						# If using hotkeys, treat them as "Allow movement on Axis"
-						# So if X is pressed, we Lock Y and Z.
-						final_lock_x = not constrain_x
-						final_lock_y = not constrain_y
-						final_lock_z = not constrain_z
-					
-					if final_lock_x: delta.x = 0
-					if final_lock_y: delta.y = 0
-					if final_lock_z: delta.z = 0
-					
-					# Apply to all selected balls
 					for b in selected_balls:
 						if is_instance_valid(b):
-							var addballz_base_selected = false
-							var p = b.get_parent()
-							while is_instance_valid(p) and p != get_tree().root:
-								if p in selected_balls:
-									addballz_base_selected = true
-									break
-								p = p.get_parent()
-							
-							if not addballz_base_selected:
-								b.global_transform.origin += delta
+							if not pending_moves.has(b.ball_no):
+								var orig_p = b.global_transform.origin
+								if pet_node._orig_world_pos.has(b.ball_no):
+									orig_p = pet_node._orig_world_pos[b.ball_no]
 
-							_track_pending_move(b)
-					
-					# Handle Mirroring
-					if move_mode_settings_instance.is_mirror_x_active():
-						_apply_mirror_move(selected_balls, delta)
+								var orig_s = b.ball_size
+								if was_resizing and _scale_group_initial_data.has(b.ball_no):
+									orig_s = _scale_group_initial_data[b.ball_no].size
 
-			return
+								pending_moves[b.ball_no] = {
+									"orig_pos": orig_p,
+									"new_pos": b.global_transform.origin,
+									"orig_size": orig_s,
+									"new_size": b.ball_size,
+									"orig_basis": b.global_transform.basis,
+									"new_basis": b.global_transform.basis
+								}
+							else:
+								pending_moves[b.ball_no]["new_pos"] = b.global_transform.origin
+								pending_moves[b.ball_no]["new_size"] = b.ball_size
+								if was_resizing and _scale_group_initial_data.has(b.ball_no):
+									if not pending_moves[b.ball_no].has("orig_size") or pending_moves[b.ball_no]["orig_size"] == pending_moves[b.ball_no]["new_size"]:
+										pending_moves[b.ball_no]["orig_size"] = _scale_group_initial_data[b.ball_no].size
 
-	if preset_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+					move_mode_settings_instance.set_queued_count(pending_moves.size())
+					_record_move_end_state("Drag Move")
+					return true
+
+	elif event is InputEventMouseMotion and is_dragging and drag_ball:
+		if is_resizing:
+			var mouse_delta = event.position - drag_start_pos
+			var change_amount = mouse_delta.dot(Vector2(1, -1).normalized()) * 0.05
+			var scale_factor = max(0.1, 1.0 + change_amount)
+
+			Input.set_custom_mouse_cursor(hand_stretch if change_amount > 0 else hand_pinch, 0, Vector2(30, 31))
+
+			var engine_scale = pet_node.lnz.scales[1]
+			for b_no in _scale_group_initial_data:
+				var b = _find_visual_ball_by_no(b_no)
+				if not is_instance_valid(b): continue
+
+				var initial = _scale_group_initial_data[b_no]
+
+				var offset_from_pivot = initial.pos - _scale_group_pivot
+				b.global_transform.origin = _scale_group_pivot + (offset_from_pivot * scale_factor)
+
+				var target_visual = clamp(initial.size * scale_factor, 1.0, 500.0)
+				var is_addball = b_no >= KeyBallsData.max_base_ball_num
+				var bhd_s = pet_node.bhd.ball_sizes[b_no] if not is_addball else 0
+
+				var req_total
+				if is_addball:
+					req_total = (target_visual / (engine_scale / 255.0))
+				else:
+					req_total = (target_visual / (engine_scale / 255.0)) + 2
+
+				var final_lnz = round(req_total - bhd_s)
+				var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
+				snapped_visual -= 1 - fmod(snapped_visual, 2)
+
+				b.set_ball_size(snapped_visual)
+			return true
+
+		var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
+		var ray_o = camera.project_ray_origin(screen_pos)
+		var ray_d = camera.project_ray_normal(screen_pos)
+
+		var plane_n = camera.global_transform.basis.z.normalized()
+		var plane_p = drag_ball.global_transform.origin
+		var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+
+		if intersect:
+			var drag_current_pos = intersect
+			
+			var prev_screen_pos = _get_viewport_pos_from_screen_pos(event.position - event.relative)
+			var prev_ray_o = camera.project_ray_origin(prev_screen_pos)
+			var prev_ray_d = camera.project_ray_normal(prev_screen_pos)
+			var prev_intersect = LnzLiveUtils.intersect_ray_with_plane(prev_ray_o, prev_ray_d, plane_n, plane_p)
+			
+			if prev_intersect:
+				var delta = drag_current_pos - prev_intersect
+				
+				var constraints = move_mode_settings_instance.get_constraints()
+				
+				var constrain_x = Input.is_key_pressed(KEY_X)
+				var constrain_y = Input.is_key_pressed(KEY_Y)
+				var constrain_z = Input.is_key_pressed(KEY_Z)
+
+				var final_lock_x = constraints.x
+				var final_lock_y = constraints.y
+				var final_lock_z = constraints.z
+
+				if constrain_x or constrain_y or constrain_z:
+					final_lock_x = not constrain_x
+					final_lock_y = not constrain_y
+					final_lock_z = not constrain_z
+
+				if final_lock_x: delta.x = 0
+				if final_lock_y: delta.y = 0
+				if final_lock_z: delta.z = 0
+
+				for b in selected_balls:
+					if is_instance_valid(b):
+						var addballz_base_selected = false
+						var p = b.get_parent()
+						while is_instance_valid(p) and p != get_tree().root:
+							if p in selected_balls:
+								addballz_base_selected = true
+								break
+							p = p.get_parent()
+
+						if not addballz_base_selected:
+							b.global_transform.origin += delta
+
+						_track_pending_move(b)
+
+				if move_mode_settings_instance.is_mirror_x_active():
+					_apply_mirror_move(selected_balls, delta)
+
+		return true
+
+	return false
+
+func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
+	if not preset_mode:
+		return false
+
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			var is_eyedropper_active = preset_settings_instance.find_node("EyedropperToggle").pressed or Input.is_key_pressed(KEY_ALT)
 			if is_eyedropper_active:
@@ -775,9 +1002,15 @@ func _gui_input(event):
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
-		return
+		return true
 
-	if paintball_mode and event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
+	return false
+
+func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
+	if not paintball_mode:
+		return false
+
+	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
 		var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 		var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 		if event.button_index == BUTTON_WHEEL_UP:
@@ -786,9 +1019,9 @@ func _gui_input(event):
 		else:
 			diameter_min_spinbox.value -= 1
 			diameter_max_spinbox.value -= 1
-		return
+		return true
 
-	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
 		var props = paintball_settings_instance.get_properties()
 		var freeline_mode = props.freeline or (event.shift and not (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN))
 		if freeline_mode:
@@ -803,22 +1036,22 @@ func _gui_input(event):
 			else:
 				freeline_active = false
 				_finalize_freeline()
-			return
+			return true
 
-	if paintball_mode and event is InputEventMouseMotion and freeline_active:
+	if event is InputEventMouseMotion and freeline_active:
 		var props = paintball_settings_instance.get_properties()
 		var current_pos = event.position
 		if current_pos.distance_to(last_freeline_point) > props.spacing:
 			freeline_path.append(current_pos)
 			last_freeline_point = current_pos
-		return
+		return true
 
-	if paintball_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
 		if delete_mode:
 			var pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
-				return
+				return true
 
 			var closest_paintball = null
 			var min_dist_sq = INF
@@ -844,7 +1077,7 @@ func _gui_input(event):
 			
 			if closest_paintball and min_dist_sq < 25*25: # 25px threshold
 				pet_node.remove_specific_pending_paintball(closest_paintball)
-			return
+			return true
 
 		var target_ball
 
@@ -853,16 +1086,37 @@ func _gui_input(event):
 		else:
 			var target_mode = paintball_settings_instance.find_node("Target").selected
 			if target_mode == 0: # Hovered Ball
-				target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+				target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 			else: # Selected Ball
 				if active_selected_ball and is_instance_valid(active_selected_ball):
 					target_ball = active_selected_ball
 
 		if target_ball:
-			var screen_pos = (event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
 			var result = _create_paintball_at_position(screen_pos, target_ball)
 			if result:
 				_record_paint_action([result])
+		return true
+
+	return false
+
+func _gui_input(event):
+	if input_is_paused:
+		return
+
+	if _handle_box_selection(event):
+		return
+
+	if event is InputEventMouseButton and event.pressed and event.button_index != BUTTON_RIGHT and not Input.is_key_pressed(KEY_SHIFT) and not move_mode and not auto_paintballer_mode and not preset_mode and not linez_mode:
+		_reset_tab_state()
+
+	if _handle_move_mode_gui_input(event):
+		return
+
+	if _handle_preset_mode_gui_input(event):
+		return
+
+	if _handle_paint_mode_gui_input(event):
 		return
 
 	# Guard against entering hotkeys into text area when interacting with view container:
@@ -957,7 +1211,7 @@ func _gui_input(event):
 			var ray_d = camera.project_ray_normal(screen_pos)
 			var plane_n = camera.global_transform.basis.z.normalized()
 			var plane_p = drag_ball.global_transform.origin
-			var intersect = intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
+			var intersect = LnzLiveUtils.intersect_ray_with_plane(ray_o, ray_d, plane_n, plane_p)
 			if intersect:
 				var new_pos = intersect
 				var original_pos = drag_ball.global_transform.origin
@@ -992,6 +1246,7 @@ func _gui_input(event):
 		is_dragging = false
 		is_resizing = false
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		#update() # AXIS GIZMO
 		drag_ball = null
 		return
 
@@ -1039,8 +1294,8 @@ func _gui_input(event):
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
 			Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-			var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-			for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+			var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			for b in _get_all_visual_balls():
 				if b != linez_start_ball and b.has_method("apply_outline_state"):
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
@@ -1081,6 +1336,7 @@ func _gui_input(event):
 			is_resizing = false
 			drag_started_via_code = false
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+			#update() # AXIS GIZMO
 			drag_ball = null
 			return
 	
@@ -1098,6 +1354,147 @@ func _gui_input(event):
 			get_tree().set_input_as_handled() 
 			return
 
+	if recolor_mode and event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var target_ball = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if target_ball:
+			recolor_settings_instance.queue_bucket_change(target_ball)
+			get_tree().set_input_as_handled()
+			return
+
+func _handle_camera_view_key_input(event: InputEventKey) -> bool:
+	if not event.pressed: return false
+
+	match event.scancode:
+		KEY_1:
+			_set_camera_view("front")
+			return true
+		KEY_2:
+			_set_camera_view("bottom")
+			return true
+		KEY_3:
+			_set_camera_view("top")
+			return true
+		KEY_4:
+			_set_camera_view("right")
+			return true
+		KEY_5:
+			_set_camera_view("left")
+			return true
+		KEY_6:
+			_set_camera_view("back")
+			return true
+		KEY_7:
+			_set_camera_view("isorightbottom")
+			return true
+		KEY_8:
+			_set_camera_view("isorighttop")
+			return true
+		KEY_9:
+			_set_camera_view("isoleftbottom")
+			return true
+		KEY_0:
+			_set_camera_view("isolefttop")
+			return true
+	return false
+
+func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
+	if not event.pressed: return false
+
+	if event.alt:
+		match event.scancode:
+			KEY_F:
+				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_B:
+				paintball_check_box.pressed = !paintball_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_L:
+				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_G:
+				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_M:
+				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_P:
+				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+
+	if not event.control and not event.alt and not event.shift:
+		match event.scancode:
+			KEY_S:
+				select_check_box.pressed = !select_check_box.pressed
+				_on_SelectCheckBox_pressed()
+				get_tree().set_input_as_handled()
+				return true
+			KEY_W:
+				paintball_check_box.pressed = !paintball_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_E:
+				line_mode_check_box.pressed = !line_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_R:
+				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_U:
+				move_mode_check_box.pressed = !move_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_D:
+				project_mode_check_box.pressed = !project_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_A:
+				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_T:
+				view_palette_check_box.pressed = !view_palette_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_G:
+				recolor_mode_check_box.pressed = !recolor_mode_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
+			KEY_H:
+				lnz_text_edit._on_HeadShotButton_pressed()
+				get_tree().set_input_as_handled()
+				return true
+
+	return false
+
+func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
+	if move_mode and event.pressed:
+		var nudge_axis = ""
+		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
+		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
+		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
+
+		if nudge_axis != "":
+			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
+				_record_move_start_state() # Before change
+				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
+				_record_move_end_state("Nudge +")
+				get_tree().set_input_as_handled()
+				return true
+			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
+				_record_move_start_state() # Before change
+				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
+				_record_move_end_state("Nudge -")
+				get_tree().set_input_as_handled()
+				return true
+	return false
+
 func _unhandled_key_input(event):
 	if input_is_paused:
 		return
@@ -1113,6 +1510,7 @@ func _unhandled_key_input(event):
 		line_mode_check_box.pressed = false
 		move_mode_check_box.pressed = false
 		preset_mode_check_box.pressed = false
+		recolor_mode_check_box.pressed = false
 		project_mode_check_box.pressed = false
 		auto_paintballer_check_box.pressed = false
 		
@@ -1139,26 +1537,9 @@ func _unhandled_key_input(event):
 				_redo_queued_move()
 				get_tree().set_input_as_handled()
 				return
-
-	if move_mode and event.pressed:
-		var nudge_axis = ""
-		if Input.is_key_pressed(KEY_X): nudge_axis = "x"
-		elif Input.is_key_pressed(KEY_Y): nudge_axis = "y"
-		elif Input.is_key_pressed(KEY_Z): nudge_axis = "z"
-		
-		if nudge_axis != "":
-			if event.scancode == KEY_EQUAL or event.scancode == KEY_KP_ADD: # + key
-				_record_move_start_state() # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, 1.0)
-				_record_move_end_state("Nudge +")
-				get_tree().set_input_as_handled()
-				return
-			elif event.scancode == KEY_MINUS or event.scancode == KEY_KP_SUBTRACT: # - key
-				_record_move_start_state() # Before change
-				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
-				_record_move_end_state("Nudge -")
-				get_tree().set_input_as_handled()
-				return
+	
+	if _handle_move_nudge_key_input(event):
+		return
 		
 	# Open Tools Menu via CTRL+SPACE for last selected ball:
 	if event is InputEventKey and event.pressed and event.control and event.scancode == KEY_SPACE:
@@ -1171,131 +1552,41 @@ func _unhandled_key_input(event):
 		tools_menu.popup()
 		return
 	
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_B:
-		paintball_check_box.pressed = !paintball_check_box.pressed
-		get_tree().set_input_as_handled()
+	if _handle_mode_shortcut_key_input(event):
 		return
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_L:
-		line_mode_check_box.pressed = !line_mode_check_box.pressed
-		get_tree().set_input_as_handled()
+	if _handle_camera_view_key_input(event):
 		return
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_G:
-		preset_mode_check_box.pressed = !preset_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
+	if event.pressed and last_selected_is_valid():
+		last_selected._input(event)
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_M:
-		move_mode_check_box.pressed = !move_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
+func _set_camera_view(view_name: String):
+	camera_holder.rotation = Vector3.ZERO
+	
+	match view_name:
+		"front":
+			camera_holder.rotation_degrees = Vector3(0, 0, 0)
+		"back":
+			camera_holder.rotation_degrees = Vector3(0, 180, 0)
+		"right":
+			camera_holder.rotation_degrees = Vector3(0, 90, 0)
+		"left":
+			camera_holder.rotation_degrees = Vector3(0, -90, 0)
+		"bottom":
+			camera_holder.rotation_degrees = Vector3(-90, 0, 0)
+		"top":
+			camera_holder.rotation_degrees = Vector3(90, 0, 0)
+		"isorightbottom":
+			camera_holder.rotation_degrees = Vector3(-35, 45, 0)
+		"isorighttop":
+			camera_holder.rotation_degrees = Vector3(35, 45, 0)
+		"isoleftbottom":
+			camera_holder.rotation_degrees = Vector3(-35, -45, 0)
+		"isolefttop":
+			camera_holder.rotation_degrees = Vector3(35, -45, 0)
 
-	if event is InputEventKey and event.pressed and event.alt and event.scancode == KEY_P:
-		project_mode_check_box.pressed = !project_mode_check_box.pressed
-		get_tree().set_input_as_handled()
-		return
-
-	if event.pressed and not event.control and not event.alt and not event.shift:
-		match event.scancode:
-			KEY_S:
-				select_check_box.pressed = !select_check_box.pressed
-				_on_SelectCheckBox_pressed()
-				get_tree().set_input_as_handled()
-				return
-			KEY_W:
-				paintball_check_box.pressed = !paintball_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_E:
-				line_mode_check_box.pressed = !line_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_R:
-				preset_mode_check_box.pressed = !preset_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_U:
-				move_mode_check_box.pressed = !move_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_D:
-				project_mode_check_box.pressed = !project_mode_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_A:
-				auto_paintballer_check_box.pressed = !auto_paintballer_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_T:
-				view_palette_check_box.pressed = !view_palette_check_box.pressed
-				get_tree().set_input_as_handled()
-				return
-			KEY_G:
-				if recolor_popup.visible:
-					recolor_popup.hide()
-				else:
-					recolor_popup.popup_centered()
-				get_tree().set_input_as_handled()
-				return
-			KEY_H:
-				lnz_text_edit._on_HeadShotButton_pressed()
-				get_tree().set_input_as_handled()
-				return
-
-	if event.pressed and event.scancode == KEY_L and Input.is_key_pressed(KEY_SHIFT) and last_selected_is_valid():
-		linez_mode = true
-		linez_start_ball = last_selected
-		linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
-	else:
-		if event.pressed:
-			match event.scancode:
-				KEY_1:
-					_set_camera_view("front")
-				KEY_2:
-					_set_camera_view("bottom")
-				KEY_3:
-					_set_camera_view("top")
-				KEY_4:
-					_set_camera_view("right")
-				KEY_5:
-					_set_camera_view("left")
-				KEY_6:
-					_set_camera_view("back")
-				KEY_7:
-					_set_camera_view("isorightbottom")
-				KEY_8:
-					_set_camera_view("isorighttop")
-				KEY_9:
-					_set_camera_view("isoleftbottom")
-				KEY_0:
-					_set_camera_view("isolefttop")
-		if event.pressed and last_selected_is_valid():
-			last_selected._input(event)
-
-func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
-	var denom = plane_normal.dot(ray_dir)
-	if abs(denom) < 0.0001:
-		return null
-	var d = plane_normal.dot(plane_point - ray_origin) / denom
-	return ray_origin + ray_dir * d
-
-func last_selected_is_valid():
-	return last_selected != null and is_instance_valid(last_selected)
-
-func deal_with_last_selected():
-	if last_selected != null and is_instance_valid(last_selected):
-		last_selected._on_Area_mouse_exited()
-				
-func _on_Node_ball_mouse_enter(ball_info):
-	if selecting_on:
-		ball_label.text = str(ball_info.ball_no)
-		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
-		ball_label.show()
-
-func _on_SelectCheckBox_toggled(button_pressed):
-	pass
-
+# MODES
 func _on_ModePopup_about_to_show():
 	select_check_box.pressed = selecting_on
 
@@ -1307,7 +1598,7 @@ func _on_SelectCheckBox_pressed():
 		last_selected = null
 		clear_active_selected_ball()
 		ball_label.hide()
-		for b in get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs"):
+		for b in _get_all_visual_balls():
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
 		tex.update()
@@ -1327,6 +1618,93 @@ func _on_PetViewContainer_resized():
 
 func _on_PetViewContainer_sort_children():
 	_on_PetViewContainer_resized()
+
+# VISUALS
+func set_active_selected_ball(ball):
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = ball
+	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
+	_update_selected_ballz_in_settings()
+
+func clear_active_selected_ball():
+	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
+		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
+	active_selected_ball = null
+	_update_selected_ballz_in_settings()
+
+func get_visual_state_for_ball(b):
+	if not "ball_no" in b:
+		return
+	else:
+		if move_mode:
+			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
+				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+				if b.ball_no == pivot_id:
+					return b.OutlineState.PIVOT
+
+		if (move_mode or preset_mode or auto_paintballer_mode) and b in selected_balls:
+			return b.OutlineState.ACTIVE_SELECTED
+		elif move_mode and pending_moves.has(b.ball_no):
+			return b.OutlineState.MODIFIED
+		else:
+			if b == active_selected_ball:
+				return b.OutlineState.ACTIVE_SELECTED
+			return b.OutlineState.NONE
+
+func last_selected_is_valid():
+	return last_selected != null and is_instance_valid(last_selected)
+
+func deal_with_last_selected():
+	if last_selected != null and is_instance_valid(last_selected):
+		last_selected._on_Area_mouse_exited()
+				
+func _on_Node_ball_mouse_enter(ball_info):
+	if selecting_on:
+		ball_label.text = str(ball_info.ball_no)
+		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
+		ball_label.show()
+
+func _find_visual_ball_by_no(no: int) -> Spatial:
+	if is_instance_valid(pet_node) and pet_node.ball_map:
+		if pet_node.ball_map.has(no):
+			var b = pet_node.ball_map[no]
+			if is_instance_valid(b):
+				return b
+		return null
+	
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if b.ball_no == no:
+				return b
+	return null
+
+# func _find_visual_addball_by_no(no: int) -> Spatial:
+# 	for b in get_tree().get_nodes_in_group("addballs"):
+# 		if b.has_method("get"): # safety if some nodes aren't the ball script
+# 			if b.ball_no == no:
+# 				return b
+# 	return null
+
+func _get_all_visual_balls() -> Array:
+	if is_instance_valid(pet_node) and pet_node.ball_map:
+		return pet_node.ball_map.values()
+	return get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+
+func _on_affected_list_changed(ids: Array):
+	_auto_paint_affected_cache = ids
+	
+	selected_balls.clear()
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			selected_balls.append(ball)
+
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from = camera.project_ray_origin(screen_pos)
@@ -1353,7 +1731,7 @@ func _sort_by_distance(a, b):
 	return a.distance < b.distance
 
 func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
-	var balls_list = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var balls_list = _get_all_visual_balls()
 	var nearby_balls = []
 	
 	var viewport_global_offset = tex.get_global_transform().origin
@@ -1459,15 +1837,13 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
 	var ball_no = drag_ball.ball_no
 	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
-	
-	var bhd_size = 0
-	if not is_addball:
-		bhd_size = pet_node.bhd.ball_sizes[ball_no]
-	
-	var scale = pet_node.lnz.scales[1] # 
+
+	var bhd_size = pet_node.bhd.ball_sizes[ball_no] if not is_addball else 0
+	var scale = pet_node.lnz.scales[1]
 	var desired_visual = drag_ball.ball_size
 	
-	var req_total_size = (desired_visual / (scale / 255.0)) + 2
+	var offset = 0 if is_addball else 2
+	var req_total_size = (desired_visual / (scale / 255.0)) + offset
 	var lnz_value = int(round(req_total_size - bhd_size))
 	
 	for i in range(-1, 2):
@@ -1479,6 +1855,342 @@ func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node)
 			return test_lnz
 			
 	return lnz_value
+
+func _isolate_target_ball(target_ball):
+	_create_overlay()
+	camera.cull_mask = 1
+
+	var all_balls = _get_all_visual_balls()
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		if ball != target_ball:
+			area.set_collision_layer_bit(0, false)
+			area.set_collision_layer_bit(1, true)
+		else:
+			area.set_collision_layer_bit(0, true)
+			area.set_collision_layer_bit(1, false)
+			_set_visual_layer_recursive(ball, 2)
+
+func _restore_all_balls():
+	var all_balls = _get_all_visual_balls()
+	for ball in all_balls:
+		if not is_instance_valid(ball):
+			continue
+
+		_set_visual_layer_recursive(ball, 1)
+
+		var area = ball.get_node_or_null("Area")
+		if not area:
+			continue
+
+		area.set_collision_layer_bit(0, true)
+		area.set_collision_layer_bit(1, false)
+
+	camera.cull_mask = 1048575
+
+	if is_instance_valid(_overlay_viewport_container):
+		_overlay_viewport_container.queue_free()
+	if is_instance_valid(_dimmer_rect):
+		_dimmer_rect.queue_free()
+
+func _create_overlay():
+	var scene_root = tex.get_parent()
+	var bg_rect = scene_root.get_node("BackgroundColorRect")
+
+	_dimmer_rect = ColorRect.new()
+	_dimmer_rect.color = bg_rect.color
+	_dimmer_rect.color.a = 0.5
+	_dimmer_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	_overlay_viewport_container = ViewportContainer.new()
+	_overlay_viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay_viewport_container.stretch = true
+
+	_overlay_viewport = Viewport.new()
+	_overlay_viewport.transparent_bg = true
+	_overlay_viewport.handle_input_locally = false
+	_overlay_viewport.render_target_update_mode = Viewport.UPDATE_ALWAYS
+	_overlay_viewport.world = tex.get_child(0).world
+
+	_overlay_camera = Camera.new()
+	_overlay_camera.cull_mask = 2
+
+	_overlay_viewport.add_child(_overlay_camera)
+	_overlay_viewport_container.add_child(_overlay_viewport)
+
+	scene_root.add_child(_dimmer_rect)
+	scene_root.add_child(_overlay_viewport_container)
+
+	var tex_idx = tex.get_index()
+	scene_root.move_child(_dimmer_rect, tex_idx + 1)
+	scene_root.move_child(_overlay_viewport_container, tex_idx + 2)
+
+	_sync_overlay()
+
+func _sync_overlay():
+	if not is_instance_valid(_overlay_viewport_container): return
+
+	_overlay_viewport_container.rect_position = tex.rect_position
+	_overlay_viewport_container.rect_size = tex.rect_size
+	_overlay_viewport_container.rect_scale = tex.rect_scale
+	_overlay_viewport_container.rect_pivot_offset = tex.rect_pivot_offset
+
+	_dimmer_rect.rect_position = tex.rect_position
+	_dimmer_rect.rect_size = tex.rect_size
+	_dimmer_rect.rect_scale = tex.rect_scale
+	_dimmer_rect.rect_pivot_offset = tex.rect_pivot_offset
+
+	if is_instance_valid(_overlay_camera) and is_instance_valid(camera):
+		_overlay_camera.global_transform = camera.global_transform
+		_overlay_camera.projection = camera.projection
+		_overlay_camera.fov = camera.fov
+		_overlay_camera.size = camera.size
+		_overlay_camera.near = camera.near
+		_overlay_camera.far = camera.far
+		_overlay_camera.keep_aspect = camera.keep_aspect
+
+func _set_visual_layer_recursive(node: Node, layer_value: int):
+	if node is VisualInstance:
+		node.layers = layer_value
+	for child in node.get_children():
+		_set_visual_layer_recursive(child, layer_value)
+
+func _on_unselect_all():
+	var to_update = selected_balls.duplicate()
+	selected_balls.clear()
+	
+	if auto_paintballer_mode:
+		_auto_paint_affected_cache.clear() 
+	
+	for b in to_update:
+		if is_instance_valid(b) and "ball_no" in b:
+			b.apply_outline_state(get_visual_state_for_ball(b)) 
+			
+	_update_selected_ballz_in_settings()
+
+func _on_unselect_side(side: String):
+	if selected_balls.empty():
+		return
+
+	var symmetry_dict = {}
+	match KeyBallsData.species:
+		KeyBallsData.Species.CAT:
+			symmetry_dict = KeyBallsData.cat_body_part_symmetry
+		KeyBallsData.Species.DOG:
+			symmetry_dict = KeyBallsData.dog_body_part_symmetry
+		KeyBallsData.Species.BABY:
+			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+
+	var left_lookup = {}
+	var right_lookup = {}
+	for main_part in symmetry_dict:
+		for sub_part in symmetry_dict[main_part]:
+			var part_info = symmetry_dict[main_part][sub_part]
+			if part_info.has("left"):
+				for id in part_info.left: left_lookup[id] = true
+			if part_info.has("right"):
+				for id in part_info.right: right_lookup[id] = true
+
+	var to_remove = []
+	for b in selected_balls:
+		if not is_instance_valid(b) or not "ball_no" in b:
+			continue
+			
+		var ball_no = b.ball_no
+		var is_left = left_lookup.has(ball_no)
+		var is_right = right_lookup.has(ball_no)
+		var is_center = not is_left and not is_right
+		
+		var should_unselect = false
+		match side:
+			"left":   should_unselect = is_left
+			"right":  should_unselect = is_right
+			"center": should_unselect = is_center
+
+		if should_unselect:
+			to_remove.append(b)
+
+	for b in to_remove:
+		selected_balls.erase(b)
+		if b.has_method("apply_outline_state"):
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
+func _update_selected_ballz_in_settings():
+	var ids = []
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	
+	var filter = []
+	if exclude_eyes:
+		filter += KeyBallsData.get_group_balls("Eyes")
+
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in filter:
+				ids.append(b.ball_no)
+				
+	move_mode_settings_instance.update_selected_balls_text(ids)
+	preset_settings_instance.update_selected_balls_text(ids)
+
+	if auto_paintballer_mode:
+		auto_paintballer_settings_instance.update_selected_balls_text(ids)
+
+func _on_select_balls_by_ids(ids: Array):
+	_on_unselect_all()
+	
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if ball and is_instance_valid(ball):
+			if "ball_no" in ball:
+				selected_balls.append(ball)
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+				
+	_update_selected_ballz_in_settings()
+
+func _commit_box_selection():
+	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
+	var all_balls = _get_all_visual_balls()
+	
+	var properties = preset_settings_instance.get_properties()
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
+	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
+
+	for b in all_balls:
+		#if not is_instance_valid(b) or not b.is_inside_tree(): 
+		if not is_instance_valid(b) or not b.visible: 
+			continue
+
+		if b.get("omitted") == true and not pet_node.draw_omitted_balls:
+			continue
+		
+		if not ("ball_no" in b): 
+			continue
+			
+		if b.ball_no in eye_ids: 
+			continue
+
+		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
+		var relative_pos = projected_pos_local - Vector2(500, 500)
+		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
+
+		if rect.has_point(pos_in_container):
+			if not (b in selected_balls):
+				selected_balls.append(b)
+				if b.has_method("apply_outline_state"):
+					b.apply_outline_state(get_visual_state_for_ball(b))
+
+	_update_selected_ballz_in_settings()
+
+# HISTORY
+func _capture_pending_state_snapshot():
+	var snapshot = {}
+
+	for b_no in pending_moves.keys():
+		snapshot[b_no] = pending_moves[b_no].duplicate()
+
+	for b in selected_balls:
+		if is_instance_valid(b) and not snapshot.has(b.ball_no):
+			snapshot[b.ball_no] = {
+				"new_pos": b.global_transform.origin,
+				"new_size": b.ball_size,
+				"new_basis": b.global_transform.basis
+			}
+			
+	return snapshot
+
+func _record_move_history_entry(old_snapshot, new_snapshot):
+	if old_snapshot.hash() == new_snapshot.hash(): return
+
+	move_history.append({
+		"old": old_snapshot,
+		"new": new_snapshot
+	})
+	move_redo_stack.clear()
+
+func _restore_move_snapshot(snapshot):
+	pending_moves = snapshot.duplicate(true)
+
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if not "ball_no" in b: continue
+
+		if pending_moves.has(b.ball_no):
+			var data = pending_moves[b.ball_no]
+			b.global_transform.origin = data.new_pos
+			if data.has("new_size"):
+				b.set_ball_size(data.new_size)
+			b.apply_outline_state(get_visual_state_for_ball(b))
+		else:
+			if pet_node._orig_world_pos.has(b.ball_no):
+				b.global_transform.origin = pet_node._orig_world_pos[b.ball_no]
+
+			b.apply_outline_state(get_visual_state_for_ball(b))
+
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
+
+func _undo_queued_move():
+	if move_history.empty(): return
+	var entry = move_history.pop_back()
+	move_redo_stack.append(entry)
+	_restore_move_snapshot(entry.old)
+
+func _redo_queued_move():
+	if move_redo_stack.empty(): return
+	var entry = move_redo_stack.pop_back()
+	move_history.append(entry)
+	_restore_move_snapshot(entry.new)
+
+func _record_paint_action(paintballs_added):
+	if paintballs_added.empty(): return
+	paint_history.append(paintballs_added)
+	paint_redo_stack.clear()
+
+func _undo_queued_paintball():
+	if paint_history.empty():
+		var data = pet_node.remove_last_pending_paintball()
+		if data:
+			paint_redo_stack.append([data])
+		return
+
+	var last_action = paint_history.pop_back()
+	paint_redo_stack.append(last_action)
+
+	for i in range(last_action.size()):
+		pet_node.remove_last_pending_paintball()
+
+func _redo_queued_paintball():
+	if paint_redo_stack.empty():
+		return
+
+	var action_to_redo = paint_redo_stack.pop_back()
+	paint_history.append(action_to_redo)
+
+	for pb_data in action_to_redo:
+		pet_node.add_pending_paintball(pb_data)
+
+func _record_move_start_state():
+	_pre_move_state = _capture_pending_state_snapshot()
+
+func _record_move_end_state(action_name):
+	var current_state = _capture_pending_state_snapshot()
+	_record_move_history_entry(_pre_move_state, current_state)
+
+# HELPERS
+func _flatten_symmetry_dict(dict: Dictionary) -> Array:
+	var flat_list = []
+	for main_part in dict:
+		for sub_part in dict[main_part]:
+			var part_info = dict[main_part][sub_part]
+			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
+				flat_list.append(part_info)
+	return flat_list
 
 func begin_auto_move_for_ball(ball: Spatial) -> void:
 	if not ball: return
@@ -1494,71 +2206,144 @@ func schedule_autodrag_for_addball(ball_no: int) -> void:
 	_wait_for_addball_then_autodrag()
 
 func _wait_for_addball_then_autodrag() -> void:
-	var tries := 90  # ~1.5s @ 60fps; adjust if your rebuild takes longer
+	var tries := 10
 	while tries > 0 and pending_autodrag_addball_no != -1:
 		yield(get_tree(), "idle_frame")
-		var visual := _find_visual_addball_by_no(pending_autodrag_addball_no)
+		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
 		if visual:
 			begin_auto_move_for_ball(visual)
 			pending_autodrag_addball_no = -1
 			return
 		tries -= 1
 
-func _find_visual_addball_by_no(no: int) -> Spatial:
-	for b in get_tree().get_nodes_in_group("addballs"):
-		if b.has_method("get"): # safety if some nodes aren't the ball script
-			if b.ball_no == no:
-				return b
-	return null
+### MODE MANAGEMENT ###
+func _deactivate_other_modes(active_mode_name: String):
+	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
+	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false
+	if active_mode_name != "Move Mode": move_mode_check_box.pressed = false
+	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
+	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
+	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
+	if active_mode_name != "Recolor Mode": recolor_mode_check_box.pressed = false
 
-func _on_affected_list_changed(ids: Array):
-	_auto_paint_affected_cache = ids
-	
-	selected_balls.clear()
-	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
-		if ball and is_instance_valid(ball):
-			selected_balls.append(ball)
-
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if is_instance_valid(b) and b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-func _update_paintball_mode_ui():
-	if paintball_mode:
-		_ensure_panel_visible(paintball_settings_instance)
-		paintball_settings_instance.show()
-		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-		if paintball_target_ball and is_instance_valid(paintball_target_ball):
-			paintball_settings_instance.find_node("Target").disabled = true
+func _update_mode_panel_visibility(panel: Control, is_active: bool):
+	if is_active:
+		if panel.is_docked:
+			sidebar_controller.dock_panel(panel)
+			sidebar_controller.switch_to_tab(panel) 
 		else:
-			paintball_settings_instance.find_node("Target").disabled = false
+			panel.show()
+			panel.raise()
+	else:
+		if not panel.is_docked:
+			panel.hide()
+		
+		if sidebar_controller:
+			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
+			if tree_tab:
+				sidebar_controller.switch_to_tab(tree_tab) 
+	
+	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
+		sidebar_controller._update_tab_visibilities()
+
+func _on_recolor_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Recolor Mode")
+	recolor_mode = is_on
+	_update_mode_panel_visibility(recolor_settings_instance, is_on)
+
+	if is_on:
+		mouse_default_cursor_shape = CURSOR_ARROW
+		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
+	else:
+		recolor_settings_instance._on_ClearBucket_pressed()
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+		recolor_settings_instance._on_ClearBucket_pressed()
+
+func _on_paintball_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Paintball Mode")
+	paintball_mode = is_on
+	_update_mode_panel_visibility(paintball_settings_instance, is_on)
+	
+	if not is_on:
+		paintball_target_ball = null
+		close_paintball_on_apply = false
+		_restore_all_balls()
+	else:
+		_restore_all_balls()
+		_ordered_color_index = 0
+		_ordered_outline_color_index = 0
+		_ordered_texture_index = 0
+		paintball_settings_instance.find_node("Target").selected = 0
+		
+	_update_paintball_mode_ui()
+
+func _on_move_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Move Mode")
+	move_mode = is_on
+	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
+	
+	if is_on:
+		move_mode_settings_instance.set_queued_count(pending_moves.size())
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		ball_label.hide()
+		_reset_tab_state()
+	else:
+		_on_unselect_all()
+		_on_move_mode_clear()
+
+func _on_line_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Line Mode")
+	linez_mode = is_on
+	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
+	
+	if is_on:
+		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
+	else:
+		line_mode_close = false
+		if is_instance_valid(linez_start_ball):
+			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+		linez_start_ball = null
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+
+func _on_preset_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Preset Mode")
+	preset_mode = is_on
+	_update_mode_panel_visibility(preset_settings_instance, is_on)
+	
+	if is_on:
+		if pet_node and pet_node.lnz:
+			if pet_node.lnz.texture_list:
+				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
+			if pet_node.lnz.palette:
+				preset_settings_instance.set_palette(pet_node.lnz.palette)
+		
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_ARROW
 	else:
-		if pet_node:
-			pet_node.clear_pending_paintballs()
-
-		paintball_settings_instance.hide()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
-func _on_delete_mode_toggled(is_on):
-	if is_on:
-		Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
-	else:
-		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+func _on_auto_paintballer_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Auto Paintballer")
+	auto_paintballer_mode = is_on
+	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
+	
+	if not is_on:
+		pet_node._on_clear_auto_paintballz()
+		_on_unselect_all()
+		_auto_paint_affected_cache.clear()
+		var all_balls = _get_all_visual_balls()
+		for b in all_balls:
+			if is_instance_valid(b) and b.has_method("apply_outline_state"):
+				b.apply_outline_state(b.OutlineState.NONE)
 
-func _on_paintball_mode_for_ball_toggled(ball):
-	close_paintball_on_apply = true
-	paintball_target_ball = ball
-	set_active_selected_ball(ball)
-	paintball_settings_instance.find_node("Target").selected = 1
-	if not paintball_check_box.pressed:
-		paintball_check_box.pressed = true
-	else:
-		_update_paintball_mode_ui()
-	_isolate_target_ball(ball)
+func _on_project_mode_toggled(is_on):
+	if is_on: _deactivate_other_modes("Project Mode")
+	project_mode = is_on
+	_update_mode_panel_visibility(project_settings_instance, is_on)
+
+### PALETTE VIEWER ###
 
 func _on_view_palette_check_box_toggled(is_on):
 	palette_viewer_instance.visible = is_on
@@ -1578,234 +2363,57 @@ func _on_palette_visibility_changed():
 	if view_palette_check_box.pressed != palette_viewer_instance.visible:
 		view_palette_check_box.pressed = palette_viewer_instance.visible
 
-func _flatten_symmetry_dict(dict: Dictionary) -> Array:
-	var flat_list = []
-	for main_part in dict:
-		for sub_part in dict[main_part]:
-			var part_info = dict[main_part][sub_part]
-			if part_info.has("left") and part_info.has("right") and not part_info.left.empty() and not part_info.right.empty():
-				flat_list.append(part_info)
-	return flat_list
+### RECOLOR MODE ###
 
-func _on_randomize_body_proportions(settings: Dictionary):
-	randomize()
-	lnz_text_edit.save_backup()
+### PAINT MODE ###
 
-	# Two-value sections
-	var leg_ext1_min = int(settings.leg_ext_1.min)
-	var leg_ext1_max = int(settings.leg_ext_1.max)
-	var leg_ext1 = randi() % (leg_ext1_max - leg_ext1_min + 1) + leg_ext1_min
-	var leg_ext2_min = int(settings.leg_ext_2.min)
-	var leg_ext2_max = int(settings.leg_ext_2.max)
-	var leg_ext2 = randi() % (leg_ext2_max - leg_ext2_min + 1) + leg_ext2_min
-	lnz_text_edit.update_lnz_section_two_values("[Leg Extension]", leg_ext1, leg_ext2)
+func _update_paintball_mode_ui():
+	if paintball_mode:
+		_ensure_panel_visible(paintball_settings_instance)
 
-	var head_enl1_min = int(settings.head_enl_1.min)
-	var head_enl1_max = int(settings.head_enl_1.max)
-	var head_enl1 = randi() % (head_enl1_max - head_enl1_min + 1) + head_enl1_min
-	var head_enl2_min = int(settings.head_enl_2.min)
-	var head_enl2_max = int(settings.head_enl_2.max)
-	var head_enl2 = randi() % (head_enl2_max - head_enl2_min + 1) + head_enl2_min
-	lnz_text_edit.update_lnz_section_two_values("[Head Enlargement]", head_enl1, head_enl2)
+		_set_pending_paintballs_visible(true)
 
-	var feet_enl1_min = int(settings.feet_enl_1.min)
-	var feet_enl1_max = int(settings.feet_enl_1.max)
-	var feet_enl1 = randi() % (feet_enl1_max - feet_enl1_min + 1) + feet_enl1_min
-	var feet_enl2_min = int(settings.feet_enl_2.min)
-	var feet_enl2_max = int(settings.feet_enl_2.max)
-	var feet_enl2 = randi() % (feet_enl2_max - feet_enl2_min + 1) + feet_enl2_min
-	lnz_text_edit.update_lnz_section_two_values("[Feet Enlargement]", feet_enl1, feet_enl2)
+		paintball_settings_instance.show()
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_ARROW
 
-	var scales1_min = int(settings.scales_1.min)
-	var scales1_max = int(settings.scales_1.max)
-	var scales1 = randi() % (scales1_max - scales1_min + 1) + scales1_min
-	var scales2_min = int(settings.scales_2.min)
-	var scales2_max = int(settings.scales_2.max)
-	var scales2 = randi() % (scales2_max - scales2_min + 1) + scales2_min
-	lnz_text_edit.update_lnz_section_two_values("[Default Scales]", scales1, scales2)
+		if paintball_target_ball and is_instance_valid(paintball_target_ball):
+			paintball_settings_instance.find_node("Target").disabled = true
+		else:
+			paintball_settings_instance.find_node("Target").disabled = false
+	else:
+		# used to clear on exit
+		#if pet_node:
+		#	pet_node.clear_pending_paintballs()
+		_set_pending_paintballs_visible(false)
 
-	# One-value sections
-	var body_ext_min = int(settings.body_ext.min)
-	var body_ext_max = int(settings.body_ext.max)
-	var body_ext = randi() % (body_ext_max - body_ext_min + 1) + body_ext_min
-	lnz_text_edit.update_lnz_section_one_value("[Body Extension]", body_ext)
+		paintball_settings_instance.hide()
+		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
-	var face_ext_min = int(settings.face_ext.min)
-	var face_ext_max = int(settings.face_ext.max)
-	var face_ext = randi() % (face_ext_max - face_ext_min + 1) + face_ext_min
-	lnz_text_edit.update_lnz_section_one_value("[Face Extension]", face_ext)
-
-	var ear_ext_min = int(settings.ear_ext.min)
-	var ear_ext_max = int(settings.ear_ext.max)
-	var ear_ext = randi() % (ear_ext_max - ear_ext_min + 1) + ear_ext_min
-	lnz_text_edit.update_lnz_section_one_value("[Ear Extension]", ear_ext)
-
-	# A short delay to allow the text edit to process, then save.
-	yield(get_tree().create_timer(0.1), "timeout")
-	lnz_text_edit.save_file()
-	print("Randomized Body Proportions and applied to LNZ.")
-
-func _on_randomize_moves(settings: Dictionary):
-	var target_groups = settings.groups
-	var mirror_x = settings.mirror_x
-	var type = settings.type
-	var range_min = settings.range_min
-	var range_max = settings.range_max
-	var jitter_radius_percent = settings.jitter_radius
-	
-	var moves_to_apply = {}
-	
-	var target_balls = []
-	for group_name in target_groups:
-		target_balls.append_array(KeyBallsData.get_group_balls(group_name))
-	
-	var unique_targets = {}
-	for b in target_balls:
-		unique_targets[b] = true
-	target_balls = unique_targets.keys()
-	
-	var symmetry_dict = {}
-	if KeyBallsData.species == KeyBallsData.Species.DOG:
-		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-	elif KeyBallsData.species == KeyBallsData.Species.CAT:
-		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		symmetry_dict = KeyBallsData.baby_body_part_symmetry
-		
-	var eye_iris_pairs = {} # iris_id -> eye_id
-	var eye_pairs_source = {}
-	if KeyBallsData.species == KeyBallsData.Species.DOG:
-		eye_pairs_source = KeyBallsData.eyes_dog
-	elif KeyBallsData.species == KeyBallsData.Species.CAT:
-		eye_pairs_source = KeyBallsData.eyes_cat
-	elif KeyBallsData.species == KeyBallsData.Species.BABY:
-		eye_pairs_source = KeyBallsData.eyes_bab
-		
-	for iris in eye_pairs_source:
-		eye_iris_pairs[iris] = eye_pairs_source[iris]
-
-	var assigned_offsets = {}
-	
-	randomize()
-	
-	for ball_no in target_balls:
-		if assigned_offsets.has(ball_no):
-			continue
-			
-		var offset = Vector3.ZERO
-		
-		# iris, check if eye already has offset
-		if eye_iris_pairs.has(ball_no):
-			var parent_eye = eye_iris_pairs[ball_no]
-			if assigned_offsets.has(parent_eye):
-				offset = assigned_offsets[parent_eye]
-				assigned_offsets[ball_no] = offset
-				moves_to_apply[ball_no] = offset
-				continue
-		
-		# random offset
-		if type == "range":
-			var rx = rand_range(range_min.x, range_max.x)
-			var ry = rand_range(range_min.y, range_max.y)
-			var rz = rand_range(range_min.z, range_max.z)
-			offset = Vector3(rx, ry, rz)
-		elif type == "jitter":
-			# % radius offset from ball size
-			var ball_size = 10.0
-			if pet_node.bhd and ball_no < pet_node.bhd.ball_sizes.size():
-				ball_size = pet_node.bhd.ball_sizes[ball_no]
-			elif pet_node.lnz.addballs.has(ball_no):
-				var ab = pet_node.lnz.addballs[ball_no]
-				if typeof(ab) == TYPE_OBJECT: ball_size = ab.size
-				elif typeof(ab) == TYPE_DICTIONARY: ball_size = ab.get("size", 10)
-			
-			var radius = ball_size / 2.0
-			var jitter_amount = radius * (jitter_radius_percent / 100.0)
-			
-			var v = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-			offset = v * jitter_amount
-			
-		assigned_offsets[ball_no] = offset
-		moves_to_apply[ball_no] = offset
-		
-		# Symmetry
-		if mirror_x:
-			var mirrored_ball = KeyBallsData.get_mirrored_ball(ball_no, symmetry_dict)
-			
-			if mirrored_ball != -1:
-				var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
-				assigned_offsets[mirrored_ball] = mirror_offset
-				moves_to_apply[mirrored_ball] = mirror_offset
-			else:
-				# zero out if center ball
-				offset.x = 0
-				assigned_offsets[ball_no] = offset
-				moves_to_apply[ball_no] = offset
-				
-		# Find iris for eye
-		for iris in eye_iris_pairs:
-			if eye_iris_pairs[iris] == ball_no:
-				assigned_offsets[iris] = offset
-				moves_to_apply[iris] = offset
-				
-				if mirror_x:
-					var mirrored_iris = KeyBallsData.get_mirrored_ball(iris, symmetry_dict)
-					if mirrored_iris != -1:
-						var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
-						assigned_offsets[mirrored_iris] = mirror_offset
-						moves_to_apply[mirrored_iris] = mirror_offset
-
-	if not moves_to_apply.empty():
-		lnz_text_edit.set_batch_moves(moves_to_apply)
-		print("Randomized Moves applied to %d balls." % moves_to_apply.size())
-
-func _handle_line_mode_input(event) -> bool:
-	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
-		if hover:
-			if !is_instance_valid(linez_start_ball):
-				linez_start_ball = hover
-				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
-			else:
-				if hover != linez_start_ball:
-					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
-					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-					linez_start_ball = null
-					if line_mode_close:
-						line_mode_check_box.pressed = false
-			return true
-	return false
-
-func _on_eyedropper_toggled(is_on):
+func _on_delete_mode_toggled(is_on):
 	if is_on:
-		Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
+		Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 	else:
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
 
-func _set_camera_view(view_name: String):
-	camera_holder.rotation = Vector3.ZERO
-	
-	match view_name:
-		"front":
-			camera_holder.rotation_degrees = Vector3(0, 0, 0)
-		"back":
-			camera_holder.rotation_degrees = Vector3(0, 180, 0)
-		"right":
-			camera_holder.rotation_degrees = Vector3(0, 90, 0)
-		"left":
-			camera_holder.rotation_degrees = Vector3(0, -90, 0)
-		"bottom":
-			camera_holder.rotation_degrees = Vector3(-90, 0, 0)
-		"top":
-			camera_holder.rotation_degrees = Vector3(90, 0, 0)
-		"isorightbottom":
-			camera_holder.rotation_degrees = Vector3(-35, 45, 0)
-		"isorighttop":
-			camera_holder.rotation_degrees = Vector3(35, 45, 0)
-		"isoleftbottom":
-			camera_holder.rotation_degrees = Vector3(-35, -45, 0)
-		"isolefttop":
-			camera_holder.rotation_degrees = Vector3(35, -45, 0)
+func _set_pending_paintballs_visible(is_visible: bool):
+	if is_instance_valid(pet_node):
+		var pending = pet_node.get_pending_paintball_nodes()
+		for pb in pending:
+			if is_instance_valid(pb):
+				pb.visible = is_visible
+
+func _on_paintball_mode_for_ball_toggled(ball):
+	close_paintball_on_apply = true
+	paintball_target_ball = ball
+	set_active_selected_ball(ball)
+	paintball_settings_instance.find_node("Target").selected = 1
+	if not paintball_check_box.pressed:
+		paintball_check_box.pressed = true
+	else:
+		_update_paintball_mode_ui()
+	_isolate_target_ball(ball)
 
 func close_paintball_mode():
 	paintball_check_box.pressed = false
@@ -1979,118 +2587,233 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		return paintball_info
 	return null
 
-func _isolate_target_ball(target_ball):
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for ball in all_balls:
-		if not is_instance_valid(ball):
-			continue
-		var area = ball.get_node_or_null("Area")
-		if not area:
-			continue
+### SHAPE MODE ###
 
-		if ball != target_ball:
-			area.set_collision_layer_bit(0, false)
-			area.set_collision_layer_bit(1, true)
-		else:
-			area.set_collision_layer_bit(0, true)
-			area.set_collision_layer_bit(1, false)
+func _on_randomize_body_proportions(settings: Dictionary):
+	randomize()
+	lnz_text_edit.save_backup()
 
-func _restore_all_balls():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for ball in all_balls:
-		if not is_instance_valid(ball):
-			continue
-		var area = ball.get_node_or_null("Area")
-		if not area:
-			continue
+	# Two-value sections
+	var leg_ext1_min = int(settings.leg_ext_1.min)
+	var leg_ext1_max = int(settings.leg_ext_1.max)
+	var leg_ext1 = randi() % (leg_ext1_max - leg_ext1_min + 1) + leg_ext1_min
+	var leg_ext2_min = int(settings.leg_ext_2.min)
+	var leg_ext2_max = int(settings.leg_ext_2.max)
+	var leg_ext2 = randi() % (leg_ext2_max - leg_ext2_min + 1) + leg_ext2_min
+	lnz_text_edit.update_lnz_section_two_values("[Leg Extension]", leg_ext1, leg_ext2)
 
-		area.set_collision_layer_bit(0, true)
-		area.set_collision_layer_bit(1, false)
+	var head_enl1_min = int(settings.head_enl_1.min)
+	var head_enl1_max = int(settings.head_enl_1.max)
+	var head_enl1 = randi() % (head_enl1_max - head_enl1_min + 1) + head_enl1_min
+	var head_enl2_min = int(settings.head_enl_2.min)
+	var head_enl2_max = int(settings.head_enl_2.max)
+	var head_enl2 = randi() % (head_enl2_max - head_enl2_min + 1) + head_enl2_min
+	lnz_text_edit.update_lnz_section_two_values("[Head Enlargement]", head_enl1, head_enl2)
 
-func _track_pending_move(ball):
-	var current_size = ball.ball_size
-	if not pending_moves.has(ball.ball_no):
-		var orig_pos = ball.global_transform.origin
-		if pet_node._orig_world_pos.has(ball.ball_no):
-			orig_pos = pet_node._orig_world_pos[ball.ball_no]
+	var feet_enl1_min = int(settings.feet_enl_1.min)
+	var feet_enl1_max = int(settings.feet_enl_1.max)
+	var feet_enl1 = randi() % (feet_enl1_max - feet_enl1_min + 1) + feet_enl1_min
+	var feet_enl2_min = int(settings.feet_enl_2.min)
+	var feet_enl2_max = int(settings.feet_enl_2.max)
+	var feet_enl2 = randi() % (feet_enl2_max - feet_enl2_min + 1) + feet_enl2_min
+	lnz_text_edit.update_lnz_section_two_values("[Feet Enlargement]", feet_enl1, feet_enl2)
 
-		pending_moves[ball.ball_no] = {
-			"orig_pos": orig_pos,
-			"orig_size": current_size,
-			"new_pos": ball.global_transform.origin,
-			"new_size": current_size
-		}
-	else:
-		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
-		pending_moves[ball.ball_no]["new_size"] = current_size
+	var scales1_min = int(settings.scales_1.min)
+	var scales1_max = int(settings.scales_1.max)
+	var scales1 = randi() % (scales1_max - scales1_min + 1) + scales1_min
+	var scales2_min = int(settings.scales_2.min)
+	var scales2_max = int(settings.scales_2.max)
+	var scales2 = randi() % (scales2_max - scales2_min + 1) + scales2_min
+	lnz_text_edit.update_lnz_section_two_values("[Default Scales]", scales1, scales2)
+
+	# One-value sections
+	var body_ext_min = int(settings.body_ext.min)
+	var body_ext_max = int(settings.body_ext.max)
+	var body_ext = randi() % (body_ext_max - body_ext_min + 1) + body_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Body Extension]", body_ext)
+
+	var face_ext_min = int(settings.face_ext.min)
+	var face_ext_max = int(settings.face_ext.max)
+	var face_ext = randi() % (face_ext_max - face_ext_min + 1) + face_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Face Extension]", face_ext)
+
+	var ear_ext_min = int(settings.ear_ext.min)
+	var ear_ext_max = int(settings.ear_ext.max)
+	var ear_ext = randi() % (ear_ext_max - ear_ext_min + 1) + ear_ext_min
+	lnz_text_edit.update_lnz_section_one_value("[Ear Extension]", ear_ext)
+
+	# A short delay to allow the text edit to process, then save.
+	yield(get_tree().create_timer(0.1), "timeout")
+	lnz_text_edit.save_file()
+	print("Randomized Body Proportions and applied to LNZ.")
+
+func _on_randomize_moves(settings: Dictionary):
+	var target_groups = settings.groups
+	var mirror_x = settings.mirror_x
+	var type = settings.type
+	var range_min = settings.range_min
+	var range_max = settings.range_max
+	var jitter_radius_percent = settings.jitter_radius
 	
-	ball.apply_outline_state(get_visual_state_for_ball(ball))
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
+	var moves_to_apply = {}
+	
+	var target_balls = []
+	for group_name in target_groups:
+		target_balls.append_array(KeyBallsData.get_group_balls(group_name))
+	
+	var unique_targets = {}
+	for b in target_balls:
+		unique_targets[b] = true
+	target_balls = unique_targets.keys()
+	
+	var symmetry_dict = {}
+	if KeyBallsData.species == KeyBallsData.Species.DOG:
+		symmetry_dict = KeyBallsData.dog_body_part_symmetry
+	elif KeyBallsData.species == KeyBallsData.Species.CAT:
+		symmetry_dict = KeyBallsData.cat_body_part_symmetry
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		symmetry_dict = KeyBallsData.baby_body_part_symmetry
+		
+	var eye_iris_pairs = {} # iris_id -> eye_id
+	var eye_pairs_source = {}
+	if KeyBallsData.species == KeyBallsData.Species.DOG:
+		eye_pairs_source = KeyBallsData.eyes_dog
+	elif KeyBallsData.species == KeyBallsData.Species.CAT:
+		eye_pairs_source = KeyBallsData.eyes_cat
+	elif KeyBallsData.species == KeyBallsData.Species.BABY:
+		eye_pairs_source = KeyBallsData.eyes_bab
+		
+	for iris in eye_pairs_source:
+		eye_iris_pairs[iris] = eye_pairs_source[iris]
 
-func _on_unselect_all():
-	var to_update = selected_balls.duplicate()
-	selected_balls.clear()
+	var assigned_offsets = {}
 	
-	if auto_paintballer_mode:
-		_auto_paint_affected_cache.clear() 
+	randomize()
 	
-	for b in to_update:
-		if is_instance_valid(b) and "ball_no" in b:
-			b.apply_outline_state(get_visual_state_for_ball(b)) 
+	for ball_no in target_balls:
+		if assigned_offsets.has(ball_no):
+			continue
 			
-	_update_selected_ballz_in_settings()
+		var offset = Vector3.ZERO
+		
+		# iris, check if eye already has offset
+		if eye_iris_pairs.has(ball_no):
+			var parent_eye = eye_iris_pairs[ball_no]
+			if assigned_offsets.has(parent_eye):
+				offset = assigned_offsets[parent_eye]
+				assigned_offsets[ball_no] = offset
+				moves_to_apply[ball_no] = offset
+				continue
+		
+		# random offset
+		if type == "range":
+			var rx = rand_range(range_min.x, range_max.x)
+			var ry = rand_range(range_min.y, range_max.y)
+			var rz = rand_range(range_min.z, range_max.z)
+			offset = Vector3(rx, ry, rz)
+		elif type == "jitter":
+			# % radius offset from ball size
+			var ball_size = 10.0
+			if pet_node.bhd and ball_no < pet_node.bhd.ball_sizes.size():
+				ball_size = pet_node.bhd.ball_sizes[ball_no]
+			elif pet_node.lnz.addballs.has(ball_no):
+				var ab = pet_node.lnz.addballs[ball_no]
+				if typeof(ab) == TYPE_OBJECT: ball_size = ab.size
+				elif typeof(ab) == TYPE_DICTIONARY: ball_size = ab.get("size", 10)
+			
+			var radius = ball_size / 2.0
+			var jitter_amount = radius * (jitter_radius_percent / 100.0)
+			
+			var v = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+			offset = v * jitter_amount
+			
+		assigned_offsets[ball_no] = offset
+		moves_to_apply[ball_no] = offset
+		
+		# Symmetry
+		if mirror_x:
+			var mirrored_ball = KeyBallsData.get_mirrored_ball(ball_no, symmetry_dict)
+			
+			if mirrored_ball != -1:
+				var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
+				assigned_offsets[mirrored_ball] = mirror_offset
+				moves_to_apply[mirrored_ball] = mirror_offset
+			else:
+				# zero out if center ball
+				offset.x = 0
+				assigned_offsets[ball_no] = offset
+				moves_to_apply[ball_no] = offset
+				
+		# Find iris for eye
+		for iris in eye_iris_pairs:
+			if eye_iris_pairs[iris] == ball_no:
+				assigned_offsets[iris] = offset
+				moves_to_apply[iris] = offset
+				
+				if mirror_x:
+					var mirrored_iris = KeyBallsData.get_mirrored_ball(iris, symmetry_dict)
+					if mirrored_iris != -1:
+						var mirror_offset = Vector3(-offset.x, offset.y, offset.z)
+						assigned_offsets[mirrored_iris] = mirror_offset
+						moves_to_apply[mirrored_iris] = mirror_offset
 
-func _on_unselect_side(side: String):
+	if not moves_to_apply.empty():
+		lnz_text_edit.set_batch_moves(moves_to_apply)
+		print("Randomized Moves applied to %d balls." % moves_to_apply.size())
+
+### LINE MODE ###
+
+func _handle_line_mode_input(event) -> bool:
+	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
+		var hover = get_intended_ball((event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500))
+		if hover:
+			if !is_instance_valid(linez_start_ball):
+				linez_start_ball = hover
+				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+			else:
+				if hover != linez_start_ball:
+					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
+					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
+					linez_start_ball = null
+					if line_mode_close:
+						line_mode_check_box.pressed = false
+			return true
+	return false
+
+### PRESET MODE ###
+
+func _on_eyedropper_toggled(is_on):
+	if is_on:
+		Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
+	else:
+		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
+
+func _on_preset_apply_selection():
 	if selected_balls.empty():
 		return
 
-	var symmetry_dict = {}
-	match KeyBallsData.species:
-		KeyBallsData.Species.CAT:
-			symmetry_dict = KeyBallsData.cat_body_part_symmetry
-		KeyBallsData.Species.DOG:
-			symmetry_dict = KeyBallsData.dog_body_part_symmetry
-		KeyBallsData.Species.BABY:
-			symmetry_dict = KeyBallsData.baby_body_part_symmetry
+	var properties = preset_settings_instance.get_properties()
+	var ball_ids = []
+	
+	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
+	print(exclude_eyes)
+	var exclusion_list = []
+	if exclude_eyes:
+		exclusion_list = KeyBallsData.get_group_balls("Eyes")
+		print(exclusion_list)
 
-	var left_lookup = {}
-	var right_lookup = {}
-	for main_part in symmetry_dict:
-		for sub_part in symmetry_dict[main_part]:
-			var part_info = symmetry_dict[main_part][sub_part]
-			if part_info.has("left"):
-				for id in part_info.left: left_lookup[id] = true
-			if part_info.has("right"):
-				for id in part_info.right: right_lookup[id] = true
-
-	var to_remove = []
 	for b in selected_balls:
-		if not is_instance_valid(b) or not "ball_no" in b:
-			continue
-			
-		var ball_no = b.ball_no
-		var is_left = left_lookup.has(ball_no)
-		var is_right = right_lookup.has(ball_no)
-		var is_center = not is_left and not is_right
-		
-		var should_unselect = false
-		match side:
-			"left":   should_unselect = is_left
-			"right":  should_unselect = is_right
-			"center": should_unselect = is_center
+		if is_instance_valid(b) and "ball_no" in b:
+			if not b.ball_no in exclusion_list:
+				ball_ids.append(b.ball_no)
 
-		if should_unselect:
-			to_remove.append(b)
+	if not ball_ids.empty():
+		lnz_text_edit.apply_batch_presets(ball_ids, properties)
 
-	for b in to_remove:
-		selected_balls.erase(b)
-		if b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-	_update_selected_ballz_in_settings()
+### MOVE MODE ###
 
 func _on_move_mode_clear():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if not "ball_no" in b:
 			continue
@@ -2111,17 +2834,64 @@ func _on_move_mode_clear():
 			continue
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
+func _update_pivot_limit():
+	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
+		var total_balls = 0
+		if pet_node.ball_map:
+			total_balls = pet_node.ball_map.size()
+		else:
+			total_balls = get_tree().get_nodes_in_group("balls").size() + \
+						  get_tree().get_nodes_in_group("addballs").size()
+		
+		move_mode_settings_instance.update_pivot_max(total_balls)
+
+func _track_pending_move(ball):
+	var current_size = ball.ball_size
+	if not pending_moves.has(ball.ball_no):
+		var orig_pos = ball.global_transform.origin
+		if pet_node._orig_world_pos.has(ball.ball_no):
+			orig_pos = pet_node._orig_world_pos[ball.ball_no]
+
+		pending_moves[ball.ball_no] = {
+			"orig_pos": orig_pos,
+			"orig_size": current_size,
+			"orig_basis": ball.global_transform.basis,
+			"new_pos": ball.global_transform.origin,
+			"new_size": current_size,
+			"new_basis": ball.global_transform.basis
+		}
+		print(current_size)
+	else:
+		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
+		pending_moves[ball.ball_no]["new_size"] = current_size
+		pending_moves[ball.ball_no]["new_basis"] = ball.global_transform.basis
+	
+	ball.apply_outline_state(get_visual_state_for_ball(ball))
+	move_mode_settings_instance.set_queued_count(pending_moves.size())
+
 func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
 		
-	pet_node.set_skip_next_rebuild(true)
+	var needs_rebuild = false
+	for b_no in pending_moves:
+		var data = pending_moves[b_no]
+		if data.has("orig_basis") and data.has("new_basis"):
+			if data.orig_basis != data.new_basis:
+				needs_rebuild = true
+				break
+		if data.has("orig_size") and data.has("new_size"):
+			if data.orig_size != data.new_size:
+				needs_rebuild = true
+				break
+
+	pet_node.set_skip_next_rebuild(!needs_rebuild)
 	lnz_text_edit.apply_batch_moves(pending_moves)
 	
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
 	
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if not "ball_no" in b:
 			continue
@@ -2202,7 +2972,7 @@ func _on_snap_selection(axis, direction):
 	if selected_balls.empty():
 		return
 
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	var all_balls = _get_all_visual_balls()
 	var target_val = 0.0
 	var first = true
 	
@@ -2363,13 +3133,6 @@ func _apply_mirror_move(balls_moved, delta):
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
 
-func _find_visual_ball_by_no(no: int) -> Spatial:
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if b.ball_no == no:
-			return b
-	return null
-
 func _get_rotation_pivot_origin(pivot_id):
 	var pivot_origin = Vector3.ZERO
 	var pivot_visual = null
@@ -2416,8 +3179,10 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 				continue
 
 			var current_pos = b.global_transform.origin
-			var rel_pos = current_pos - pivot_origin
+			var current_basis = b.global_transform.basis
+			_track_pending_move(b)
 			
+			var rel_pos = current_pos - pivot_origin
 			var rotated_rel = basis.xform(rel_pos)
 			var new_pos = pivot_origin + rotated_rel
 			
@@ -2455,6 +3220,11 @@ func _on_flip_selection(axis_vector, pivot_id):
 				continue
 
 			var current_pos = b.global_transform.origin
+			var current_basis = b.global_transform.basis
+
+			if not pending_moves.has(b.ball_no):
+				_track_pending_move(b)
+
 			var rel_pos = current_pos - pivot_origin
 			var flipped_rel = rel_pos * axis_vector
 			var new_pos = pivot_origin + flipped_rel
@@ -2463,106 +3233,26 @@ func _on_flip_selection(axis_vector, pivot_id):
 				pet_node._orig_world_pos[b.ball_no] = current_pos 
 			
 			b.global_transform.origin = new_pos
+			
+			var scale_basis = Basis().scaled(axis_vector)
+			b.global_transform.basis = scale_basis * b.global_transform.basis
+
+			if scale_basis.determinant() < 0:
+				var mesh_instance = b.get_node_or_null("MeshInstance")
+				if mesh_instance:
+					mesh_instance.scale.x *= -1.0
+				
+				for child in b.get_children():
+					if child.is_in_group("paintballs"):
+						var pb_mesh = child.get_node_or_null("MeshInstance")
+						if pb_mesh:
+							pb_mesh.scale.x *= -1.0
 
 	for b in selected_balls:
 		if is_instance_valid(b):
 			_track_pending_move(b)
 
 	_record_move_end_state("Flip")
-
-func _update_selected_ballz_in_settings():
-	var ids = []
-	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
-	
-	var filter = []
-	if exclude_eyes:
-		filter += KeyBallsData.get_group_balls("Eyes")
-
-	for b in selected_balls:
-		if is_instance_valid(b) and "ball_no" in b:
-			if not b.ball_no in filter:
-				ids.append(b.ball_no)
-				
-	move_mode_settings_instance.update_selected_balls_text(ids)
-	preset_settings_instance.update_selected_balls_text(ids)
-
-	if auto_paintballer_mode:
-		auto_paintballer_settings_instance.update_selected_balls_text(ids)
-
-func _on_select_balls_by_ids(ids: Array):
-	_on_unselect_all()
-	
-	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
-		if ball and is_instance_valid(ball):
-			if "ball_no" in ball:
-				selected_balls.append(ball)
-				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
-				
-	_update_selected_ballz_in_settings()
-
-func _commit_box_selection():
-	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	
-	var properties = preset_settings_instance.get_properties()
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false 
-	var eye_ids = KeyBallsData.get_group_balls("Eyes") if exclude_eyes else []
-
-	for b in all_balls:
-		#if not is_instance_valid(b) or not b.is_inside_tree(): 
-		if not is_instance_valid(b) or not b.visible: 
-			continue
-
-		if b.get("omitted") == true and not pet_node.draw_omitted_balls:
-			continue
-		
-		if not ("ball_no" in b): 
-			continue
-			
-		if b.ball_no in eye_ids: 
-			continue
-
-		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
-		var relative_pos = projected_pos_local - Vector2(500, 500)
-		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
-
-		if rect.has_point(pos_in_container):
-			if not (b in selected_balls):
-				selected_balls.append(b)
-				if b.has_method("apply_outline_state"):
-					b.apply_outline_state(get_visual_state_for_ball(b))
-
-	_update_selected_ballz_in_settings()
-
-func _on_preset_apply_selection():
-	if selected_balls.empty():
-		return
-
-	var properties = preset_settings_instance.get_properties()
-	var ball_ids = []
-	
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
-	print(exclude_eyes)
-	var exclusion_list = []
-	if exclude_eyes:
-		exclusion_list = KeyBallsData.get_group_balls("Eyes")
-		print(exclusion_list)
-
-	for b in selected_balls:
-		if is_instance_valid(b) and "ball_no" in b:
-			if not b.ball_no in exclusion_list:
-				ball_ids.append(b.ball_no)
-
-	if not ball_ids.empty():
-		lnz_text_edit.apply_batch_presets(ball_ids, properties)
-
-func _on_pivot_changed():
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-	for b in all_balls:
-		if is_instance_valid(b) and b.has_method("apply_outline_state"):
-			b.apply_outline_state(get_visual_state_for_ball(b))
 
 func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
 	if selected_balls.empty():
@@ -2624,396 +3314,8 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 
 	_record_move_end_state("Scale")
 
-func _on_paintball_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Paintball Mode")
-	paintball_mode = is_on
-	_update_mode_panel_visibility(paintball_settings_instance, is_on)
-	
-	if not is_on:
-		paintball_target_ball = null
-		close_paintball_on_apply = false
-		_restore_all_balls()
-	else:
-		_restore_all_balls()
-		_ordered_color_index = 0
-		_ordered_outline_color_index = 0
-		_ordered_texture_index = 0
-		paintball_settings_instance.find_node("Target").selected = 0
-		
-	_update_paintball_mode_ui()
-	
-# func _on_paintball_mode_toggled(is_on):
-# 	paintball_mode = is_on
-# 	if not is_on:
-# 		paintball_target_ball = null
-# 		close_paintball_on_apply = false
-# 		_restore_all_balls()
-# 	else:
-# 		_restore_all_balls()
-# 		_ordered_color_index = 0
-# 		_ordered_outline_color_index = 0
-# 		_ordered_texture_index = 0
-# 		paintball_settings_instance.find_node("Target").selected = 0
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	_update_paintball_mode_ui()
-
-
-func _on_line_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Line Mode")
-	linez_mode = is_on
-	_update_mode_panel_visibility(line_mode_settings_instance, is_on)
-	
-	if is_on:
-		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
-	else:
-		line_mode_close = false
-		if is_instance_valid(linez_start_ball):
-			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-		linez_start_ball = null
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-
-# func _on_line_mode_toggled(is_on):
-# 	linez_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(line_mode_settings_instance)
-# 		line_mode_settings_instance.show()
-# 		Input.set_custom_mouse_cursor(rope)
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		line_mode_close = false
-# 		line_mode_settings_instance.hide()
-# 		if is_instance_valid(linez_start_ball):
-# 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
-# 		linez_start_ball = null
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-
-
-func _on_move_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Move Mode")
-	move_mode = is_on
-	_update_mode_panel_visibility(move_mode_settings_instance, is_on)
-	
-	if is_on:
-		move_mode_settings_instance.set_queued_count(pending_moves.size())
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		ball_label.hide()
-		_reset_tab_state()
-	else:
-		_on_unselect_all()
-		_on_move_mode_clear()
-
-# func _on_move_mode_toggled(is_on):
-# 	move_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(move_mode_settings_instance)
-# 		move_mode_settings_instance.show()
-# 		move_mode_settings_instance.set_queued_count(pending_moves.size())
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-		
-# 		# Disable other modes
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-			
-# 		# Hide ball label and clear tab selection
-# 		ball_label.hide()
-# 		_reset_tab_state()
-		
-# 	else:
-# 		move_mode_settings_instance.hide()
-# 		# Clear visual state of selected balls
-# 		_on_unselect_all()
-# 		_on_move_mode_clear() # Revert any pending moves visuals
-
-
-func _on_preset_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Preset Mode")
-	preset_mode = is_on
-	_update_mode_panel_visibility(preset_settings_instance, is_on)
-	
-	if is_on:
-		if pet_node and pet_node.lnz:
-			if pet_node.lnz.texture_list:
-				preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-			if pet_node.lnz.palette:
-				preset_settings_instance.set_palette(pet_node.lnz.palette)
-		
-		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_ARROW
-	else:
-		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
-		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-
-# func _on_preset_mode_toggled(is_on):
-# 	preset_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(preset_settings_instance)
-# 		preset_settings_instance.show()
-
-# 		var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
-# 		if pet_node and pet_node.lnz and pet_node.lnz.texture_list:
-# 			preset_settings_instance.set_texture_list(pet_node.lnz.texture_list)
-		
-# 		if pet_node and pet_node.lnz and pet_node.lnz.palette:
-# 			preset_settings_instance.set_palette(pet_node.lnz.palette)
-
-# 		Input.set_custom_mouse_cursor(smallbrush)
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 		mouse_default_cursor_shape = CURSOR_ARROW
-# 	else:
-# 		preset_settings_instance.hide()
-# 		Input.set_custom_mouse_cursor(hand_neutral)
-# 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-
-
-func _on_project_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Project Mode")
-	project_mode = is_on
-	_update_mode_panel_visibility(project_settings_instance, is_on)
-
-# func _on_project_mode_toggled(is_on):
-# 	project_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(project_settings_instance)
-# 		project_settings_instance.show()
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		project_settings_instance.hide()
-
-
-func _on_auto_paintballer_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Auto Paintballer")
-	auto_paintballer_mode = is_on
-	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
-	
-	if not is_on:
-		pet_node._on_clear_auto_paintballz()
-		_on_unselect_all()
-		_auto_paint_affected_cache.clear()
-		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-		for b in all_balls:
-			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-				b.apply_outline_state(b.OutlineState.NONE)
-
-# func _on_auto_paintballer_mode_toggled(is_on):
-# 	auto_paintballer_mode = is_on
-# 	if is_on:
-# 		_ensure_panel_visible(auto_paintballer_settings_instance)
-# 		auto_paintballer_settings_instance.show()
-# 		if paintball_mode:
-# 			paintball_mode = false
-# 			paintball_check_box.pressed = false
-# 			_on_paintball_mode_toggled(false)
-# 		if linez_mode:
-# 			linez_mode = false
-# 			line_mode_check_box.pressed = false
-# 			_on_line_mode_toggled(false)
-# 		if preset_mode:
-# 			preset_mode = false
-# 			preset_mode_check_box.pressed = false
-# 			_on_preset_mode_toggled(false)
-# 		if project_mode:
-# 			project_mode = false
-# 			project_mode_check_box.pressed = false
-# 			_on_project_mode_toggled(false)
-# 		if move_mode:
-# 			move_mode = false
-# 			move_mode_check_box.pressed = false
-# 			_on_move_mode_toggled(false)
-# 	else:
-# 		auto_paintballer_settings_instance.hide()
-# 		pet_node._on_clear_auto_paintballz()
-# 		_on_unselect_all()
-# 		_auto_paint_affected_cache.clear()
-# 		var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-# 		for b in all_balls:
-# 			if is_instance_valid(b) and b.has_method("apply_outline_state"):
-# 				b.apply_outline_state(b.OutlineState.NONE)
-
-func _deactivate_other_modes(active_mode_name: String):
-	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
-	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false
-	if active_mode_name != "Move Mode": move_mode_check_box.pressed = false
-	if active_mode_name != "Preset Mode": preset_mode_check_box.pressed = false
-	if active_mode_name != "Project Mode": project_mode_check_box.pressed = false
-	if active_mode_name != "Auto Paintballer": auto_paintballer_check_box.pressed = false
-
-func _update_mode_panel_visibility(panel: Control, is_active: bool):
-	if is_active:
-		if panel.is_docked:
-			sidebar_controller.dock_panel(panel)
-			sidebar_controller.switch_to_tab(panel) 
-		else:
-			panel.show()
-			panel.raise()
-	else:
-		if not panel.is_docked:
-			panel.hide()
-		
-		if sidebar_controller:
-			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
-			if tree_tab:
-				sidebar_controller.switch_to_tab(tree_tab) 
-	
-	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
-		sidebar_controller._update_tab_visibilities()
-
-func _capture_pending_state_snapshot():
-	var snapshot = {}
-
-	for b_no in pending_moves.keys():
-		snapshot[b_no] = pending_moves[b_no].duplicate()
-
-	for b in selected_balls:
-		if is_instance_valid(b) and not snapshot.has(b.ball_no):
-			snapshot[b.ball_no] = {
-				"new_pos": b.global_transform.origin,
-				"new_size": b.ball_size
-			}
-			
-	return snapshot
-
-func _record_move_history_entry(old_snapshot, new_snapshot):
-	if old_snapshot.hash() == new_snapshot.hash(): return
-
-	move_history.append({
-		"old": old_snapshot,
-		"new": new_snapshot
-	})
-	move_redo_stack.clear()
-
-func _restore_move_snapshot(snapshot):
-	pending_moves = snapshot.duplicate(true)
-
-	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+func _on_pivot_changed():
+	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
-		if not "ball_no" in b: continue
-
-		if pending_moves.has(b.ball_no):
-			var data = pending_moves[b.ball_no]
-			b.global_transform.origin = data.new_pos
-			if data.has("new_size"):
-				b.set_ball_size(data.new_size)
+		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
-		else:
-			if pet_node._orig_world_pos.has(b.ball_no):
-				b.global_transform.origin = pet_node._orig_world_pos[b.ball_no]
-
-			b.apply_outline_state(get_visual_state_for_ball(b))
-
-	move_mode_settings_instance.set_queued_count(pending_moves.size())
-
-func _undo_queued_move():
-	if move_history.empty(): return
-	var entry = move_history.pop_back()
-	move_redo_stack.append(entry)
-	_restore_move_snapshot(entry.old)
-
-func _redo_queued_move():
-	if move_redo_stack.empty(): return
-	var entry = move_redo_stack.pop_back()
-	move_history.append(entry)
-	_restore_move_snapshot(entry.new)
-
-func _record_paint_action(paintballs_added):
-	if paintballs_added.empty(): return
-	paint_history.append(paintballs_added)
-	paint_redo_stack.clear()
-
-func _undo_queued_paintball():
-	if paint_history.empty():
-		var data = pet_node.remove_last_pending_paintball()
-		if data:
-			paint_redo_stack.append([data])
-		return
-
-	var last_action = paint_history.pop_back()
-	paint_redo_stack.append(last_action)
-
-	for i in range(last_action.size()):
-		pet_node.remove_last_pending_paintball()
-
-func _redo_queued_paintball():
-	if paint_redo_stack.empty():
-		return
-
-	var action_to_redo = paint_redo_stack.pop_back()
-	paint_history.append(action_to_redo)
-
-	for pb_data in action_to_redo:
-		pet_node.add_pending_paintball(pb_data)
-
-var _pre_move_state = {}
-
-func _record_move_start_state():
-	_pre_move_state = _capture_pending_state_snapshot()
-
-func _record_move_end_state(action_name):
-	var current_state = _capture_pending_state_snapshot()
-	_record_move_history_entry(_pre_move_state, current_state)

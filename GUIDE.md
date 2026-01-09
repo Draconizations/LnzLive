@@ -42,7 +42,6 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `ESCAPE` | Exit Current Mode |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
-| **Tools** | `G` | Open/Close Color Swap |
 | **Tools** | `H` | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
 | **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
@@ -66,8 +65,10 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Paintball Mode** | `SHIFT` + `left-click drag` | **Freeline**: Draw paintballz continuously by click-and-drag |
 | **Paintball Mode** | `SHIFT` + `wheel up` / `Down` | **Scale/Resize**: Resize diameter of paintballz |
 | **Paintball Mode** | `CTRL` + `SHIFT` + `Z` / `X` | **Mini-History**: Undo/Redo last queued paintball action |
+| **Recolor Mode** | `G` or `ALT` + `F` | **Open/Close Recolor Mode** |
+| **Recolor Mode** | `left-click` | **Apply Paint Bucket**: Queue current Paint Bucket settings to ball |
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
-| **Preset Mode** | left-click | **Apply Preset**: Apply current Preset to ball |
+| **Preset Mode** | `left-click` | **Apply Preset**: Apply current Preset to ball |
 | **Preset Mode** | `ALT` + left-click | **Eyedropper**: Sample properties from ball |
 | **Preset Mode** | `CTRL` + `left-click`| Group selection of ballz |
 | **Preset Mode** | `CTRL` + `left-click drag`| Box selection of ballz |
@@ -240,7 +241,7 @@ Pops open a numbered preview of the paletted color index matching whichever game
 
 #### Color Swap
 
-The "Color Swap" option opens a menu can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
+The "Color Swap" option opens the Recolor Mode where you can find Color Swap, functions that can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
 
 #### Capture Head Shot
 
@@ -256,6 +257,14 @@ In `Select Mode`, hovering over ballz will report their index # and double click
 - **X** or **M**: cycle through `[Move]` lines that affect this ball. If none are found, goes to the `[Move]` header.
 - **C** or **P**: cycle through `[Project Ball]` lines that affect this ball. If none are found, goes to the `[Project Ball]` header.
 - **V** or **L**: cycle through `[Linez]` that include this ball. If none are found, goes to the `[Linez]` header.
+
+#### Recolor Mode
+
+In Recolor Mode, you can quickly recolor / retexture ballz using Color Swap or point-and-click to queue recolor / retexture ballz changes with the Paint Bucket.
+
+##### Tutorial: Recolor Mode
+
+Coming soon!
 
 #### Preset Mode
 

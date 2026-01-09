@@ -106,3 +106,18 @@ static func get_ramp_color(current_color_str: String, rule):
 # 		# e.g., Rule: 62 -> 244. Current: 60.
 # 		# new_color = 244
 # 		return str(after_color)
+
+
+### SPATIAL UTILITIES ###
+static func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
+	var denom = plane_normal.dot(ray_dir)
+	if abs(denom) < 0.0001:
+		return null
+	var d = plane_normal.dot(plane_point - ray_origin) / denom
+	return ray_origin + ray_dir * d
+
+static func flip_camera_view(camera_node: Camera):
+	var camera_transform = camera_node.transform
+	camera_transform.basis.x *= -1
+	camera_node.transform = camera_transform
+

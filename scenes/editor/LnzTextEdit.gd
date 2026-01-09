@@ -707,72 +707,130 @@ func find_line_in_addball_section(ball_no):
 	var start_point = section_find[SEARCH_RESULT_LINE] + 1
 	return find_line_in_ball_or_addball_section(ball_no, start_point)
 	
-func find_line_in_move_section(ball_no):
+func find_line_in_move_section(ball_no, start_from = -1):
 	var section_find = search('[Move]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
 	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 
 		var parts = _split_line(line)
 		if parts.size() > 0 and parts[0] == str(ball_no):
-			return start_of_section + i
+			return current_line_idx
 		i += 1
-	return -1
+	
+	if start_from != -1:
+		var top_match = find_line_in_move_section(ball_no, -1)
+		return top_match
+			
+	return header_idx
 
-func find_line_in_project_section(ball_no):
+func find_line_in_project_section(ball_no, start_from = -1):
 	var section_find = search('[Project Ball]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
 		var parts = _split_line(line)
 		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
-			return looped
+			return current_line_idx
 		i += 1
-	return -1
 	
-func find_line_in_linez_section(ball_no):
+	if start_from != -1:
+		return find_line_in_project_section(ball_no, -1)
+	
+	return header_idx
+	
+func find_line_in_linez_section(ball_no, start_from = -1):
 	var section_find = search('[Linez]', 0, 0, 0)
 	if section_find.empty(): return -1
-	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
 	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
 	while true:
-		var looped = start_of_section + i
-		if looped >= get_line_count(): break
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
 		
-		var line = get_line(looped)
+		var line = get_line(current_line_idx)
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
+		
+		var parsed_line = _split_line(line)
+		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
+			return current_line_idx
+		i += 1
+	
+	if start_from != -1:
+		return find_line_in_linez_section(ball_no, -1)
+
+	return header_idx
+
+func find_line_in_paintball_section(ball_no, start_from = -1):
+	var section_find = search('[Paint Ballz]', 0, 0, 0)
+	if section_find.empty(): return -1
+	var header_idx = section_find[SEARCH_RESULT_LINE]
+	var start_of_section = header_idx + 1
+	
+	var i = 0
+	if start_from >= start_of_section:
+		i = start_from - start_of_section + 1 
+
+	while true:
+		var current_line_idx = start_of_section + i
+		if current_line_idx >= get_line_count(): break
+		
+		var line = get_line(current_line_idx)
+		var stripped = line.strip_edges()
+		if stripped.begins_with("["): break
+		
 		if stripped.empty() or stripped.begins_with(";"):
 			i += 1
 			continue
 			
-		var parsed_line = _split_line(line)
-		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
-			return looped
+		var parts = _split_line(line)
+		if parts.size() > 0 and parts[0] == str(ball_no):
+			return current_line_idx
 		i += 1
-	return -1
+		
+	if start_from != -1:
+		return find_line_in_paintball_section(ball_no, -1)
+
+	return header_idx
 
 func find_line_in_ball_or_addball_section(ball_no, start_point):
 	var line = get_line(start_point)
@@ -888,6 +946,35 @@ var ball_map = {}
 func _on_ApplyChangesButton_pressed():
 	save_backup()
 	save_file(false) # User Manual Save = History Snapshot
+
+func _transform_paintballz_section(transforms: Dictionary):
+	var bounds = _get_section_bounds("[Paint Ballz]")
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"): continue
+		
+		var parts = _split_line(line)
+		if parts.size() < 5: continue
+		
+		var ball_no = int(parts[0])
+		if transforms.has(ball_no):
+			var trans = transforms[ball_no]
+			var basis_delta = trans.basis
+			
+			var rel_pos = Vector3(float(parts[2]), float(parts[3]) * -1.0, float(parts[4]))
+			
+			var updated_pos = basis_delta.xform(rel_pos)
+			
+			var old_diam = int(parts[1])
+			parts[2] = str(round(updated_pos.x))
+			parts[3] = str(round(updated_pos.y * -1.0))
+			parts[4] = str(round(updated_pos.z))
+			
+			set_line(i, _join_array(parts, delim))
 
 func _on_apply_paintballz():
 	save_backup()
@@ -1271,6 +1358,11 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	var raw_color = reference_ball.color_index
 	var raw_outline_color = reference_ball.outline_color_index
 
+	var raw_outline = reference_ball.outline
+	if reference_ball.get("current_outline_state") != 0: 
+		raw_outline = reference_ball.old_outline
+		raw_outline_color = reference_ball.old_outline_color
+
 	if reference_ball.get("current_outline_state") != 0: 
 		raw_outline_color = reference_ball.old_outline_color
 
@@ -1327,7 +1419,7 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 		"0",
 		str(fuzz_amount),
 		"0",
-		"0",
+		str(raw_outline),
 		str(lnz_size),
 		str(bodyarea),
 		"0",
@@ -1552,8 +1644,9 @@ func _update_paintballz_section(header: String, ball_no: int):
 		i += 1
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
-	# need to find line number for the ball
 	var actual_start_point
+	var current_line = cursor_get_line()
+
 	if section == Section.Section.BALL:
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
@@ -1563,13 +1656,15 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 		if is_addball:
 			actual_start_point = find_line_in_addball_section(ball_no - KeyBallsData.max_base_ball_num)
 		else:
-			actual_start_point = find_line_in_move_section(ball_no)
+			actual_start_point = find_line_in_move_section(ball_no, current_line)
 	elif section == Section.Section.PROJECT:
-		actual_start_point = find_line_in_project_section(ball_no)
+		actual_start_point = find_line_in_project_section(ball_no, current_line)
 	elif section == Section.Section.LINE:
-		actual_start_point = find_line_in_linez_section(ball_no)
+		actual_start_point = find_line_in_linez_section(ball_no, current_line)
+
 	if actual_start_point == -1:
 		return
+
 	cursor_set_line(actual_start_point)
 	cursor_set_column(0)
 	center_viewport_to_cursor()
@@ -2583,6 +2678,20 @@ func apply_batch_presets(balls_list, properties):
 	if applied_something:
 		save_file(true)
 		commit_visual_change("Batch Applied Preset to %d Ballz" % balls_list.size())
+
+func apply_batch_bucket_changes(changes: Dictionary):
+	if changes.empty(): return
+	save_backup()
+	var applied_something = false
+
+	for ball_no in changes:
+		var props = changes[ball_no]
+		apply_preset_to_ball(ball_no, props, false)
+		applied_something = true
+
+	if applied_something:
+		save_file(true)
+		commit_visual_change("Batch Applied Bucket to %d Ballz" % changes.size())
 
 func _apply_paintball_preset_no_save(ball_no, properties):
 	var paintballz = properties.paintballz
@@ -3989,15 +4098,31 @@ func apply_batch_moves(pending_moves: Dictionary):
 	save_backup()
 	
 	var size_changes = {}
+	var paintball_transforms = {}
+
 	for ball_no in pending_moves.keys():
 		var data = pending_moves[ball_no]
-		if data.has("new_size"):
-			var target_visual = data.new_size
+		
+		var scale_delta = 1.0
+		if data.has("new_size") and data.has("orig_size") and data.orig_size > 0:
+			scale_delta = float(data.new_size) / float(data.orig_size)
 			var size_dif = pet_view.get_lnz_size_difference(1.0, pet_view._find_visual_ball_by_no(ball_no), pet_node)
 			size_changes[ball_no] = size_dif
 
+		var basis_delta = Basis.IDENTITY
+		if data.has("new_basis") and data.has("orig_basis"):
+			basis_delta = data.new_basis * data.orig_basis.inverse()
+		
+		if basis_delta != Basis.IDENTITY:
+			paintball_transforms[ball_no] = {
+				"basis": basis_delta
+			}
+
 	if not size_changes.empty():
 		_apply_batch_sizes(size_changes)
+
+	if not paintball_transforms.empty():
+		_transform_paintballz_section(paintball_transforms)
 
 	var move_section_tag = "[Move]"
 	var add_ball_section_tag = "[Add Ball]"
@@ -4096,7 +4221,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					count += 1
 	
 	save_file(true)
-	commit_visual_change("Batch Moved/Sized Ballz")
+	commit_visual_change("Batch Moved/Rotated/Scaled Ballz/Paintballz")
 
 func _apply_batch_sizes(size_changes: Dictionary):
 	var ballz_bounds = _get_section_bounds("[Ballz Info]")
