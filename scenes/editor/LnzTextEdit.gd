@@ -2662,24 +2662,7 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 #		var insert_line = _find_insertion_line(start_line, end_line)
 #		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
 
-func apply_batch_presets(balls_list, properties):
-	save_backup()
-	var applied_something = false
-
-	for ball_no in balls_list:
-		if properties.get("apply_ballz", true):
-			apply_preset_to_ball(ball_no, properties, false)
-			applied_something = true
-
-		if properties.get("apply_paintballz", true) and properties.has("paintballz"):
-			_apply_paintball_preset_no_save(ball_no, properties)
-			applied_something = true
-
-	if applied_something:
-		save_file(true)
-		commit_visual_change("Batch Applied Preset to %d Ballz" % balls_list.size())
-
-func apply_batch_bucket_changes(changes: Dictionary):
+func apply_batch_presets(changes: Dictionary):
 	if changes.empty(): return
 	save_backup()
 	var applied_something = false
@@ -2691,7 +2674,7 @@ func apply_batch_bucket_changes(changes: Dictionary):
 
 	if applied_something:
 		save_file(true)
-		commit_visual_change("Batch Applied Bucket to %d Ballz" % changes.size())
+		commit_visual_change("Batch Applied Properties to %d Ballz" % changes.size())
 
 func _apply_paintball_preset_no_save(ball_no, properties):
 	var paintballz = properties.paintballz

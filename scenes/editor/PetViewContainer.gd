@@ -267,7 +267,7 @@ func _ready():
 
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
-		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_bucket_changes")
+		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
 
 	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
@@ -2845,23 +2845,55 @@ func _on_preset_apply_selection():
 	if selected_balls.empty():
 		return
 
-	var properties = preset_settings_instance.get_properties()
-	var ball_ids = []
-	
-	var exclude_eyes = properties.get("exclude_eyes", false) if not move_mode else false
-	print(exclude_eyes)
+	var base_properties = preset_settings_instance.get_properties()
 	var exclusion_list = []
-	if exclude_eyes:
+	if base_properties.get("exclude_eyes", false):
 		exclusion_list = KeyBallsData.get_group_balls("Eyes")
-		print(exclusion_list)
+
+	var batch_changes = {}
 
 	for b in selected_balls:
-		if is_instance_valid(b) and "ball_no" in b:
-			if not b.ball_no in exclusion_list:
-				ball_ids.append(b.ball_no)
+		if not is_instance_valid(b) or not "ball_no" in b: continue
+		if b.ball_no in exclusion_list: continue
 
-	if not ball_ids.empty():
-		lnz_text_edit.apply_batch_presets(ball_ids, properties)
+		var ball_no = b.ball_no
+		var per_ball_props = base_properties.duplicate() 
+		
+		var size_mode = base_properties.get("size_mode", 0) 
+		var ref_val = base_properties.get("size", 10) 
+		
+		if size_mode == preset_settings_instance.SizeMode.SUM: 
+			var original = 0
+			if pet_node.lnz.balls.has(ball_no): 
+				original = pet_node.lnz.balls[ball_no].size 
+			elif pet_node.lnz.addballs.has(ball_no): 
+				original = pet_node.lnz.addballs[ball_no].size 
+			per_ball_props["size"] = original + ref_val 
+			
+		elif size_mode == preset_settings_instance.SizeMode.TRUE: 
+			if pet_node.lnz.balls.has(ball_no):
+				var bhd_size = pet_node.bhd.ball_sizes[ball_no] 
+				var scale = pet_node.lnz.scales[1] 
+				var required_base_size = (ref_val / (scale / 255.0)) + 2 
+				per_ball_props["size"] = int(round(required_base_size - bhd_size)) 
+
+		if per_ball_props.get("scale_paintballz", false) and per_ball_props.has("paintballz"):
+			var source_ref = preset_settings_instance.source_ball_reference_size 
+			var target_lnz_size = per_ball_props["size"] 
+			var scale_ratio = float(target_lnz_size) / float(source_ref) if source_ref > 0 else 1.0 
+
+			var scaled_paintballz = []
+			for pb in per_ball_props["paintballz"]:
+				var new_pb = pb.duplicate() 
+				new_pb.position *= scale_ratio 
+				new_pb.size = int(round(new_pb.size * scale_ratio)) 
+				scaled_paintballz.append(new_pb)
+			per_ball_props["paintballz"] = scaled_paintballz
+
+		batch_changes[ball_no] = per_ball_props
+
+	if not batch_changes.empty():
+		lnz_text_edit.apply_batch_presets(batch_changes)
 
 ### MOVE MODE ###
 
