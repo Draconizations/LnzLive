@@ -198,7 +198,6 @@ custom_fonts/font = SubResource( 2 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -491,6 +490,7 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -527,7 +527,7 @@ size = Vector2( 200, 200 )
 own_world = true
 transparent_bg = true
 handle_input_locally = false
-render_target_update_mode = 3
+render_target_update_mode = 0
 
 [node name="PreviewWorld" type="Spatial" parent="VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport"]
 
@@ -842,12 +842,14 @@ custom_fonts/font = SubResource( 2 )
 text = "Reset Defaults"
 
 [node name="PatternInfoDialog" type="WindowDialog" parent="."]
-visible = false
 margin_left = 50.0
 margin_top = 100.0
 margin_right = 450.0
 margin_bottom = 350.0
-window_title = "Pattern Info"
+custom_styles/panel = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="VBoxContainer" type="VBoxContainer" parent="PatternInfoDialog"]
 anchor_right = 1.0
@@ -868,10 +870,10 @@ align = 1
 [node name="GridContainer" type="GridContainer" parent="PatternInfoDialog/VBoxContainer"]
 margin_top = 31.0
 margin_right = 380.0
-margin_bottom = 150.0
-columns = 2
+margin_bottom = 193.0
 custom_constants/vseparation = 10
 custom_constants/hseparation = 10
+columns = 2
 
 [node name="LabelAuthor" type="Label" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
 margin_top = 5.0
@@ -906,9 +908,9 @@ custom_fonts/font = SubResource( 2 )
 placeholder_text = "https://..."
 
 [node name="LabelDesc" type="Label" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
-margin_top = 87.0
+margin_top = 111.0
 margin_right = 100.0
-margin_bottom = 108.0
+margin_bottom = 132.0
 custom_fonts/font = SubResource( 2 )
 text = "Description:"
 
@@ -922,9 +924,9 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 2 )
 
 [node name="CloseButton" type="Button" parent="PatternInfoDialog/VBoxContainer"]
-margin_top = 172.0
+margin_top = 203.0
 margin_right = 380.0
-margin_bottom = 197.0
+margin_bottom = 228.0
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 2 )
 text = "Close"
