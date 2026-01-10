@@ -210,12 +210,22 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		var footprint_percent = override_footprint if override_footprint > 0 else sampled_scale
 		footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
 
+	var design_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
+	var rotate_jitter = find_node("RotateJitter").value if jitter_enabled else 0.0
+	var spread_jitter = find_node("SpreadJitter").value if jitter_enabled else 0.0
+
+	if jitter_enabled and rotate_jitter > 0:
+		design_rotation_angle += deg2rad(rand_range(-rotate_jitter, rotate_jitter))
+
 	# Apply rotation to basis
 	var rotated_basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x = rotated_basis.x
 	var tangent_y = rotated_basis.z
 
-	var design_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
+	var spread_offset = Vector3.ZERO
+	if jitter_enabled and spread_jitter > 0:
+		var spread_scale = (footprint_lnz / 2.0) * (spread_jitter / 100.0)
+		spread_offset = tangent_x * rand_range(-spread_scale, spread_scale) + tangent_y * rand_range(-spread_scale, spread_scale)
 
 	for pb in paintballs:
 		if pb.color_slot - 1 >= design_color_slots.size():
@@ -230,28 +240,32 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 			dx += rand_range(-j_amt, j_amt)
 			dy += rand_range(-j_amt, j_amt)
 
-		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy
+		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy + spread_offset
 		var slot_data = design_color_slots[pb.color_slot - 1]
 		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
 
+		var slot_scale = float(slot_data.get("scale", 100)) / 100.0
 		var ratio = float(pb.diameter) / DESIGN_CANVAS_SIZE
-		var pb_diam_lnz = footprint_lnz * ratio
+		var pb_diam_lnz = footprint_lnz * ratio * slot_scale
 
 		# Jitter diameter
 		if design_jitter > 0:
 			var j_scale = 1.0 + rand_range(-design_jitter/100.0, design_jitter/100.0)
 			pb_diam_lnz *= j_scale
 
+		var outline_color_list = LnzLiveUtils.parse_number_list(slot_data.outline_color)
+		var texture_list = LnzLiveUtils.parse_number_list(slot_data.texture, true)
+		
 		var pb_info = {
 			"base_ball_no": ball_no,
 			"pos_normalized": pos_on_plane.normalized(),
 			"diameter": int(max(1, pb_diam_lnz)),
 			"color": color_list[randi() % color_list.size()] if color_list else 0,
-			"outline_color": int(LnzLiveUtils.parse_number_list(slot_data.outline_color)[0]) if slot_data.outline_color else 244,
+			"outline_color": int(outline_color_list[0]) if outline_color_list else 244,
 			"outline_type": int(slot_data.outline_type),
 			"fuzz": int(slot_data.get("fuzz", 0)),
 			"group": int(slot_data.get("group", 0)),
-			"texture": int(LnzLiveUtils.parse_number_list(slot_data.texture, true)[0]),
+			"texture": int(texture_list[0]) if texture_list else 0,
 			"anchored": 1 if slot_data.get("anchored", true) else 0
 		}
 		output.append(pb_info)
@@ -299,6 +313,12 @@ func _connect_design_signals():
 	find_node("ImportPatternButton").connect("pressed", self, "_on_import_pattern_pressed")
 	find_node("ExportPatternButton").connect("pressed", self, "_on_export_pattern_pressed")
 	find_node("DesignJitter").connect("value_changed", self, "_on_setting_changed")
+	find_node("RotateJitter").connect("value_changed", self, "_on_setting_changed")
+	find_node("SpreadJitter").connect("value_changed", self, "_on_setting_changed")
+
+	find_node("ImportTatButton").connect("pressed", self, "_on_import_tat_pressed")
+	find_node("PatternInfoButton").connect("pressed", self, "_on_pattern_info_pressed")
+	find_node("PatternInfoDialog").find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
 
 	var tree = find_node("SlotsTree")
 	tree.connect("item_edited", self, "_on_SlotsTree_item_edited")
@@ -312,6 +332,333 @@ func _on_design_tool_toggled(_arg):
 	canvas.eraser_mode = find_node("CanvasEraser").pressed
 	canvas.update()
 	save_settings()
+
+func _on_import_tat_pressed():
+	if OS.has_feature("HTML5"):
+		JavaScript.eval("window.alert('Importing TAT files is not yet supported in web version.');")
+		return
+
+	var file_dialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.tat ; Petz Workshop Tattoo"]
+	file_dialog.connect("file_selected", self, "_load_tat_file")
+	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
+
+func _load_tat_file(path):
+	var file = File.new()
+	if file.open(path, File.READ) != OK:
+		return
+	
+	var design_balls = []
+	var info_section = false
+	var data_section = false
+	
+	var min_x = 1000.0
+	var max_x = -1000.0
+	var min_y = 1000.0
+	var max_y = -1000.0
+	
+	while not file.eof_reached():
+		var line = file.get_line().strip_edges()
+		if line == "[Info]":
+			info_section = true
+			data_section = false
+			continue
+		elif line == "[Data]":
+			info_section = false
+			data_section = true
+			continue
+		elif line.begins_with("["):
+			info_section = false
+			data_section = false
+			continue
+			
+		if info_section:
+			if line.begins_with("Author="):
+				find_node("PatternInfoDialog").find_node("AuthorEdit").text = line.trim_prefix("Author=")
+			elif line.begins_with("Website="):
+				find_node("PatternInfoDialog").find_node("WebsiteEdit").text = line.trim_prefix("Website=")
+			elif line.begins_with("Description="):
+				find_node("PatternInfoDialog").find_node("DescEdit").text = line.trim_prefix("Description=")
+
+		if data_section and line.begins_with("Ball"):
+			var eq_split = line.split("=")
+			if eq_split.size() < 2: continue
+			
+			var vals = eq_split[1].split(",")
+			if vals.size() < 8: continue
+			
+			var x = float(vals[1])
+			var y = float(vals[2])
+			
+			if x < min_x: min_x = x
+			if x > max_x: max_x = x
+			if y < min_y: min_y = y
+			if y > max_y: max_y = y
+			
+			var pb_data = {
+				"x": x,
+				"y": y,
+				"diameter": float(vals[0]),
+				"color": int(vals[4]),
+				"outline_color": int(vals[5]),
+				"fuzz": int(vals[6]),
+				"outline": int(vals[7])
+			}
+			design_balls.append(pb_data)
+
+	file.close()
+	if design_balls.empty(): return
+
+	# 1. CALCULATE BOUNDS AND POSITIONAL SCALE
+	var range_x = max_x - min_x
+	var range_y = max_y - min_y
+	var max_range = max(range_x, range_y)
+	if max_range == 0: max_range = 1.0
+	
+	var center_x = (min_x + max_x) / 2.0
+	var center_y = (min_y + max_y) / 2.0
+	
+	# Scale factor for coordinates to fit into 90% of the canvas width
+	var pos_scale_factor = 1.8 / max_range
+	
+	var canvas_pixel_ratio = (DESIGN_CANVAS_SIZE / 2.0) * pos_scale_factor 
+
+	design_color_slots.clear()
+	var slot_map = {} 
+	var final_paintballs = []
+	
+	for pb in design_balls:
+		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline)
+		var slot_idx = -1
+		
+		if slot_map.has(signature):
+			slot_idx = slot_map[signature]
+		else:
+			var new_slot = {
+				"color": str(pb.color),
+				"outline_color": str(pb.outline_color),
+				"texture": "0",
+				"outline_type": pb.outline,
+				"fuzz": pb.fuzz,
+				"group": 0,
+				"anchored": true,
+				"display_color": Color(randf(), randf(), randf())
+			}
+			
+			new_slot["scale"] = int(clamp((pb.diameter / max_range) * 10.0, 10, 100))
+			
+			design_color_slots.append(new_slot)
+			slot_idx = design_color_slots.size()
+			slot_map[signature] = slot_idx
+			
+		var norm_x = (pb.x - center_x) * pos_scale_factor
+		var norm_y = -(pb.y - center_y) * pos_scale_factor
+		
+		var pixel_diam = pb.diameter * (1.8 / max_range) * (DESIGN_CANVAS_SIZE / 2.0) 
+		
+		pixel_diam = clamp(pixel_diam, 2.0, DESIGN_CANVAS_SIZE * 0.25)
+		
+		var new_pb = {
+			"x": norm_x,
+			"y": norm_y,
+			"diameter": pixel_diam,
+			"color_slot": slot_idx
+		}
+		final_paintballs.append(new_pb)
+
+	find_node("DesignCanvas").design_paintballs = final_paintballs
+	_refresh_slot_buttons()
+	find_node("DesignCanvas").update()
+	find_node("DesignCanvas").emit_signal("design_changed")
+
+# func _load_tat_file(path):
+# 	var file = File.new()
+# 	if file.open(path, File.READ) != OK:
+# 		return
+	
+# 	var design_balls = []
+# 	var new_slots = []
+	
+# 	var info_section = false
+# 	var data_section = false
+	
+# 	var min_x = 1000.0
+# 	var max_x = -1000.0
+# 	var min_y = 1000.0
+# 	var max_y = -1000.0
+	
+# 	while not file.eof_reached():
+# 		var line = file.get_line().strip_edges()
+# 		if line == "[Info]":
+# 			info_section = true
+# 			data_section = false
+# 			continue
+# 		elif line == "[Data]":
+# 			info_section = false
+# 			data_section = true
+# 			continue
+# 		elif line.begins_with("["):
+# 			info_section = false
+# 			data_section = false
+# 			continue
+			
+# 		if info_section:
+# 			if line.begins_with("Author="):
+# 				find_node("PatternInfoDialog").find_node("AuthorEdit").text = line.trim_prefix("Author=")
+# 			elif line.begins_with("Website="):
+# 				find_node("PatternInfoDialog").find_node("WebsiteEdit").text = line.trim_prefix("Website=")
+# 			elif line.begins_with("Description="):
+# 				find_node("PatternInfoDialog").find_node("DescEdit").text = line.trim_prefix("Description=")
+
+# 		if data_section and line.begins_with("Ball"):
+# 			var eq_split = line.split("=")
+# 			if eq_split.size() < 2: continue
+			
+# 			var vals = eq_split[1].split(",")
+# 			if vals.size() < 8: continue
+			
+# 			var diameter = int(vals[0])
+# 			var x = float(vals[1])
+# 			var y = float(vals[2])
+# 			var z = float(vals[3])
+# 			var color_idx = int(vals[4])
+# 			var outline_color = int(vals[5])
+# 			var fuzz = int(vals[6])
+# 			var outline = int(vals[7])
+			
+# 			# Project 3D coordinate to 2D
+# 			# Since TATs are typically on a sphere, and our DesignCanvas is 2D planar (-1..1)
+# 			# We will use x and y directly as projection if z is roughly facing camera (negative Z in Petz?)
+# 			# Actually, let's just project X and Y.
+# 			# Petz coordinates are usually small (~1.0).
+# 			# We'll normalize later.
+			
+# 			if x < min_x: min_x = x
+# 			if x > max_x: max_x = x
+# 			if y < min_y: min_y = y
+# 			if y > max_y: max_y = y
+			
+# 			var pb_data = {
+# 				"x": x,
+# 				"y": y,
+# 				"diameter": diameter,
+# 				"color": color_idx,
+# 				"outline_color": outline_color,
+# 				"fuzz": fuzz,
+# 				"outline": outline
+# 			}
+# 			design_balls.append(pb_data)
+
+# 	file.close()
+	
+# 	if design_balls.empty():
+# 		return
+
+# 	# Normalize coordinates to -0.9 .. 0.9 range of canvas
+# 	var range_x = max_x - min_x
+# 	var range_y = max_y - min_y
+# 	var max_range = max(range_x, range_y)
+# 	if max_range == 0: max_range = 1.0
+	
+# 	var center_x = (min_x + max_x) / 2.0
+# 	var center_y = (min_y + max_y) / 2.0
+	
+# 	var scale_factor = 1.8 / max_range # Scale to fit 90% of 2.0 (-1 to 1)
+	
+# 	# Create unique slots
+# 	design_color_slots.clear()
+# 	var slot_map = {} # signature -> index
+	
+# 	var final_paintballs = []
+	
+# 	for pb in design_balls:
+# 		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline)
+		
+# 		var slot_idx = -1
+# 		if slot_map.has(signature):
+# 			slot_idx = slot_map[signature]
+# 		else:
+# 			var new_slot = {
+# 				"color": str(pb.color),
+# 				"outline_color": str(pb.outline_color),
+# 				"texture": "0",
+# 				"outline_type": pb.outline,
+# 				"fuzz": pb.fuzz,
+# 				"group": 0,
+# 				"anchored": true, # Always anchored
+# 				"display_color": Color(randf(), randf(), randf())
+# 			}
+# 			# Try to map LNZ color to display color if possible (approximate)
+# 			# We don't have palette loaded here easily, so random color
+			
+# 			design_color_slots.append(new_slot)
+# 			slot_idx = design_color_slots.size()
+# 			slot_map[signature] = slot_idx
+			
+# 		var norm_x = (pb.x - center_x) * scale_factor
+# 		var norm_y = (pb.y - center_y) * scale_factor
+		
+# 		# Scale diameter relative to canvas size (200)
+# 		# pb.diameter is LNZ pixel size.
+# 		# In LnzLive, pb.diameter in design_paintballs is relative to DESIGN_CANVAS_SIZE
+# 		# We want the stamp to look right.
+# 		# If the whole cluster is mapped to -0.9..0.9 (approx 180 pixels), 
+# 		# then the diameter should be scaled by same factor?
+# 		# No, diameter is absolute in TAT.
+# 		# If we scale coordinates, we should probably scale diameter to maintain ratio.
+# 		# But 'scale_factor' scales WORLD units to NORMALIZED CANVAS units.
+# 		# DESIGN_CANVAS_SIZE = 200.
+# 		# So world_size * scale_factor * (200/2) = pixel size?
+# 		# Let's try to maintain relative size.
+# 		# Normalized Diameter = (pb.diameter_lnz / cluster_size_lnz) * cluster_size_canvas
+# 		# It's tricky. Let's just use a heuristic multiplier.
+# 		# Assume typical ball diameter is ~50-100.
+# 		# If TAT defines diameter 3, that's small.
+# 		# Let's map diameter directly to brush size (pixels) via a factor.
+# 		# Or better: Scale diameter proportional to the coordinate scaling.
+# 		# normalized_diam = pb.diameter * scale_factor? No.
+# 		# pb.diameter is in LNZ units (pixels).
+# 		# We want 'brush_size' (0-200).
+# 		# If the stamp covers 180 pixels.
+# 		# And original range was max_range (LNZ units).
+# 		# Then scale = 180 / max_range.
+# 		# So new_diameter = pb.diameter * (180 / max_range).
+		
+# 		# TAT diameter is in pixels. But our canvas is normalized -1 to 1.
+# 		# And "DESIGN_CANVAS_SIZE" is 200.
+# 		# We want to preserve the ratio of diameter vs positions.
+# 		# positions were scaled by 'scale_factor'.
+# 		# scale_factor = 1.8 / max_range (where max_range is diameter of stamp in TAT units)
+# 		# So normalized_pos = pos * scale_factor.
+# 		# normalized_diameter = diameter * scale_factor.
+# 		# But design_paintballs use pixel size (0-200) for diameter on canvas.
+# 		# So pixel_diameter = normalized_diameter * (DESIGN_CANVAS_SIZE / 2.0)
+		
+# 		var pixel_diam = float(pb.diameter) * scale_factor * (DESIGN_CANVAS_SIZE / 2.0)
+# 		if pixel_diam < 2: pixel_diam = 2
+		
+# 		var new_pb = {
+# 			"x": norm_x,
+# 			"y": norm_y,
+# 			"diameter": pixel_diam,
+# 			"color_slot": slot_idx
+# 		}
+# 		final_paintballs.append(new_pb)
+
+# 	find_node("DesignCanvas").design_paintballs = final_paintballs
+# 	_refresh_slot_buttons()
+# 	find_node("DesignCanvas").update()
+# 	find_node("DesignCanvas").emit_signal("design_changed")
+
+func _on_pattern_info_pressed():
+	find_node("PatternInfoDialog").popup_centered()
+
+func _on_info_close_pressed():
+	find_node("PatternInfoDialog").hide()
 
 func _on_import_pattern_pressed():
 	if OS.has_feature("HTML5"):
@@ -347,10 +694,73 @@ func _load_pattern_file(path):
 							s.erase("display_color_b")
 						design_color_slots.append(s)
 
+				if data.has("info"):
+					var info = data["info"]
+					find_node("PatternInfoDialog").find_node("AuthorEdit").text = info.get("author", "")
+					find_node("PatternInfoDialog").find_node("WebsiteEdit").text = info.get("website", "")
+					find_node("PatternInfoDialog").find_node("DescEdit").text = info.get("description", "")
+
 				_refresh_slot_buttons()
 				find_node("DesignCanvas").update()
 				find_node("DesignCanvas").emit_signal("design_changed")
 		file.close()
+
+func _on_clear_design_pressed():
+	find_node("DesignCanvas").clear()
+	
+	design_color_slots = [
+		{
+			"color": "105",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 1, 0)
+		},
+		{
+			"color": "95",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 0, 0)
+		},
+		{
+			"color": "145",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 1, 0)
+		},
+		{
+			"color": "155",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 0, 1)
+		}
+	]
+	
+	# find_node("PatternInfoDialog").find_node("AuthorEdit").text = ""
+	# find_node("PatternInfoDialog").find_node("WebsiteEdit").text = ""
+	# find_node("PatternInfoDialog").find_node("DescEdit").text = ""
+	
+	_refresh_slot_buttons()
+	find_node("DesignCanvas").emit_signal("design_changed")
 
 func _on_export_pattern_pressed():
 	if OS.has_feature("HTML5"):
@@ -368,6 +778,13 @@ func _on_export_pattern_pressed():
 
 func _save_pattern_file(path):
 	var data = {
+		"header": "LnzLive Stampz Design",
+		"info": {
+			"time_generated": OS.get_datetime(),
+			"author": find_node("PatternInfoDialog").find_node("AuthorEdit").text,
+			"website": find_node("PatternInfoDialog").find_node("WebsiteEdit").text,
+			"description": find_node("PatternInfoDialog").find_node("DescEdit").text
+		},
 		"paintballs": find_node("DesignCanvas").design_paintballs,
 		"slots": []
 	}
@@ -401,7 +818,7 @@ func _refresh_slot_buttons():
 func _setup_slots_tree():
 	var tree = find_node("SlotsTree")
 	tree.set_column_titles_visible(true)
-	tree.columns = 8
+	tree.columns = 9
 	tree.set_column_title(0, "Color")
 	tree.set_column_title(1, "Col")
 	tree.set_column_title(2, "OutCol")
@@ -410,12 +827,16 @@ func _setup_slots_tree():
 	tree.set_column_title(5, "Fuzz")
 	tree.set_column_title(6, "Grp")
 	tree.set_column_title(7, "Anc")
+	tree.set_column_title(8, "Scale")
 
 	tree.set_column_expand(0, false)
 	tree.set_column_min_width(0, 40)
 
 	tree.set_column_expand(7, false)
 	tree.set_column_min_width(7, 30)
+
+	tree.set_column_expand(8, false)
+	tree.set_column_min_width(8, 60)
 
 func _populate_slots_tree():
 	var tree = find_node("SlotsTree")
@@ -468,6 +889,12 @@ func _populate_slots_tree():
 		item.set_checked(7, slot.get("anchored", true))
 		item.set_editable(7, true)
 
+		# Col 8: Scale (Range %)
+		item.set_cell_mode(8, TreeItem.CELL_MODE_RANGE)
+		item.set_range_config(8, 1, 500, 1)
+		item.set_range(8, slot.get("scale", 100))
+		item.set_editable(8, true)
+
 		item.set_metadata(0, i)
 
 func _create_color_icon(color: Color) -> Texture:
@@ -497,6 +924,7 @@ func _on_SlotsTree_item_edited():
 	design_color_slots[idx].fuzz = int(item.get_range(5))
 	design_color_slots[idx].group = int(item.get_range(6))
 	design_color_slots[idx].anchored = item.is_checked(7)
+	design_color_slots[idx].scale = int(item.get_range(8))
 
 	save_settings()
 	update_preview()
@@ -540,6 +968,7 @@ func _on_AddSlotButton_pressed():
 		"fuzz": 0,
 		"group": 0,
 		"anchored": true,
+		"scale": 100,
 		"display_color": Color(randf(), randf(), randf())
 	}
 	design_color_slots.append(new_slot)
@@ -584,44 +1013,69 @@ func _on_setting_changed(_arg = null):
 func update_preview():
 	if not preview_viewport or not preview_world: return
 
+	# 1. Setup Camera
 	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
 	preview_camera.fov = 35.0
 	preview_camera.transform.origin = Vector3(0, 0, 0.4)
 
-	for child in preview_world.get_children():
-		if child.is_in_group("preview_objects") or child.name.begins_with("Paintball"):
-			child.free()
-
-	var base_visual_ball = ball_scene.instance()
-	base_visual_ball.add_to_group("preview_objects")
-	preview_world.add_child(base_visual_ball)
+	# 2. Get or Instance Base Ball
+	var base_visual_ball = preview_world.get_node_or_null("PreviewBaseBall")
+	if not base_visual_ball:
+		base_visual_ball = ball_scene.instance()
+		base_visual_ball.name = "PreviewBaseBall"
+		base_visual_ball.add_to_group("preview_objects")
+		preview_world.add_child(base_visual_ball)
+	
 	base_visual_ball.rotation = _preview_ball_rotation
-
-	var base_size = 50.0 
+	var base_size = 100.0
 	base_visual_ball.ball_size = base_size
 	base_visual_ball.palette = active_palette
 
+	# 3. Generate Design Data
 	var current_footprint = find_node("DiameterMax").value
 	var center_dir = Vector3(0, 0, 1) 
 	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
-	var pb_list = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint)
+	# Note: Jitter is disabled for preview to keep it stable while editing
+	var pb_list = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
 
+	# 4. Synchronize Visual Objects
+	var existing_pbs = []
+	for child in base_visual_ball.get_children():
+		if child.is_in_group("preview_paintballs") or child.name.begins_with("Paintball"):
+			existing_pbs.append(child)
+
+	# If the count changed significantly, it's safer to rebuild
+	if existing_pbs.size() != pb_list.size():
+		for pb in existing_pbs:
+			pb.free()
+		existing_pbs.clear()
+		for i in range(pb_list.size()):
+			var pb_visual = paintball_scene.instance()
+			pb_visual.add_to_group("preview_paintballs")
+			base_visual_ball.add_child(pb_visual)
+			existing_pbs.append(pb_visual)
+
+	# 5. Update Shader Properties and Transforms
 	var z_add_counter = 0.0
-	for pb_data in pb_list:
-		var pb_visual = paintball_scene.instance()
-		base_visual_ball.add_child(pb_visual)
+	var radius = float(base_size) / 2.0
+	var pixel_world_size = 0.002
 
+	for i in range(pb_list.size()):
+		var pb_data = pb_list[i]
+		var pb_visual = existing_pbs[i]
+		
+		# Update Visuals (Shader parameters/properties)
 		pb_visual.ball_size = pb_data.diameter
 		pb_visual.base_ball_size = base_size
 		pb_visual.color_index = pb_data.color
 		pb_visual.palette = active_palette
 		pb_visual.z_add = z_add_counter
-		z_add_counter += 1.0
-
-		var radius = float(base_size) / 2.0
-		var pixel_world_size = 0.002
-		var pb_pos = pb_data.pos_normalized * Vector3(1, 1, 1) * radius * pixel_world_size
+		
+		# Update Position (Transform)
+		var pb_pos = pb_data.pos_normalized * radius * pixel_world_size
 		pb_visual.transform.origin = pb_pos
+		
+		z_add_counter += 1.0
 
 func save_settings():
 	var config = ConfigFile.new()
@@ -660,6 +1114,8 @@ func save_settings():
 	config.set_value("DesignMode", "mirror_y", find_node("MirrorY").pressed)
 	config.set_value("DesignMode", "canvas_eraser", find_node("CanvasEraser").pressed)
 	config.set_value("DesignMode", "design_jitter", find_node("DesignJitter").value)
+	config.set_value("DesignMode", "rotate_jitter", find_node("RotateJitter").value)
+	config.set_value("DesignMode", "spread_jitter", find_node("SpreadJitter").value)
 
 	var save_err = config.save(SETTINGS_PATH)
 	if save_err != OK:
@@ -722,6 +1178,8 @@ func load_settings():
 	find_node("MirrorY").pressed = config.get_value("DesignMode", "mirror_y", false)
 	find_node("CanvasEraser").pressed = config.get_value("DesignMode", "canvas_eraser", false)
 	find_node("DesignJitter").value = config.get_value("DesignMode", "design_jitter", 0.0)
+	find_node("RotateJitter").value = config.get_value("DesignMode", "rotate_jitter", 0.0)
+	find_node("SpreadJitter").value = config.get_value("DesignMode", "spread_jitter", 0.0)
 
 	_on_design_tool_toggled(null)
 
