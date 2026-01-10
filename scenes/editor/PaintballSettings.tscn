@@ -638,6 +638,7 @@ custom_fonts/font = SubResource( 2 )
 text = "Import JSON"
 
 [node name="ImportTatButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer"]
+visible = false
 margin_left = 300.0
 margin_right = 365.0
 margin_bottom = 29.0

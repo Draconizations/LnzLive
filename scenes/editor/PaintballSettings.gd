@@ -316,7 +316,7 @@ func _connect_design_signals():
 	find_node("RotateJitter").connect("value_changed", self, "_on_setting_changed")
 	find_node("SpreadJitter").connect("value_changed", self, "_on_setting_changed")
 
-	find_node("ImportTatButton").connect("pressed", self, "_on_import_tat_pressed")
+	# find_node("ImportTatButton").connect("pressed", self, "_on_import_tat_pressed")
 	find_node("PatternInfoButton").connect("pressed", self, "_on_pattern_info_pressed")
 	find_node("PatternInfoDialog").find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
 
@@ -333,147 +333,19 @@ func _on_design_tool_toggled(_arg):
 	canvas.update()
 	save_settings()
 
-func _on_import_tat_pressed():
-	if OS.has_feature("HTML5"):
-		JavaScript.eval("window.alert('Importing TAT files is not yet supported in web version.');")
-		return
+# func _on_import_tat_pressed():
+# 	if OS.has_feature("HTML5"):
+# 		JavaScript.eval("window.alert('Importing PWS Tattoo (.tat) files is not yet supported in web version.');")
+# 		return
 
-	var file_dialog = FileDialog.new()
-	file_dialog.mode = FileDialog.MODE_OPEN_FILE
-	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.filters = ["*.tat ; Petz Workshop Tattoo"]
-	file_dialog.connect("file_selected", self, "_load_tat_file")
-	file_dialog.connect("popup_hide", file_dialog, "queue_free")
-	add_child(file_dialog)
-	file_dialog.popup_centered_ratio(0.6)
-
-func _load_tat_file(path):
-	var file = File.new()
-	if file.open(path, File.READ) != OK:
-		return
-	
-	var design_balls = []
-	var info_section = false
-	var data_section = false
-	
-	var min_x = 1000.0
-	var max_x = -1000.0
-	var min_y = 1000.0
-	var max_y = -1000.0
-	
-	while not file.eof_reached():
-		var line = file.get_line().strip_edges()
-		if line == "[Info]":
-			info_section = true
-			data_section = false
-			continue
-		elif line == "[Data]":
-			info_section = false
-			data_section = true
-			continue
-		elif line.begins_with("["):
-			info_section = false
-			data_section = false
-			continue
-			
-		if info_section:
-			if line.begins_with("Author="):
-				find_node("PatternInfoDialog").find_node("AuthorEdit").text = line.trim_prefix("Author=")
-			elif line.begins_with("Website="):
-				find_node("PatternInfoDialog").find_node("WebsiteEdit").text = line.trim_prefix("Website=")
-			elif line.begins_with("Description="):
-				find_node("PatternInfoDialog").find_node("DescEdit").text = line.trim_prefix("Description=")
-
-		if data_section and line.begins_with("Ball"):
-			var eq_split = line.split("=")
-			if eq_split.size() < 2: continue
-			
-			var vals = eq_split[1].split(",")
-			if vals.size() < 8: continue
-			
-			var x = float(vals[1])
-			var y = float(vals[2])
-			
-			if x < min_x: min_x = x
-			if x > max_x: max_x = x
-			if y < min_y: min_y = y
-			if y > max_y: max_y = y
-			
-			var pb_data = {
-				"x": x,
-				"y": y,
-				"diameter": float(vals[0]),
-				"color": int(vals[4]),
-				"outline_color": int(vals[5]),
-				"fuzz": int(vals[6]),
-				"outline": int(vals[7])
-			}
-			design_balls.append(pb_data)
-
-	file.close()
-	if design_balls.empty(): return
-
-	# 1. CALCULATE BOUNDS AND POSITIONAL SCALE
-	var range_x = max_x - min_x
-	var range_y = max_y - min_y
-	var max_range = max(range_x, range_y)
-	if max_range == 0: max_range = 1.0
-	
-	var center_x = (min_x + max_x) / 2.0
-	var center_y = (min_y + max_y) / 2.0
-	
-	# Scale factor for coordinates to fit into 90% of the canvas width
-	var pos_scale_factor = 1.8 / max_range
-	
-	var canvas_pixel_ratio = (DESIGN_CANVAS_SIZE / 2.0) * pos_scale_factor 
-
-	design_color_slots.clear()
-	var slot_map = {} 
-	var final_paintballs = []
-	
-	for pb in design_balls:
-		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline)
-		var slot_idx = -1
-		
-		if slot_map.has(signature):
-			slot_idx = slot_map[signature]
-		else:
-			var new_slot = {
-				"color": str(pb.color),
-				"outline_color": str(pb.outline_color),
-				"texture": "0",
-				"outline_type": pb.outline,
-				"fuzz": pb.fuzz,
-				"group": 0,
-				"anchored": true,
-				"display_color": Color(randf(), randf(), randf())
-			}
-			
-			new_slot["scale"] = int(clamp((pb.diameter / max_range) * 10.0, 10, 100))
-			
-			design_color_slots.append(new_slot)
-			slot_idx = design_color_slots.size()
-			slot_map[signature] = slot_idx
-			
-		var norm_x = (pb.x - center_x) * pos_scale_factor
-		var norm_y = -(pb.y - center_y) * pos_scale_factor
-		
-		var pixel_diam = pb.diameter * (1.8 / max_range) * (DESIGN_CANVAS_SIZE / 2.0) 
-		
-		pixel_diam = clamp(pixel_diam, 2.0, DESIGN_CANVAS_SIZE * 0.25)
-		
-		var new_pb = {
-			"x": norm_x,
-			"y": norm_y,
-			"diameter": pixel_diam,
-			"color_slot": slot_idx
-		}
-		final_paintballs.append(new_pb)
-
-	find_node("DesignCanvas").design_paintballs = final_paintballs
-	_refresh_slot_buttons()
-	find_node("DesignCanvas").update()
-	find_node("DesignCanvas").emit_signal("design_changed")
+# 	var file_dialog = FileDialog.new()
+# 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+# 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+# 	file_dialog.filters = ["*.tat ; Petz Workshop Tattoo"]
+# 	file_dialog.connect("file_selected", self, "_load_tat_file")
+# 	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+# 	add_child(file_dialog)
+# 	file_dialog.popup_centered_ratio(0.6)
 
 # func _load_tat_file(path):
 # 	var file = File.new()
@@ -481,107 +353,62 @@ func _load_tat_file(path):
 # 		return
 	
 # 	var design_balls = []
-# 	var new_slots = []
-	
 # 	var info_section = false
 # 	var data_section = false
 	
-# 	var min_x = 1000.0
-# 	var max_x = -1000.0
-# 	var min_y = 1000.0
-# 	var max_y = -1000.0
-	
+# 	var min_x = 1000.0; var max_x = -1000.0
+# 	var min_y = 1000.0; var max_y = -1000.0
+# 	var max_tat_diameter = 0.0
+
 # 	while not file.eof_reached():
 # 		var line = file.get_line().strip_edges()
-# 		if line == "[Info]":
-# 			info_section = true
-# 			data_section = false
-# 			continue
-# 		elif line == "[Data]":
-# 			info_section = false
+# 		if line == "[Data]":
 # 			data_section = true
 # 			continue
-# 		elif line.begins_with("["):
-# 			info_section = false
-# 			data_section = false
-# 			continue
-			
-# 		if info_section:
-# 			if line.begins_with("Author="):
-# 				find_node("PatternInfoDialog").find_node("AuthorEdit").text = line.trim_prefix("Author=")
-# 			elif line.begins_with("Website="):
-# 				find_node("PatternInfoDialog").find_node("WebsiteEdit").text = line.trim_prefix("Website=")
-# 			elif line.begins_with("Description="):
-# 				find_node("PatternInfoDialog").find_node("DescEdit").text = line.trim_prefix("Description=")
-
+		
 # 		if data_section and line.begins_with("Ball"):
-# 			var eq_split = line.split("=")
-# 			if eq_split.size() < 2: continue
-			
-# 			var vals = eq_split[1].split(",")
+# 			var vals = line.split("=")[1].split(",")
 # 			if vals.size() < 8: continue
 			
-# 			var diameter = int(vals[0])
+# 			var diam = float(vals[0])
 # 			var x = float(vals[1])
 # 			var y = float(vals[2])
-# 			var z = float(vals[3])
-# 			var color_idx = int(vals[4])
-# 			var outline_color = int(vals[5])
-# 			var fuzz = int(vals[6])
-# 			var outline = int(vals[7])
 			
-# 			# Project 3D coordinate to 2D
-# 			# Since TATs are typically on a sphere, and our DesignCanvas is 2D planar (-1..1)
-# 			# We will use x and y directly as projection if z is roughly facing camera (negative Z in Petz?)
-# 			# Actually, let's just project X and Y.
-# 			# Petz coordinates are usually small (~1.0).
-# 			# We'll normalize later.
-			
+# 			if diam > max_tat_diameter: max_tat_diameter = diam
 # 			if x < min_x: min_x = x
 # 			if x > max_x: max_x = x
 # 			if y < min_y: min_y = y
 # 			if y > max_y: max_y = y
 			
-# 			var pb_data = {
-# 				"x": x,
-# 				"y": y,
-# 				"diameter": diameter,
-# 				"color": color_idx,
-# 				"outline_color": outline_color,
-# 				"fuzz": fuzz,
-# 				"outline": outline
-# 			}
-# 			design_balls.append(pb_data)
-
+# 			design_balls.append({
+# 				"x": x, "y": y, "diameter": diam,
+# 				"color": int(vals[4]), "outline_color": int(vals[5]),
+# 				"fuzz": int(vals[6]), "outline": int(vals[7])
+# 			})
 # 	file.close()
-	
-# 	if design_balls.empty():
-# 		return
 
-# 	# Normalize coordinates to -0.9 .. 0.9 range of canvas
-# 	var range_x = max_x - min_x
-# 	var range_y = max_y - min_y
-# 	var max_range = max(range_x, range_y)
+# 	if design_balls.empty() or max_tat_diameter == 0: return
+
+# 	var max_range = max(max_x - min_x, max_y - min_y)
 # 	if max_range == 0: max_range = 1.0
-	
 # 	var center_x = (min_x + max_x) / 2.0
 # 	var center_y = (min_y + max_y) / 2.0
+# 	var pos_scale_factor = 1.8 / max_range
 	
-# 	var scale_factor = 1.8 / max_range # Scale to fit 90% of 2.0 (-1 to 1)
-	
-# 	# Create unique slots
 # 	design_color_slots.clear()
-# 	var slot_map = {} # signature -> index
-	
+# 	var slot_map = {} 
 # 	var final_paintballs = []
 	
 # 	for pb in design_balls:
-# 		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline)
+# 		var diam_group = int(round(pb.diameter / 5.0) * 5)
+# 		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline) + "_" + str(diam_group)
 		
 # 		var slot_idx = -1
 # 		if slot_map.has(signature):
 # 			slot_idx = slot_map[signature]
 # 		else:
+# 			var relative_scale = (pb.diameter / max_tat_diameter) * 100.0
+			
 # 			var new_slot = {
 # 				"color": str(pb.color),
 # 				"outline_color": str(pb.outline_color),
@@ -589,70 +416,30 @@ func _load_tat_file(path):
 # 				"outline_type": pb.outline,
 # 				"fuzz": pb.fuzz,
 # 				"group": 0,
-# 				"anchored": true, # Always anchored
+# 				"anchored": true,
+# 				"scale": int(max(1, relative_scale)),
 # 				"display_color": Color(randf(), randf(), randf())
 # 			}
-# 			# Try to map LNZ color to display color if possible (approximate)
-# 			# We don't have palette loaded here easily, so random color
-			
 # 			design_color_slots.append(new_slot)
 # 			slot_idx = design_color_slots.size()
 # 			slot_map[signature] = slot_idx
 			
-# 		var norm_x = (pb.x - center_x) * scale_factor
-# 		var norm_y = (pb.y - center_y) * scale_factor
-		
-# 		# Scale diameter relative to canvas size (200)
-# 		# pb.diameter is LNZ pixel size.
-# 		# In LnzLive, pb.diameter in design_paintballs is relative to DESIGN_CANVAS_SIZE
-# 		# We want the stamp to look right.
-# 		# If the whole cluster is mapped to -0.9..0.9 (approx 180 pixels), 
-# 		# then the diameter should be scaled by same factor?
-# 		# No, diameter is absolute in TAT.
-# 		# If we scale coordinates, we should probably scale diameter to maintain ratio.
-# 		# But 'scale_factor' scales WORLD units to NORMALIZED CANVAS units.
-# 		# DESIGN_CANVAS_SIZE = 200.
-# 		# So world_size * scale_factor * (200/2) = pixel size?
-# 		# Let's try to maintain relative size.
-# 		# Normalized Diameter = (pb.diameter_lnz / cluster_size_lnz) * cluster_size_canvas
-# 		# It's tricky. Let's just use a heuristic multiplier.
-# 		# Assume typical ball diameter is ~50-100.
-# 		# If TAT defines diameter 3, that's small.
-# 		# Let's map diameter directly to brush size (pixels) via a factor.
-# 		# Or better: Scale diameter proportional to the coordinate scaling.
-# 		# normalized_diam = pb.diameter * scale_factor? No.
-# 		# pb.diameter is in LNZ units (pixels).
-# 		# We want 'brush_size' (0-200).
-# 		# If the stamp covers 180 pixels.
-# 		# And original range was max_range (LNZ units).
-# 		# Then scale = 180 / max_range.
-# 		# So new_diameter = pb.diameter * (180 / max_range).
-		
-# 		# TAT diameter is in pixels. But our canvas is normalized -1 to 1.
-# 		# And "DESIGN_CANVAS_SIZE" is 200.
-# 		# We want to preserve the ratio of diameter vs positions.
-# 		# positions were scaled by 'scale_factor'.
-# 		# scale_factor = 1.8 / max_range (where max_range is diameter of stamp in TAT units)
-# 		# So normalized_pos = pos * scale_factor.
-# 		# normalized_diameter = diameter * scale_factor.
-# 		# But design_paintballs use pixel size (0-200) for diameter on canvas.
-# 		# So pixel_diameter = normalized_diameter * (DESIGN_CANVAS_SIZE / 2.0)
-		
-# 		var pixel_diam = float(pb.diameter) * scale_factor * (DESIGN_CANVAS_SIZE / 2.0)
-# 		if pixel_diam < 2: pixel_diam = 2
+# 		var norm_x = (pb.x - center_x) * pos_scale_factor
+# 		var norm_y = -(pb.y - center_y) * pos_scale_factor 
 		
 # 		var new_pb = {
 # 			"x": norm_x,
 # 			"y": norm_y,
-# 			"diameter": pixel_diam,
+# 			"diameter": DESIGN_CANVAS_SIZE * 0.1,
 # 			"color_slot": slot_idx
 # 		}
 # 		final_paintballs.append(new_pb)
 
-# 	find_node("DesignCanvas").design_paintballs = final_paintballs
+# 	var canvas = find_node("DesignCanvas")
+# 	canvas.design_paintballs = final_paintballs
 # 	_refresh_slot_buttons()
-# 	find_node("DesignCanvas").update()
-# 	find_node("DesignCanvas").emit_signal("design_changed")
+# 	canvas.update()
+# 	canvas.emit_signal("design_changed")
 
 func _on_pattern_info_pressed():
 	find_node("PatternInfoDialog").popup_centered()
