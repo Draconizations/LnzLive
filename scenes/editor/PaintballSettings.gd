@@ -192,85 +192,80 @@ func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float)
 					cleared += 1
 	return cleared
 
-func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Array:
+func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
 	var design_canvas = find_node("DesignCanvas")
 	var paintballs = design_canvas.design_paintballs
-	var output = []
+	
+	var out_pos = PoolVector3Array()
+	var out_diams = PoolIntArray()
+	var out_colors = PoolIntArray()
+	
+	var out_outlines = PoolIntArray()
+	var out_out_types = PoolIntArray()
+	var out_fuzz = PoolIntArray()
+	var out_group = PoolIntArray()
+	var out_tex = PoolIntArray()
+	var out_anchored = PoolIntArray()
 
 	var pixel_mode = find_node("PixelMode").pressed 
-	var d_min = find_node("DiameterMin").value
-	var d_max = find_node("DiameterMax").value
+	var sampled_scale = rand_range(find_node("DiameterMin").value, find_node("DiameterMax").value)
+	var footprint_lnz = sampled_scale if pixel_mode else ball_lnz_diameter * (sampled_scale / 100.0)
+	
+	var d_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
+	var r_jitter = find_node("RotateJitter").value if jitter_enabled else 0.0
+	var s_jitter = find_node("SpreadJitter").value if jitter_enabled else 0.0
 
-	var sampled_scale = rand_range(d_min, d_max)
-	var footprint_lnz: float
+	if jitter_enabled and r_jitter > 0:
+		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
 
-	if pixel_mode:
-		footprint_lnz = sampled_scale
-	else:
-		var footprint_percent = override_footprint if override_footprint > 0 else sampled_scale
-		footprint_lnz = ball_lnz_diameter * (footprint_percent / 100.0)
-
-	var design_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
-	var rotate_jitter = find_node("RotateJitter").value if jitter_enabled else 0.0
-	var spread_jitter = find_node("SpreadJitter").value if jitter_enabled else 0.0
-
-	if jitter_enabled and rotate_jitter > 0:
-		design_rotation_angle += deg2rad(rand_range(-rotate_jitter, rotate_jitter))
-
-	# Apply rotation to basis
 	var rotated_basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x = rotated_basis.x
 	var tangent_y = rotated_basis.z
 
 	var spread_offset = Vector3.ZERO
-	if jitter_enabled and spread_jitter > 0:
-		var spread_scale = (footprint_lnz / 2.0) * (spread_jitter / 100.0)
-		spread_offset = tangent_x * rand_range(-spread_scale, spread_scale) + tangent_y * rand_range(-spread_scale, spread_scale)
+	if jitter_enabled and s_jitter > 0:
+		var s_scale = (footprint_lnz / 2.0) * (s_jitter / 100.0)
+		spread_offset = tangent_x * rand_range(-s_scale, s_scale) + tangent_y * rand_range(-s_scale, s_scale)
 
 	for pb in paintballs:
-		if pb.color_slot - 1 >= design_color_slots.size():
-			continue
+		if pb.color_slot - 1 >= design_color_slots.size(): continue
+		var slot_data = design_color_slots[pb.color_slot - 1]
 
 		var dx = pb.x * (footprint_lnz / 2.0)
 		var dy = -pb.y * (footprint_lnz / 2.0)
-
-		# Jitter position relative to design
-		if design_jitter > 0:
-			var j_amt = (design_jitter / 100.0) * (footprint_lnz / 2.0)
+		if d_jitter > 0:
+			var j_amt = (d_jitter / 100.0) * (footprint_lnz / 2.0)
 			dx += rand_range(-j_amt, j_amt)
 			dy += rand_range(-j_amt, j_amt)
 
 		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy + spread_offset
-		var slot_data = design_color_slots[pb.color_slot - 1]
-		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
+		out_pos.append(pos_on_plane.normalized())
 
 		var slot_scale = float(slot_data.get("scale", 100)) / 100.0
-		var ratio = float(pb.diameter) / DESIGN_CANVAS_SIZE
-		var pb_diam_lnz = footprint_lnz * ratio * slot_scale
+		var pb_diam_lnz = footprint_lnz * (float(pb.diameter) / DESIGN_CANVAS_SIZE) * slot_scale
+		if d_jitter > 0:
+			pb_diam_lnz *= (1.0 + rand_range(-d_jitter/100.0, d_jitter/100.0))
+		out_diams.append(int(max(1, pb_diam_lnz)))
 
-		# Jitter diameter
-		if design_jitter > 0:
-			var j_scale = 1.0 + rand_range(-design_jitter/100.0, design_jitter/100.0)
-			pb_diam_lnz *= j_scale
-
-		var outline_color_list = LnzLiveUtils.parse_number_list(slot_data.outline_color)
-		var texture_list = LnzLiveUtils.parse_number_list(slot_data.texture, true)
+		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
+		out_colors.append(color_list[randi() % color_list.size()] if color_list else 0)
 		
-		var pb_info = {
-			"base_ball_no": ball_no,
-			"pos_normalized": pos_on_plane.normalized(),
-			"diameter": int(max(1, pb_diam_lnz)),
-			"color": color_list[randi() % color_list.size()] if color_list else 0,
-			"outline_color": int(outline_color_list[0]) if outline_color_list else 244,
-			"outline_type": int(slot_data.outline_type),
-			"fuzz": int(slot_data.get("fuzz", 0)),
-			"group": int(slot_data.get("group", 0)),
-			"texture": int(texture_list[0]) if texture_list else 0,
-			"anchored": 1 if slot_data.get("anchored", true) else 0
-		}
-		output.append(pb_info)
+		var out_col_list = LnzLiveUtils.parse_number_list(slot_data.outline_color)
+		out_outlines.append(int(out_col_list[0]) if out_col_list else 244)
+		
+		var tex_list = LnzLiveUtils.parse_number_list(slot_data.texture, true)
+		out_tex.append(int(tex_list[0]) if tex_list else 0)
 
-	return output
+		out_out_types.append(int(slot_data.outline_type))
+		out_fuzz.append(int(slot_data.get("fuzz", 0)))
+		out_group.append(int(slot_data.get("group", 0)))
+		out_anchored.append(1 if slot_data.get("anchored", true) else 0)
+
+	return {
+		"positions": out_pos, "diameters": out_diams, "colors": out_colors,
+		"outlines": out_outlines, "outline_types": out_out_types, "fuzzes": out_fuzz,
+		"groups": out_group, "textures": out_tex, "anchored": out_anchored
+	}
 
 func _connect_settings_signals():
 	find_node("DiameterMin").connect("value_changed", self, "_on_setting_changed")
@@ -800,12 +795,10 @@ func _on_setting_changed(_arg = null):
 func update_preview():
 	if not preview_viewport or not preview_world: return
 
-	# 1. Setup Camera
 	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
 	preview_camera.fov = 35.0
 	preview_camera.transform.origin = Vector3(0, 0, 0.4)
 
-	# 2. Get or Instance Base Ball
 	var base_visual_ball = preview_world.get_node_or_null("PreviewBaseBall")
 	if not base_visual_ball:
 		base_visual_ball = ball_scene.instance()
@@ -818,51 +811,45 @@ func update_preview():
 	base_visual_ball.ball_size = base_size
 	base_visual_ball.palette = active_palette
 
-	# 3. Generate Design Data
 	var current_footprint = find_node("DiameterMax").value
 	var center_dir = Vector3(0, 0, 1) 
 	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
-	# Note: Jitter is disabled for preview to keep it stable while editing
-	var pb_list = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
+	
+	var data = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
+	var pos_array = data.positions
+	var diam_array = data.diameters
+	var color_array = data.colors
+	var pb_count = pos_array.size()
 
-	# 4. Synchronize Visual Objects
 	var existing_pbs = []
 	for child in base_visual_ball.get_children():
 		if child.is_in_group("preview_paintballs") or child.name.begins_with("Paintball"):
 			existing_pbs.append(child)
 
-	# If the count changed significantly, it's safer to rebuild
-	if existing_pbs.size() != pb_list.size():
+	if existing_pbs.size() != pb_count:
 		for pb in existing_pbs:
 			pb.free()
 		existing_pbs.clear()
-		for i in range(pb_list.size()):
+		for i in range(pb_count):
 			var pb_visual = paintball_scene.instance()
 			pb_visual.add_to_group("preview_paintballs")
 			base_visual_ball.add_child(pb_visual)
 			existing_pbs.append(pb_visual)
 
-	# 5. Update Shader Properties and Transforms
-	var z_add_counter = 0.0
-	var radius = float(base_size) / 2.0
+	var radius = base_size / 2.0
 	var pixel_world_size = 0.002
 
-	for i in range(pb_list.size()):
-		var pb_data = pb_list[i]
+	for i in range(pb_count):
 		var pb_visual = existing_pbs[i]
 		
-		# Update Visuals (Shader parameters/properties)
-		pb_visual.ball_size = pb_data.diameter
+		pb_visual.ball_size = diam_array[i]
 		pb_visual.base_ball_size = base_size
-		pb_visual.color_index = pb_data.color
+		pb_visual.color_index = color_array[i]
 		pb_visual.palette = active_palette
-		pb_visual.z_add = z_add_counter
+		pb_visual.z_add = float(i)
 		
-		# Update Position (Transform)
-		var pb_pos = pb_data.pos_normalized * radius * pixel_world_size
+		var pb_pos = pos_array[i] * radius * pixel_world_size
 		pb_visual.transform.origin = pb_pos
-		
-		z_add_counter += 1.0
 
 func save_settings():
 	var config = ConfigFile.new()

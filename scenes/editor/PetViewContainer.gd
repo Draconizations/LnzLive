@@ -2532,20 +2532,40 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			var px_scale = pet_node.pixel_world_size
 			var lnz_scale = pet_node.lnz.scales.x / 255.0
 
-			for pb in pattern_pbs:
-				var spot_world_rel = pb.pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
+			var pos_arr = pattern_pbs.positions
+			var diam_arr = pattern_pbs.diameters
+			var col_arr = pattern_pbs.colors
+			var out_col_arr = pattern_pbs.outlines
+			var out_type_arr = pattern_pbs.outline_types
+			var fuzz_arr = pattern_pbs.fuzzes
+			var group_arr = pattern_pbs.groups
+			var tex_arr = pattern_pbs.textures
+			var anc_arr = pattern_pbs.anchored
+
+			for i in range(pos_arr.size()):
+				var pos_normalized = pos_arr[i]
+				var spot_world_rel = pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
 				
 				var spot_local_rel = target_ball.global_transform.basis.xform_inv(spot_world_rel)
 				
 				var relative_pos_lnz = spot_local_rel / (px_scale * lnz_scale)
-				relative_pos_lnz.y *= -1 # Flip Y for LNZ format
+				relative_pos_lnz.y *= -1
 
-				pb["relative_pos_local"] = spot_local_rel
-				pb["relative_pos_lnz"] = relative_pos_lnz
-				
-				pb.erase("pos_normalized") 
+				var pb_data = {
+					"base_ball_no": target_ball.ball_no,
+					"diameter": diam_arr[i],
+					"color": col_arr[i],
+					"outline_color": out_col_arr[i],
+					"outline_type": out_type_arr[i],
+					"fuzz": fuzz_arr[i],
+					"group": group_arr[i],
+					"texture": tex_arr[i],
+					"anchored": anc_arr[i],
+					"relative_pos_local": spot_local_rel,
+					"relative_pos_lnz": relative_pos_lnz
+				}
 
-				pet_node.add_pending_paintball(pb)
+				pet_node.add_pending_paintball(pb_data)
 			return
 
 		var props = paintball_settings_instance.get_properties()
