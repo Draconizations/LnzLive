@@ -4071,7 +4071,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 					if abs(ny) > max_move_head or abs(nz) > max_move_head:
 						if parts.size() < 5: 
 							parts.resize(5) 
-						parts[4] = str(head_id)
+							parts[4] = str(head_id)
 				
 				var new_line = _join_array(parts, delim)
 				set_line(i, new_line)
@@ -4209,9 +4209,10 @@ func apply_batch_moves(pending_moves: Dictionary):
 					parts[3] = str(nz)
 					
 					if head_group.has(ball_no) and head_id != -1:
-						if abs(ny) > 25 or abs(nz) > 25:
-							if parts.size() < 5: parts.resize(5)
-							parts[4] = str(head_id)
+						if parts.size() < 5:
+							if abs(ny) > 25 or abs(nz) > 25:
+								if parts.size() < 5: parts.resize(5)
+								parts[4] = str(head_id)
 					
 					set_line(i, _join_array(parts, " "))
 					updated = true
