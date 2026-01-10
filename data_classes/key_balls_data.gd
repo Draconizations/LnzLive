@@ -672,6 +672,18 @@ var bab_ball_definitions = {
 	119: { "name": "ztrans" }
 }
 
+func get_ball_id_by_name(target_name: String) -> int:
+	var defs = {}
+	match species:
+		Species.CAT: defs = cat_ball_definitions
+		Species.DOG: defs = dog_ball_definitions
+		Species.BABY: defs = bab_ball_definitions
+	
+	for id in defs:
+		if defs[id].get("name") == target_name:
+			return id
+	return -1
+
 # Move Groups
 # (can't just use the ext groups cuz that is for extension sections and missing some ballz; can't use the symmetry def b/c that misses center ballz)
 var move_groups_dog = {}
@@ -689,6 +701,7 @@ func build_move_groups():
 		"Ears": _flatten_dict(ear_ext_dog),
 		"Eyes": eyes_dog.values() + eyes_dog.keys()
 	}
+	move_groups_dog["Head"].append_array(tongue_dog)
 
 	var cat_torso = [38, 39, 25, 26, 6, 2, 3, 36]
 	
@@ -700,6 +713,7 @@ func build_move_groups():
 		"Ears": _flatten_dict(ear_ext_cat),
 		"Eyes": eyes_cat.values() + eyes_cat.keys()
 	}
+	move_groups_cat["Head"].append_array(tongue_cat)
 
 	var bab_torso = [94, 95, 66, 67, 10, 11, 4, 70, 81]
 	
@@ -711,6 +725,7 @@ func build_move_groups():
 		"Ears": _flatten_dict(ear_ext_bab),
 		"Eyes": eyes_bab.values() + eyes_bab.keys()
 	}
+	move_groups_bab["Head"].append_array(tongue_bab)
 
 func _flatten(array_of_arrays):
 	var flat = []

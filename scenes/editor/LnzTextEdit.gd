@@ -76,6 +76,8 @@ signal ball_number_changed(ball_no)
 
 var min_font_size = 4
 
+var max_move_head = 60
+
 func _ready():
 	_setup_context_menu()
 	_setup_fonts()
@@ -4046,17 +4048,32 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 					count += 1
 	else:
 		var updated = false
+		var head_id = KeyBallsData.get_ball_id_by_name("head")
+		
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"):
 				continue
 			var parts = _split_line(raw)
+			
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
 				var old_line = get_line(i)
-				parts[1] = str(parts[1].to_int() + new_pos.x)
-				parts[2] = str(parts[2].to_int() + new_pos.y)
-				parts[3] = str(parts[3].to_int() + new_pos.z)
-				var new_line = _join_array(parts, " ")
+				
+				var nx = parts[1].to_int() + new_pos.x
+				var ny = parts[2].to_int() + new_pos.y
+				var nz = parts[3].to_int() + new_pos.z
+				
+				parts[1] = str(nx)
+				parts[2] = str(ny)
+				parts[3] = str(nz)
+				
+				if KeyBallsData.get_group_balls("Head").has(ball_no):
+					if abs(ny) > max_move_head or abs(nz) > max_move_head:
+						if parts.size() < 5: 
+							parts.resize(5) 
+						parts[4] = str(head_id)
+				
+				var new_line = _join_array(parts, delim)
 				set_line(i, new_line)
 				updated = true
 				save_file(true)
@@ -4065,10 +4082,19 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 				if not success:
 					print("[HISTORY] Fallback: Line not found, committing full snapshot")
 					commit_full_snapshot("Moved Ballz #%d [FULL COMMIT]" % ball_no)
-
 				break
+
 		if not updated:
-			var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, new_pos.x, delim, new_pos.y, delim, new_pos.z]
+			var nx = int(new_pos.x)
+			var ny = int(new_pos.y)
+			var nz = int(new_pos.z)
+			var parts = [str(ball_no), str(nx), str(ny), str(nz)]
+			
+			if KeyBallsData.get_group_balls("Head").has(ball_no):
+				if abs(ny) > max_move_head or abs(nz) > max_move_head:
+					parts.append(str(head_id))
+			
+			var line_txt = _join_array(parts, delim)
 			var insert_at = _find_insertion_line(start_line, end_line)
 			_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 			save_file(true)
@@ -4166,20 +4192,42 @@ func apply_batch_moves(pending_moves: Dictionary):
 
 		if ball_no < KeyBallsData.max_base_ball_num:
 			var updated = false
+			var head_id = KeyBallsData.get_ball_id_by_name("head")
+			var head_group = KeyBallsData.get_group_balls("Head")
+			
 			for i in range(move_start, move_end):
 				var raw = get_line(i).strip_edges()
 				if raw == "" or raw.begins_with(";"): continue
 				var parts = _split_line(raw)
 				if parts.size() >= 4 and parts[0].to_int() == ball_no:
-					parts[1] = str(parts[1].to_int() + lnz_delta.x)
-					parts[2] = str(parts[2].to_int() + lnz_delta.y)
-					parts[3] = str(parts[3].to_int() + lnz_delta.z)
+					var nx = parts[1].to_int() + lnz_delta.x
+					var ny = parts[2].to_int() + lnz_delta.y
+					var nz = parts[3].to_int() + lnz_delta.z
+					
+					parts[1] = str(nx)
+					parts[2] = str(ny)
+					parts[3] = str(nz)
+					
+					if head_group.has(ball_no) and head_id != -1:
+						if abs(ny) > 25 or abs(nz) > 25:
+							if parts.size() < 5: parts.resize(5)
+							parts[4] = str(head_id)
+					
 					set_line(i, _join_array(parts, " "))
 					updated = true
 					break
+					
 			if !updated:
-				var delim = " "
-				var line_txt = "%d%s%d%s%d%s%d" % [ball_no, delim, lnz_delta.x, delim, lnz_delta.y, delim, lnz_delta.z]
+				var nx = int(lnz_delta.x)
+				var ny = int(lnz_delta.y)
+				var nz = int(lnz_delta.z)
+				var parts = [str(ball_no), str(nx), str(ny), str(nz)]
+				
+				if head_group.has(ball_no) and head_id != -1:
+					if abs(ny) > 25 or abs(nz) > 25:
+						parts.append(str(head_id))
+				
+				var line_txt = _join_array(parts, " ")
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 				move_end += 1
