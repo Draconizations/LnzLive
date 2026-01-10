@@ -40,6 +40,8 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `CTRL` + `Z` | Undo last committed action |
 | **Viewport** | `CTRL` + `Y` | Redo last committed action |
 | **Viewport** | `ESCAPE` | Exit Current Mode |
+| **Viewport** | `CTRL` + `left-click`| Add or remove ballz in group selection |
+| **Viewport** | `CTRL` + `left-click drag`| Box selection of ballz |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `H` | Capture `[Head Shot]` |
@@ -70,13 +72,9 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Preset Mode** | `R` or `ALT` + `G` | **Open/Close Preset Mode** |
 | **Preset Mode** | `left-click` | **Apply Preset**: Apply current Preset to ball |
 | **Preset Mode** | `ALT` + left-click | **Eyedropper**: Sample properties from ball |
-| **Preset Mode** | `CTRL` + `left-click`| Group selection of ballz |
-| **Preset Mode** | `CTRL` + `left-click drag`| Box selection of ballz |
 | **Line Mode** | `E` | **Open/Close Line Mode** |
 | **Line Mode** | `left-click` | Connect linez between first and second clicked ball |
 | **Move Mode** | `U` or `ALT` + `M` | **Open/Close Move Mode** |
-| **Move Mode** | `CTRL` + `left-click`| Group selection of ballz |
-| **Move Mode** | `CTRL` + `left-click drag`| Box selection of ballz |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `ALT` + `left-click`| Select pivot ball |
 | **Move Mode** | `left-click drag`| Move target ball or selected group of ballz |
