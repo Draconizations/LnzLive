@@ -169,12 +169,6 @@ func _ready():
 
 	call_deferred("update_preview")
 
-# func show():
-# 	panel.show()
-
-# func hide():
-# 	panel.hide()
-
 func set_texture_list(list):
 	ball_texture_list = list
 	if ball_texture_list.size() > 0:
@@ -212,50 +206,10 @@ func sync_camera(main_camera_transform: Transform):
 		preview_camera.transform.origin = pos
 		preview_camera.look_at(Vector3.ZERO, Vector3.UP)
 
-func _on_EyedropperToggle_toggled(is_on):
-	emit_signal("eyedropper_toggled", is_on)
-
-func _on_ShowRawButton_pressed():
-	raw_lnz_container.visible = !raw_lnz_container.visible
-
 func _on_property_changed(_val = null):
 	if _ignore_ui_changes: return
 	save_settings()
 	update_preview()
-
-func _on_Tree_item_edited():
-	_base_paintballz_data.clear()
-	var root = paintballz_tree.get_root()
-	if root:
-		var item = root.get_children()
-		while item:
-			var p_data = _read_item_data(item)
-			_base_paintballz_data.append(p_data)
-			item = item.get_next()
-
-	_reset_rotation_spinboxes()
-	update_preview()
-
-func _reset_rotation_spinboxes():
-	_ignore_ui_changes = true
-	roll_spinbox.value = 0
-	pitch_spinbox.value = 0
-	yaw_spinbox.value = 0
-	_ignore_ui_changes = false
-
-func _read_item_data(item: TreeItem) -> Dictionary:
-	return {
-		"base": item.get_text(0).to_int(),
-		"size": item.get_text(1).to_int(),
-		"position": Vector3(item.get_text(2).to_float(), item.get_text(3).to_float(), item.get_text(4).to_float()),
-		"color_index": item.get_text(5).to_int(),
-		"outline_color_index": item.get_text(6).to_int(),
-		"fuzz": item.get_text(7).to_int(),
-		"outline": item.get_text(8).to_int(),
-		"group": item.get_text(9).to_int(),
-		"texture_id": item.get_text(10).to_int(),
-		"anchored": item.get_text(11).to_int()
-	}
 
 func _on_scale_changed(value, is_size_control):
 	if _ignore_ui_changes: return
@@ -277,6 +231,39 @@ func _on_rotation_changed(_val):
 	save_settings()
 	update_preview()
 
+func _on_EyedropperToggle_toggled(is_on):
+	emit_signal("eyedropper_toggled", is_on)
+
+func _on_ShowRawButton_pressed():
+	raw_lnz_container.visible = !raw_lnz_container.visible
+
+func _on_Tree_item_edited():
+	_base_paintballz_data.clear()
+	var root = paintballz_tree.get_root()
+	if root:
+		var item = root.get_children()
+		while item:
+			var p_data = _read_item_data(item)
+			_base_paintballz_data.append(p_data)
+			item = item.get_next()
+
+	_reset_rotation_spinboxes()
+	update_preview()
+
+func _read_item_data(item: TreeItem) -> Dictionary:
+	return {
+		"base": item.get_text(0).to_int(),
+		"size": item.get_text(1).to_int(),
+		"position": Vector3(item.get_text(2).to_float(), item.get_text(3).to_float(), item.get_text(4).to_float()),
+		"color_index": item.get_text(5).to_int(),
+		"outline_color_index": item.get_text(6).to_int(),
+		"fuzz": item.get_text(7).to_int(),
+		"outline": item.get_text(8).to_int(),
+		"group": item.get_text(9).to_int(),
+		"texture_id": item.get_text(10).to_int(),
+		"anchored": item.get_text(11).to_int()
+	}
+
 func _apply_rotation_to_tree():
 	_ignore_ui_changes = true
 
@@ -295,6 +282,13 @@ func _apply_rotation_to_tree():
 		var item = paintballz_tree.create_item(root)
 		_setup_tree_item(item, p_data, new_pos)
 
+	_ignore_ui_changes = false
+
+func _reset_rotation_spinboxes():
+	_ignore_ui_changes = true
+	roll_spinbox.value = 0
+	pitch_spinbox.value = 0
+	yaw_spinbox.value = 0
 	_ignore_ui_changes = false
 
 func _on_MirrorButton_pressed(axis):
