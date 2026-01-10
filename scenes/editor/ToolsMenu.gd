@@ -240,7 +240,7 @@ func _on_ToolsMenu_about_to_show():
 		is_omitted = selected_visual_ball.get("omitted") == true
 
 	if is_ball_selected:
-		set_item_text(13, "Jump to #%d (%s)" % [b_name, ball_no])
+		set_item_text(13, "Jump to #%d (%s)" % [ball_no, b_name])
 	else:
 		set_item_text(13, "No Ballz Selected")
 
