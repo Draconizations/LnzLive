@@ -2845,7 +2845,13 @@ func _on_preset_apply_selection():
 	if selected_balls.empty():
 		return
 
+	var ids_to_restore = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			ids_to_restore.append(b.ball_no)
+
 	var base_properties = preset_settings_instance.get_properties()
+
 	var exclusion_list = []
 	if base_properties.get("exclude_eyes", false):
 		exclusion_list = KeyBallsData.get_group_balls("Eyes")
@@ -2894,6 +2900,19 @@ func _on_preset_apply_selection():
 
 	if not batch_changes.empty():
 		lnz_text_edit.apply_batch_presets(batch_changes)
+		_restore_preset_selection(ids_to_restore)
+
+func _restore_preset_selection(ids: Array):
+	selected_balls.clear()
+	
+	for id in ids:
+		var ball = _find_visual_ball_by_no(id)
+		if is_instance_valid(ball):
+			selected_balls.append(ball)
+			if ball.has_method("apply_outline_state"):
+				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
+	
+	_update_selected_ballz_in_settings()
 
 ### MOVE MODE ###
 
