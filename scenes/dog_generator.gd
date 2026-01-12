@@ -747,6 +747,14 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					var tilt_rad = deg2rad(EYELID_TILTS[eyelid_mode])
 					base_node.set_eyelid_rotation(eye_dir * tilt_rad)
 
+				if lnz.eyelash_lengths.size() > 0:
+					base_node.set_eyelash_lengths(lnz.eyelash_lengths)
+					base_node.set_eyelash_angle(lnz.eyelash_angle)
+					base_node.set_eyelash_spacing(lnz.eyelash_spacing)
+					
+					var lash_col = lnz.eyelash_color if lnz.eyelash_color != -1 else lnz.eyelid_color
+					base_node.set_eyelash_color(lash_col)
+
 			ball_map[ball.ball_no] = visual_ball
 
 		else:
@@ -1365,11 +1373,21 @@ func update_eyelids(tilt_deg: float):
 	var tilt = deg2rad(tilt_deg)
 	for base_no in eyelid_dir_map.keys():
 		var node = ball_map.get(base_no)
-		if node:
+		if is_instance_valid(node) and node.has_method("set_eyelid_color"):
 			if eyelid_mode == 1:
 				node.set_eyelid_color(-1)
+				node.set_eyelash_lengths([])
 			else:
 				node.set_eyelid_color(lnz.eyelid_color)
+				
+				if lnz.eyelash_lengths.size() > 0:
+					node.set_eyelash_lengths(lnz.eyelash_lengths)
+					node.set_eyelash_angle(lnz.eyelash_angle)
+					node.set_eyelash_spacing(lnz.eyelash_spacing)
+					
+					var lash_col = lnz.eyelash_color if lnz.eyelash_color != -1 else lnz.eyelid_color
+					node.set_eyelash_color(lash_col)
+			
 			var angle = eyelid_dir_map[base_no] * tilt
 			node.set_eyelid_rotation(angle)
 

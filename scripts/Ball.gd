@@ -28,6 +28,11 @@ export var transparency_on        = true               setget set_transparency
 
 export var eyelid_rotation        = 0.0                setget set_eyelid_rotation
 export(int) var eyelid_color      = -1                 setget set_eyelid_color
+		   
+export var eyelash_lengths        = []                 setget set_eyelash_lengths
+export var eyelash_angle          = 15                 setget set_eyelash_angle
+export var eyelash_spacing        = 50                 setget set_eyelash_spacing
+export var eyelash_color          = 244                setget set_eyelash_color
 
 export var species                = 0                  setget set_species
 
@@ -78,6 +83,11 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("eyelid_rotation", eyelid_rotation)
 	$MeshInstance.material_override.set_shader_param("eyelid_color",    eyelid_color)
 	
+	set_eyelash_lengths(eyelash_lengths)
+	set_eyelash_angle(eyelash_angle)
+	set_eyelash_spacing(eyelash_spacing)
+	set_eyelash_color(eyelash_color)
+
 	# Pass the original texture to the shader
 	set_texture(texture)
 
@@ -113,6 +123,42 @@ func set_eyelid_rotation(rad: float) -> void:
 func set_eyelid_color(col: int) -> void:
 	eyelid_color = col
 	$MeshInstance.material_override.set_shader_param("eyelid_color", col)
+
+func set_eyelash_lengths(new_value: Array):
+	eyelash_lengths = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("has_eyelashes", new_value.size() > 0)
+		$MeshInstance.material_override.set_shader_param("eyelash_count", new_value.size())
+		
+		var l1 = [0.0, 0.0, 0.0, 0.0]
+		var l2 = [0.0, 0.0, 0.0, 0.0]
+		
+		# Fill first vec4 (lashes 0-3)
+		for i in range(min(new_value.size(), 4)):
+			l1[i] = float(new_value[i])
+			
+		# Fill second vec4 (lashes 4-7)
+		for i in range(4, min(new_value.size(), 8)):
+			l2[i-4] = float(new_value[i])
+		
+		$MeshInstance.material_override.set_shader_param("eyelash_lengths_1", Plane(l1[0], l1[1], l1[2], l1[3]))
+		$MeshInstance.material_override.set_shader_param("eyelash_lengths_2", Plane(l2[0], l2[1], l2[2], l2[3]))
+	
+func set_eyelash_angle(new_value):
+	eyelash_angle = new_value
+	if $MeshInstance.material_override:
+		var angle_rad = (float(new_value) / 64.0) * PI
+		$MeshInstance.material_override.set_shader_param("eyelash_angle_rad", angle_rad)
+
+func set_eyelash_spacing(new_value):
+	eyelash_spacing = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("eyelash_spacing_norm", float(new_value) / 100.0)
+
+func set_eyelash_color(new_value):
+	eyelash_color = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("eyelash_color_index", new_value)
 
 func set_fuzz_amount(new_value):
 	fuzz_amount = new_value

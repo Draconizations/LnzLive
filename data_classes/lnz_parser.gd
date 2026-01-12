@@ -27,6 +27,11 @@ var texture_list = []
 var no_texture_rotate = []
 var palette = null
 
+var eyelash_lengths = []
+var eyelash_angle   = 0
+var eyelash_spacing = 0
+var eyelash_color   = -1
+
 var file_path
 
 func _init(file_path):
@@ -50,6 +55,7 @@ func _init(file_path):
 	get_palette(file)
 	get_species(file)
 	get_eyelid_color(file)
+	get_eyelash_info(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
 	get_body_extension(file)
@@ -270,6 +276,36 @@ func get_eyelid_color(file: File):
 		eyelid_color = parsed_lines[0]["color"]
 	else:
 		eyelid_color = 244
+
+func get_eyelash_info(file: File):
+	if not get_next_section(file, "Eyelash Info"):
+		return
+	
+	var raw_lines = []
+	while true:
+		var line = file.get_line().strip_edges()
+		if line.empty() or line.begins_with("[") or file.eof_reached():
+			break
+		if line.begins_with(";") or line.begins_with("#") or line.begins_with("="):
+			continue
+		raw_lines.append(line)
+
+	if raw_lines.size() >= 4:
+		eyelash_lengths = _parse_comma_list(raw_lines[0])
+		eyelash_angle = int(raw_lines[1])
+		eyelash_spacing = int(raw_lines[2])
+		eyelash_color = int(raw_lines[3])
+	print(eyelash_lengths)
+
+func _parse_comma_list(line: String) -> Array:
+	var result = []
+	var parts = line.split(",")
+	for p in parts:
+		var val = int(p.strip_edges())
+		if val == -1:
+			break 
+		result.append(val)
+	return result
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
