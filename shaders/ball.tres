@@ -15,6 +15,14 @@ const int TRANSPARENT_COLOR_INDEX = 253;
 uniform float eyelid_rotation = 0.0;              // radians: 0 = up, +π/2 = right, –π/2 = left, π = down
 uniform int   eyelid_color    = -1;               // palette index
 
+uniform bool  has_eyelashes = false;
+uniform int   eyelash_count = 0;
+uniform vec4  eyelash_lengths_1; // Lashes 0-3
+uniform vec4  eyelash_lengths_2; // Lashes 4-7
+uniform float eyelash_angle_rad = 0.0;
+uniform float eyelash_spacing_norm = 0.5;
+uniform int   eyelash_color_index = 244;
+
 uniform int fuzz_amount = 0;                      // fuzz jitter
 uniform int ball_size = 1;                        // diameter in pixels
 uniform int outline = -1;                         // outline drawing (-3, draw as nose; -2, shift half R; -1, none; 0, shift half L; 1, shift R + L; 2+, full thickness)
@@ -286,8 +294,59 @@ void fragment() {
         }
     }
 
+    // DRAW EYELASHES
+    float lash_mask = 0.0;
+    if (has_eyelashes && eyelash_color_index != -1) {
+        vec2 vc = mesh_pos * float(ball_size); 
+        
+        float rot_c = cos(-eyelid_rotation);
+        float rot_s = sin(-eyelid_rotation);
+        vec2 vcr = vec2(vc.x * rot_c - vc.y * rot_s, vc.x * rot_s + vc.y * rot_c);
+
+        float total_fan_width = (float(ball_size) * eyelash_spacing_norm) / 2.0;
+        float start_x = -total_fan_width * 0.5;
+        float denom = max(float(eyelash_count) - 1.0, 1.0);
+
+        for(int i = 0; i < 8; i++) {
+            if(i >= eyelash_count) break;
+
+            float lash_len = 0.0;
+            if (i == 0)      lash_len = eyelash_lengths_1.x;
+            else if (i == 1) lash_len = eyelash_lengths_1.y;
+            else if (i == 2) lash_len = eyelash_lengths_1.z;
+            else if (i == 3) lash_len = eyelash_lengths_1.w;
+            else if (i == 4) lash_len = eyelash_lengths_2.x;
+            else if (i == 5) lash_len = eyelash_lengths_2.y;
+            else if (i == 6) lash_len = eyelash_lengths_2.z;
+            else if (i == 7) lash_len = eyelash_lengths_2.w;
+
+            if (lash_len <= 0.0) continue;
+
+            float t = float(i) / denom;
+            float lash_rot = (t * 2.0 - 1.0) * eyelash_angle_rad;
+            
+            vec2 dir = vec2(sin(lash_rot), cos(lash_rot));
+            vec2 lash_base = vec2(start_x + t * total_fan_width, 0.5);
+            vec2 p = vcr - lash_base;
+            //vec2 p = vcr - vec2(start_x + t * total_fan_width, 0.0);
+
+            float proj = dot(p, dir);
+            float dist = length(p - dir * proj);
+            
+            float thickness = 0.15; 
+
+            if (proj > 0.0 && proj < lash_len && dist < thickness) {
+                vec4 tex_color = texture(palette, vec2(float(eyelash_color_index)/255.0, 0.0));
+                ALBEDO = tex_color.rgb;
+                lash_mask = 1.0;
+                break; 
+            }
+        }
+    }
+
     // SET TRANSPARENCY
-    float alpha_value = 1.0 - step(pct + pct2, 0.0);
+    // float alpha_value = 1.0 - step(pct + pct2, 0.0);
+    float alpha_value = 1.0 - step(pct + pct2 + lash_mask, 0.0);
 
     if (highlight_pct > 0.0) {
         alpha_value = 1.0;
@@ -316,6 +375,7 @@ void fragment() {
 }
 
 void vertex() {
+    
     // Store pet-local XY for eyelids:
     mesh_pos = VERTEX.xy;
 
@@ -335,14 +395,18 @@ void vertex() {
 	vec2 center_ndc = (center_view.xy + 1.0) / 2.0;
 	center_fragcoord = floor(center_ndc * VIEWPORT_SIZE) + 0.5;
 	
+	// float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
+    //float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0); // extra space for higlight
+    float lash_pad = has_eyelashes ? 10.0 : 0.0; 
+    float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3) + lash_pad) / (VIEWPORT_SIZE.x / 2.0);
+
     // Push vertices outwards by half ball size and fuzz amount
 	vert_in_clip_space.z = center_clip_space.z;
 	vert_in_clip_space.z += z_add * 0.001;
-	// float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
-    float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0); // extra space for higlight
+
 	vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
 	vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
-
+    
 	VERTEX = vert_in_clip_space;
 }"
 
@@ -354,6 +418,13 @@ shader_param/should_quantize = false
 shader_param/palette_size = 256
 shader_param/eyelid_rotation = 0.0
 shader_param/eyelid_color = -1
+shader_param/has_eyelashes = false
+shader_param/eyelash_count = 0
+shader_param/eyelash_lengths_1 = null
+shader_param/eyelash_lengths_2 = null
+shader_param/eyelash_angle_rad = 0.0
+shader_param/eyelash_spacing_norm = 0.25
+shader_param/eyelash_color_index = 244
 shader_param/fuzz_amount = 0
 shader_param/ball_size = 1
 shader_param/outline = -1
