@@ -2575,7 +2575,7 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			push_warning("Invalid color list format.")
 			return
 
-		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color)
+		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color, true)
 		if outline_color_list.empty():
 			push_warning("Invalid outline color list format.")
 			return
