@@ -31,6 +31,9 @@ uniform int outline_color_index = 0;              // outline color from palette 
 uniform float z_add = .0;                         // z-offset for z-shading
 uniform bool has_texture = false;                 // texture mask flag
 uniform sampler2D ball_texture: hint_white;       // texture lookup
+uniform bool is_atlas = false;
+uniform vec4 atlas_rect;                          // x,y,w,h
+uniform vec2 atlas_size;
 uniform vec2 texture_size;                        // declared texture mask size from LNZ
 uniform vec2 texture_size_raw;                    // actual texture image size from BMP
 uniform int transparent_index = 0;                // mask transparency threshold
@@ -164,34 +167,121 @@ void fragment() {
         // Normalize to raw texture size
         uv *= float(ball_size) / texture_size_raw;
 
-        // Wrap into [0,1] to tile
-        tex_coords = fract(uv);
+        if (is_atlas) {
+            vec2 tiled_uv = fract(uv);
+            tiled_uv.x = 1.0 - tiled_uv.x;
+            tiled_uv.y = 1.0 - tiled_uv.y;
+
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+
+            tex_coords = (atlas_pos + tiled_uv * atlas_dim) / atlas_size;
+        } else {
+            // Wrap into [0,1] to tile
+            tex_coords = fract(uv);
+            tex_coords.x = 1.0 - tex_coords.x;
+            tex_coords.y = 1.0 - tex_coords.y;
+        }
 
     } else {
-        // This works OK for centering BMP on ballz BUT it causes distortion/scaling that makes texture not pixel perfect
-        // https://thebookofshaders.com/09/ see whether better solution here
-
-         // Offset from ball center in pixels
+        // Get raw pixel offset from ball center
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
 
-        // Center using declared texture size
+        // Adjust for the difference between declared LNZ size and actual BMP size
         vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
-
-        // Correct offset to account for actual BMP being smaller than declared in LNZ
         offset -= base_center_offset;
 
-        // Normalize by actual BMP size to get UV coordinates and shift for centering
-        tex_coords = offset / texture_size_raw + vec2(0.5, 0.5);
-        
-    }
+        // Targeted center of the texel using floor and adding a half-pixel for pixel-perfect
+        vec2 snapped_uv = (floor(offset) + 0.5) / texture_size_raw + vec2(0.5);
 
-    tex_coords.x = 1.0 - tex_coords.x;
-    tex_coords.y = 1.0 - tex_coords.y;
+        if (is_atlas) {
+            // Flip for atlas
+            snapped_uv.x = 1.0 - snapped_uv.x;
+            snapped_uv.y = 1.0 - snapped_uv.y;
+            
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+            // Map the snapped UV to the atlas coordinates
+            tex_coords = (atlas_pos + snapped_uv * atlas_dim) / atlas_size;
+        } else {
+            tex_coords = snapped_uv;
+            //Flip for non-atlas
+            tex_coords.x = 1.0 - tex_coords.x;
+            tex_coords.y = 1.0 - tex_coords.y;
+        }
+    }
 
     vec3 texture_color;
     bool is_transparent = false;
     
-    if (should_quantize && has_texture) {
+    if (is_atlas && has_texture) {
+         vec4 raw_color = texture(ball_texture, tex_coords);
+         if (raw_color.a < 0.1) is_transparent = true;
+
+         if (should_quantize) {
+             vec4 original_color = raw_color;
+
+             if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+                texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
+                is_transparent = true;
+             } else {
+                 vec4 best_color = vec4(0.0);
+                 float best_distance_sq = 1e20;
+
+                 const int MAX_PALETTE_SIZE = 256;
+                 for (int i = 0; i < MAX_PALETTE_SIZE; i++) {
+                     if (i >= palette_size) {
+                         break;
+                     }
+
+                     if (i == TRANSPARENT_COLOR_INDEX) {
+                         continue;
+                     }
+                     // Normalized palette index for Babyz palette sampling (sample centers)
+                     float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
+                     vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
+                     float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
+
+                     if (distance_sq < best_distance_sq) {
+                         best_distance_sq = distance_sq;
+                         best_color = babyz_color;
+                     }
+                 }
+                 texture_color = best_color.rgb;
+             }
+         } else {
+             vec4 best_color = vec4(0.0);
+             float best_dist = 1e20;
+             int best_index = 0;
+
+             if (distance(raw_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+                 best_index = 253;
+             } else {
+                 for (int i=0; i<256; i++) {
+                     // Sample pixel centers
+                     vec4 p_col = texture(petz_palette, vec2((float(i) + 0.5)/256.0, 0.5));
+                     float d = distance(raw_color.rgb, p_col.rgb);
+                     if (d < best_dist) { best_dist = d; best_index = i; }
+                 }
+             }
+
+             int palette_index = best_index;
+             is_transparent = (palette_index == 253);
+             if (raw_color.a < 0.1) is_transparent = true;
+
+             if (transparent_index > 0 && color_index >= 10 && color_index < 150) {
+                if(transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
+                    texture_color = get_shifted_color(palette_index);
+                } else {
+                    texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+                }
+            } else if (transparent_index == 0 && color_index >= 10 && color_index < 150) {
+                texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+            } else {
+                texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
+            }
+         }
+    } else if (should_quantize && has_texture) {
         // Get palette index from texture
         int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
 
@@ -432,6 +522,9 @@ shader_param/color_index = 0
 shader_param/outline_color_index = 0
 shader_param/z_add = 0.0
 shader_param/has_texture = false
+shader_param/is_atlas = false
+shader_param/atlas_rect = null
+shader_param/atlas_size = null
 shader_param/texture_size = null
 shader_param/texture_size_raw = null
 shader_param/transparent_index = 0

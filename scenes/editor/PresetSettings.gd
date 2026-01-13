@@ -402,6 +402,10 @@ func _split_and_clean_paintball(line: String) -> Array:
 	return cleaned_parts
 
 func _load_texture(texture_filename: String) -> Texture:
+	var root_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if root_node and root_node.has_method("load_texture"):
+		return root_node.load_texture(texture_filename, get_tree().root.get_node("Root/ResourcePreloader"))
+
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()

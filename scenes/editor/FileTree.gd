@@ -438,39 +438,80 @@ func scan_local_textures():
 	dir.list_dir_end()
 
 func scan_res_textures():
-	var dir = Directory.new()
-	var textures_dir = "res://resources/textures"
-	if dir.open(textures_dir) != OK:
-		return
-	dir.list_dir_begin()
-	var filename = dir.get_next()
-
 	var processed = []
+	var textures_dir = "res://resources/textures"
+	
+	var atlas_manifest_path = "res://resources/texture_atlas/atlas_manifest.json"
+	var f = File.new()
+	if f.open(atlas_manifest_path, File.READ) == OK:
+		var result = JSON.parse(f.get_as_text())
+		f.close()
+		if result.error == OK:
+			var manifest = result.result
+			print("FileTree scanning atlas manifest...")
 
-	while filename != "":
-		var final_filename = ""
-		
-		if filename.to_lower().ends_with(".bmp"):
-			final_filename = filename
-		elif filename.to_lower().ends_with(".bmp.import"):
-			final_filename = filename.get_basename()
-
-		if final_filename != "" and not final_filename in processed:
-			processed.append(final_filename)
-			var full_path = textures_dir.plus_file(final_filename)
-
-			var new_item = create_item(res_textures)
-			new_item.set_text(0, final_filename)
-			new_item.set_metadata(0, full_path)
-
-			var thumb_path = full_path.get_basename() + "_thumb.png"
+			var sorted_keys = manifest.keys()
+			sorted_keys.sort()
 			
-			var thumb_tex = load(thumb_path)
-			if thumb_tex:
-				new_item.set_icon(0, thumb_tex)
+			for key in sorted_keys:
+				var entry = manifest[key]
+				var texture_name = key
+				if !texture_name.to_lower().ends_with(".bmp"):
+					texture_name += ".bmp"
+				
+				processed.append(texture_name)
+				
+				var new_item = create_item(res_textures)
+				new_item.set_text(0, texture_name)
+				new_item.set_metadata(0, textures_dir.plus_file(texture_name))
+				
+				var thumb_path = textures_dir.plus_file(texture_name.get_basename() + "_thumb.png")
+				if ResourceLoader.exists(thumb_path):
+					var thumb = ResourceLoader.load(thumb_path)
+					new_item.set_icon(0, thumb)
+				else:
+					var atlas_file = entry["atlas"]
+					if atlas_file.to_lower().ends_with(".bmp"):
+						atlas_file = atlas_file.get_basename() + ".png"
+					var atlas_path = "res://resources/texture_atlas/" + atlas_file
+					
+					if ResourceLoader.exists(atlas_path):
+						var atlas_tex = ResourceLoader.load(atlas_path)
+						var region = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
+						var icon_tex = AtlasTexture.new()
+						icon_tex.atlas = atlas_tex
+						icon_tex.region = region
+						new_item.set_icon(0, icon_tex)
 
-		filename = dir.get_next()
-	dir.list_dir_end()
+	var dir = Directory.new()
+	if dir.open(textures_dir) == OK:
+		dir.list_dir_begin()
+		var filename = dir.get_next()
+
+		while filename != "":
+			var final_filename = ""
+			
+			if filename.to_lower().ends_with(".bmp"):
+				final_filename = filename
+			elif filename.to_lower().ends_with(".bmp.import"):
+				final_filename = filename.get_basename()
+
+			if final_filename != "" and not final_filename in processed:
+				processed.append(final_filename)
+				var full_path = textures_dir.plus_file(final_filename)
+
+				var new_item = create_item(res_textures)
+				new_item.set_text(0, final_filename)
+				new_item.set_metadata(0, full_path)
+
+				var thumb_path = full_path.get_basename() + "_thumb.png"
+				
+				var thumb_tex = load(thumb_path)
+				if thumb_tex:
+					new_item.set_icon(0, thumb_tex)
+
+			filename = dir.get_next()
+		dir.list_dir_end()
 
 func scan_local_palettes():
 	var dir2 = Directory.new()
