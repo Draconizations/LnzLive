@@ -87,9 +87,22 @@ func set_texture(new_value):
 	texture = new_value
 	
 	if $MeshInstance.material_override != null:
-		$MeshInstance.material_override.set_shader_param("polygon_texture", new_value)
 		if new_value != null:
 			var raw_texture_size = new_value.get_size()
+
+			if new_value is AtlasTexture:
+				var atlas_tex = new_value as AtlasTexture
+				var rect = atlas_tex.region
+				raw_texture_size = rect.size
+
+				$MeshInstance.material_override.set_shader_param("polygon_texture", atlas_tex.atlas)
+				$MeshInstance.material_override.set_shader_param("is_atlas", true)
+				$MeshInstance.material_override.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
+				$MeshInstance.material_override.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
+			else:
+				$MeshInstance.material_override.set_shader_param("polygon_texture", new_value)
+				$MeshInstance.material_override.set_shader_param("is_atlas", false)
+
 			var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
 
 			# print("Declared size from [Texture List]:", texture_size)
@@ -101,7 +114,9 @@ func set_texture(new_value):
 			$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 			$MeshInstance.material_override.set_shader_param("has_texture", true)
 		else:
+			$MeshInstance.material_override.set_shader_param("polygon_texture", null)
 			$MeshInstance.material_override.set_shader_param("has_texture", false)
+			$MeshInstance.material_override.set_shader_param("is_atlas", false)
 
 func set_palette(new_value):
 	if new_value != null:

@@ -124,6 +124,20 @@ func _update_shader_texture_params():
 
 	if texture != null:
 		var raw_texture_size = texture.get_size()
+
+		if texture is AtlasTexture:
+			var atlas_tex = texture as AtlasTexture
+			var rect = atlas_tex.region
+			raw_texture_size = rect.size
+
+			$MeshInstance.material_override.set_shader_param("ball_texture", atlas_tex.atlas)
+			$MeshInstance.material_override.set_shader_param("is_atlas", true)
+			$MeshInstance.material_override.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
+			$MeshInstance.material_override.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
+		else:
+			$MeshInstance.material_override.set_shader_param("ball_texture", texture)
+			$MeshInstance.material_override.set_shader_param("is_atlas", false)
+
 		var eff_texture_size = texture_size if (texture_size != Vector2.ZERO and !tile_texture) else raw_texture_size
 
 		# print("Declared size from [Texture List]:", texture_size)
@@ -131,13 +145,13 @@ func _update_shader_texture_params():
 		# print("Effective texture_size passed to shader:", eff_texture_size)
 		# print("Texture resized? ", eff_texture_size != raw_texture_size)
 		
-		$MeshInstance.material_override.set_shader_param("ball_texture", texture)
 		$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
 		$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 		$MeshInstance.material_override.set_shader_param("has_texture", true)
 	else:
 		$MeshInstance.material_override.set_shader_param("ball_texture", null)
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
+		$MeshInstance.material_override.set_shader_param("is_atlas", false)
 
 func set_palette(new_value):
 	if new_value != null:
