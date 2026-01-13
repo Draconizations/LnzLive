@@ -1,0 +1,1668 @@
+{
+	"AMEOBA": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BEE2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BIGWAVE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BLACKNOISE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BLUESOCKS": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BUNNYBROWN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BUNNYBROWN2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BUNNYGREY": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"BUNNYTAN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"CAMOD": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 0,
+		"w": 32,
+		"h": 32
+	},
+	"CAMOJ": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"CHAINMAIL1": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"CHAINMAIL2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"CHECKER2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"CHECKS": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"CIRCLES": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONBLUE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONBLUE2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONBLUE3": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONBLUE4": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 32,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONGREEN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONGREEN2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONGREEN3": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONGREY": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONORANGE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONORANGE2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONPINK": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONPURP": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONPURP02": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONRED": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 64,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONWHITE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONYELLOW": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"COTTONYELLOW2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"GOLF": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"GOLF2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"GOLF3": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"GOLFHAT": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"HAWAIIAN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"HAWAIIAN2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"HEARTS": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 96,
+		"w": 32,
+		"h": 32
+	},
+	"HEARTS2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"HEARTS3": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"HELMET": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"HELMET2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"HERRING": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"HERRING2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"JOWL2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"LONGJOHN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"MAINE9": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"PAINTED": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 128,
+		"w": 32,
+		"h": 32
+	},
+	"PJBALLOON": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PJBALLOON2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PJBASE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PJBOAT": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PJDUCK": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PLAID": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PLAID5": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PLAIDBLUE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"PLAIDRED": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"Plain": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 160,
+		"w": 32,
+		"h": 32
+	},
+	"POLKA": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"POLKABG": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"POLKABLUE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"POLKACLOWN": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"POLKARED": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"Red Tile": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"REDSTRIPE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"RIDDLER": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"SCRIBBLE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"SKI2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 192,
+		"w": 32,
+		"h": 32
+	},
+	"SPOONWOOD": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"stripe11": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"stripe13": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"stripe14": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"stripe16": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"stripe17": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"TANRIB": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"TIEDYE4": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 224,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"TRIANGLESBLUE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 256,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"TRIANGLESPINK": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 288,
+		"y": 224,
+		"w": 32,
+		"h": 32
+	},
+	"TRIANGLESYEL": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 0,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"WIGGLE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 32,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"WIZARD": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 64,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"YELLOWDIAMOND": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 96,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"YELLOWNOISE": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 128,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"ZEBRA2": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 160,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"ZIGZAG": {
+		"atlas": "atlas_32x32.bmp",
+		"x": 192,
+		"y": 256,
+		"w": 32,
+		"h": 32
+	},
+	"Autumn": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"babyz_128x128_centered": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"Blue Carpet": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"Blue Dogz": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"Blue Plaid": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"Bunny": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"B_AFRO1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"B_AFRO11": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"B_AFRO2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 0,
+		"w": 128,
+		"h": 128
+	},
+	"B_AFRO3": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_BROWNLONG1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN1_TRANS": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN21": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN2_TRANS": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN3": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_DARKBROWN3_TRANS": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 128,
+		"w": 128,
+		"h": 128
+	},
+	"B_LTBROWN1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_ORANGE2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANS1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANS11": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANS2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANS21": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANS3": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANSNEW1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANSNEW2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 256,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANSNEW3": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"B_TRANSNEW4": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"CALI2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"CALI5": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"CLEAR": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"Clouds": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"Cobblestone": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"Desert": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"Disco": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 384,
+		"w": 128,
+		"h": 128
+	},
+	"Eggs": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"EGYPTM03": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Field": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Fish": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Flowers": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Granite": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Grass": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Green Dogz": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"HAIR6": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 512,
+		"w": 128,
+		"h": 128
+	},
+	"Hay": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Hextile": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Holiday1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Holiday2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Holiday4": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Holiday5": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Holiday6": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"HONEY1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"I Love You": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 640,
+		"w": 128,
+		"h": 128
+	},
+	"Jade Floor": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"Kitchen Tile": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"Leaves": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"LYNX04": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"MAINE4": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"MAINE5": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"MOTTLED2": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"MOTTLED5": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"Musical Notes": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 768,
+		"w": 128,
+		"h": 128
+	},
+	"Orange Catz": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Pink": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Purple Shag": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Redhot": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Rose": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"SCOTT1": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Shag Carpet": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 768,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Shamrock": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 896,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Stained Glass": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 1024,
+		"y": 896,
+		"w": 128,
+		"h": 128
+	},
+	"Stone": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 0,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"stripe3": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 128,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"Tiki": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 256,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"Tile": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 384,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"Tilewave": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 512,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"Wooden Floor": {
+		"atlas": "atlas_128x128.bmp",
+		"x": 640,
+		"y": 1024,
+		"w": 128,
+		"h": 128
+	},
+	"babyz_256x256_centered": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 256,
+		"h": 256
+	},
+	"Beach": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 256,
+		"y": 0,
+		"w": 256,
+		"h": 256
+	},
+	"Cupid": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 512,
+		"y": 0,
+		"w": 256,
+		"h": 256
+	},
+	"Fireworks": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 0,
+		"y": 256,
+		"w": 256,
+		"h": 256
+	},
+	"Holiday3": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 256,
+		"y": 256,
+		"w": 256,
+		"h": 256
+	},
+	"test_no_tex_rot_size_256x256": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 512,
+		"y": 256,
+		"w": 256,
+		"h": 256
+	},
+	"Turkey": {
+		"atlas": "atlas_256x256.bmp",
+		"x": 0,
+		"y": 512,
+		"w": 256,
+		"h": 256
+	},
+	"babyz_64x64_centered": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"BLACK": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"BLACKSTRIPE": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"Blue Tile": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 192,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"BLUERIB": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 256,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"BUBBLESB": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 320,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"BUBBLESP": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 384,
+		"y": 0,
+		"w": 64,
+		"h": 64
+	},
+	"B_ORANGE1": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"Carpet": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"CLOTHRED": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"CLOTHYELLOW": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 192,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"COW": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 256,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"DENIM": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 320,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"DENIMWASHED": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 384,
+		"y": 64,
+		"w": 64,
+		"h": 64
+	},
+	"DIAPER0": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"DIAPER1": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"DIAPER2": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"FLOWER": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 192,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"GIRAFFE": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 256,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"GROOVY": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 320,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"GROOVY2": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 384,
+		"y": 128,
+		"w": 64,
+		"h": 64
+	},
+	"HAIR11": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"JOWL1": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"Linoleum Tile": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"Paw Print": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 192,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"REDRIB": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 256,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"Sand": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 320,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"SKIN1": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 384,
+		"y": 192,
+		"w": 64,
+		"h": 64
+	},
+	"STARS": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"SWTR3": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"SWTR7": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"TEDDY1": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 192,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"test_iris_texture": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 256,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"TIEDYE": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 320,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"TIEDYE2": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 384,
+		"y": 256,
+		"w": 64,
+		"h": 64
+	},
+	"TIGER2": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 0,
+		"y": 320,
+		"w": 64,
+		"h": 64
+	},
+	"YELLOWRIB": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 64,
+		"y": 320,
+		"w": 64,
+		"h": 64
+	},
+	"ZEBRA": {
+		"atlas": "atlas_64x64.bmp",
+		"x": 128,
+		"y": 320,
+		"w": 64,
+		"h": 64
+	},
+	"Bricks": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 128,
+		"h": 64
+	},
+	"hair10": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 128,
+		"y": 0,
+		"w": 128,
+		"h": 64
+	},
+	"HAIR20": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 256,
+		"y": 0,
+		"w": 128,
+		"h": 64
+	},
+	"HAIR3": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 0,
+		"y": 64,
+		"w": 128,
+		"h": 64
+	},
+	"LEOPARD": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 128,
+		"y": 64,
+		"w": 128,
+		"h": 64
+	},
+	"plush": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 256,
+		"y": 64,
+		"w": 128,
+		"h": 64
+	},
+	"PURP": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 0,
+		"y": 128,
+		"w": 128,
+		"h": 64
+	},
+	"Redwood Floor": {
+		"atlas": "atlas_128x64.bmp",
+		"x": 128,
+		"y": 128,
+		"w": 128,
+		"h": 64
+	},
+	"B_BLOND1": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 64,
+		"h": 32
+	},
+	"HAIR4": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 64,
+		"y": 0,
+		"w": 64,
+		"h": 32
+	},
+	"STRIPES": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 128,
+		"y": 0,
+		"w": 64,
+		"h": 32
+	},
+	"TERRYBLUE": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 0,
+		"y": 32,
+		"w": 64,
+		"h": 32
+	},
+	"TERRYBROWN": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 64,
+		"y": 32,
+		"w": 64,
+		"h": 32
+	},
+	"TERRYPINK": {
+		"atlas": "atlas_64x32.bmp",
+		"x": 128,
+		"y": 32,
+		"w": 64,
+		"h": 32
+	},
+	"CHECKER": {
+		"atlas": "atlas_16x16.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 16,
+		"h": 16
+	},
+	"SOAPBUBBLUE": {
+		"atlas": "atlas_16x16.bmp",
+		"x": 16,
+		"y": 0,
+		"w": 16,
+		"h": 16
+	},
+	"SOAPBUBWHITE": {
+		"atlas": "atlas_16x16.bmp",
+		"x": 0,
+		"y": 16,
+		"w": 16,
+		"h": 16
+	},
+	"Logo": {
+		"atlas": "atlas_170x170.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 170,
+		"h": 170
+	},
+	"Newspaper": {
+		"atlas": "atlas_70x157.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 70,
+		"h": 157
+	},
+	"PICTURE": {
+		"atlas": "atlas_100x70.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 100,
+		"h": 70
+	},
+	"PICTURE2": {
+		"atlas": "atlas_100x70.bmp",
+		"x": 100,
+		"y": 0,
+		"w": 100,
+		"h": 70
+	},
+	"PICTURE3": {
+		"atlas": "atlas_100x70.bmp",
+		"x": 0,
+		"y": 70,
+		"w": 100,
+		"h": 70
+	},
+	"PINKIE": {
+		"atlas": "atlas_18x18.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 18,
+		"h": 18
+	},
+	"QUILTBLUE": {
+		"atlas": "atlas_46x46.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 46,
+		"h": 46
+	},
+	"STARS2": {
+		"atlas": "atlas_48x48.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 48,
+		"h": 48
+	},
+	"Tartan": {
+		"atlas": "atlas_300x200.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 300,
+		"h": 200
+	},
+	"test_no_tex_rot_size_100x100": {
+		"atlas": "atlas_100x100.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 100,
+		"h": 100
+	},
+	"Tie": {
+		"atlas": "atlas_128x256.bmp",
+		"x": 0,
+		"y": 0,
+		"w": 128,
+		"h": 256
+	}
+}
