@@ -261,6 +261,8 @@ func is_special_baby_ball(species: int, ball_no: int) -> bool:
 	return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
 
 func generate_pet(file_path):
+	var t_start = OS.get_ticks_msec()
+
 	var full_rebuild = !_skip_next_rebuild
 	_skip_next_rebuild = false
 	
@@ -273,6 +275,8 @@ func generate_pet(file_path):
 	
 	init_visual_balls(lnz_info, full_rebuild)
 	emit_signal("palette_changed", lnz.palette)
+
+	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func generate_color_icon(color_index: int) -> ImageTexture:
 	if not current_palette_texture:
