@@ -52,6 +52,9 @@ var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
 var _texture_cache = {}
+var _atlas_manifest = {}
+var _atlas_textures = {}
+var _perf_texture_load_time = 0
 
 var _orig_lnz_pos := {}
 var _orig_world_pos := {}
@@ -97,6 +100,19 @@ signal line_created(start_ball, end_ball)
 signal palette_changed(palette_name)
 
 func _ready():
+	var t_start = OS.get_ticks_msec()
+	var f = File.new()
+	if f.open("res://resources/texture_atlas/atlas_manifest.json", File.READ) == OK:
+		var result = JSON.parse(f.get_as_text())
+		if result.error == OK:
+			_atlas_manifest = result.result
+			print("Atlas manifest loaded successfully with " + str(_atlas_manifest.size()) + " entries completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
+		else:
+			print("Failed to parse atlas manifest.")
+		f.close()
+	else:
+		print("Failed to open atlas manifest.")
+
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
 	editor.connect("find_paintball", self, "_on_LnzTextEdit_find_paintball")
@@ -262,6 +278,7 @@ func is_special_baby_ball(species: int, ball_no: int) -> bool:
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
+	_perf_texture_load_time = 0
 
 	var full_rebuild = !_skip_next_rebuild
 	_skip_next_rebuild = false
@@ -277,6 +294,7 @@ func generate_pet(file_path):
 	emit_signal("palette_changed", lnz.palette)
 
 	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
+	print("Texture loading completed in " + str(_perf_texture_load_time) + "ms")
 
 func generate_color_icon(color_index: int) -> ImageTexture:
 	if not current_palette_texture:
@@ -551,9 +569,55 @@ func get_root():
 		return get_tree().root.get_node("Root/PetRoot")
 
 func load_texture(texture_filename: String, preloader: ResourcePreloader):
+	var t_start = OS.get_ticks_msec()
+
 	if _texture_cache.has(texture_filename):
+		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 		return _texture_cache[texture_filename]
 
+	# Check atlas manifest first
+	var atlas_key = texture_filename.get_basename() # e.g. "hair10" from "hair10.bmp"
+
+	# Try exact match or case-insensitive match against manifest keys
+	var manifest_entry = null
+	if _atlas_manifest.has(atlas_key):
+		manifest_entry = _atlas_manifest[atlas_key]
+	else:
+		# Search case-insensitive
+		for key in _atlas_manifest.keys():
+			if key.to_lower() == atlas_key.to_lower():
+				manifest_entry = _atlas_manifest[key]
+				break
+
+	if manifest_entry:
+		var atlas_file = manifest_entry["atlas"]
+		# Fix extension .bmp -> .png for atlas file
+		if atlas_file.to_lower().ends_with(".bmp"):
+			atlas_file = atlas_file.get_basename() + ".png"
+
+		var atlas_path = "res://resources/texture_atlas/" + atlas_file
+		var atlas_tex = null
+
+		if _atlas_textures.has(atlas_path):
+			atlas_tex = _atlas_textures[atlas_path]
+		elif ResourceLoader.exists(atlas_path):
+			atlas_tex = ResourceLoader.load(atlas_path)
+			_atlas_textures[atlas_path] = atlas_tex
+
+		if atlas_tex:
+			var region = Rect2(manifest_entry["x"], manifest_entry["y"], manifest_entry["w"], manifest_entry["h"])
+			var texture = AtlasTexture.new()
+			texture.atlas = atlas_tex
+			texture.region = region
+
+			_texture_cache[texture_filename] = texture
+			print("Loaded atlas texture: " + texture_filename)
+			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
+			return texture
+		else:
+			print("Atlas texture file not found: " + atlas_path)
+
+	print("Loading individual texture: " + texture_filename)
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()
@@ -590,6 +654,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
 	_texture_cache[texture_filename] = texture
+	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 	return texture
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
