@@ -420,19 +420,90 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 		ear_ext = KeyBallsData.ear_ext_bab
 		
 	# legs
-	for ball_no in legs[0]:
-		var ball = base_ball_dict[ball_no]
-		if ball_no in [legs[0][0], legs[0][1]]:
-			ball.position.y += abs(ball.position.y * (lnz.leg_extensions.x / 100.0))
-		else:
-			ball.position.y += lnz.leg_extensions.x
-	for ball_no in legs[1]:
-		var ball = base_ball_dict[ball_no]
-		if ball_no in [legs[1][0], legs[1][1]]:
-			ball.position.y += abs(ball.position.y * abs(lnz.leg_extensions.y / 100.0))
-		else:
-			ball.position.y += lnz.leg_extensions.y
+	# for ball_no in legs[0]:
+	# 	var ball = base_ball_dict[ball_no]
+	# 	if ball_no in [legs[0][0], legs[0][1]]:
+	# 		ball.position.y += abs(ball.position.y * (lnz.leg_extensions.x / 100.0))
+	# 	else:
+	# 		ball.position.y += lnz.leg_extensions.x
+	# for ball_no in legs[1]:
+	# 	var ball = base_ball_dict[ball_no]
+	# 	if ball_no in [legs[1][0], legs[1][1]]:
+	# 		ball.position.y += abs(ball.position.y * abs(lnz.leg_extensions.y / 100.0))
+	# 	else:
+	# 		ball.position.y += lnz.leg_extensions.y
+
+	# legs
+	var front_legs = legs[0]
+	var back_legs = legs[1]
+	
+	var front_legs_set = {}
+	for b in front_legs: front_legs_set[b] = true
+
+	var back_legs_set = {}
+	for b in back_legs: back_legs_set[b] = true
+	
+	var ext_front = lnz.leg_extensions.x
+	var ext_back = lnz.leg_extensions.y
+	
+	if lnz.species == KeyBallsData.Species.BABY:
+		pass
+	else:
+		# tilt/raise head+body
+		# var z_front = 0.0
+		# var z_back = 0.0
 		
+		# if front_legs.size() > 0:
+		# 	z_front = base_ball_dict[front_legs[0]].position.z
+		# if back_legs.size() > 0:
+		# 	z_back = base_ball_dict[back_legs[0]].position.z
+			
+		# for ball_no in base_ball_dict:
+		# 	var ball = base_ball_dict[ball_no]
+			
+		# 	if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
+		# 		# plant legs
+		# 		pass
+		# 	else:
+		# 		# tilt body
+		# 		var t = 0.5
+		# 		if abs(z_back - z_front) > 0.001:
+		# 			t = (ball.position.z - z_front) / (z_back - z_front)
+		# 		# lift body
+		# 		var lift = lerp(ext_front, ext_back, t)
+		# 		ball.position.y -= lift
+
+		# tilt/raise body, raise head
+		var z_front = 0.0
+		var z_back = 0.0
+		
+		if front_legs.size() > 0:
+			z_front = base_ball_dict[front_legs[0]].position.z
+		if back_legs.size() > 0:
+			z_back = base_ball_dict[back_legs[0]].position.z
+		
+		var head_set = {}
+		for b in head_ext: head_set[b] = true
+			
+		for ball_no in base_ball_dict:
+			var ball = base_ball_dict[ball_no]
+			
+			if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
+				# plant legs
+				pass
+			else:
+				var t = 0.5
+				if abs(z_back - z_front) > 0.001:
+					t = (ball.position.z - z_front) / (z_back - z_front)
+				
+				if head_set.has(ball_no) or ball.position.z < z_front:
+					t = 0.0
+				else:
+					t = clamp(t, 0.0, 1.0)
+				
+				var lift = lerp(ext_front, ext_back, t)
+				ball.position.y -= lift
+			
 	# body
 	var special_ball = body_ext[0]
 	for ball_no in body_ext:
