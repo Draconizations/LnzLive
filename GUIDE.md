@@ -310,7 +310,47 @@ Coming soon!
 
 ![Paintball Mode icon](resources/icons/ico_tab_paint_2x.png)
 
-In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu or by right-clicking a specific ball to lock editing to that ball. When applying paintballs to Babyz, LnzLive automatically detects avoids the first 17 indices (chicken pox) and adds filler entries if necessary.
+In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu, left panel tab, or by right-clicking a specific ball to lock editing to that ball. 
+
+By default, left-clicking paints on the `Hovered Ball`. Entering Paintball Mode via right-click Tools Menu will enter in `Selected Ball` mode, which will ensure paintballing doesn't "leak" onto overlapping ballz and will auto-exit upon `Apply`.
+
+When applying paintballs to Babyz LNZ, LnzLive automatically avoids the first 17 indices (reserved for chicken pox) and adds filler entries as needed.
+
+##### Standard Paintballing (Drawing)
+
+In the Standard tab, you control the properties of individual paintballs as they are placed.
+
+**Diameter:** Set a minimum and maximum range of diameter for random sizing or tapering freelines. Toggle `Pixel Size` checkbox to compute diameter of paintballz on ballz needed to achieve visual pixel diameter.
+
+**Sampled LNZ Properties:** Use comma-separated lists or ranges (e.g., `1,2,5-10`) to cycle through or randomize colors and textures.
+
+**Placement Modes:**
+
+*Place (`left-click-drag`):* Place one paintball at a time using randomly sampled properties.
+
+*Freeline (`SHIFT` + `left-click-drag`, or toggle `Freeline` checkbox):* Draw continuous stroke of paintballz. Enable `Tapered` to automatically shrink the start and end of a stroke. You can adjust the `Spacing` between balls and add `Jitter` offsets paintballz along rhe stroke for a more natural, hand-drawn look. The `Shuffled` checkbox reorders the layer of paintballz for better texture blending. Colors and textures are randomly sampled unless `Ordered` checkbox is toggled. The `Repeated` checkbox modifies `Ordered` by starting from the beginning of the color/texture range with each stroke. 
+
+*Eraser (`CTRL` + `left-click`, or toggle `Eraser` checkbox):* Removing pending/queued paintballs by clicking them.
+
+##### Design Mode (Stamping)
+
+The Design tab introduces a "stamp" system. Instead of placing single balls, you can "stamp" a pattern of multiple paintballz onto ballz.
+
+**Design Canvas:** A 2D grid where you draw your pattern.
+
+**Color Slots:** Define multiple "slots" with different LNZ properties. Select a slot to draw in that specific color/fuzz/texture on the canvas.
+
+**Symmetry Tools:** Enable `Mirror X` or `Mirror Y` to draw symmetrical patterns.
+
+**3D Preview:** As you draw on the 2D canvas, a real-time preview ballz shows how the pattern will look when applied. You can `left-click-drag` on this preview ballz to rotate.
+
+**Stamping Controls:**
+
+*Scale (`CTRL` + `wheel up` / `wheel down`):* Change the overall footprint size of the stamp using the `Diameter` setting shared with Standard mode.
+
+*Design Jitter:* Adds randomness to the paintballz positions (`Jitter`), design rotation (`Rotation`), and placement spread (`Spread`).
+
+*Import/Export:* You can save your custom designs as `.json` files to share with others or reuse them across different projects.
 
 ##### Tutorial: Paintball Mode
 
@@ -326,7 +366,7 @@ Move Mode provides advanced visual editing for multiple balls:
 
 - **Axis/Plane Locks:** Use the panel or hotkeys (X, Y, Z) to lock movement to specific axes or planes (X+Y, etc.).
 
-- **Nudging:** Use the panel buttons or Axis + Scroll to move selection by precise increments.
+- **Nudging:** Use the panel buttons or hold an axis key (`X`, `Y`, `Z`) + `wheel up` / `wheel down` to move selection by precise increments.
 
 - **Rotation:** Apply Roll, Pitch, or Yaw rotations. Use `ALT`+left-click to set a Pivot Ball for the rotation.
 
