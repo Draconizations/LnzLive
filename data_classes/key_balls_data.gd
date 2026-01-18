@@ -166,9 +166,9 @@ func _ready():
 	
 	# bodyarea values
 	# 8 = head-related
-	# 1 = body-related (safe fallback and general default)
+	# 1 = body-related 
 
-	# [0] Z stuff  
+	# [0] Default 
 	# [1] Body Balls  
 	# [2] Right Leg Balls  
 	# [3] Left Leg Balls  
@@ -190,6 +190,48 @@ func _ready():
 	# [19] Extra Balls  
 	# [20] Extra Head Balls 
 
+
+# Catz
+# 0 - game chooses
+# 1 - torso; basic bodyarea #
+# 2 - right-back leg
+# 3 - left-back leg
+# 4 - right fingers
+# 5 - left fingers
+# 6 - right-back foot
+# 7 - left-back foot
+# 8 - head
+# 9 - front-right arm
+# 10 - front-left arm; both shoulders
+# 11 - right ear
+# 12 - left ear
+# 13 - tail
+# 14 - whiskers
+# 15 - face
+# 16 - tongue
+
+# Dogz
+# 0 - game chooses
+# 1 - torso; basic body area #
+# 2 - right-back leg
+# 3 - left-back leg
+# 4 - right fingers
+# 5 - left fingers
+# 6 - right-back foot
+# 7 - left-back foot
+# 8 - head
+# 9 - front-right arm
+# 10 - front-left arm
+# 11 - right ear
+# 12 - left ear
+# 13 - tail
+# 14 - n/a as #
+# 15 - face
+# 16 - tongue
+# 17 - right eyebrow
+# 18 - left eyebrow
+
+
 func build_bodyarea_map():
 	bodyarea_map.clear()
 	if species == Species.DOG:
@@ -205,40 +247,81 @@ func build_bodyarea_map():
 				bodyarea_map[i] = 1
 
 func _build_bodyarea_map_dog():
-	for b in head_ext_dog + face_ext_dog + tongue_dog:
-		bodyarea_map[b] = 8
-	for b in eyes_dog.keys() + eyes_dog.values() + nose_dog:
-		bodyarea_map[b] = 8
-	for base in ear_ext_dog:
-		bodyarea_map[base] = 8
-		for b in ear_ext_dog[base]:
-			bodyarea_map[b] = 8
-	for b in tail_dog + body_ext_dog:
+	# Default all balls to 0 (game chooses) 
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			bodyarea_map[i] = 0
+
+	var sym = dog_body_part_symmetry
+
+	for b in move_groups_dog["Body"] + body_ext_dog: 
 		bodyarea_map[b] = 1
-	for group in legs_dog + foot_ext_dog:
-		for b in group:
-			bodyarea_map[b] = 1
-	for b in symmetry_mode_right_balls_dog + symmetry_mode_hide_balls_dog:
-		if not bodyarea_map.has(b):
-			bodyarea_map[b] = 1
+
+	for b in sym.BackPaws.Legs.right: bodyarea_map[b] = 2
+	for b in sym.BackPaws.Legs.left: bodyarea_map[b] = 3
+
+	for b in sym.FrontPaws.Fingers.right: bodyarea_map[b] = 4
+	for b in sym.FrontPaws.Fingers.left: bodyarea_map[b] = 5
+
+	for b in sym.BackPaws.Feet.right + sym.BackPaws.Toes.right: bodyarea_map[b] = 6
+	for b in sym.BackPaws.Feet.left + sym.BackPaws.Toes.left: bodyarea_map[b] = 7
+
+	for b in move_groups_dog["Head"]: bodyarea_map[b] = 8
+
+	for b in sym.FrontPaws.Arms.right: bodyarea_map[b] = 9
+	for b in sym.FrontPaws.Arms.left: bodyarea_map[b] = 10
+
+	for b in sym.Head.Ears.right: bodyarea_map[b] = 11
+	for b in sym.Head.Ears.left: bodyarea_map[b] = 12
+
+	for b in tail_dog: bodyarea_map[b] = 13
+
+	for b in sym.Head.Jowls.right + sym.Head.Jowls.left + sym.Head.Nostrils.right + sym.Head.Nostrils.left:
+		bodyarea_map[b] = 15
+
+	for b in tongue_dog: bodyarea_map[b] = 16
+
+	for b in sym.Head.Eyebrows.right: bodyarea_map[b] = 17
+	for b in sym.Head.Eyebrows.left: bodyarea_map[b] = 18
 
 func _build_bodyarea_map_cat():
-	for b in head_ext_cat + face_ext_cat + tongue_cat:
-		bodyarea_map[b] = 8
-	for b in eyes_cat.keys() + eyes_cat.values() + nose_cat:
-		bodyarea_map[b] = 8
-	for base in ear_ext_cat:
-		bodyarea_map[base] = 8
-		for b in ear_ext_cat[base]:
-			bodyarea_map[b] = 8
-	for b in tail_cat + body_ext_cat:
+	# Default all balls to 0 (game chooses) 
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			bodyarea_map[i] = 0
+
+	var sym = cat_body_part_symmetry # 
+
+	for b in move_groups_cat["Body"] + body_ext_cat: 
 		bodyarea_map[b] = 1
-	for group in legs_cat + foot_ext_cat:
-		for b in group:
-			bodyarea_map[b] = 1
-	for b in symmetry_mode_right_balls_cat + symmetry_mode_hide_balls_cat:
-		if not bodyarea_map.has(b):
-			bodyarea_map[b] = 1
+
+	for b in sym.BackPaws.Legs.right: bodyarea_map[b] = 2
+	for b in sym.BackPaws.Legs.left: bodyarea_map[b] = 3
+
+	for b in sym.FrontPaws.Fingers_Knuckles.right: bodyarea_map[b] = 4
+	for b in sym.FrontPaws.Fingers_Knuckles.left: bodyarea_map[b] = 5
+
+	for b in sym.BackPaws.Feet.right + sym.BackPaws.Toes.right: bodyarea_map[b] = 6
+	for b in sym.BackPaws.Feet.left + sym.BackPaws.Toes.left: bodyarea_map[b] = 7
+
+	for b in move_groups_cat["Head"]: bodyarea_map[b] = 8
+
+	for b in sym.FrontPaws.Arms.right: bodyarea_map[b] = 9
+
+	var arm_left_and_shoulders = sym.FrontPaws.Arms.left + sym.Torso.Shoulders.left + sym.Torso.Shoulders.right
+	for b in arm_left_and_shoulders: 
+		bodyarea_map[b] = 10
+
+	for b in sym.Head.Ears.right: bodyarea_map[b] = 11
+	for b in sym.Head.Ears.left: bodyarea_map[b] = 12
+
+	for b in tail_cat: bodyarea_map[b] = 13
+
+	for b in sym.Head.Whiskers.left + sym.Head.Whiskers.right: bodyarea_map[b] = 14
+
+	for b in sym.Head.Cheeks_Jowls.left + sym.Head.Cheeks_Jowls.right: bodyarea_map[b] = 15
+
+	for b in tongue_cat: bodyarea_map[b] = 16
 
 func _build_bodyarea_map_baby():
 	for b in head_ext_bab + face_ext_bab + tongue_bab:
