@@ -29,15 +29,25 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://data_classes/bhd_parser.gd"
 }, {
+"base": "Control",
+"class": "DesignCanvas",
+"language": "GDScript",
+"path": "res://scenes/editor/DesignCanvas.gd"
+}, {
+"base": "Panel",
+"class": "DraggablePanel",
+"language": "GDScript",
+"path": "res://scenes/editor/DraggablePanel.gd"
+}, {
 "base": "Node",
 "class": "LineData",
 "language": "GDScript",
 "path": "res://data_classes/line_data.gd"
 }, {
-"base": "Node",
-"class": "LnzDocument",
+"base": "Reference",
+"class": "LnzLiveUtils",
 "language": "GDScript",
-"path": "res://scenes/editor/wip/LnzDocument.gd"
+"path": "res://data_classes/lnzlive_utils.gd"
 }, {
 "base": "Node",
 "class": "LnzParser",
@@ -64,8 +74,10 @@ _global_script_class_icons={
 "BallData": "",
 "BdtParser": "",
 "BhdParser": "",
+"DesignCanvas": "",
+"DraggablePanel": "",
 "LineData": "",
-"LnzDocument": "",
+"LnzLiveUtils": "",
 "LnzParser": "",
 "PaintBallData": "",
 "PolyData": "",
@@ -77,11 +89,12 @@ _global_script_class_icons={
 config/name="LnzLive"
 config/description="A visual editor for P.F. Magic game files"
 run/main_scene="res://scenes/bootsplash.tscn"
+run/low_processor_mode=true
+run/low_processor_mode_sleep_usec=10000
 boot_splash/image="res://launcher/images/launcher_roll_still1.png"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0.168627, 0.45098, 0.45098, 1 )
 config/icon="res://LnzLiveIcon.png"
-config/windows_native_icon="res://LnzLiveIcon.ico"
 
 [autoload]
 
@@ -95,13 +108,18 @@ gdscript/warnings/shadowed_variable=false
 
 window/size/width=1920
 window/size/height=1080
+window/dpi/allow_hidpi=true
 window/energy_saving/keep_screen_on=false
+window/stretch/mode="2d"
 window/stretch/aspect="expand"
+window/stretch/shrink=1.5
 
 [global]
 
 filter=false
 default=false
+application/config/version=false
+application/config/versio=false
 
 [importer_defaults]
 
@@ -126,8 +144,14 @@ texture={
 "svg/scale": 1.0
 }
 
+[logging]
+
+file_logging/enable_file_logging=true
+file_logging/log_path="user://logs/lnzlive_debug.log"
+
 [physics]
 
+common/physics_fps=5
 3d/physics_engine="Bullet"
 3d/active_soft_world=false
 

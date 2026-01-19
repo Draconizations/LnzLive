@@ -19,7 +19,7 @@ const AXIS_COLORS = {
 }
 const AXIS_LABELS = {
 	"X": "+X",
-	"Y": "+Y",
+	"Y": "-Y",
 	"Z": "+Z"
 }
 

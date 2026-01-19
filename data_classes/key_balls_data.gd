@@ -82,27 +82,61 @@ var belly_bab = 4
 # NOTE: needs to be updated to reflect min and max possible for ballz typically set across original P.F. Magic breeds
 var projection_standards = {
 	"cat": [
-		{"fixed_ball": 43, "project_ball": 44, "min_projection": 80, "max_projection": 120, "comment": "tail"},
-		{"fixed_ball": 44, "project_ball": 45, "min_projection": 80, "max_projection": 120, "comment": "tail"},
-		{"fixed_ball": 45, "project_ball": 46, "min_projection": 80, "max_projection": 120, "comment": "tail"},
-		{"fixed_ball": 46, "project_ball": 47, "min_projection": 80, "max_projection": 120, "comment": "tail"},
-		{"fixed_ball": 47, "project_ball": 48, "min_projection": 80, "max_projection": 120, "comment": "tail"}
+		{"fixed_ball": 41, "project_ball": 34, "min_projection": 25, "max_projection": 75, "comment": "legs soleL to knuckleL"},
+		{"fixed_ball": 42, "project_ball": 35, "min_projection": 25, "max_projection": 75, "comment": "legs soleR to knuckleR"},
+		{"fixed_ball": 0, "project_ball": 41, "min_projection": 50, "max_projection": 125, "comment": "legs ankleL to soleL"},
+		{"fixed_ball": 1, "project_ball": 42, "min_projection": 50, "max_projection": 125, "comment": "legs ankleR to soleR"},
+		{"fixed_ball": 63, "project_ball": 22, "min_projection": 0, "max_projection": 125, "comment": "legs wristL to handL"},
+		{"fixed_ball": 64, "project_ball": 23, "min_projection": 0, "max_projection": 125, "comment": "legs wristR to handR"},
+		{"fixed_ball": 2, "project_ball": 6, "min_projection": 75, "max_projection": 100, "comment": "body belly to chest"},
+		{"fixed_ball": 12, "project_ball": 63, "min_projection": 50, "max_projection": 125, "comment": "legs elbowL to wristL"},
+		{"fixed_ball": 13, "project_ball": 64, "min_projection": 50, "max_projection": 125, "comment": "legs elbowR to wristR"},
+		{"fixed_ball": 30, "project_ball": 57, "min_projection": 125, "max_projection": 150, "comment": "face jowlL to whiskerL1"},
+		{"fixed_ball": 43, "project_ball": 44, "min_projection": 50, "max_projection": 150, "comment": "tail tail1 to tail2"},
+		{"fixed_ball": 30, "project_ball": 58, "min_projection": 125, "max_projection": 150, "comment": "face jowlL to whiskerL2"},
+		{"fixed_ball": 44, "project_ball": 45, "min_projection": 50, "max_projection": 150, "comment": "tail tail2 to tail3"},
+		{"fixed_ball": 30, "project_ball": 59, "min_projection": 125, "max_projection": 150, "comment": "face jowlL to whiskerL3"},
+		{"fixed_ball": 45, "project_ball": 46, "min_projection": 50, "max_projection": 150, "comment": "tail tail3 to tail4"},
+		{"fixed_ball": 31, "project_ball": 60, "min_projection": 125, "max_projection": 150, "comment": "face jowlR to whiskerR1"},
+		{"fixed_ball": 46, "project_ball": 47, "min_projection": 50, "max_projection": 150, "comment": "tail tail4 to tail5"},
+		{"fixed_ball": 47, "project_ball": 48, "min_projection": 50, "max_projection": 150, "comment": "tail tail5 to tail6"},
+		{"fixed_ball": 31, "project_ball": 61, "min_projection": 125, "max_projection": 150, "comment": "face jowlR to whiskerR2"},
+		{"fixed_ball": 31, "project_ball": 62, "min_projection": 125, "max_projection": 150, "comment": "face jowlR to whiskerR3"}
 	],
 	"dog": [
-		{"fixed_ball": 49, "project_ball": 57, "min_projection": 20, "max_projection": 80, "comment": "tail"},
-		{"fixed_ball": 51, "project_ball": 64, "min_projection": 60, "max_projection": 80, "comment": "tail"},
-		{"fixed_ball": 51, "project_ball": 77, "min_projection": 60, "max_projection": 130, "comment": "tail"},
-		{"fixed_ball": 52, "project_ball": 63, "min_projection": 60, "max_projection": 130, "comment": "tail"},
-		{"fixed_ball": 53, "project_ball": 63, "min_projection": 50, "max_projection": 70, "comment": "tail"},
-		{"fixed_ball": 56, "project_ball": 63, "min_projection": 50, "max_projection": 70, "comment": "tail"},
-		{"fixed_ball": 57, "project_ball": 58, "min_projection": 0, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 58, "project_ball": 59, "min_projection": 0, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 59, "project_ball": 60, "min_projection": 0, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 59, "project_ball": 94, "min_projection": 50, "max_projection": 70, "comment": "tail"},
-		{"fixed_ball": 60, "project_ball": 61, "min_projection": 0, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 61, "project_ball": 62, "min_projection": 0, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 63, "project_ball": 64, "min_projection": 50, "max_projection": 100, "comment": "tail"},
-		{"fixed_ball": 64, "project_ball": 77, "min_projection": 50, "max_projection": 100, "comment": "tail"}
+		{"fixed_ball": 8, "project_ball": 1, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 8, "project_ball": 2, "min_projection": 0, "max_projection": 150, "comment": "eyebrows"},
+		{"fixed_ball": 8, "project_ball": 3, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 32, "project_ball": 1, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 32, "project_ball": 25, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 49, "project_ball": 57, "min_projection": 0, "max_projection": 150, "comment": "tail butt to tail1"},
+		{"fixed_ball": 32, "project_ball": 26, "min_projection": 0, "max_projection": 150, "comment": "eyebrows"},
+		{"fixed_ball": 32, "project_ball": 27, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 8, "project_ball": 25, "min_projection": 25, "max_projection": 125, "comment": "eyebrows"},
+		{"fixed_ball": 63, "project_ball": 64, "min_projection": 50, "max_projection": 125, "comment": "tongue tongue1 to tongue2"},
+		{"fixed_ball": 51, "project_ball": 64, "min_projection": 75, "max_projection": 100, "comment": "tongue chin to tongue2"},
+		{"fixed_ball": 57, "project_ball": 58, "min_projection": 0, "max_projection": 200, "comment": "tail tail1 to tail2"},
+		{"fixed_ball": 19, "project_ball": 16, "min_projection": 50, "max_projection": 125, "comment": "legs hipL to kneeL"},
+		{"fixed_ball": 48, "project_ball": 50, "min_projection": 50, "max_projection": 125, "comment": "body belly to chest"},
+		{"fixed_ball": 52, "project_ball": 6, "min_projection": 25, "max_projection": 150, "comment": "ears head to earL3"},
+		{"fixed_ball": 58, "project_ball": 59, "min_projection": 0, "max_projection": 225, "comment": "tail tail2 to tail3"},
+		{"fixed_ball": 60, "project_ball": 61, "min_projection": 0, "max_projection": 200, "comment": "tail tail4 to tail5"},
+		{"fixed_ball": 52, "project_ball": 30, "min_projection": 25, "max_projection": 150, "comment": "ears head to earR3"},
+		{"fixed_ball": 59, "project_ball": 60, "min_projection": 0, "max_projection": 225, "comment": "tail tail3 to tail4"},
+		{"fixed_ball": 61, "project_ball": 62, "min_projection": 0, "max_projection": 225, "comment": "tail tail5 to tail6"},
+		{"fixed_ball": 56, "project_ball": 63, "min_projection": 50, "max_projection": 75, "comment": "tongue snout to tongue1"},
+		{"fixed_ball": 52, "project_ball": 63, "min_projection": 125, "max_projection": 150, "comment": "tongue head to tongue1"},
+		{"fixed_ball": 53, "project_ball": 63, "min_projection": 25, "max_projection": 125, "comment": "tongue jaw to tongue1"},
+		{"fixed_ball": 43, "project_ball": 40, "min_projection": 75, "max_projection": 100, "comment": "legs hipR to kneeR"},
+		{"fixed_ball": 55, "project_ball": 51, "min_projection": 25, "max_projection": 150, "comment": "face nose_bottom to chin"},
+		{"fixed_ball": 0, "project_ball": 12, "min_projection": 50, "max_projection": 175, "comment": "legs ankleL to footL"},
+		{"fixed_ball": 23, "project_ball": 7, "min_projection": 75, "max_projection": 100, "comment": "legs wristL to elbowL"},
+		{"fixed_ball": 16, "project_ball": 0, "min_projection": 75, "max_projection": 100, "comment": "legs kneeL to ankleL"},
+		{"fixed_ball": 24, "project_ball": 36, "min_projection": 50, "max_projection": 175, "comment": "feet ankleR to footR"},
+		{"fixed_ball": 47, "project_ball": 31, "min_projection": 75, "max_projection": 100, "comment": "legs wristR to elbowR"},
+		{"fixed_ball": 23, "project_ball": 13, "min_projection": 25, "max_projection": 175, "comment": "feet wristL to handL"},
+		{"fixed_ball": 40, "project_ball": 24, "min_projection": 75, "max_projection": 100, "comment": "legs kneeR to ankleR"},
+		{"fixed_ball": 47, "project_ball": 37, "min_projection": 25, "max_projection": 175, "comment": "feet wristR to handR"}
 	],
 	"bab": [
 		{"fixed_ball": 4, "project_ball": 63, "min_projection": 80, "max_projection": 100, "comment": "bellyhead"}
@@ -127,12 +161,14 @@ func _ready():
 		symmetry_mode_hide_balls_dog.append(n)
 	for n in range(24, 48):
 		symmetry_mode_right_balls_dog.append(n)
+
+	build_move_groups()
 	
 	# bodyarea values
 	# 8 = head-related
-	# 1 = body-related (safe fallback and general default)
+	# 1 = body-related 
 
-	# [0] Z stuff  
+	# [0] Default 
 	# [1] Body Balls  
 	# [2] Right Leg Balls  
 	# [3] Left Leg Balls  
@@ -154,6 +190,48 @@ func _ready():
 	# [19] Extra Balls  
 	# [20] Extra Head Balls 
 
+
+# Catz
+# 0 - game chooses
+# 1 - torso; basic bodyarea #
+# 2 - right-back leg
+# 3 - left-back leg
+# 4 - right fingers
+# 5 - left fingers
+# 6 - right-back foot
+# 7 - left-back foot
+# 8 - head
+# 9 - front-right arm
+# 10 - front-left arm; both shoulders
+# 11 - right ear
+# 12 - left ear
+# 13 - tail
+# 14 - whiskers
+# 15 - face
+# 16 - tongue
+
+# Dogz
+# 0 - game chooses
+# 1 - torso; basic body area #
+# 2 - right-back leg
+# 3 - left-back leg
+# 4 - right fingers
+# 5 - left fingers
+# 6 - right-back foot
+# 7 - left-back foot
+# 8 - head
+# 9 - front-right arm
+# 10 - front-left arm
+# 11 - right ear
+# 12 - left ear
+# 13 - tail
+# 14 - n/a as #
+# 15 - face
+# 16 - tongue
+# 17 - right eyebrow
+# 18 - left eyebrow
+
+
 func build_bodyarea_map():
 	bodyarea_map.clear()
 	if species == Species.DOG:
@@ -169,40 +247,81 @@ func build_bodyarea_map():
 				bodyarea_map[i] = 1
 
 func _build_bodyarea_map_dog():
-	for b in head_ext_dog + face_ext_dog + tongue_dog:
-		bodyarea_map[b] = 8
-	for b in eyes_dog.keys() + eyes_dog.values() + nose_dog:
-		bodyarea_map[b] = 8
-	for base in ear_ext_dog:
-		bodyarea_map[base] = 8
-		for b in ear_ext_dog[base]:
-			bodyarea_map[b] = 8
-	for b in tail_dog + body_ext_dog:
+	# Default all balls to 0 (game chooses) 
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			bodyarea_map[i] = 0
+
+	var sym = dog_body_part_symmetry
+
+	for b in move_groups_dog["Body"] + body_ext_dog: 
 		bodyarea_map[b] = 1
-	for group in legs_dog + foot_ext_dog:
-		for b in group:
-			bodyarea_map[b] = 1
-	for b in symmetry_mode_right_balls_dog + symmetry_mode_hide_balls_dog:
-		if not bodyarea_map.has(b):
-			bodyarea_map[b] = 1
+
+	for b in sym.BackPaws.Legs.right: bodyarea_map[b] = 2
+	for b in sym.BackPaws.Legs.left: bodyarea_map[b] = 3
+
+	for b in sym.FrontPaws.Fingers.right: bodyarea_map[b] = 4
+	for b in sym.FrontPaws.Fingers.left: bodyarea_map[b] = 5
+
+	for b in sym.BackPaws.Feet.right + sym.BackPaws.Toes.right: bodyarea_map[b] = 6
+	for b in sym.BackPaws.Feet.left + sym.BackPaws.Toes.left: bodyarea_map[b] = 7
+
+	for b in move_groups_dog["Head"]: bodyarea_map[b] = 8
+
+	for b in sym.FrontPaws.Arms.right: bodyarea_map[b] = 9
+	for b in sym.FrontPaws.Arms.left: bodyarea_map[b] = 10
+
+	for b in sym.Head.Ears.right: bodyarea_map[b] = 11
+	for b in sym.Head.Ears.left: bodyarea_map[b] = 12
+
+	for b in tail_dog: bodyarea_map[b] = 13
+
+	for b in sym.Head.Jowls.right + sym.Head.Jowls.left + sym.Head.Nostrils.right + sym.Head.Nostrils.left:
+		bodyarea_map[b] = 15
+
+	for b in tongue_dog: bodyarea_map[b] = 16
+
+	for b in sym.Head.Eyebrows.right: bodyarea_map[b] = 17
+	for b in sym.Head.Eyebrows.left: bodyarea_map[b] = 18
 
 func _build_bodyarea_map_cat():
-	for b in head_ext_cat + face_ext_cat + tongue_cat:
-		bodyarea_map[b] = 8
-	for b in eyes_cat.keys() + eyes_cat.values() + nose_cat:
-		bodyarea_map[b] = 8
-	for base in ear_ext_cat:
-		bodyarea_map[base] = 8
-		for b in ear_ext_cat[base]:
-			bodyarea_map[b] = 8
-	for b in tail_cat + body_ext_cat:
+	# Default all balls to 0 (game chooses) 
+	if typeof(max_base_ball_num) == TYPE_INT:
+		for i in range(0, max_base_ball_num + 1):
+			bodyarea_map[i] = 0
+
+	var sym = cat_body_part_symmetry # 
+
+	for b in move_groups_cat["Body"] + body_ext_cat: 
 		bodyarea_map[b] = 1
-	for group in legs_cat + foot_ext_cat:
-		for b in group:
-			bodyarea_map[b] = 1
-	for b in symmetry_mode_right_balls_cat + symmetry_mode_hide_balls_cat:
-		if not bodyarea_map.has(b):
-			bodyarea_map[b] = 1
+
+	for b in sym.BackPaws.Legs.right: bodyarea_map[b] = 2
+	for b in sym.BackPaws.Legs.left: bodyarea_map[b] = 3
+
+	for b in sym.FrontPaws.Fingers_Knuckles.right: bodyarea_map[b] = 4
+	for b in sym.FrontPaws.Fingers_Knuckles.left: bodyarea_map[b] = 5
+
+	for b in sym.BackPaws.Feet.right + sym.BackPaws.Toes.right: bodyarea_map[b] = 6
+	for b in sym.BackPaws.Feet.left + sym.BackPaws.Toes.left: bodyarea_map[b] = 7
+
+	for b in move_groups_cat["Head"]: bodyarea_map[b] = 8
+
+	for b in sym.FrontPaws.Arms.right: bodyarea_map[b] = 9
+
+	var arm_left_and_shoulders = sym.FrontPaws.Arms.left + sym.Torso.Shoulders.left + sym.Torso.Shoulders.right
+	for b in arm_left_and_shoulders: 
+		bodyarea_map[b] = 10
+
+	for b in sym.Head.Ears.right: bodyarea_map[b] = 11
+	for b in sym.Head.Ears.left: bodyarea_map[b] = 12
+
+	for b in tail_cat: bodyarea_map[b] = 13
+
+	for b in sym.Head.Whiskers.left + sym.Head.Whiskers.right: bodyarea_map[b] = 14
+
+	for b in sym.Head.Cheeks_Jowls.left + sym.Head.Cheeks_Jowls.right: bodyarea_map[b] = 15
+
+	for b in tongue_cat: bodyarea_map[b] = 16
 
 func _build_bodyarea_map_baby():
 	for b in head_ext_bab + face_ext_bab + tongue_bab:
@@ -514,124 +633,208 @@ var dog_ball_definitions = {
 }
 
 var bab_ball_definitions = {
-	0: { "name": "ankleL" },
-	1: { "name": "ankleR" },
-	2: { "name": "archL" },
-	3: { "name": "archR" },
-	4: { "name": "belly" },
-	5: { "name": "bigtoeL" },
-	6: { "name": "bigtoeR" },
-	7: { "name": "bridge" },
-	8: { "name": "cheekL" },
-	9: { "name": "cheekR" },
-	10: { "name": "chestL" },
-	11: { "name": "chestR" },
-	12: { "name": "chin1" },
-	13: { "name": "chin2" },
-	14: { "name": "chin3" },
-	15: { "name": "chin4" },
-	16: { "name": "ear1L" },
-	17: { "name": "ear1R" },
-	18: { "name": "ear2L" },
-	19: { "name": "ear2R" },
-	20: { "name": "ear3L" },
-	21: { "name": "ear3R" },
-	22: { "name": "ear4L" },
-	23: { "name": "ear4R" },
-	24: { "name": "ear5L" },
-	25: { "name": "ear5R" },
-	26: { "name": "ear6L" },
-	27: { "name": "ear6R" },
-	28: { "name": "earcenterL" },
-	29: { "name": "earcenterR" },
-	30: { "name": "elbowL" },
-	31: { "name": "elbowR" },
-	32: { "name": "extra1" },
-	33: { "name": "extra2" },
-	34: { "name": "extra3" },
-	35: { "name": "eyeL" },
-	36: { "name": "eyeR" },
-	37: { "name": "eyebrow1L" },
-	38: { "name": "eyebrow1R" },
-	39: { "name": "eyebrow2L" },
-	40: { "name": "eyebrow2R" },
-	41: { "name": "eyebrow3L" },
-	42: { "name": "eyebrow3R" },
-	43: { "name": "eyebrow4L" },
-	44: { "name": "eyebrow4R" },
-	45: { "name": "eyebrow5L" },
-	46: { "name": "eyebrow5R" },
-	47: { "name": "finger_index1L" },
-	48: { "name": "finger_index1R" },
-	49: { "name": "finger_index2L" },
-	50: { "name": "finger_index2R" },
-	51: { "name": "finger_middle1L" },
-	52: { "name": "finger_middle1R" },
-	53: { "name": "finger_middle2L" },
-	54: { "name": "finger_middle2R" },
-	55: { "name": "finger_pinky1L" },
-	56: { "name": "finger_pinky1R" },
-	57: { "name": "finger_pinky2L" },
-	58: { "name": "finger_pinky2R" },
-	59: { "name": "football1L" },
-	60: { "name": "football1R" },
-	61: { "name": "football2L" },
-	62: { "name": "football2R" },
-	63: { "name": "head" },
-	64: { "name": "heelL" },
-	65: { "name": "heelR" },
-	66: { "name": "hipL" },
-	67: { "name": "hipR" },
-	68: { "name": "irisL" },
-	69: { "name": "irisR" },
-	70: { "name": "jock" },
-	71: { "name": "kneeL" },
-	72: { "name": "kneeR" },
-	73: { "name": "lowerLip1" },
-	74: { "name": "lowerLip2" },
-	75: { "name": "lowerLip3" },
-	76: { "name": "lowerLip4" },
-	77: { "name": "lowerLip5" },
-	78: { "name": "lowerLip6" },
-	79: { "name": "mouthTopL" },
-	80: { "name": "mouthTopR" },
-	81: { "name": "neck" },
-	82: { "name": "nose1" },
-	83: { "name": "nose2" },
-	84: { "name": "nosemiddle" },
-	85: { "name": "nostrilL" },
-	86: { "name": "nostrilR" },
-	87: { "name": "origin" },
-	88: { "name": "palm1L" },
-	89: { "name": "palm1R" },
-	90: { "name": "palm2L" },
-	91: { "name": "palm2R" },
-	92: { "name": "palm3L" },
-	93: { "name": "palm3R" },
-	94: { "name": "shoulderL" },
-	95: { "name": "shoulderR" },
-	96: { "name": "templeL" },
-	97: { "name": "templeR" },
-	98: { "name": "thumb1L" },
-	99: { "name": "thumb1R" },
-	100: { "name": "thumb2L" },
-	101: { "name": "thumb2R" },
-	102: { "name": "toe_indexL" },
-	103: { "name": "toe_indexR" },
-	104: { "name": "toe_middleL" },
-	105: { "name": "toe_middleR" },
-	106: { "name": "toe_pinkyL" },
-	107: { "name": "toe_pinkyR" },
-	108: { "name": "tongue1" },
-	109: { "name": "underchin" },
-	110: { "name": "upperLip1" },
-	111: { "name": "upperLip2" },
-	112: { "name": "upperLip3" },
-	113: { "name": "upperLip4" },
-	114: { "name": "upperLip5" },
-	115: { "name": "upperLip6" },
-	116: { "name": "wristL" },
-	117: { "name": "wristR" },
-	118: { "name": "zorient" },
+	0: { "name": "ankleL"},
+	1: { "name": "ankleR"},
+	2: { "name": "archL"},
+	3: { "name": "archR"},
+	4: { "name": "belly"},
+	5: { "name": "bigtoeL"},
+	6: { "name": "bigtoeR"},
+	7: { "name": "bridge"},
+	8: { "name": "cheekL"},
+	9: { "name": "cheekR"},
+	10: { "name": "chestL"},
+	11: { "name": "chestR"},
+	12: { "name": "chin1"},
+	13: { "name": "chin2"},
+	14: { "name": "chin3"},
+	15: { "name": "chin4"},
+	16: { "name": "ear1L"},
+	17: { "name": "ear1R"},
+	18: { "name": "ear2L"},
+	19: { "name": "ear2R"},
+	20: { "name": "ear3L"},
+	21: { "name": "ear3R"},
+	22: { "name": "ear4L"},
+	23: { "name": "ear4R"},
+	24: { "name": "ear5L"},
+	25: { "name": "ear5R"},
+	26: { "name": "ear6L"},
+	27: { "name": "ear6R"},
+	28: { "name": "earcenterL"},
+	29: { "name": "earcenterR"},
+	30: { "name": "elbowL"},
+	31: { "name": "elbowR"},
+	32: { "name": "extra1"},
+	33: { "name": "extra2"},
+	34: { "name": "extra3"},
+	35: { "name": "eyeL"},
+	36: { "name": "eyeR"},
+	37: { "name": "eyebrow1L"},
+	38: { "name": "eyebrow1R"},
+	39: { "name": "eyebrow2L"},
+	40: { "name": "eyebrow2R"},
+	41: { "name": "eyebrow3L"},
+	42: { "name": "eyebrow3R"},
+	43: { "name": "eyebrow4L"},
+	44: { "name": "eyebrow4R"},
+	45: { "name": "eyebrow5L"},
+	46: { "name": "eyebrow5R"},
+	47: { "name": "finger_index1L"},
+	48: { "name": "finger_index1R"},
+	49: { "name": "finger_index2L"},
+	50: { "name": "finger_index2R"},
+	51: { "name": "finger_middle1L"},
+	52: { "name": "finger_middle1R"},
+	53: { "name": "finger_middle2L"},
+	54: { "name": "finger_middle2R"},
+	55: { "name": "finger_pinky1L"},
+	56: { "name": "finger_pinky1R"},
+	57: { "name": "finger_pinky2L"},
+	58: { "name": "finger_pinky2R"},
+	59: { "name": "football1L"},
+	60: { "name": "football1R"},
+	61: { "name": "football2L"},
+	62: { "name": "football2R"},
+	63: { "name": "head"},
+	64: { "name": "heelL"},
+	65: { "name": "heelR"},
+	66: { "name": "hipL"},
+	67: { "name": "hipR"},
+	68: { "name": "irisL"},
+	69: { "name": "irisR"},
+	70: { "name": "jock"},
+	71: { "name": "kneeL"},
+	72: { "name": "kneeR"},
+	73: { "name": "lowerLip1"},
+	74: { "name": "lowerLip2"},
+	75: { "name": "lowerLip3"},
+	76: { "name": "lowerLip4"},
+	77: { "name": "lowerLip5"},
+	78: { "name": "lowerLip6"},
+	79: { "name": "mouthTopL"},
+	80: { "name": "mouthTopR"},
+	81: { "name": "neck"},
+	82: { "name": "nose1"},
+	83: { "name": "nose2"},
+	84: { "name": "nosemiddle"},
+	85: { "name": "nostrilL"},
+	86: { "name": "nostrilR"},
+	87: { "name": "origin"},
+	88: { "name": "palm1L"},
+	89: { "name": "palm1R"},
+	90: { "name": "palm2L"},
+	91: { "name": "palm2R"},
+	92: { "name": "palm3L"},
+	93: { "name": "palm3R"},
+	94: { "name": "shoulderL"},
+	95: { "name": "shoulderR"},
+	96: { "name": "templeL"},
+	97: { "name": "templeR"},
+	98: { "name": "thumb1L"},
+	99: { "name": "thumb1R"},
+	100: { "name": "thumb2L"},
+	101: { "name": "thumb2R"},
+	102: { "name": "toe_indexL"},
+	103: { "name": "toe_indexR"},
+	104: { "name": "toe_middleL"},
+	105: { "name": "toe_middleR"},
+	106: { "name": "toe_pinkyL"},
+	107: { "name": "toe_pinkyR"},
+	108: { "name": "tongue1"},
+	109: { "name": "underchin"},
+	110: { "name": "upperLip1"},
+	111: { "name": "upperLip2"},
+	112: { "name": "upperLip3"},
+	113: { "name": "upperLip4"},
+	114: { "name": "upperLip5"},
+	115: { "name": "upperLip6"},
+	116: { "name": "wristL"},
+	117: { "name": "wristR"},
+	118: { "name": "zorient"},
 	119: { "name": "ztrans" }
 }
+
+func get_ball_id_by_name(target_name: String) -> int:
+	var defs = {}
+	match species:
+		Species.CAT: defs = cat_ball_definitions
+		Species.DOG: defs = dog_ball_definitions
+		Species.BABY: defs = bab_ball_definitions
+	
+	for id in defs:
+		if defs[id].get("name") == target_name:
+			return id
+	return -1
+
+# Move Groups
+# (can't just use the ext groups cuz that is for extension sections and missing some ballz; can't use the symmetry def b/c that misses center ballz)
+var move_groups_dog = {}
+var move_groups_cat = {}
+var move_groups_bab = {}
+
+func build_move_groups():
+	var dog_torso = [18, 42, 19, 43, 50, 48, 49, 54]
+	
+	move_groups_dog = {
+		"Head": head_ext_dog.duplicate(),
+		"Body": dog_torso, 
+		"Legs": _flatten(legs_dog),
+		"Tail": tail_dog.duplicate(),
+		"Ears": _flatten_dict(ear_ext_dog),
+		"Eyes": eyes_dog.values() + eyes_dog.keys()
+	}
+	move_groups_dog["Head"].append_array(tongue_dog)
+
+	var cat_torso = [38, 39, 25, 26, 6, 2, 3, 36]
+	
+	move_groups_cat = {
+		"Head": head_ext_cat.duplicate(),
+		"Body": cat_torso,
+		"Legs": _flatten(legs_cat),
+		"Tail": tail_cat.duplicate(),
+		"Ears": _flatten_dict(ear_ext_cat),
+		"Eyes": eyes_cat.values() + eyes_cat.keys()
+	}
+	move_groups_cat["Head"].append_array(tongue_cat)
+
+	var bab_torso = [94, 95, 66, 67, 10, 11, 4, 70, 81]
+	
+	move_groups_bab = {
+		"Head": head_ext_bab.duplicate(),
+		"Body": bab_torso,
+		"Legs": _flatten(legs_bab),
+		"Tail": [],
+		"Ears": _flatten_dict(ear_ext_bab),
+		"Eyes": eyes_bab.values() + eyes_bab.keys()
+	}
+	move_groups_bab["Head"].append_array(tongue_bab)
+
+func _flatten(array_of_arrays):
+	var flat = []
+	for group in array_of_arrays:
+		flat.append_array(group)
+	return flat
+
+func _flatten_dict(dict_of_arrays):
+	var flat = []
+	for key in dict_of_arrays:
+		flat.append(key)
+		flat.append_array(dict_of_arrays[key])
+	return flat
+
+func get_group_balls(group_name: String):
+	var result = []
+	
+	match species:
+		Species.DOG:
+			if move_groups_dog.has(group_name):
+				result = move_groups_dog[group_name]
+		Species.CAT:
+			if move_groups_cat.has(group_name):
+				result = move_groups_cat[group_name]
+		Species.BABY:
+			if move_groups_bab.has(group_name):
+				result = move_groups_bab[group_name]
+				
+	return result

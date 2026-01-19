@@ -27,6 +27,15 @@ var texture_list = []
 var no_texture_rotate = []
 var palette = null
 
+var whisker_connections = []
+
+var eyelash_lengths = []
+var eyelash_angle   = 0
+var eyelash_spacing = 0
+var eyelash_color   = -1
+
+var z_shade_slope = 100
+
 var file_path
 
 func _init(file_path):
@@ -49,7 +58,6 @@ func _init(file_path):
 	get_no_texture_rotate(file)
 	get_palette(file)
 	get_species(file)
-	get_eyelid_color(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
 	get_body_extension(file)
@@ -74,6 +82,12 @@ func _init(file_path):
 	get_project_balls(file)
 	parse_paintballs(file)
 	parse_moves(file)
+
+	# Rendering options
+	get_eyelid_color(file)
+	get_eyelash_info(file)
+	get_whiskers(file)
+	get_z_shade_slope(file)
 
 	file.close()
 
@@ -180,10 +194,18 @@ func get_no_texture_rotate(file: File):
 
 func get_palette(file: File):
 	get_next_section(file, "Palette")
-	var parsed_lines = get_parsed_line_strings(file, ["filepath"])
-	for line in parsed_lines:
-		var filename = line.filepath.get_file()
-		palette = filename + ".png"
+	
+	var raw_line = file.get_line().strip_edges()
+	
+	while raw_line.empty() or raw_line.begins_with(";"):
+		if file.get_position() >= file.get_len(): 
+			break
+		raw_line = file.get_line().strip_edges()
+	
+	if not raw_line.empty():
+		palette = raw_line + ".png"
+	else:
+		palette = null
 
 func parse_paintballs(file: File):
 	file.seek(0)
@@ -255,6 +277,34 @@ func get_project_balls(file: File):
 			"comment": ""
 		})
 
+func get_whiskers(file: File):
+	if not get_next_section(file, "Whiskers"):
+		if species == KeyBallsData.Species.CAT:
+			KeyBallsData.species = KeyBallsData.Species.CAT 
+			var jowlL = KeyBallsData.get_ball_id_by_name("jowlL")
+			var jowlR = KeyBallsData.get_ball_id_by_name("jowlR")
+			
+			if jowlL != -1 and jowlR != -1:
+				var whiskers = KeyBallsData.cat_body_part_symmetry.Head.Whiskers
+				for w in whiskers.left:
+					whisker_connections.append({"start": w, "end": jowlL})
+				for w in whiskers.right:
+					whisker_connections.append({"start": w, "end": jowlR})
+		return
+	
+	while true:
+		var line = file.get_line().dedent()
+		if line.empty() or line.begins_with("[") or file.eof_reached():
+			break
+		if line.begins_with(";") or line.begins_with("#"):
+			continue
+			
+		var parsed = r.search_all(line)
+		if parsed.size() >= 2:
+			var jowl_ball = int(parsed[0].get_string())
+			var whisker_ball = int(parsed[1].get_string())
+			whisker_connections.append({"start": whisker_ball, "end": jowl_ball})
+
 func get_eyelid_color(file: File):
 	get_next_section(file, "256 Eyelid Color")
 	var parsed_lines = get_parsed_lines(file, ["color", "group"])
@@ -262,6 +312,37 @@ func get_eyelid_color(file: File):
 		eyelid_color = parsed_lines[0]["color"]
 	else:
 		eyelid_color = 244
+
+func get_eyelash_info(file: File):
+	if not get_next_section(file, "Eyelash Info"):
+		return
+	
+	var raw_lines = []
+	while true:
+		var line = file.get_line().strip_edges()
+		if line.empty() or line.begins_with("[") or file.eof_reached():
+			break
+		if line.begins_with(";") or line.begins_with("#") or line.begins_with("="):
+			continue
+		raw_lines.append(line)
+
+	if raw_lines.size() >= 4:
+		var all_lengths = LnzLiveUtils.parse_flexible_integers(raw_lines[0])
+		eyelash_lengths = []
+		for val in all_lengths:
+			if val == -1: break
+			eyelash_lengths.append(val)
+		
+		var angle_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[1])
+		eyelash_angle = angle_vals[0] if angle_vals.size() > 0 else 15
+		
+		var spacing_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[2])
+		eyelash_spacing = spacing_vals[0] if spacing_vals.size() > 0 else 50
+		
+		var color_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[3])
+		eyelash_color = color_vals[0] if color_vals.size() > 0 else 244
+		
+	print("Parsed Eyelash Info: ", eyelash_lengths, " Angle: ", eyelash_angle)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
@@ -411,8 +492,8 @@ func get_outline_color_override(file: File):
 	for line in parsed_lines:
 		if balls.has(line.ball):
 			var ball_data = balls[line.ball]
-			if "outline_color" in ball_data:
-				ball_data.outline_color = line.outline_color
+			if "outline_color_index" in ball_data:
+				ball_data.outline_color_index = line.outline_color
 		else:
 			print("Warning: [Outline Color Override] override for non-existent ball ", line.ball)
 
@@ -435,3 +516,9 @@ func get_add_ball_override(file: File):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
 		else:
 			print("Warning: [Add Ball Override] override attempted for non-existent ball ", line.ball)
+
+func get_z_shade_slope(file: File):
+	if get_next_section(file, "Z Shade Slope"):
+		var parsed_lines = get_parsed_lines(file, ["slope"])
+		if parsed_lines.size() > 0:
+			z_shade_slope = int(parsed_lines[0].slope)

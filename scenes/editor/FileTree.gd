@@ -27,7 +27,7 @@ var local_storage_palettes: TreeItem
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
 
-onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as WindowDialog
+onready var rename_dialog = get_tree().root.get_node("Root/SceneRoot/RenameDialog") as AcceptDialog
 onready var upload_popup = get_tree().root.get_node("Root/SceneRoot/WebFileUploadPopup") as AcceptDialog
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 
@@ -66,17 +66,41 @@ func _ready():
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.rect_min_size = Vector2(400, 400)
 	
+	file_dialog.popup_exclusive = true
+	
+	if rename_dialog:
+		rename_dialog.popup_exclusive = true
+		rename_dialog.connect("about_to_show", self, "_on_RenameDialog_about_to_show")
+		rename_dialog.connect("popup_hide", self, "_on_RenameDialog_popup_hide")
+
+	if upload_popup:
+		upload_popup.connect("about_to_show", self, "_on_FileDialog_about_to_show")
+		upload_popup.connect("popup_hide", self, "_on_FileDialog_popup_hide")
+
 	var dir = Directory.new()
-	dir.open(example_file_location)
-	dir.list_dir_begin()
-	var filename = dir.get_next()
-	while(!filename.empty()):
-		if filename.ends_with(".lnz"):
-			var new_item = create_item(examples)
-			new_item.set_text(0, filename)
-			new_item.set_metadata(0, example_file_location + filename)
-		filename = dir.get_next()
-	dir.list_dir_end()
+	var lnz_dir_path = "res://resources/lnz/"
+	if dir.open(lnz_dir_path) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name = dir.get_next()
+		while file_name != "":
+			if dir.current_is_dir():
+				var subdir_path = lnz_dir_path + file_name
+				var subdir = Directory.new()
+				if subdir.open(subdir_path) == OK:
+					var sub_item = create_item(examples)
+					sub_item.set_text(0, file_name)
+					sub_item.set_collapsed(true)
+					subdir.list_dir_begin(true, true)
+					var sub_file = subdir.get_next()
+					while sub_file != "":
+						if sub_file.ends_with(".lnz"):
+							var new_item = create_item(sub_item)
+							new_item.set_text(0, sub_file)
+							new_item.set_metadata(0, subdir_path + "/" + sub_file)
+						sub_file = subdir.get_next()
+					subdir.list_dir_end()
+			file_name = dir.get_next()
+		dir.list_dir_end()
 
 	rescan(null)
 	rescan_textures()
@@ -85,6 +109,14 @@ func _ready():
 
 func _on_FileDialog_popup_hide():
 	pet_view_container.input_is_paused = false
+	release_focus()
+
+func _on_RenameDialog_about_to_show():
+	pet_view_container.input_is_paused = true
+
+func _on_RenameDialog_popup_hide():
+	pet_view_container.input_is_paused = false
+	release_focus()
 
 func _on_ImportLNZ_pressed():
 	current_import_type = ImportType.LNZ
@@ -114,7 +146,7 @@ func _on_ImportPalette_pressed():
 	if (!OS.has_feature("HTML5")):
 		pet_view_container.input_is_paused = true
 		file_dialog.clear_filters()
-		file_dialog.add_filter("*.png ; PNG Palettes")
+		file_dialog.add_filter("*.png, *.bmp ; Palette Files")
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
@@ -141,6 +173,12 @@ func _on_FileDialog_file_selected(selected_path):
 	else:
 		print("Unknown import type")
 		return
+
+	if current_import_type == ImportType.PALETTE and file_extension == "bmp":
+		var success = convert_bmp_to_palette_png(selected_path, dest_dir)
+		if success:
+			rescan_palettes()
+			return
 
 	if current_import_type == ImportType.PALETTE:
 		var img = Image.new()
@@ -282,7 +320,9 @@ func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
 	var filepath = selected.get_metadata(0)
 	var parent = selected.get_parent() as TreeItem
-	if parent == examples:
+	if filepath == null:
+		return
+	if parent == examples or parent.get_parent() == examples:
 		emit_signal("example_file_selected", filepath)
 	elif parent == local_storage:
 		emit_signal("user_file_selected", filepath)
@@ -293,10 +333,14 @@ func _on_Tree_item_activated():
 	release_focus()
 
 func rescan(selected_filepath):
+	var was_collapsed = true
 	if local_storage != null:
+		was_collapsed = local_storage.collapsed 
 		root.remove_child(local_storage)
+	
 	local_storage = create_item(root, 1)
 	local_storage.set_text(0, "Local Storage")
+	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
 	
 func rescan_textures():
@@ -305,8 +349,8 @@ func rescan_textures():
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
 	local_storage_textures = create_item(root, 2)
-	local_storage_textures.collapsed = was_collapsed
 	local_storage_textures.set_text(0, "Local Textures")
+	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
 func rescan_res_textures():
@@ -315,8 +359,8 @@ func rescan_res_textures():
 		was_collapsed = res_textures.collapsed
 		root.remove_child(res_textures)
 	res_textures = create_item(root, 3)
-	res_textures.collapsed = was_collapsed
 	res_textures.set_text(0, "Base Textures")
+	res_textures.collapsed = was_collapsed
 	scan_res_textures()
 	
 func rescan_palettes():
@@ -325,8 +369,8 @@ func rescan_palettes():
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
 	local_storage_palettes = create_item(root, 4)
-	local_storage_palettes.collapsed = was_collapsed
 	local_storage_palettes.set_text(0, "Local Palettes")
+	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes()
 	
 func scan_local_storage(selected_filepath):
@@ -378,76 +422,237 @@ func scan_local_textures():
 
 				var icon_img = Image.new()
 				icon_img.load_bmp_from_buffer(buf)
+
+				var w = icon_img.get_width()
+				var h = icon_img.get_height()
+
 				icon_img.convert(Image.FORMAT_RGBA8)
 				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
 
 				var icon_tex = ImageTexture.new()
 				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 				new_item.set_icon(0, icon_tex)
+
+				new_item.set_text(0, filename + " (" + str(w) + "x" + str(h) + ")")
 		filename = dir.get_next()
 	dir.list_dir_end()
 
 func scan_res_textures():
-	var dir = Directory.new()
-	var textures_dir = "res://resources/textures"
-	if dir.open(textures_dir) != OK:
-		return
-	dir.list_dir_begin()
-	var filename = dir.get_next()
-
 	var processed = []
+	var textures_dir = "res://resources/textures"
+	
+	var atlas_manifest_path = "res://resources/texture_atlas/atlas_manifest.json"
+	var f = File.new()
+	if f.open(atlas_manifest_path, File.READ) == OK:
+		var result = JSON.parse(f.get_as_text())
+		f.close()
+		if result.error == OK:
+			var manifest = result.result
+			print("FileTree scanning atlas manifest...")
 
-	while filename != "":
-		var final_filename = ""
-		if filename.to_lower().ends_with(".bmp"):
-			final_filename = filename
-		elif filename.to_lower().ends_with(".bmp.import"):
-			final_filename = filename.get_basename()
+			var sorted_keys = manifest.keys()
+			sorted_keys.sort()
+			
+			for key in sorted_keys:
+				var entry = manifest[key]
+				var texture_name = key
+				if !texture_name.to_lower().ends_with(".bmp"):
+					texture_name += ".bmp"
+				
+				processed.append(texture_name)
+				
+				var new_item = create_item(res_textures)
+				new_item.set_text(0, texture_name)
+				new_item.set_metadata(0, textures_dir.plus_file(texture_name))
+				
+				var thumb_path = textures_dir.plus_file(texture_name.get_basename() + "_thumb.png")
+				if ResourceLoader.exists(thumb_path):
+					var thumb = ResourceLoader.load(thumb_path)
+					new_item.set_icon(0, thumb)
+				else:
+					var atlas_file = entry["atlas"]
+					if atlas_file.to_lower().ends_with(".bmp"):
+						atlas_file = atlas_file.get_basename() + ".png"
+					var atlas_path = "res://resources/texture_atlas/" + atlas_file
+					
+					if ResourceLoader.exists(atlas_path):
+						var atlas_tex = ResourceLoader.load(atlas_path)
+						var region = Rect2(entry["x"], entry["y"], entry["w"], entry["h"])
+						var icon_tex = AtlasTexture.new()
+						icon_tex.atlas = atlas_tex
+						icon_tex.region = region
+						new_item.set_icon(0, icon_tex)
 
-		if final_filename != "" and not final_filename in processed:
-			processed.append(final_filename)
-			var full_path = textures_dir.plus_file(final_filename)
+	var dir = Directory.new()
+	if dir.open(textures_dir) == OK:
+		dir.list_dir_begin()
+		var filename = dir.get_next()
 
-			var new_item = create_item(res_textures)
-			new_item.set_text(0, final_filename)
-			new_item.set_metadata(0, full_path)
+		while filename != "":
+			var final_filename = ""
+			
+			if filename.to_lower().ends_with(".bmp"):
+				final_filename = filename
+			elif filename.to_lower().ends_with(".bmp.import"):
+				final_filename = filename.get_basename()
 
-			# Load image for preview
-			var file = File.new()
-			if file.open(full_path, File.READ) == OK:
-				var buf = file.get_buffer(file.get_len())
-				file.close()
+			if final_filename != "" and not final_filename in processed:
+				processed.append(final_filename)
+				var full_path = textures_dir.plus_file(final_filename)
 
-				var icon_img = Image.new()
-				icon_img.load_bmp_from_buffer(buf)
-				icon_img.convert(Image.FORMAT_RGBA8)
-				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+				var new_item = create_item(res_textures)
+				new_item.set_text(0, final_filename)
+				new_item.set_metadata(0, full_path)
 
-				var icon_tex = ImageTexture.new()
-				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
-				new_item.set_icon(0, icon_tex)
+				var thumb_path = full_path.get_basename() + "_thumb.png"
+				
+				var thumb_tex = load(thumb_path)
+				if thumb_tex:
+					new_item.set_icon(0, thumb_tex)
 
-		filename = dir.get_next()
-	dir.list_dir_end()
+			filename = dir.get_next()
+		dir.list_dir_end()
 
 func scan_local_palettes():
 	var dir2 = Directory.new()
+	if not dir2.dir_exists(user_file_location + "/palettes"):
+		return
+
 	dir2.open(user_file_location + "/palettes")
 	dir2.list_dir_begin()
 	var filename = dir2.get_next()
+	
 	while(!filename.empty()):
 		if filename.ends_with(".png"):
+			var full_path = user_file_location + "/palettes/" + filename
+			
 			var new_item = create_item(local_storage_palettes)
 			new_item.set_text(0, filename)
-			new_item.set_metadata(0, user_file_location + "/palettes/" + filename)
+			new_item.set_metadata(0, full_path)
+			
 			var img = Image.new()
-			img.load(user_file_location + "/palettes/" + filename, true, true)
-			var tex = ImageTexture.new()
-			tex.create_from_image((img))
-			tex.flags = 0
-			preloader.add_resource("palette_" + filename.to_lower(), tex)
+			var err = img.load(full_path, true, true)
+			
+			if err == OK:
+				var tex = ImageTexture.new()
+				tex.create_from_image(img, 0)
+				var clean_key = "palette_" + filename.strip_edges().to_lower()
+				preloader.add_resource(clean_key, tex)
+				
+				if img.get_format() != Image.FORMAT_RGBA8:
+					img.convert(Image.FORMAT_RGBA8)
+				
+				var w = img.get_width()
+				var h = img.get_height()
+				
+				if w >= 200:
+					img.lock()
+					
+					# Create the thumbnail 32 x 20 thumbnail
+					var preview_img = Image.new()
+					preview_img.create(32, 20, false, Image.FORMAT_RGBA8)
+					preview_img.lock()
+					
+					# 38 colors total (19 ranges * 2 samples)
+					var color_index = 0
+					
+					for i in range(10, 200, 10):
+						var pos_start = Vector2(0, i) if h > w else Vector2(i, 0)
+						var pos_end = Vector2(0, i + 8) if h > w else Vector2(i + 8, 0)
+						
+						var c1 = img.get_pixel(pos_start.x, pos_start.y)
+						var c2 = img.get_pixel(pos_end.x, pos_end.y)
+						
+						var row = color_index / 8
+						var col = color_index % 8
+						var x_base = col * 4
+						var y_base = row * 4
+
+						for y in range(4):
+							for x in range(4):
+								if x_base + x < 32 and y_base + y < 20:
+									preview_img.set_pixel(x_base + x, y_base + y, c1)
+						color_index += 1
+						
+						row = color_index / 8
+						col = color_index % 8
+						x_base = col * 4
+						y_base = row * 4
+						for y in range(4):
+							for x in range(4):
+								if x_base + x < 32 and y_base + y < 20:
+									preview_img.set_pixel(x_base + x, y_base + y, c2)
+						color_index += 1
+					
+					preview_img.unlock()
+					img.unlock()
+					
+					var icon_tex = ImageTexture.new()
+					icon_tex.create_from_image(preview_img, 0)
+					new_item.set_icon(0, icon_tex)
+					
+				else:
+					var fallback = img.duplicate()
+					fallback.resize(32, 32, Image.INTERPOLATE_NEAREST)
+					var icon_tex = ImageTexture.new()
+					icon_tex.create_from_image(fallback, 0)
+					new_item.set_icon(0, icon_tex)
+
 		filename = dir2.get_next()
 	dir2.list_dir_end()
+
+func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
+	var f = File.new()
+	if f.open(source_path, File.READ) != OK:
+		print("Error: Could not read BMP file.")
+		return false
+	
+	f.seek(10)
+	var pixel_offset = f.get_32()
+	
+	f.seek(14)
+	var header_size = f.get_32()
+	
+	f.seek(28)
+	var bpp = f.get_16()
+	
+	if bpp != 8:
+		print("Error: This BMP is " + str(bpp) + "-bit. Only 8-bit BMPs have palettes.")
+		f.close()
+		return false
+	
+	var palette_offset = 14 + header_size
+	
+	f.seek(palette_offset)
+	
+	var img = Image.new()
+	img.create(256, 1, false, Image.FORMAT_RGBA8)
+	img.lock()
+	
+	for i in range(256):
+		if f.get_position() >= pixel_offset:
+			break
+			
+		var b = f.get_8() / 255.0
+		var g = f.get_8() / 255.0
+		var r = f.get_8() / 255.0
+		var _reserved = f.get_8()
+		
+		img.set_pixel(i, 0, Color(r, g, b, 1.0))
+		
+	img.unlock()
+	f.close()
+	
+	var dest_filename = source_path.get_file().get_basename() + ".png"
+	var dest_path = dest_dir.plus_file(dest_filename)
+	
+	var err = img.save_png(dest_path)
+	if err == OK:
+		print("Converted BMP palette to: " + dest_path)
+		return true
+	else:
+		print("Error saving PNG palette.")
+		return false
 
 func get_all_selected() -> Array:
 	var selected_items = []
@@ -568,6 +773,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		save_dialog.window_title = "Save File As"
 		save_dialog.current_file = filename
 		save_dialog.rect_min_size = Vector2(400, 400)
+		save_dialog.popup_exclusive = true
 		
 		add_child(save_dialog)
 		save_dialog.popup_centered()
@@ -587,6 +793,7 @@ func _on_RenameDialog_confirmed():
 	if new_filepath.ends_with(".lnz"):
 		emit_signal("user_file_selected", new_filepath)
 
+	release_focus()
 
 func _on_ItemPopupMenu_about_to_show():
 	var items = get_all_selected()
@@ -601,3 +808,19 @@ func _on_ItemPopupMenu_about_to_show():
 
 func _on_LnzTextEdit_file_backed_up():
 	rescan(get_selected().get_metadata(0) as String)
+
+func get_expanded_states() -> Dictionary:
+	return {
+		"Examples": examples.collapsed == false if examples else true,
+		"Local Storage": local_storage.collapsed == false if local_storage else true,
+		"Local Textures": local_storage_textures.collapsed == false if local_storage_textures else false,
+		"Base Textures": res_textures.collapsed == false if res_textures else false,
+		"Local Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false
+	}
+
+func set_expanded_states(states: Dictionary):
+	if examples: examples.collapsed = !states.get("Examples", true)
+	if local_storage: local_storage.collapsed = !states.get("Local Storage", true)
+	if local_storage_textures: local_storage_textures.collapsed = !states.get("Local Textures", false)
+	if res_textures: res_textures.collapsed = !states.get("Base Textures", false)
+	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("Local Palettes", false)

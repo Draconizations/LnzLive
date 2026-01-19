@@ -1,9 +1,8 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://scenes/editor/PaletteViewer.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
 [ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=3]
-
 
 [node name="PaletteViewerPopup" type="Panel"]
 visible = false
@@ -11,46 +10,73 @@ margin_left = 187.263
 margin_top = 172.014
 margin_right = 687.263
 margin_bottom = 672.014
-rect_min_size = Vector2( 500, 500 )
-custom_styles/panel = ExtResource( 2)
+rect_min_size = Vector2( 475, 500 )
+custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PaletteViewerScrollContainer" type="ScrollContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 8.0
-margin_top = 8.0
-margin_right = -8.0
-margin_bottom = -38.0
-rect_min_size = Vector2( 450, 500 )
+mouse_filter = 1
+custom_constants/margin_right = 10
+custom_constants/margin_top = 10
+custom_constants/margin_left = 10
+custom_constants/margin_bottom = 10
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CloseButton" type="Button" parent="."]
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-margin_left = -242.0
-margin_top = -34.0
-margin_right = 242.0
-margin_bottom = -14.0
-custom_styles/hover = ExtResource( 2)
-custom_styles/pressed = ExtResource( 2)
-custom_styles/focus = ExtResource( 2)
-custom_styles/disabled = ExtResource( 2)
-custom_styles/normal = ExtResource( 2)
-custom_fonts/font = ExtResource( 3)
-text = "Close"
+[node name="MainVBox" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 10.0
+margin_top = 10.0
+margin_right = 490.0
+margin_bottom = 490.0
+custom_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/MainVBox"]
+margin_right = 480.0
+margin_bottom = 31.0
+custom_fonts/font = ExtResource( 3 )
+text = "Palette Name"
+align = 1
+valign = 1
+autowrap = true
+
+[node name="PaletteViewerScrollContainer" type="MarginContainer" parent="MarginContainer/MainVBox"]
+mouse_filter = 1
+margin_top = 41.0
+margin_right = 480.0
+margin_bottom = 480.0
+size_flags_vertical = 3
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="PaletteViewerScrollContainer"]
-margin_right = 450.0
+[node name="PaletteViewerVBoxContainer" type="VBoxContainer" parent="MarginContainer/MainVBox/PaletteViewerScrollContainer"]
+margin_right = 480.0
+size_flags_horizontal = 3
 margin_bottom = 500.0
 rect_min_size = Vector2( 450, 500 )
+
+; [node name="CloseButton" type="Button" parent="."]
+; anchor_left = 0.5
+; anchor_top = 1.0
+; anchor_right = 0.5
+; anchor_bottom = 1.0
+; margin_left = -242.0
+; margin_top = -34.0
+; margin_right = 242.0
+; margin_bottom = -14.0
+; custom_styles/hover = ExtResource( 2 )
+; custom_styles/pressed = ExtResource( 2 )
+; custom_styles/focus = ExtResource( 2 )
+; custom_styles/disabled = ExtResource( 2 )
+; custom_styles/normal = ExtResource( 2 )
+; custom_fonts/font = ExtResource( 3 )
+; text = "Close"
+; __meta__ = {
+; "_edit_use_anchors_": false
+; }

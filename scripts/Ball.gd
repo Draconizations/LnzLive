@@ -28,6 +28,11 @@ export var transparency_on        = true               setget set_transparency
 
 export var eyelid_rotation        = 0.0                setget set_eyelid_rotation
 export(int) var eyelid_color      = -1                 setget set_eyelid_color
+		   
+export var eyelash_lengths        = []                 setget set_eyelash_lengths
+export var eyelash_angle          = 15                 setget set_eyelash_angle
+export var eyelash_spacing        = 50                 setget set_eyelash_spacing
+export var eyelash_color          = 244                setget set_eyelash_color
 
 export var species                = 0                  setget set_species
 
@@ -42,7 +47,9 @@ enum OutlineState {
 	ACTIVE_SELECTED,
 	LINEZ_START,
 	LINEZ_TARGET,
-	HOVER
+	HOVER,
+	MODIFIED,
+	PIVOT
 }
 
 var current_outline_state         = OutlineState.NONE  setget , get_outline_state
@@ -51,7 +58,6 @@ var old_outline                   = outline
 var old_outline_color             = outline_color_index
 
 var is_over                       = false
-
 
 signal ball_mouse_enter(ball_info)
 signal ball_mouse_exit(ball_no)
@@ -64,7 +70,7 @@ func _ready():
 
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
-	
+
 	# Set the initial species, which will configure the shader
 	set_species(species)
 
@@ -77,21 +83,26 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("eyelid_rotation", eyelid_rotation)
 	$MeshInstance.material_override.set_shader_param("eyelid_color",    eyelid_color)
 	
+	set_eyelash_lengths(eyelash_lengths)
+	set_eyelash_angle(eyelash_angle)
+	set_eyelash_spacing(eyelash_spacing)
+	set_eyelash_color(eyelash_color)
+
 	# Pass the original texture to the shader
 	set_texture(texture)
 
 	# Pass the default Petz palette to the shader
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
 
+func set_hidden(is_hidden):
+	$MeshInstance.visible = !is_hidden
+	$Area/CollisionShape.disabled = is_hidden
+
 func set_visible(new_value):
 	visible_override = new_value
-	if !omitted:
-		$MeshInstance.visible = new_value
-		$Area/CollisionShape.disabled = !new_value
-		$Area/CollisionShape.visible = new_value
-	else:
-		$Area/CollisionShape.disabled = true
-		$Area/CollisionShape.visible = false
+	$MeshInstance.visible = new_value
+	$Area/CollisionShape.disabled = !new_value
+	$Area/CollisionShape.visible = new_value
 
 func set_tile_texture(new_value):
 	tile_texture = new_value
@@ -113,13 +124,51 @@ func set_eyelid_color(col: int) -> void:
 	eyelid_color = col
 	$MeshInstance.material_override.set_shader_param("eyelid_color", col)
 
+func set_eyelash_lengths(new_value: Array):
+	eyelash_lengths = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("has_eyelashes", new_value.size() > 0)
+		$MeshInstance.material_override.set_shader_param("eyelash_count", new_value.size())
+		
+		var l1 = [0.0, 0.0, 0.0, 0.0]
+		var l2 = [0.0, 0.0, 0.0, 0.0]
+		
+		# Fill first vec4 (lashes 0-3)
+		for i in range(min(new_value.size(), 4)):
+			l1[i] = float(new_value[i])
+			
+		# Fill second vec4 (lashes 4-7)
+		for i in range(4, min(new_value.size(), 8)):
+			l2[i-4] = float(new_value[i])
+		
+		$MeshInstance.material_override.set_shader_param("eyelash_lengths_1", Plane(l1[0], l1[1], l1[2], l1[3]))
+		$MeshInstance.material_override.set_shader_param("eyelash_lengths_2", Plane(l2[0], l2[1], l2[2], l2[3]))
+	
+func set_eyelash_angle(new_value):
+	eyelash_angle = new_value
+	if $MeshInstance.material_override:
+		var angle_rad = (float(new_value) / 64.0) * PI
+		$MeshInstance.material_override.set_shader_param("eyelash_angle_rad", angle_rad)
+
+func set_eyelash_spacing(new_value):
+	eyelash_spacing = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("eyelash_spacing_norm", float(new_value) / 100.0)
+
+func set_eyelash_color(new_value):
+	eyelash_color = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("eyelash_color_index", new_value)
+
 func set_fuzz_amount(new_value):
 	fuzz_amount = new_value
 	$MeshInstance.material_override.set_shader_param("fuzz_amount", new_value)
 	
 func set_outline(new_value):
 	outline = new_value
-	$MeshInstance.material_override.set_shader_param("outline", new_value)
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("outline", new_value)
+		_update_visibility_params()
 
 func set_color_index(new_value):
 	color_index = new_value
@@ -147,6 +196,21 @@ func _update_shader_texture_params():
 
 	if texture != null:
 		var raw_texture_size = texture.get_size()
+
+		if texture is AtlasTexture:
+			var atlas_tex = texture as AtlasTexture
+			var rect = atlas_tex.region
+			raw_texture_size = rect.size
+
+			$MeshInstance.material_override.set_shader_param("ball_texture", atlas_tex.atlas)
+			$MeshInstance.material_override.set_shader_param("is_atlas", true)
+			# Pass rect as Plane (x,y,w,h) to ensure it maps to vec4 correctly in shader
+			$MeshInstance.material_override.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
+			$MeshInstance.material_override.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
+		else:
+			$MeshInstance.material_override.set_shader_param("ball_texture", texture)
+			$MeshInstance.material_override.set_shader_param("is_atlas", false)
+
 		var eff_texture_size = texture_size if (texture_size != Vector2.ZERO and !tile_texture) else raw_texture_size
 
 		# print("Declared size from [Texture List]:", texture_size)
@@ -154,13 +218,13 @@ func _update_shader_texture_params():
 		# print("Effective texture_size passed to shader:", eff_texture_size)
 		# print("Texture resized? ", eff_texture_size != raw_texture_size)
 		
-		$MeshInstance.material_override.set_shader_param("ball_texture", texture)
 		$MeshInstance.material_override.set_shader_param("texture_size", eff_texture_size)
 		$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 		$MeshInstance.material_override.set_shader_param("has_texture", true)
 	else:
 		$MeshInstance.material_override.set_shader_param("ball_texture", null)
 		$MeshInstance.material_override.set_shader_param("has_texture", false)
+		$MeshInstance.material_override.set_shader_param("is_atlas", false)
 
 func set_palette(new_value):
 	if new_value != null:
@@ -202,28 +266,37 @@ func _on_Area_mouse_entered():
 	emit_signal("ball_mouse_enter", {ball_no = ball_no})
 
 func apply_outline_state(state: int):
-	if current_outline_state == OutlineState.NONE:
-		old_outline = outline
-		old_outline_color = outline_color_index
-
 	current_outline_state = state
+	var highlight_idx = -1 # -1 hides the extra ring
 
 	match state:
 		OutlineState.HOVER:
-			set_outline(3)
-			set_outline_color_index(0)  # WHITE
+			highlight_idx = 0  # WHITE
 		OutlineState.ACTIVE_SELECTED:
-			set_outline(3)
-			set_outline_color_index(2)  # GREEN
+			highlight_idx = 2  # GREEN
 		OutlineState.LINEZ_START:
-			set_outline(3)
-			set_outline_color_index(1)  # RED
+			highlight_idx = 1  # RED
 		OutlineState.LINEZ_TARGET:
-			set_outline(3)
-			set_outline_color_index(4)  # BLUE
+			highlight_idx = 4  # BLUE
+		OutlineState.MODIFIED:
+			highlight_idx = 248 # GRAY
+		OutlineState.PIVOT:
+			highlight_idx = 1 # RED
 		OutlineState.NONE:
-			set_outline(old_outline)
-			set_outline_color_index(old_outline_color)
+			highlight_idx = -1
+
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("highlight_color_index", highlight_idx)
+	
+	_update_visibility_params()
+
+func _update_visibility_params():
+	if not $MeshInstance.material_override: return
+	
+	var is_currently_invisible = (outline == -4)
+
+	$MeshInstance.material_override.set_shader_param("hide_fill", is_currently_invisible)
+	$MeshInstance.material_override.set_shader_param("hide_outline", is_currently_invisible)
 
 func turn_on_highlight():
 	apply_outline_state(OutlineState.HOVER)
@@ -260,16 +333,16 @@ func _input(event):
 	if event is InputEventKey and event.pressed and is_over:
 		if event.scancode == KEY_SPACE and event.control:
 			return
-		if event.scancode == KEY_B or event.scancode == KEY_Z:
+		if (event.scancode == KEY_B or event.scancode == KEY_Z) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.BALL)
-		elif event.scancode == KEY_M or event.scancode == KEY_X:
+		elif (event.scancode == KEY_M or event.scancode == KEY_X) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.MOVE)
-		elif event.scancode == KEY_P or event.scancode == KEY_C:
+		elif (event.scancode == KEY_P or event.scancode == KEY_C) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.PROJECT)
-		elif event.scancode == KEY_L or event.scancode == KEY_V:
+		elif (event.scancode == KEY_L or event.scancode == KEY_V) and not event.alt and not event.control:
 			get_tree().set_input_as_handled()
 			emit_signal("ball_selected", ball_no, Section.Section.LINE)
 		elif event.scancode == KEY_DELETE:

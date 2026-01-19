@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends DraggablePanel
 ## PaintballSettings.gd
 ## Manages the UI panel and logic for the Paintball Mode settings
 ## This script controls the visibility of the settings panel and provides methods to:
@@ -12,13 +12,77 @@ signal apply_paintballz
 signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
+var _is_loading_settings = false
+
+#var _preview_ball_rotation = Vector3.ZERO
+#var _is_dragging_preview = false
+#var _last_mouse_pos = Vector2.ZERO
+
+onready var paintballz_tree = find_node("PaintballzTree")
+#onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
+#onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
+#onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
+#onready var preview_camera = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld/Camera
+
+#var ball_scene = preload("res://Ball.tscn")
+#var paintball_scene = preload("res://Paintball.tscn")
+var default_palette = preload("res://resources/palettes/petz_palette.png")
+var active_palette = default_palette
+
+onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
+
+var design_color_slots = [
+	{
+		"color": "105",
+		"outline_color": "244",
+		"texture": "0",
+		"outline_type": -1,
+		"fuzz": 0,
+		"group": 0,
+		"anchored": true,
+		"display_color": Color(1, 1, 0)
+	},
+	{
+		"color": "95",
+		"outline_color": "244",
+		"texture": "0",
+		"outline_type": -1,
+		"fuzz": 0,
+		"group": 0,
+		"anchored": true,
+		"display_color": Color(1, 0, 0)
+	},
+	{
+		"color": "145",
+		"outline_color": "244",
+		"texture": "0",
+		"outline_type": -1,
+		"fuzz": 0,
+		"group": 0,
+		"anchored": true,
+		"display_color": Color(0, 1, 0)
+	},
+	{
+		"color": "155",
+		"outline_color": "244",
+		"texture": "0",
+		"outline_type": -1,
+		"fuzz": 0,
+		"group": 0,
+		"anchored": true,
+		"display_color": Color(0, 0, 1)
+	}
+]
+
+const DESIGN_CANVAS_SIZE = 200.0
+
 func _ready():
 	find_node("ApplyButton").connect("pressed", self, "_on_ApplyButton_pressed")
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
 
 	var viewport_size = get_viewport().size
-	var panel = $Panel
+	var panel = self
 	var panel_size = panel.rect_size
 	
 	var default_x = (viewport_size.x - panel_size.x) / 2
@@ -27,13 +91,33 @@ func _ready():
 	
 	panel.restore_position(default_pos)
 
-	# var viewport_size = get_viewport().size
-	# var panel = $Panel
-	# var panel_size = panel.rect_size
-	# panel.margin_left = (viewport_size.x - panel_size.x) / 2
-	# panel.margin_right = panel.margin_left + panel_size.x
-	# panel.margin_top = viewport_size.y - panel_size.y - 10
-	# panel.margin_bottom = panel.margin_top + panel_size.y
+	_connect_settings_signals()
+	_connect_design_signals()
+
+#	preview_viewport.size = preview_container.rect_size
+
+#	var preview_container = find_node("PreviewContainer")
+#	preview_container.connect("gui_input", self, "_on_PreviewContainer_gui_input")
+
+	find_node("BrushSpaceSlider").connect("value_changed", self, "_on_brush_space_changed")
+
+	_setup_slots_tree()
+	load_settings()
+
+#	call_deferred("update_preview")
+
+#func _on_PreviewContainer_gui_input(event):
+#	if event is InputEventMouseButton:
+#		if event.button_index == BUTTON_LEFT:
+#			_is_dragging_preview = event.pressed
+#			_last_mouse_pos = event.position
+#
+#	elif event is InputEventMouseMotion and _is_dragging_preview:
+#		var diff = event.position - _last_mouse_pos
+#		_preview_ball_rotation.y += diff.x * 0.01
+#		_preview_ball_rotation.x += diff.y * 0.01
+#		_last_mouse_pos = event.position
+#		update_preview()
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_paintballz")
@@ -44,17 +128,19 @@ func _on_ClearButton_pressed():
 func _on_DeleteModeCheckBox_toggled(is_on):
 	emit_signal("delete_mode_toggled", is_on)
 
-func show():
-	$Panel.show()
+func is_design_mode_active():
+	return find_node("TabContainer").current_tab == 1
 
-func hide():
-	$Panel.hide()
+#func _on_TabContainer_tab_changed(tab):
+#	if tab == 1:
+##		update_preview()
 
 func get_properties():
 	var properties = {}
 	properties["diameter_min"] = find_node("DiameterMin").value
 	properties["diameter_max"] = find_node("DiameterMax").value
 	properties["tapered"] = find_node("Tapered").pressed
+	properties["pixel_mode"] = find_node("PixelMode").pressed
 	properties["color"] = find_node("Color").text
 	properties["outline_color"] = find_node("OutlineColor").text
 	properties["outline_type_min"] = find_node("OutlineTypeMin").value
@@ -70,23 +156,901 @@ func get_properties():
 	properties["jitter"] = find_node("Jitter").value
 	properties["ordered"] = find_node("Ordered").pressed
 	properties["repeat"] = find_node("Repeat").pressed
+	properties["shuffle"] = find_node("Shuffle").pressed
 	return properties
 
-func _parse_number_list(s, allow_negatives=false):
-	var list = []
-	var parts = s.split(",", false)
-	for part in parts:
-		part = part.strip_edges()
-		if "-" in part:
-			if part.rfind("-") > 0:
-				var range_parts = part.split("-")
-				if range_parts.size() == 2:
-					var start = range_parts[0].to_int()
-					var end = range_parts[1].to_int()
-					for i in range(start, end + 1):
-						list.append(i)
-			elif allow_negatives and part.is_valid_integer():
-				list.append(part.to_int())
-		elif part.is_valid_integer():
-			list.append(part.to_int())
-	return list
+func _compute_distance_transform(mask: Array, size: int) -> Array:
+	var dists = []
+	dists.resize(size * size)
+	for i in range(dists.size()):
+		if not mask[i]:
+			dists[i] = 0.0
+			continue
+		
+		var x = i % size
+		var y = i / size
+		var min_d = 100.0
+		for my in range(size):
+			for mx in range(size):
+				if not mask[my * size + mx]:
+					var d = sqrt(pow(x - mx, 2) + pow(y - my, 2))
+					if d < min_d: min_d = d
+
+		min_d = min(min_d, min(x + 0.5, min(y + 0.5, min(size - 1 - x + 0.5, size - 1 - y + 0.5))))
+		dists[i] = min_d
+	return dists
+
+func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float) -> int:
+	var cleared = 0
+	for y in range(size):
+		for x in range(size):
+			var idx = y * size + x
+			if mask[idx]:
+				var d = sqrt(pow(x - cx, 2) + pow(y - cy, 2))
+				if d <= radius:
+					mask[idx] = false
+					cleared += 1
+	return cleared
+
+func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
+	var design_canvas = find_node("DesignCanvas")
+	var paintballs = design_canvas.design_paintballs
+	
+	var out_pos = PoolVector3Array()
+	var out_diams = PoolIntArray()
+	var out_colors = PoolIntArray()
+	var out_outlines = PoolIntArray()
+	var out_out_types = PoolIntArray()
+	var out_fuzz = PoolIntArray()
+	var out_group = PoolIntArray()
+	var out_tex = PoolIntArray()
+	var out_anchored = PoolIntArray()
+
+	var pixel_mode = find_node("PixelMode").pressed 
+	
+	var sampled_scale = override_footprint
+	if sampled_scale <= 0:
+		sampled_scale = rand_range(find_node("DiameterMin").value, find_node("DiameterMax").value)
+	
+	var footprint_lnz = sampled_scale if pixel_mode else ball_lnz_diameter * (sampled_scale / 100.0)
+	
+	var d_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
+	var r_jitter = find_node("RotateJitter").value if jitter_enabled else 0.0
+	var s_jitter = find_node("SpreadJitter").value if jitter_enabled else 0.0
+
+	if jitter_enabled and r_jitter > 0:
+		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
+
+	var rotated_basis = basis.rotated(center_dir, design_rotation_angle)
+	var tangent_x = rotated_basis.x
+	var tangent_y = rotated_basis.z
+
+	var spread_offset = Vector3.ZERO
+	if jitter_enabled and s_jitter > 0:
+		var s_scale = (footprint_lnz / 2.0) * (s_jitter / 100.0)
+		spread_offset = tangent_x * rand_range(-s_scale, s_scale) + tangent_y * rand_range(-s_scale, s_scale)
+
+	var ball_lnz_diam_safe = max(1.0, ball_lnz_diameter)
+
+	for pb in paintballs:
+		if pb.color_slot - 1 >= design_color_slots.size(): continue
+		var slot_data = design_color_slots[pb.color_slot - 1]
+
+		var dx = pb.x * (footprint_lnz / 2.0)
+		var dy = -pb.y * (footprint_lnz / 2.0)
+		if d_jitter > 0:
+			var j_amt = (d_jitter / 100.0) * (footprint_lnz / 2.0)
+			dx += rand_range(-j_amt, j_amt)
+			dy += rand_range(-j_amt, j_amt)
+
+		var pos_on_plane = center_dir * (ball_lnz_diameter * 0.5) + tangent_x * dx + tangent_y * dy + spread_offset
+		out_pos.append(pos_on_plane.normalized())
+
+		var slot_scale = float(slot_data.get("scale", 100)) / 100.0
+		var pb_size_units = footprint_lnz * (float(pb.diameter) / DESIGN_CANVAS_SIZE) * slot_scale
+		
+		if d_jitter > 0:
+			pb_size_units *= (1.0 + rand_range(-d_jitter/100.0, d_jitter/100.0))
+		
+		var final_pb_percentage = (pb_size_units / ball_lnz_diam_safe) * 100.0
+		out_diams.append(int(max(1, round(final_pb_percentage))))
+
+		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
+		out_colors.append(color_list[randi() % color_list.size()] if color_list else 0)
+		
+		var out_col_list = LnzLiveUtils.parse_number_list(slot_data.outline_color)
+		out_outlines.append(int(out_col_list[0]) if out_col_list else 244)
+		
+		var tex_list = LnzLiveUtils.parse_number_list(slot_data.texture, true)
+		out_tex.append(int(tex_list[0]) if tex_list else 0)
+
+		out_out_types.append(int(slot_data.outline_type))
+		out_fuzz.append(int(slot_data.get("fuzz", 0)))
+		out_group.append(int(slot_data.get("group", 0)))
+		out_anchored.append(1 if slot_data.get("anchored", true) else 0)
+
+	return {
+		"positions": out_pos, 
+		"diameters": out_diams, 
+		"colors": out_colors,
+		"outlines": out_outlines, 
+		"outline_types": out_out_types, 
+		"fuzzes": out_fuzz,
+		"groups": out_group, 
+		"textures": out_tex, 
+		"anchored": out_anchored
+	}
+
+func _connect_settings_signals():
+	find_node("DiameterMin").connect("value_changed", self, "_on_setting_changed")
+	find_node("DiameterMax").connect("value_changed", self, "_on_setting_changed")
+	find_node("Tapered").connect("toggled", self, "_on_setting_changed")
+	find_node("PixelMode").connect("toggled", self, "_on_setting_changed")
+	find_node("Color").connect("text_changed", self, "_on_setting_changed")
+	find_node("OutlineColor").connect("text_changed", self, "_on_setting_changed")
+	find_node("OutlineTypeMin").connect("value_changed", self, "_on_setting_changed")
+	find_node("OutlineTypeMax").connect("value_changed", self, "_on_setting_changed")
+	find_node("FuzzMin").connect("value_changed", self, "_on_setting_changed")
+	find_node("FuzzMax").connect("value_changed", self, "_on_setting_changed")
+	find_node("Texture").connect("text_changed", self, "_on_setting_changed")
+	find_node("Group").connect("value_changed", self, "_on_setting_changed")
+	find_node("Anchored").connect("toggled", self, "_on_setting_changed")
+	find_node("Target").connect("item_selected", self, "_on_setting_changed")
+	find_node("FreelineCheckBox").connect("toggled", self, "_on_setting_changed")
+	find_node("Spacing").connect("value_changed", self, "_on_setting_changed")
+	find_node("Jitter").connect("value_changed", self, "_on_setting_changed")
+	find_node("Ordered").connect("toggled", self, "_on_setting_changed")
+	find_node("Repeat").connect("toggled", self, "_on_setting_changed")
+	find_node("Shuffle").connect("toggled", self, "_on_setting_changed")
+	find_node("EraserCheckBox").connect("toggled", self, "_on_setting_changed")
+
+	var reset_btn = find_node("ResetDefaultsButton")
+	if reset_btn:
+		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
+
+func _connect_design_signals():
+	find_node("DesignCanvas").connect("design_changed", self, "_on_setting_changed")
+	find_node("ClearGridButton").connect("pressed", find_node("DesignCanvas"), "clear")
+	find_node("BrushSizeSlider").connect("value_changed", self, "_on_brush_size_changed")
+
+	find_node("AddSlotButton").connect("pressed", self, "_on_AddSlotButton_pressed")
+	find_node("RemoveSlotButton").connect("pressed", self, "_on_RemoveSlotButton_pressed")
+
+	find_node("MirrorX").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("MirrorY").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("CanvasEraser").connect("toggled", self, "_on_design_tool_toggled")
+	find_node("ImportPatternButton").connect("pressed", self, "_on_import_pattern_pressed")
+	find_node("ExportPatternButton").connect("pressed", self, "_on_export_pattern_pressed")
+	find_node("DesignJitter").connect("value_changed", self, "_on_setting_changed")
+	find_node("RotateJitter").connect("value_changed", self, "_on_setting_changed")
+	find_node("SpreadJitter").connect("value_changed", self, "_on_setting_changed")
+
+	# find_node("ImportTatButton").connect("pressed", self, "_on_import_tat_pressed")
+	find_node("PatternInfoButton").connect("pressed", self, "_on_pattern_info_pressed")
+	find_node("PatternInfoDialog").find_node("CloseButton").connect("pressed", self, "_on_info_close_pressed")
+
+	var tree = find_node("SlotsTree")
+	tree.connect("item_edited", self, "_on_SlotsTree_item_edited")
+	tree.connect("cell_selected", self, "_on_SlotsTree_cell_selected")
+	tree.connect("item_selected", self, "_on_SlotsTree_cell_selected")
+
+func _on_design_tool_toggled(_arg):
+	var canvas = find_node("DesignCanvas")
+	canvas.mirror_x = find_node("MirrorX").pressed
+	canvas.mirror_y = find_node("MirrorY").pressed
+	canvas.eraser_mode = find_node("CanvasEraser").pressed
+	canvas.update()
+	save_settings()
+
+# func _on_import_tat_pressed():
+# 	if OS.has_feature("HTML5"):
+# 		JavaScript.eval("window.alert('Importing PWS Tattoo (.tat) files is not yet supported in web version.');")
+# 		return
+
+# 	var file_dialog = FileDialog.new()
+# 	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+# 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+# 	file_dialog.filters = ["*.tat ; Petz Workshop Tattoo"]
+# 	file_dialog.connect("file_selected", self, "_load_tat_file")
+# 	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+# 	add_child(file_dialog)
+# 	file_dialog.popup_centered_ratio(0.6)
+
+# func _load_tat_file(path):
+# 	var file = File.new()
+# 	if file.open(path, File.READ) != OK:
+# 		return
+	
+# 	var design_balls = []
+# 	var info_section = false
+# 	var data_section = false
+	
+# 	var min_x = 1000.0; var max_x = -1000.0
+# 	var min_y = 1000.0; var max_y = -1000.0
+# 	var max_tat_diameter = 0.0
+
+# 	while not file.eof_reached():
+# 		var line = file.get_line().strip_edges()
+# 		if line == "[Data]":
+# 			data_section = true
+# 			continue
+		
+# 		if data_section and line.begins_with("Ball"):
+# 			var vals = line.split("=")[1].split(",")
+# 			if vals.size() < 8: continue
+			
+# 			var diam = float(vals[0])
+# 			var x = float(vals[1])
+# 			var y = float(vals[2])
+			
+# 			if diam > max_tat_diameter: max_tat_diameter = diam
+# 			if x < min_x: min_x = x
+# 			if x > max_x: max_x = x
+# 			if y < min_y: min_y = y
+# 			if y > max_y: max_y = y
+			
+# 			design_balls.append({
+# 				"x": x, "y": y, "diameter": diam,
+# 				"color": int(vals[4]), "outline_color": int(vals[5]),
+# 				"fuzz": int(vals[6]), "outline": int(vals[7])
+# 			})
+# 	file.close()
+
+# 	if design_balls.empty() or max_tat_diameter == 0: return
+
+# 	var max_range = max(max_x - min_x, max_y - min_y)
+# 	if max_range == 0: max_range = 1.0
+# 	var center_x = (min_x + max_x) / 2.0
+# 	var center_y = (min_y + max_y) / 2.0
+# 	var pos_scale_factor = 1.8 / max_range
+	
+# 	design_color_slots.clear()
+# 	var slot_map = {} 
+# 	var final_paintballs = []
+	
+# 	for pb in design_balls:
+# 		var diam_group = int(round(pb.diameter / 5.0) * 5)
+# 		var signature = str(pb.color) + "_" + str(pb.outline_color) + "_" + str(pb.fuzz) + "_" + str(pb.outline) + "_" + str(diam_group)
+		
+# 		var slot_idx = -1
+# 		if slot_map.has(signature):
+# 			slot_idx = slot_map[signature]
+# 		else:
+# 			var relative_scale = (pb.diameter / max_tat_diameter) * 100.0
+			
+# 			var new_slot = {
+# 				"color": str(pb.color),
+# 				"outline_color": str(pb.outline_color),
+# 				"texture": "0",
+# 				"outline_type": pb.outline,
+# 				"fuzz": pb.fuzz,
+# 				"group": 0,
+# 				"anchored": true,
+# 				"scale": int(max(1, relative_scale)),
+# 				"display_color": Color(randf(), randf(), randf())
+# 			}
+# 			design_color_slots.append(new_slot)
+# 			slot_idx = design_color_slots.size()
+# 			slot_map[signature] = slot_idx
+			
+# 		var norm_x = (pb.x - center_x) * pos_scale_factor
+# 		var norm_y = -(pb.y - center_y) * pos_scale_factor 
+		
+# 		var new_pb = {
+# 			"x": norm_x,
+# 			"y": norm_y,
+# 			"diameter": DESIGN_CANVAS_SIZE * 0.1,
+# 			"color_slot": slot_idx
+# 		}
+# 		final_paintballs.append(new_pb)
+
+# 	var canvas = find_node("DesignCanvas")
+# 	canvas.design_paintballs = final_paintballs
+# 	_refresh_slot_buttons()
+# 	canvas.update()
+# 	canvas.emit_signal("design_changed")
+
+func _on_pattern_info_pressed():
+	find_node("PatternInfoDialog").popup_centered()
+
+func _on_info_close_pressed():
+	find_node("PatternInfoDialog").hide()
+
+func _on_import_pattern_pressed():
+	if OS.has_feature("HTML5"):
+		JavaScript.eval("window.alert('Importing patterns is not yet supported in web version.');")
+		return
+
+	var file_dialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.json ; JSON Pattern"]
+	file_dialog.connect("file_selected", self, "_load_pattern_file")
+	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
+
+func _load_pattern_file(path):
+	var file = File.new()
+	if file.open(path, File.READ) == OK:
+		var text = file.get_as_text()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK:
+			var data = json_res.result
+			if data.has("paintballs") and data.has("slots"):
+				find_node("DesignCanvas").design_paintballs = data.paintballs
+
+				if data.slots is Array:
+					design_color_slots.clear()
+					for s in data.slots:
+						if s.has("display_color_r"):
+							s["display_color"] = Color(s["display_color_r"], s["display_color_g"], s["display_color_b"])
+							s.erase("display_color_r")
+							s.erase("display_color_g")
+							s.erase("display_color_b")
+						design_color_slots.append(s)
+
+				if data.has("info"):
+					var info = data["info"]
+					find_node("PatternInfoDialog").find_node("AuthorEdit").text = info.get("author", "")
+					find_node("PatternInfoDialog").find_node("WebsiteEdit").text = info.get("website", "")
+					find_node("PatternInfoDialog").find_node("DescEdit").text = info.get("description", "")
+
+				_refresh_slot_buttons()
+				find_node("DesignCanvas").update()
+				find_node("DesignCanvas").emit_signal("design_changed")
+		file.close()
+
+func _on_clear_design_pressed():
+	find_node("DesignCanvas").clear()
+	
+	design_color_slots = [
+		{
+			"color": "105",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 1, 0)
+		},
+		{
+			"color": "95",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(1, 0, 0)
+		},
+		{
+			"color": "145",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 1, 0)
+		},
+		{
+			"color": "155",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"scale": 100,
+			"display_color": Color(0, 0, 1)
+		}
+	]
+	
+	# find_node("PatternInfoDialog").find_node("AuthorEdit").text = ""
+	# find_node("PatternInfoDialog").find_node("WebsiteEdit").text = ""
+	# find_node("PatternInfoDialog").find_node("DescEdit").text = ""
+	
+	_refresh_slot_buttons()
+	find_node("DesignCanvas").emit_signal("design_changed")
+
+func _on_export_pattern_pressed():
+	if OS.has_feature("HTML5"):
+		JavaScript.eval("window.alert('Exporting patterns is not yet supported in web version.');")
+		return
+
+	var file_dialog = FileDialog.new()
+	file_dialog.mode = FileDialog.MODE_SAVE_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = ["*.json ; JSON Pattern"]
+	file_dialog.connect("file_selected", self, "_save_pattern_file")
+	file_dialog.connect("popup_hide", file_dialog, "queue_free")
+	add_child(file_dialog)
+	file_dialog.popup_centered_ratio(0.6)
+
+func _save_pattern_file(path):
+	var data = {
+		"header": "LnzLive Stampz Design",
+		"info": {
+			"time_generated": OS.get_datetime(),
+			"author": find_node("PatternInfoDialog").find_node("AuthorEdit").text,
+			"website": find_node("PatternInfoDialog").find_node("WebsiteEdit").text,
+			"description": find_node("PatternInfoDialog").find_node("DescEdit").text
+		},
+		"paintballs": find_node("DesignCanvas").design_paintballs,
+		"slots": []
+	}
+
+	for s in design_color_slots:
+		var slot_copy = s.duplicate()
+		if slot_copy.has("display_color") and slot_copy["display_color"] is Color:
+			var col = slot_copy["display_color"]
+			slot_copy["display_color_r"] = col.r
+			slot_copy["display_color_g"] = col.g
+			slot_copy["display_color_b"] = col.b
+			slot_copy.erase("display_color")
+		data.slots.append(slot_copy)
+
+	var file = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(JSON.print(data, "\t"))
+		file.close()
+
+func _on_brush_size_changed(value):
+	find_node("DesignCanvas").brush_size = value
+
+func _on_brush_space_changed(value):
+	find_node("DesignCanvas").brush_spacing = value
+
+func _refresh_slot_buttons():
+	_populate_slots_tree()
+	find_node("DesignCanvas").slot_data_ref = design_color_slots
+	find_node("DesignCanvas").update()
+
+func _setup_slots_tree():
+	var tree = find_node("SlotsTree")
+	tree.set_column_titles_visible(true)
+	tree.columns = 9
+	tree.set_column_title(0, "Color")
+	tree.set_column_title(1, "Col")
+	tree.set_column_title(2, "OutCol")
+	tree.set_column_title(3, "Tex")
+	tree.set_column_title(4, "Out")
+	tree.set_column_title(5, "Fuzz")
+	tree.set_column_title(6, "Grp")
+	tree.set_column_title(7, "Anc")
+	tree.set_column_title(8, "Scale")
+
+	tree.set_column_expand(0, false)
+	tree.set_column_min_width(0, 40)
+
+	tree.set_column_expand(7, false)
+	tree.set_column_min_width(7, 30)
+
+	tree.set_column_expand(8, false)
+	tree.set_column_min_width(8, 60)
+
+func _populate_slots_tree():
+	var tree = find_node("SlotsTree")
+	tree.clear()
+	var root = tree.create_item()
+
+	for i in range(design_color_slots.size()):
+		var slot = design_color_slots[i]
+		var item = tree.create_item(root)
+
+		# Col 0: Display Color
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CUSTOM)
+		# TreeItem doesn't support easy bg color per cell
+		var icon = _create_color_icon(slot.display_color)
+		item.set_icon(0, icon)
+		item.set_editable(0, true)
+
+		# Col 1: LNZ Color (String)
+		item.set_text(1, str(slot.color))
+		item.set_editable(1, true)
+
+		# Col 2: Outline Color (String)
+		item.set_text(2, str(slot.outline_color))
+		item.set_editable(2, true)
+
+		# Col 3: Texture (String)
+		item.set_text(3, str(slot.texture))
+		item.set_editable(3, true)
+
+		# Col 4: Outline Type (Range)
+		item.set_cell_mode(4, TreeItem.CELL_MODE_RANGE)
+		item.set_range_config(4, -2, 10, 1)
+		item.set_range(4, slot.outline_type)
+		item.set_editable(4, true)
+
+		# Col 5: Fuzz (Range)
+		item.set_cell_mode(5, TreeItem.CELL_MODE_RANGE)
+		item.set_range_config(5, 0, 100, 1)
+		item.set_range(5, slot.get("fuzz", 0))
+		item.set_editable(5, true)
+
+		# Col 6: Group (Range)
+		item.set_cell_mode(6, TreeItem.CELL_MODE_RANGE)
+		item.set_range_config(6, -1, 100, 1)
+		item.set_range(6, slot.get("group", 0))
+		item.set_editable(6, true)
+
+		# Col 7: Anchored (Check)
+		item.set_cell_mode(7, TreeItem.CELL_MODE_CHECK)
+		item.set_checked(7, slot.get("anchored", true))
+		item.set_editable(7, true)
+
+		# Col 8: Scale (Range %)
+		item.set_cell_mode(8, TreeItem.CELL_MODE_RANGE)
+		item.set_range_config(8, 1, 500, 1)
+		item.set_range(8, slot.get("scale", 100))
+		item.set_editable(8, true)
+
+		item.set_metadata(0, i)
+
+func _create_color_icon(color: Color) -> Texture:
+	var img = Image.new()
+	img.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(color)
+	var tex = ImageTexture.new()
+	tex.create_from_image(img)
+	return tex
+
+func _on_SlotsTree_item_edited():
+	if _is_loading_settings: return
+
+	var tree = find_node("SlotsTree")
+	var item = tree.get_edited()
+	if not item: return
+
+	var idx = item.get_metadata(0)
+	if idx < 0 or idx >= design_color_slots.size(): return
+
+	var col = tree.get_selected_column()
+
+	design_color_slots[idx].color = item.get_text(1)
+	design_color_slots[idx].outline_color = item.get_text(2)
+	design_color_slots[idx].texture = item.get_text(3)
+	design_color_slots[idx].outline_type = int(item.get_range(4))
+	design_color_slots[idx].fuzz = int(item.get_range(5))
+	design_color_slots[idx].group = int(item.get_range(6))
+	design_color_slots[idx].anchored = item.is_checked(7)
+	design_color_slots[idx].scale = int(item.get_range(8))
+
+	save_settings()
+#	update_preview()
+
+func _on_SlotsTree_cell_selected():
+	var tree = find_node("SlotsTree")
+	var item = tree.get_selected()
+	if not item: return
+
+	var idx = item.get_metadata(0)
+	var col = tree.get_selected_column()
+
+	var canvas = find_node("DesignCanvas")
+	if canvas:
+		canvas.current_color_slot = idx + 1
+
+	if col == 0:
+		var picker_popup = PopupPanel.new()
+		picker_popup.rect_size = Vector2(300, 400)
+		var picker = ColorPicker.new()
+		picker.color = design_color_slots[idx].display_color
+		picker.connect("color_changed", self, "_on_slot_display_color_changed", [idx, item])
+		picker_popup.add_child(picker)
+		add_child(picker_popup)
+		picker_popup.popup_centered()
+		picker_popup.connect("popup_hide", picker_popup, "queue_free")
+
+func _on_slot_display_color_changed(color, idx, item):
+	if idx >= 0 and idx < design_color_slots.size():
+		design_color_slots[idx].display_color = color
+		item.set_icon(0, _create_color_icon(color))
+		find_node("DesignCanvas").update()
+		save_settings()
+
+func _on_AddSlotButton_pressed():
+	var new_slot = {
+		"color": "255",
+		"outline_color": "244",
+		"texture": "0",
+		"outline_type": -1,
+		"fuzz": 0,
+		"group": 0,
+		"anchored": true,
+		"scale": 100,
+		"display_color": Color(randf(), randf(), randf())
+	}
+	design_color_slots.append(new_slot)
+	_refresh_slot_buttons()
+	save_settings()
+
+func _on_RemoveSlotButton_pressed():
+	var tree = find_node("SlotsTree")
+	var item = tree.get_selected()
+	if not item: return
+
+	var idx = item.get_metadata(0)
+	if design_color_slots.size() <= 1:
+		return
+
+	design_color_slots.remove(idx)
+
+	var canvas = find_node("DesignCanvas")
+	var to_remove = []
+	for i in range(canvas.design_paintballs.size()):
+		var pb = canvas.design_paintballs[i]
+		if pb.color_slot == idx + 1:
+			to_remove.append(i)
+		elif pb.color_slot > idx + 1:
+			pb.color_slot -= 1
+
+	to_remove.invert()
+	for i in to_remove:
+		canvas.design_paintballs.remove(i)
+
+	_refresh_slot_buttons()
+	canvas.update()
+	save_settings()
+
+func _on_setting_changed(_arg = null):
+	if _is_loading_settings:
+		return
+
+	save_settings()
+#	update_preview()
+
+#func update_preview():
+#	if not preview_viewport or not preview_world: return
+#
+#	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
+#	preview_camera.fov = 35.0
+#	preview_camera.transform.origin = Vector3(0, 0, 0.4)
+#
+#	var base_visual_ball = preview_world.get_node_or_null("PreviewBaseBall")
+#	if not base_visual_ball:
+#		base_visual_ball = ball_scene.instance()
+#		base_visual_ball.name = "PreviewBaseBall"
+#		base_visual_ball.add_to_group("preview_objects")
+#		preview_world.add_child(base_visual_ball)
+#
+#	base_visual_ball.rotation = _preview_ball_rotation
+#	var base_size = 100.0
+#	base_visual_ball.ball_size = base_size
+#	base_visual_ball.palette = active_palette
+#
+#	var current_footprint = find_node("DiameterMax").value
+#	var center_dir = Vector3(0, 0, 1) 
+#	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
+#
+#	var data = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
+#	var pos_array = data.positions
+#	var diam_array = data.diameters
+#	var color_array = data.colors
+#	var pb_count = pos_array.size()
+#
+#	var existing_pbs = []
+#	for child in base_visual_ball.get_children():
+#		if child.is_in_group("preview_paintballs") or child.name.begins_with("Paintball"):
+#			existing_pbs.append(child)
+#
+#	if existing_pbs.size() != pb_count:
+#		for pb in existing_pbs:
+#			pb.free()
+#		existing_pbs.clear()
+#		for i in range(pb_count):
+#			var pb_visual = paintball_scene.instance()
+#			pb_visual.add_to_group("preview_paintballs")
+#			base_visual_ball.add_child(pb_visual)
+#			existing_pbs.append(pb_visual)
+#
+#	var radius = base_size / 2.0
+#	var pixel_world_size = 0.002
+#
+#	for i in range(pb_count):
+#		var pb_visual = existing_pbs[i]
+#
+#		pb_visual.ball_size = diam_array[i]
+#		pb_visual.base_ball_size = base_size
+#		pb_visual.color_index = color_array[i]
+#		pb_visual.palette = active_palette
+#		pb_visual.z_add = float(i)
+#
+#		var pb_pos = pos_array[i] * radius * pixel_world_size
+#		pb_visual.transform.origin = pb_pos
+
+func save_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading settings for save: ", err)
+		return
+
+	config.set_value("PaintballProperties", "diameter_min", find_node("DiameterMin").value)
+	config.set_value("PaintballProperties", "diameter_max", find_node("DiameterMax").value)
+	config.set_value("PaintballProperties", "tapered", find_node("Tapered").pressed)
+	config.set_value("PaintballProperties", "pixel_mode", find_node("PixelMode").pressed)
+	config.set_value("PaintballProperties", "color", find_node("Color").text)
+	config.set_value("PaintballProperties", "outline_color", find_node("OutlineColor").text)
+	config.set_value("PaintballProperties", "outline_type_min", find_node("OutlineTypeMin").value)
+	config.set_value("PaintballProperties", "outline_type_max", find_node("OutlineTypeMax").value)
+	config.set_value("PaintballProperties", "fuzz_min", find_node("FuzzMin").value)
+	config.set_value("PaintballProperties", "fuzz_max", find_node("FuzzMax").value)
+	config.set_value("PaintballProperties", "texture", find_node("Texture").text)
+	config.set_value("PaintballProperties", "group", find_node("Group").value)
+	config.set_value("PaintballProperties", "anchored", find_node("Anchored").pressed)
+	config.set_value("PaintballProperties", "target", find_node("Target").selected)
+	config.set_value("PaintballProperties", "freeline", find_node("FreelineCheckBox").pressed)
+	config.set_value("PaintballProperties", "spacing", find_node("Spacing").value)
+	config.set_value("PaintballProperties", "jitter", find_node("Jitter").value)
+	config.set_value("PaintballProperties", "ordered", find_node("Ordered").pressed)
+	config.set_value("PaintballProperties", "repeat", find_node("Repeat").pressed)
+	config.set_value("PaintballProperties", "shuffle", find_node("Shuffle").pressed)
+	config.set_value("PaintballProperties", "eraser", find_node("EraserCheckBox").pressed)
+
+	config.set_value("DesignMode", "design_paintballs", find_node("DesignCanvas").design_paintballs)
+	config.set_value("DesignMode", "brush_size", find_node("BrushSizeSlider").value)
+	config.set_value("DesignMode", "color_slots_v2", design_color_slots)
+
+	config.set_value("DesignMode", "mirror_x", find_node("MirrorX").pressed)
+	config.set_value("DesignMode", "mirror_y", find_node("MirrorY").pressed)
+	config.set_value("DesignMode", "canvas_eraser", find_node("CanvasEraser").pressed)
+	config.set_value("DesignMode", "design_jitter", find_node("DesignJitter").value)
+	config.set_value("DesignMode", "rotate_jitter", find_node("RotateJitter").value)
+	config.set_value("DesignMode", "spread_jitter", find_node("SpreadJitter").value)
+
+	var save_err = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("Error saving PaintballSettings: ", save_err)
+
+func load_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK:
+		return
+
+	_is_loading_settings = true
+
+	find_node("DiameterMin").value = config.get_value("PaintballProperties", "diameter_min", 10.0)
+	find_node("DiameterMax").value = config.get_value("PaintballProperties", "diameter_max", 20.0)
+	find_node("Tapered").pressed = config.get_value("PaintballProperties", "tapered", false)
+	find_node("PixelMode").pressed = config.get_value("PaintballProperties", "pixel_mode", false)
+	find_node("Color").text = config.get_value("PaintballProperties", "color", "")
+	find_node("OutlineColor").text = config.get_value("PaintballProperties", "outline_color", "244")
+	find_node("OutlineTypeMin").value = config.get_value("PaintballProperties", "outline_type_min", -1.0)
+	find_node("OutlineTypeMax").value = config.get_value("PaintballProperties", "outline_type_max", -1.0)
+	find_node("FuzzMin").value = config.get_value("PaintballProperties", "fuzz_min", 0.0)
+	find_node("FuzzMax").value = config.get_value("PaintballProperties", "fuzz_max", 0.0)
+	find_node("Texture").text = config.get_value("PaintballProperties", "texture", "0")
+	find_node("Group").value = config.get_value("PaintballProperties", "group", 0.0)
+	find_node("Anchored").pressed = config.get_value("PaintballProperties", "anchored", true)
+	find_node("Target").selected = config.get_value("PaintballProperties", "target", 0)
+	find_node("FreelineCheckBox").pressed = config.get_value("PaintballProperties", "freeline", false)
+	find_node("Spacing").value = config.get_value("PaintballProperties", "spacing", 5.0)
+	find_node("Jitter").value = config.get_value("PaintballProperties", "jitter", 0.0)
+	find_node("Ordered").pressed = config.get_value("PaintballProperties", "ordered", false)
+	find_node("Repeat").pressed = config.get_value("PaintballProperties", "repeat", false)
+	find_node("Shuffle").pressed = config.get_value("PaintballProperties", "shuffle", false)
+	find_node("EraserCheckBox").pressed = config.get_value("PaintballProperties", "eraser", false)
+
+	var loaded_paintballs = config.get_value("DesignMode", "design_paintballs", [])
+	if loaded_paintballs.size() > 0:
+		var canvas = find_node("DesignCanvas")
+		canvas.design_paintballs = loaded_paintballs
+		canvas.update()
+		canvas.emit_signal("design_changed")
+
+	find_node("BrushSizeSlider").value = config.get_value("DesignMode", "brush_size", 30.0)
+	find_node("DesignCanvas").brush_size = find_node("BrushSizeSlider").value
+
+	var loaded_slots_v2 = config.get_value("DesignMode", "color_slots_v2", [])
+	if loaded_slots_v2.size() > 0:
+		design_color_slots = loaded_slots_v2
+	else:
+		var loaded_slots = config.get_value("DesignMode", "color_slots", [])
+		if loaded_slots.size() == 4:
+			for i in range(4):
+				var old_slot = loaded_slots[i]
+				design_color_slots[i].color = old_slot.color
+				design_color_slots[i].outline_color = old_slot.outline_color
+				design_color_slots[i].texture = old_slot.texture
+				design_color_slots[i].outline_type = old_slot.outline_type
+
+	find_node("MirrorX").pressed = config.get_value("DesignMode", "mirror_x", false)
+	find_node("MirrorY").pressed = config.get_value("DesignMode", "mirror_y", false)
+	find_node("CanvasEraser").pressed = config.get_value("DesignMode", "canvas_eraser", false)
+	find_node("DesignJitter").value = config.get_value("DesignMode", "design_jitter", 0.0)
+	find_node("RotateJitter").value = config.get_value("DesignMode", "rotate_jitter", 0.0)
+	find_node("SpreadJitter").value = config.get_value("DesignMode", "spread_jitter", 0.0)
+
+	_on_design_tool_toggled(null)
+
+	_refresh_slot_buttons()
+	_is_loading_settings = false
+
+func _on_reset_defaults_pressed():
+	_is_loading_settings = true
+
+	find_node("DiameterMin").value = 10.0
+	find_node("DiameterMax").value = 20.0
+	find_node("Tapered").pressed = false
+	find_node("PixelMode").pressed = false
+	find_node("Color").text = ""
+	find_node("OutlineColor").text = "244"
+	find_node("OutlineTypeMin").value = -1.0
+	find_node("OutlineTypeMax").value = -1.0
+	find_node("FuzzMin").value = 0.0
+	find_node("FuzzMax").value = 0.0
+	find_node("Texture").text = "0"
+	find_node("Group").value = 0.0
+	find_node("Anchored").pressed = true
+	find_node("Target").selected = 0
+	find_node("FreelineCheckBox").pressed = false
+	find_node("Spacing").value = 5.0
+	find_node("Jitter").value = 0.0
+	find_node("Ordered").pressed = false
+	find_node("Repeat").pressed = false
+	find_node("Shuffle").pressed = false
+	find_node("EraserCheckBox").pressed = false
+
+	find_node("MirrorX").pressed = false
+	find_node("MirrorY").pressed = false
+	find_node("CanvasEraser").pressed = false
+	find_node("DesignJitter").value = 0.0
+
+	find_node("DesignCanvas").clear()
+	find_node("BrushSizeSlider").value = 30.0
+
+	design_color_slots = [
+		{
+			"color": "105",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"display_color": Color(1, 1, 0)
+		},
+		{
+			"color": "95",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"display_color": Color(1, 0, 0)
+		},
+		{
+			"color": "145",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"display_color": Color(0, 1, 0)
+		},
+		{
+			"color": "155",
+			"outline_color": "244",
+			"texture": "0",
+			"outline_type": -1,
+			"fuzz": 0,
+			"group": 0,
+			"anchored": true,
+			"display_color": Color(0, 0, 1)
+		}
+	]
+	_refresh_slot_buttons()
+	_on_design_tool_toggled(null)
+
+	_is_loading_settings = false
+	save_settings()

@@ -30,6 +30,10 @@ var timer_count = 0
 var is_highlighted = false
 
 func _ready():
+	# Duplicate material so each ball can have unique shader params
+	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+
+	# Set initial shader parameters
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 
 	# Pass the original texture to the shader
@@ -37,6 +41,9 @@ func _ready():
 
 	# Pass the default Petz palette to the shader
 	$MeshInstance.material_override.set_shader_param("petz_palette", DEFAULT_PALETTE)
+
+func set_hidden(is_hidden):
+	$MeshInstance.visible = !is_hidden
 
 func update_palette_after_added(new_palette):
 	call_deferred("set_palette", new_palette)
@@ -79,9 +86,22 @@ func set_texture(new_value):
 	texture = new_value
 	
 	if $MeshInstance.material_override != null:
-		$MeshInstance.material_override.set_shader_param("line_texture", new_value)
 		if new_value != null:
 			var raw_texture_size = new_value.get_size()
+
+			if new_value is AtlasTexture:
+				var atlas_tex = new_value as AtlasTexture
+				var rect = atlas_tex.region
+				raw_texture_size = rect.size
+
+				$MeshInstance.material_override.set_shader_param("line_texture", atlas_tex.atlas)
+				$MeshInstance.material_override.set_shader_param("is_atlas", true)
+				$MeshInstance.material_override.set_shader_param("atlas_rect", Plane(rect.position.x, rect.position.y, rect.size.x, rect.size.y))
+				$MeshInstance.material_override.set_shader_param("atlas_size", atlas_tex.atlas.get_size())
+			else:
+				$MeshInstance.material_override.set_shader_param("line_texture", new_value)
+				$MeshInstance.material_override.set_shader_param("is_atlas", false)
+
 			var eff_texture_size = texture_size if texture_size != Vector2.ZERO else raw_texture_size
 
 			# print("Declared size from [Texture List]:", texture_size)
@@ -93,7 +113,9 @@ func set_texture(new_value):
 			$MeshInstance.material_override.set_shader_param("texture_size_raw", raw_texture_size)
 			$MeshInstance.material_override.set_shader_param("has_texture", true)
 		else:
+			$MeshInstance.material_override.set_shader_param("line_texture", null)
 			$MeshInstance.material_override.set_shader_param("has_texture", false)
+			$MeshInstance.material_override.set_shader_param("is_atlas", false)
 
 func set_palette(new_value):
 	if new_value != null:
