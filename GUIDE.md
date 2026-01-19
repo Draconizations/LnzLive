@@ -316,7 +316,7 @@ By default, left-clicking paints on the `Hovered Ball`. Entering Paintball Mode 
 
 When applying paintballs to Babyz LNZ, LnzLive automatically avoids the first 17 indices (reserved for chicken pox) and adds filler entries as needed.
 
-##### Standard Paintballing (Drawing)
+##### Standard Tab (Drawing)
 
 In the Standard tab, you control the properties of individual paintballs as they are placed.
 
@@ -332,7 +332,7 @@ In the Standard tab, you control the properties of individual paintballs as they
 
 *Eraser (`CTRL` + `left-click`, or toggle `Eraser` checkbox):* Removing pending/queued paintballs by clicking them.
 
-##### Design Mode (Stamping)
+##### Design Tab (Stamping)
 
 The Design tab introduces a "stamp" system. Instead of placing single balls, you can "stamp" a pattern of multiple paintballz onto ballz.
 
