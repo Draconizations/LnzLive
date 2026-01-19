@@ -188,7 +188,7 @@ text = "Pixel Size"
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer"]
 margin_top = 90.0
 margin_right = 470.0
-margin_bottom = 513.0
+margin_bottom = 508.0
 size_flags_vertical = 3
 custom_styles/tab_fg = SubResource( 3 )
 custom_styles/tab_disabled = SubResource( 4 )
@@ -198,7 +198,6 @@ custom_fonts/font = SubResource( 2 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
-visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -411,6 +410,7 @@ size_flags_horizontal = 3
 pressed = true
 
 [node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer/TabContainer/Standard"]
+visible = false
 margin_top = 237.0
 margin_right = 460.0
 margin_bottom = 264.0
@@ -435,9 +435,9 @@ items = [ "Hovered Ball", null, false, 0, null, "Selected Ball", null, false, 1,
 selected = 0
 
 [node name="FreelineContainer" type="VBoxContainer" parent="VBoxContainer/TabContainer/Standard"]
-margin_top = 269.0
+margin_top = 237.0
 margin_right = 460.0
-margin_bottom = 354.0
+margin_bottom = 322.0
 
 [node name="FreelineCheckBox" type="CheckBox" parent="VBoxContainer/TabContainer/Standard/FreelineContainer"]
 margin_right = 460.0
@@ -491,6 +491,7 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 5.0
@@ -791,9 +792,9 @@ columns = 8
 hide_root = true
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 517.0
+margin_top = 512.0
 margin_right = 470.0
-margin_bottom = 546.0
+margin_bottom = 541.0
 alignment = 1
 
 [node name="EraserCheckBox" type="CheckBox" parent="VBoxContainer/HBoxContainer10"]
@@ -833,9 +834,9 @@ custom_fonts/font = SubResource( 2 )
 text = "Clear"
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
-margin_top = 550.0
+margin_top = 545.0
 margin_right = 470.0
-margin_bottom = 575.0
+margin_bottom = 570.0
 custom_styles/hover = SubResource( 9 )
 custom_styles/pressed = SubResource( 9 )
 custom_styles/focus = SubResource( 3 )

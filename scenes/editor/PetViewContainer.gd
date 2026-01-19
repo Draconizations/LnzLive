@@ -1898,9 +1898,12 @@ func _isolate_target_ball(target_ball):
 		if not area:
 			continue
 
+		var is_dependent = ("base_ball_no" in ball and ball.base_ball_no == target_ball.ball_no)
+		
 		if ball != target_ball:
 			area.set_collision_layer_bit(0, false)
 			area.set_collision_layer_bit(1, true)
+			_set_visual_layer_recursive(ball, 1)
 		else:
 			area.set_collision_layer_bit(0, true)
 			area.set_collision_layer_bit(1, false)
