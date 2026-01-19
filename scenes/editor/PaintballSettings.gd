@@ -14,18 +14,18 @@ signal delete_mode_toggled(is_on)
 
 var _is_loading_settings = false
 
-var _preview_ball_rotation = Vector3.ZERO
-var _is_dragging_preview = false
-var _last_mouse_pos = Vector2.ZERO
+#var _preview_ball_rotation = Vector3.ZERO
+#var _is_dragging_preview = false
+#var _last_mouse_pos = Vector2.ZERO
 
 onready var paintballz_tree = find_node("PaintballzTree")
-onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
-onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
-onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
-onready var preview_camera = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld/Camera
+#onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
+#onready var preview_viewport = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport
+#onready var preview_world = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld
+#onready var preview_camera = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld/Camera
 
-var ball_scene = preload("res://Ball.tscn")
-var paintball_scene = preload("res://Paintball.tscn")
+#var ball_scene = preload("res://Ball.tscn")
+#var paintball_scene = preload("res://Paintball.tscn")
 var default_palette = preload("res://resources/palettes/petz_palette.png")
 var active_palette = default_palette
 
@@ -94,30 +94,30 @@ func _ready():
 	_connect_settings_signals()
 	_connect_design_signals()
 
-	preview_viewport.size = preview_container.rect_size
+#	preview_viewport.size = preview_container.rect_size
 
-	var preview_container = find_node("PreviewContainer")
-	preview_container.connect("gui_input", self, "_on_PreviewContainer_gui_input")
+#	var preview_container = find_node("PreviewContainer")
+#	preview_container.connect("gui_input", self, "_on_PreviewContainer_gui_input")
 
 	find_node("BrushSpaceSlider").connect("value_changed", self, "_on_brush_space_changed")
 
 	_setup_slots_tree()
 	load_settings()
 
-	call_deferred("update_preview")
+#	call_deferred("update_preview")
 
-func _on_PreviewContainer_gui_input(event):
-	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT:
-			_is_dragging_preview = event.pressed
-			_last_mouse_pos = event.position
-	
-	elif event is InputEventMouseMotion and _is_dragging_preview:
-		var diff = event.position - _last_mouse_pos
-		_preview_ball_rotation.y += diff.x * 0.01
-		_preview_ball_rotation.x += diff.y * 0.01
-		_last_mouse_pos = event.position
-		update_preview()
+#func _on_PreviewContainer_gui_input(event):
+#	if event is InputEventMouseButton:
+#		if event.button_index == BUTTON_LEFT:
+#			_is_dragging_preview = event.pressed
+#			_last_mouse_pos = event.position
+#
+#	elif event is InputEventMouseMotion and _is_dragging_preview:
+#		var diff = event.position - _last_mouse_pos
+#		_preview_ball_rotation.y += diff.x * 0.01
+#		_preview_ball_rotation.x += diff.y * 0.01
+#		_last_mouse_pos = event.position
+#		update_preview()
 
 func _on_ApplyButton_pressed():
 	emit_signal("apply_paintballz")
@@ -131,9 +131,9 @@ func _on_DeleteModeCheckBox_toggled(is_on):
 func is_design_mode_active():
 	return find_node("TabContainer").current_tab == 1
 
-func _on_TabContainer_tab_changed(tab):
-	if tab == 1:
-		update_preview()
+#func _on_TabContainer_tab_changed(tab):
+#	if tab == 1:
+##		update_preview()
 
 func get_properties():
 	var properties = {}
@@ -199,7 +199,6 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var out_pos = PoolVector3Array()
 	var out_diams = PoolIntArray()
 	var out_colors = PoolIntArray()
-	
 	var out_outlines = PoolIntArray()
 	var out_out_types = PoolIntArray()
 	var out_fuzz = PoolIntArray()
@@ -208,7 +207,11 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var out_anchored = PoolIntArray()
 
 	var pixel_mode = find_node("PixelMode").pressed 
-	var sampled_scale = rand_range(find_node("DiameterMin").value, find_node("DiameterMax").value)
+	
+	var sampled_scale = override_footprint
+	if sampled_scale <= 0:
+		sampled_scale = rand_range(find_node("DiameterMin").value, find_node("DiameterMax").value)
+	
 	var footprint_lnz = sampled_scale if pixel_mode else ball_lnz_diameter * (sampled_scale / 100.0)
 	
 	var d_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
@@ -227,6 +230,8 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		var s_scale = (footprint_lnz / 2.0) * (s_jitter / 100.0)
 		spread_offset = tangent_x * rand_range(-s_scale, s_scale) + tangent_y * rand_range(-s_scale, s_scale)
 
+	var ball_lnz_diam_safe = max(1.0, ball_lnz_diameter)
+
 	for pb in paintballs:
 		if pb.color_slot - 1 >= design_color_slots.size(): continue
 		var slot_data = design_color_slots[pb.color_slot - 1]
@@ -242,10 +247,13 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		out_pos.append(pos_on_plane.normalized())
 
 		var slot_scale = float(slot_data.get("scale", 100)) / 100.0
-		var pb_diam_lnz = footprint_lnz * (float(pb.diameter) / DESIGN_CANVAS_SIZE) * slot_scale
+		var pb_size_units = footprint_lnz * (float(pb.diameter) / DESIGN_CANVAS_SIZE) * slot_scale
+		
 		if d_jitter > 0:
-			pb_diam_lnz *= (1.0 + rand_range(-d_jitter/100.0, d_jitter/100.0))
-		out_diams.append(int(max(1, pb_diam_lnz)))
+			pb_size_units *= (1.0 + rand_range(-d_jitter/100.0, d_jitter/100.0))
+		
+		var final_pb_percentage = (pb_size_units / ball_lnz_diam_safe) * 100.0
+		out_diams.append(int(max(1, round(final_pb_percentage))))
 
 		var color_list = LnzLiveUtils.parse_number_list(slot_data.color)
 		out_colors.append(color_list[randi() % color_list.size()] if color_list else 0)
@@ -262,9 +270,15 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		out_anchored.append(1 if slot_data.get("anchored", true) else 0)
 
 	return {
-		"positions": out_pos, "diameters": out_diams, "colors": out_colors,
-		"outlines": out_outlines, "outline_types": out_out_types, "fuzzes": out_fuzz,
-		"groups": out_group, "textures": out_tex, "anchored": out_anchored
+		"positions": out_pos, 
+		"diameters": out_diams, 
+		"colors": out_colors,
+		"outlines": out_outlines, 
+		"outline_types": out_out_types, 
+		"fuzzes": out_fuzz,
+		"groups": out_group, 
+		"textures": out_tex, 
+		"anchored": out_anchored
 	}
 
 func _connect_settings_signals():
@@ -709,7 +723,7 @@ func _on_SlotsTree_item_edited():
 	design_color_slots[idx].scale = int(item.get_range(8))
 
 	save_settings()
-	update_preview()
+#	update_preview()
 
 func _on_SlotsTree_cell_selected():
 	var tree = find_node("SlotsTree")
@@ -790,66 +804,66 @@ func _on_setting_changed(_arg = null):
 		return
 
 	save_settings()
-	update_preview()
+#	update_preview()
 
-func update_preview():
-	if not preview_viewport or not preview_world: return
-
-	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
-	preview_camera.fov = 35.0
-	preview_camera.transform.origin = Vector3(0, 0, 0.4)
-
-	var base_visual_ball = preview_world.get_node_or_null("PreviewBaseBall")
-	if not base_visual_ball:
-		base_visual_ball = ball_scene.instance()
-		base_visual_ball.name = "PreviewBaseBall"
-		base_visual_ball.add_to_group("preview_objects")
-		preview_world.add_child(base_visual_ball)
-	
-	base_visual_ball.rotation = _preview_ball_rotation
-	var base_size = 100.0
-	base_visual_ball.ball_size = base_size
-	base_visual_ball.palette = active_palette
-
-	var current_footprint = find_node("DiameterMax").value
-	var center_dir = Vector3(0, 0, 1) 
-	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
-	
-	var data = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
-	var pos_array = data.positions
-	var diam_array = data.diameters
-	var color_array = data.colors
-	var pb_count = pos_array.size()
-
-	var existing_pbs = []
-	for child in base_visual_ball.get_children():
-		if child.is_in_group("preview_paintballs") or child.name.begins_with("Paintball"):
-			existing_pbs.append(child)
-
-	if existing_pbs.size() != pb_count:
-		for pb in existing_pbs:
-			pb.free()
-		existing_pbs.clear()
-		for i in range(pb_count):
-			var pb_visual = paintball_scene.instance()
-			pb_visual.add_to_group("preview_paintballs")
-			base_visual_ball.add_child(pb_visual)
-			existing_pbs.append(pb_visual)
-
-	var radius = base_size / 2.0
-	var pixel_world_size = 0.002
-
-	for i in range(pb_count):
-		var pb_visual = existing_pbs[i]
-		
-		pb_visual.ball_size = diam_array[i]
-		pb_visual.base_ball_size = base_size
-		pb_visual.color_index = color_array[i]
-		pb_visual.palette = active_palette
-		pb_visual.z_add = float(i)
-		
-		var pb_pos = pos_array[i] * radius * pixel_world_size
-		pb_visual.transform.origin = pb_pos
+#func update_preview():
+#	if not preview_viewport or not preview_world: return
+#
+#	preview_camera.projection = Camera.PROJECTION_PERSPECTIVE
+#	preview_camera.fov = 35.0
+#	preview_camera.transform.origin = Vector3(0, 0, 0.4)
+#
+#	var base_visual_ball = preview_world.get_node_or_null("PreviewBaseBall")
+#	if not base_visual_ball:
+#		base_visual_ball = ball_scene.instance()
+#		base_visual_ball.name = "PreviewBaseBall"
+#		base_visual_ball.add_to_group("preview_objects")
+#		preview_world.add_child(base_visual_ball)
+#
+#	base_visual_ball.rotation = _preview_ball_rotation
+#	var base_size = 100.0
+#	base_visual_ball.ball_size = base_size
+#	base_visual_ball.palette = active_palette
+#
+#	var current_footprint = find_node("DiameterMax").value
+#	var center_dir = Vector3(0, 0, 1) 
+#	var basis = Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0)) 
+#
+#	var data = paste_paintball_design(center_dir, basis, 0, base_size, current_footprint, 0.0, false)
+#	var pos_array = data.positions
+#	var diam_array = data.diameters
+#	var color_array = data.colors
+#	var pb_count = pos_array.size()
+#
+#	var existing_pbs = []
+#	for child in base_visual_ball.get_children():
+#		if child.is_in_group("preview_paintballs") or child.name.begins_with("Paintball"):
+#			existing_pbs.append(child)
+#
+#	if existing_pbs.size() != pb_count:
+#		for pb in existing_pbs:
+#			pb.free()
+#		existing_pbs.clear()
+#		for i in range(pb_count):
+#			var pb_visual = paintball_scene.instance()
+#			pb_visual.add_to_group("preview_paintballs")
+#			base_visual_ball.add_child(pb_visual)
+#			existing_pbs.append(pb_visual)
+#
+#	var radius = base_size / 2.0
+#	var pixel_world_size = 0.002
+#
+#	for i in range(pb_count):
+#		var pb_visual = existing_pbs[i]
+#
+#		pb_visual.ball_size = diam_array[i]
+#		pb_visual.base_ball_size = base_size
+#		pb_visual.color_index = color_array[i]
+#		pb_visual.palette = active_palette
+#		pb_visual.z_add = float(i)
+#
+#		var pb_pos = pos_array[i] * radius * pixel_world_size
+#		pb_visual.transform.origin = pb_pos
 
 func save_settings():
 	var config = ConfigFile.new()
