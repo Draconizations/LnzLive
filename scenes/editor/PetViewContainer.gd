@@ -704,6 +704,14 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 					"pos": b.global_transform.origin,
 					"size": b.ball_size
 				}
+				var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
+				if partner_id != -1 and partner_id != b.ball_no:
+					var mb = _find_visual_ball_by_no(partner_id)
+					if mb:
+						_scale_group_initial_data[partner_id] = {
+							"pos": mb.global_transform.origin,
+							"size": mb.ball_size
+						}
 		Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 	else:
 		_record_move_start_state()
@@ -845,6 +853,9 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				snapped_visual -= 1 - fmod(snapped_visual, 2)
 
 				b.set_ball_size(snapped_visual)
+
+			if move_mode_settings_instance.is_mirror_x_active():
+				_apply_mirror_scale(selected_balls, scale_factor, true, true, _scale_group_pivot, true)
 			return true
 
 		var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
@@ -2967,7 +2978,6 @@ func _track_pending_move(ball):
 			"new_size": current_size,
 			"new_basis": ball.global_transform.basis
 		}
-		print(current_size)
 	else:
 		pending_moves[ball.ball_no]["new_pos"] = ball.global_transform.origin
 		pending_moves[ball.ball_no]["new_size"] = current_size
@@ -3085,6 +3095,9 @@ func _on_snap_selection(axis, direction):
 	
 	for b in all_balls:
 		if not is_instance_valid(b): continue
+
+		if b.get("omitted") == true:
+			continue
 		
 		var val = _get_axis_val(b, axis)
 		
@@ -3239,6 +3252,38 @@ func _apply_mirror_move(balls_moved, delta):
 				
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
+
+func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_size: bool, pivot_origin: Vector3, is_interactive: bool = false):
+	var selected_nos = {}
+	for b in targets:
+		selected_nos[b.ball_no] = true
+
+	for b in targets:
+		if not is_instance_valid(b): continue
+		
+		var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
+		if partner_id == -1 or partner_id == b.ball_no or selected_nos.has(partner_id):
+			continue
+			
+		var mb = _find_visual_ball_by_no(partner_id)
+		if not is_instance_valid(mb): continue
+		
+		if scale_dist:
+			var start_pos = mb.global_transform.origin
+			
+			if is_interactive and _scale_group_initial_data.has(partner_id):
+				start_pos = _scale_group_initial_data[partner_id].pos
+			elif not is_interactive:
+				if not pet_node._orig_world_pos.has(partner_id):
+					pet_node._orig_world_pos[partner_id] = start_pos
+			
+			var rel_pos = start_pos - pivot_origin
+			mb.global_transform.origin = pivot_origin + (rel_pos * factor)
+			
+		if scale_size:
+			mb.set_ball_size(b.ball_size)
+			
+		_track_pending_move(mb)
 
 func _get_rotation_pivot_origin(pivot_id):
 	var pivot_origin = Vector3.ZERO
@@ -3418,6 +3463,9 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 	for b in selected_balls:
 		if is_instance_valid(b):
 			_track_pending_move(b)
+
+	if move_mode_settings_instance.is_mirror_x_active():
+		_apply_mirror_scale(selected_balls, factor, scale_dist, scale_size, pivot_origin)
 
 	_record_move_end_state("Scale")
 
