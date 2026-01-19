@@ -104,6 +104,10 @@ func _ready():
 		_safe_connect(tree_node, "palette_selected", "_on_palette_selected")
 		_safe_connect(tree_node, "example_file_selected", "_on_example_file_selected")
 
+	var search_input = find_panel.get_node("VBoxContainer/LineEdit")
+	if not search_input.is_connected("text_entered", self, "_on_FindNextButton_pressed"):
+		search_input.connect("text_entered", self, "_on_FindNextButton_pressed")
+
 	_update_section_bookmarks()
 
 func _safe_connect(target, sig, method):
@@ -181,6 +185,12 @@ func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_F:
 		find_panel.visible = !find_panel.visible
 		self.readonly = find_panel.visible
+
+		if find_panel.visible:
+			var search_input = find_panel.get_node("VBoxContainer/LineEdit")
+			if search_input:
+				search_input.grab_focus()
+
 		_setup_context_menu()
 
 func _set_text_preserve(new_text: String):
@@ -4429,7 +4439,7 @@ func _on_FindCloseButton_pressed():
 	self.readonly = false
 	_setup_context_menu()
 
-func _on_FindNextButton_pressed():
+func _on_FindNextButton_pressed(new_text = ""):
 	_find_text(true)
 
 func _on_FindPrevButton_pressed():
