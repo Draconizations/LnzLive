@@ -31,6 +31,17 @@ static func parse_number_list(s: String, allow_negatives: bool = false) -> Array
 			
 	return result
 
+static func parse_flexible_integers(s: String) -> Array:
+	var result = []
+	var regex = RegEx.new()
+	regex.compile("-?\\d+") 
+	
+	var matches = regex.search_all(s)
+	for m in matches:
+		result.append(m.get_string().to_int())
+	
+	return result
+
 static func get_ramp_color(current_color_str: String, rule):
     if not rule.get("is_ramp") or \
        not current_color_str.is_valid_integer() or \

@@ -387,14 +387,15 @@ void fragment() {
     // DRAW EYELASHES
     float lash_mask = 0.0;
     if (has_eyelashes && eyelash_color_index != -1) {
-        // vec2 vc = mesh_pos * float(ball_size);
-        vec2 vc = FRAGCOORD.xy - center_fragcoord;
+        vec2 vc = mesh_pos * float(ball_size);
+        // vec2 vc = FRAGCOORD.xy - center_fragcoord;
+        
         float rot_c = cos(-eyelid_rotation);
         float rot_s = sin(-eyelid_rotation);
         vec2 vcr = vec2(vc.x * rot_c - vc.y * rot_s, vc.x * rot_s + vc.y * rot_c);
         
-        float total_fan_width = float(ball_size) * eyelash_spacing_norm;
-        // float total_fan_width = (float(ball_size) * eyelash_spacing_norm) / 2.0;
+        // float total_fan_width = float(ball_size) * eyelash_spacing_norm;
+        float total_fan_width = (float(ball_size) * eyelash_spacing_norm) / 2.0;
         float start_x = -total_fan_width * 0.5;
         float denom = max(float(eyelash_count) - 1.0, 1.0);
 
@@ -413,17 +414,19 @@ void fragment() {
 
             if (lash_len <= 0.0) continue;
 
+            lash_len = lash_len * 0.5;
+
             float t = float(i) / denom;
             float lash_rot = (t * 2.0 - 1.0) * eyelash_angle_rad;
             
             vec2 dir = vec2(sin(lash_rot), cos(lash_rot));
-            vec2 lash_base = vec2(start_x + t * total_fan_width, 0.5);
+            vec2 lash_base = vec2(start_x + t * total_fan_width, 0.5) + 0.5;
             vec2 p = vcr - lash_base;
 
             float proj = dot(p, dir);
             float dist = length(p - dir * proj);
             
-            if (proj >= 0.0 && proj <= lash_len && dist <= 0.25) {
+            if (proj >= 0.0 && proj <= lash_len && dist <= 0.15) {
                 vec4 tex_color = texture(palette, vec2(float(eyelash_color_index)/255.0, 0.0));
                 ALBEDO = tex_color.rgb;
                 lash_mask = 1.0;

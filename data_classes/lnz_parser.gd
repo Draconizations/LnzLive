@@ -291,21 +291,22 @@ func get_eyelash_info(file: File):
 		raw_lines.append(line)
 
 	if raw_lines.size() >= 4:
-		eyelash_lengths = _parse_comma_list(raw_lines[0])
-		eyelash_angle = int(raw_lines[1])
-		eyelash_spacing = int(raw_lines[2])
-		eyelash_color = int(raw_lines[3])
-	print(eyelash_lengths)
-
-func _parse_comma_list(line: String) -> Array:
-	var result = []
-	var parts = line.split(",")
-	for p in parts:
-		var val = int(p.strip_edges())
-		if val == -1:
-			break 
-		result.append(val)
-	return result
+		var all_lengths = LnzLiveUtils.parse_flexible_integers(raw_lines[0])
+		eyelash_lengths = []
+		for val in all_lengths:
+			if val == -1: break
+			eyelash_lengths.append(val)
+		
+		var angle_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[1])
+		eyelash_angle = angle_vals[0] if angle_vals.size() > 0 else 15
+		
+		var spacing_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[2])
+		eyelash_spacing = spacing_vals[0] if spacing_vals.size() > 0 else 50
+		
+		var color_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[3])
+		eyelash_color = color_vals[0] if color_vals.size() > 0 else 244
+		
+	print("Parsed Eyelash Info: ", eyelash_lengths, " Angle: ", eyelash_angle)
 
 func get_balls(file: File):
 	get_next_section(file, "Ballz Info")
