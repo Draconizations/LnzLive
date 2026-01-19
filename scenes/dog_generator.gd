@@ -348,12 +348,14 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		apply_projections()
 		generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
 		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+		generate_whiskers(new_create)
 		_restore_hidden_states()
 
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
 	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
 	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
+	generate_whiskers(new_create)
 	_restore_hidden_states()
 
 func _restore_hidden_states():
@@ -617,7 +619,10 @@ func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 		var ball = all_ball_dict.balls[k]
 		ball.size = ball.size - 2
 		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
+		# ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size) 
 		ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size)
 #		ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
 		ball.position = (ball.position * (lnz.scales[0] / 255.0))
 		all_ball_dict.balls[k] = ball
@@ -1508,6 +1513,60 @@ func _on_ToolsMenu_print_ball_colors():
 			ball_map_string += this_ball_string
 			#print(this_ball_string)
 	OS.set_clipboard(ball_map_string)
+
+func generate_whiskers(new_create: bool):
+	if lnz.species != KeyBallsData.Species.CAT:
+		return 
+
+	var used_whiskers = {}
+	for connection in lnz.whisker_connections:
+		used_whiskers[int(connection.start)] = true
+
+	var cat_whiskers = KeyBallsData.cat_body_part_symmetry.Head.Whiskers
+	var default_whisker_indices = cat_whiskers.left + cat_whiskers.right
+
+	for b_no in default_whisker_indices:
+		if not used_whiskers.has(b_no):
+			hide_ball(b_no)
+
+	if lnz.whisker_connections.empty():
+		return
+
+	var root = get_root()
+	var parent = root.get_node("petholder/lines")
+	
+	for connection in lnz.whisker_connections:
+		var start_node = ball_map.get(connection.start)
+		var end_node = ball_map.get(connection.end)
+		
+		if not start_node or not end_node:
+			continue
+
+		var visual_line = line_scene.instance()
+		visual_line.add_to_group("lines")
+		visual_line.add_to_group("whisker_lines")
+
+		visual_line.ball_world_pos1 = start_node.global_transform.origin
+		visual_line.ball_world_pos2 = end_node.global_transform.origin
+
+		visual_line.texture = start_node.texture
+		visual_line.palette = start_node.palette
+		visual_line.color_index = start_node.color_index
+		visual_line.l_color_index = start_node.color_index
+		visual_line.r_color_index = start_node.color_index
+		
+		visual_line.line_widths = Vector2(start_node.ball_size, 1.0)
+		
+		var start_pos = start_node.global_transform.origin
+		var target_pos = end_node.global_transform.origin
+		var middle_point = lerp(start_pos, target_pos, 0.5)
+		
+		visual_line.look_at_from_position(middle_point, target_pos, Vector3.UP)
+		visual_line.rotation_degrees.x += 90
+		visual_line.scale.y = (target_pos - start_pos).length()
+		
+		parent.add_child(visual_line)
+		visual_line.set_owner(root)
 
 func update_eyelids(tilt_deg: float):
 	var tilt = deg2rad(tilt_deg)

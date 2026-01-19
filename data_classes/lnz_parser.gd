@@ -27,6 +27,8 @@ var texture_list = []
 var no_texture_rotate = []
 var palette = null
 
+var whisker_connections = []
+
 var eyelash_lengths = []
 var eyelash_angle   = 0
 var eyelash_spacing = 0
@@ -56,6 +58,7 @@ func _init(file_path):
 	get_species(file)
 	get_eyelid_color(file)
 	get_eyelash_info(file)
+	get_whiskers(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
 	get_body_extension(file)
@@ -268,6 +271,34 @@ func get_project_balls(file: File):
 			"max_projection": amount + 50,
 			"comment": ""
 		})
+
+func get_whiskers(file: File):
+	if not get_next_section(file, "Whiskers"):
+		if species == KeyBallsData.Species.CAT:
+			KeyBallsData.species = KeyBallsData.Species.CAT 
+			var jowlL = KeyBallsData.get_ball_id_by_name("jowlL")
+			var jowlR = KeyBallsData.get_ball_id_by_name("jowlR")
+			
+			if jowlL != -1 and jowlR != -1:
+				var whiskers = KeyBallsData.cat_body_part_symmetry.Head.Whiskers
+				for w in whiskers.left:
+					whisker_connections.append({"start": w, "end": jowlL})
+				for w in whiskers.right:
+					whisker_connections.append({"start": w, "end": jowlR})
+		return
+	
+	while true:
+		var line = file.get_line().dedent()
+		if line.empty() or line.begins_with("[") or file.eof_reached():
+			break
+		if line.begins_with(";") or line.begins_with("#"):
+			continue
+			
+		var parsed = r.search_all(line)
+		if parsed.size() >= 2:
+			var jowl_ball = int(parsed[0].get_string())
+			var whisker_ball = int(parsed[1].get_string())
+			whisker_connections.append({"start": whisker_ball, "end": jowl_ball})
 
 func get_eyelid_color(file: File):
 	get_next_section(file, "256 Eyelid Color")
