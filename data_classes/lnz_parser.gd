@@ -34,6 +34,8 @@ var eyelash_angle   = 0
 var eyelash_spacing = 0
 var eyelash_color   = -1
 
+var z_shade_slope = 100
+
 var file_path
 
 func _init(file_path):
@@ -56,9 +58,6 @@ func _init(file_path):
 	get_no_texture_rotate(file)
 	get_palette(file)
 	get_species(file)
-	get_eyelid_color(file)
-	get_eyelash_info(file)
-	get_whiskers(file)
 	get_default_scales(file)
 	get_leg_extensions(file)
 	get_body_extension(file)
@@ -83,6 +82,12 @@ func _init(file_path):
 	get_project_balls(file)
 	parse_paintballs(file)
 	parse_moves(file)
+
+	# Rendering options
+	get_eyelid_color(file)
+	get_eyelash_info(file)
+	get_whiskers(file)
+	get_z_shade_slope(file)
 
 	file.close()
 
@@ -511,3 +516,9 @@ func get_add_ball_override(file: File):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
 		else:
 			print("Warning: [Add Ball Override] override attempted for non-existent ball ", line.ball)
+
+func get_z_shade_slope(file: File):
+	if get_next_section(file, "Z Shade Slope"):
+		var parsed_lines = get_parsed_lines(file, ["slope"])
+		if parsed_lines.size() > 0:
+			z_shade_slope = int(parsed_lines[0].slope)
