@@ -2781,15 +2781,16 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 		save_file(true)
 		commit_visual_change("Applied Preset to Ballz #%d" % ball_no)
 
+
 func get_current_ball_index() -> int:
-	# try to merge this with the CTRL+Q finder later, but this is for the ball # helper
 	var current_line = cursor_get_line()
+	var line_text = get_line(current_line).strip_edges()
 	var nearest_section = ""
 	
 	for i in range(current_line, -1, -1):
-		var line_text = get_line(i).strip_edges()
-		if line_text.begins_with("["):
-			nearest_section = line_text
+		var header = get_line(i).strip_edges()
+		if header.begins_with("["):
+			nearest_section = header.split(";")[0].strip_edges()
 			break
 	
 	if nearest_section == "":
@@ -2800,10 +2801,37 @@ func get_current_ball_index() -> int:
 		return _get_line_no_from_line_index(current_line, "[Ballz Info]")
 	elif nearest_section == "[Add Ball]":
 		var idx = _get_line_no_from_line_index(current_line, "[Add Ball]")
-		if idx != -1:
-			return idx + KeyBallsData.max_base_ball_num
+		return idx + KeyBallsData.max_base_ball_num if idx != -1 else -1
+
+	if line_text.empty() or line_text.begins_with(";"):
+		return -1
 		
+	var parts = _split_line(line_text)
+	if parts.size() == 0:
+		return -1
+
+	match nearest_section:
+		"[Move]", \
+		"[Paint Ballz]", \
+		"[Ball Size Override]", \
+		"[Fuzz Override]", \
+		"[Color Info Override]", \
+		"[Outline Color Override]", \
+		"[Linez]", \
+		"[Omissions]", \
+		"[Thin/Fat]":
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+			
+		"[Add Ball Override]":
+			return int(parts[0]) + KeyBallsData.max_base_ball_num if parts[0].is_valid_integer() else -1
+			
+		"[Project Ball]":
+			if parts.size() > 1 and parts[1].is_valid_integer():
+				return int(parts[1])
+			return int(parts[0]) if parts[0].is_valid_integer() else -1
+
 	return -1
+
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed:
@@ -2828,57 +2856,43 @@ func _on_LnzTextEdit_gui_input(event):
 				get_tree().set_input_as_handled()
 
 		elif event.control and event.scancode == KEY_Q:
-			var nearest_section_start = search("[", SEARCH_BACKWARDS, cursor_get_line(), 0)
+			var ball_no = get_current_ball_index()
+			var current_line_idx = cursor_get_line()
 			
-			if nearest_section_start.empty():
-				emit_signal("find_ball", int(get_word_under_cursor()))
-				return
+			var raw_section = ""
+			var clean_section = ""
+			for i in range(current_line_idx, -1, -1):
+				var line = get_line(i).strip_edges()
+				if line.begins_with("["):
+					raw_section = line
+					clean_section = line.split(";")[0].strip_edges()
+					break
+
+			if ball_no != -1:
+				emit_signal("find_ball", ball_no)
+				var b_name = get_ball_name(ball_no)
+				var prefix = "[HELPER] Ballz"
+				if "Override" in clean_section: prefix = "[HELPER] Override Ballz"
+				if clean_section == "[Add Ball]": prefix = "[HELPER] Addballz"
+				console_log.log_message("%s #%d (%s)" % [prefix, ball_no, b_name])
 			
-			var nearest_section_line = nearest_section_start[SEARCH_RESULT_LINE]
-			var nearest_section = get_line(nearest_section_line)
+			var data_line_idx = _get_line_no_from_line_index(current_line_idx, clean_section)
+			if data_line_idx != -1:
+				match clean_section:
+					"[Linez]": emit_signal("find_line", data_line_idx)
+					"[Paint Ballz]": emit_signal("find_paintball", data_line_idx)
+					"[Polygons]": emit_signal("find_polygon", data_line_idx)
+					"[Move]": emit_signal("find_move", data_line_idx)
+					"[Project Ball]": emit_signal("find_project_ball", data_line_idx)
 			
-			var ball_no = -1
-			var line_no = -1
-			
-			if nearest_section == "[Ballz Info]":
-				ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Ballz Info]")
-				if ball_no != -1:
-					emit_signal("find_ball", ball_no)
-					var b_name = get_ball_name(ball_no)
-					console_log.log_message("[HELPER] Ballz #%s (%s)" % [ball_no, b_name])
-			elif nearest_section == "[Add Ball]":
-				ball_no = _get_line_no_from_line_index(cursor_get_line(), "[Add Ball]")
-				if ball_no != -1:
-					emit_signal("find_ball", ball_no + KeyBallsData.max_base_ball_num)
-					var addball_no = ball_no + KeyBallsData.max_base_ball_num
-					var b_name = get_ball_name(addball_no)
-					console_log.log_message("[HELPER] Addballz #%s (%s)" % [addball_no, b_name])
-			elif nearest_section == "[Linez]":
-				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Linez]")
-				if line_no != -1:
-					emit_signal("find_line", line_no)
-			elif nearest_section == "[Paint Ballz]":
-				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Paint Ballz]")
-				if line_no != -1:
-					emit_signal("find_paintball", line_no)
-			elif nearest_section == "[Polygons]":
-				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Polygons]")
-				if line_no != -1:
-					emit_signal("find_polygon", line_no)
-			elif nearest_section == "[Move]":
-				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Move]")
-				if line_no != -1:
-					emit_signal("find_move", line_no)
-			elif nearest_section == "[Project Ball]":
-				line_no = _get_line_no_from_line_index(cursor_get_line(), "[Project Ball]")
-				if line_no != -1:
-					emit_signal("find_project_ball", line_no)
-			else:
+			if ball_no == -1:
 				var word = get_word_under_cursor()
 				if word.is_valid_integer():
-					ball_no = int(word)
-					if ball_no != -1:
-						emit_signal("find_ball", ball_no)
+					var fallback_no = int(word)
+					emit_signal("find_ball", fallback_no)
+					var b_name = get_ball_name(fallback_no)
+					if b_name != "":
+						console_log.log_message("[HELPER] Ballz #%d (%s)" % [fallback_no, b_name])
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
 	var section_find = search(section_tag, 0, 0, 0)
