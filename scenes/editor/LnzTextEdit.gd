@@ -1563,29 +1563,37 @@ func _mark_base_ball_omitted(ball_no: int):
 
 # Generic for [Linez] with start/end ball pair
 func _update_pairwise_section(header: String, ball_no: int):
-	var section = search(header, 0, 0, 0)
-	var start = section[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start + i).strip_edges()
-		if line == "" or line.begins_with("["):
-			break
-		var tokens = _split_line(line)
-		var b1 = int(tokens[0])
-		var b2 = int(tokens[1])
-		if b1 == ball_no or b2 == ball_no:
-			select(start + i, 0, start + i + 1, 0)
-			cut()
+	var bounds = _get_section_bounds(header)
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var i = bounds.start
+	while i < bounds.end:
+		var line = get_line(i).strip_edges()
+		if line == "" or line.begins_with("["): 
+			i += 1
 			continue
-		if b1 > ball_no: b1 -= 1
-		if b2 > ball_no: b2 -= 1
-		var rest = ""
-		for j in range(2, tokens.size()):
-			if j > 2:
-				rest += " "
-			rest += tokens[j]
-
-		set_line(start + i, "%s %s %s" % [b1, b2, rest])
+			
+		var parts = _split_line(line) 
+		if parts.size() < 2: 
+			i += 1
+			continue
+			
+		var b1 = int(parts[0])
+		var b2 = int(parts[1])
+		
+		if b1 == ball_no or b2 == ball_no:
+			select(i, 0, i + 1, 0)
+			cut()
+			bounds.end -= 1
+			continue 
+			
+		var updates = {}
+		if b1 > ball_no: updates[0] = str(b1 - 1)
+		if b2 > ball_no: updates[1] = str(b2 - 1)
+		
+		if not updates.empty():
+			set_line(i, _update_fields(parts, updates, delim))
 		i += 1
 
 # Generic for single-number lists like [Omissions]
@@ -1628,21 +1636,26 @@ func _update_project_ball_section(header: String, ball_no: int):
 
 # Specific for [Paint Ballz] where 1st token is base ball number
 func _update_paintballz_section(header: String, ball_no: int):
-	var section = search(header, 0, 0, 0)
-	var start = section[SEARCH_RESULT_LINE] + 1
-	var i = 0
-	while true:
-		var line = get_line(start + i).strip_edges()
-		if line == "" or line.begins_with("["):
-			break
-		var split = line.split(" ", false, 1)
-		var b = int(split[0])
-		if b == ball_no:
-			select(start + i, 0, start + i + 1, 0)
-			cut()
+	var bounds = _get_section_bounds(header)
+	if bounds.empty(): return
+	
+	var delim = _detect_delimiter(bounds.start, bounds.end)
+	var i = bounds.start
+	while i < bounds.end:
+		var raw_line = get_line(i)
+		var parts = _split_line(raw_line)
+		if parts.size() < 1: 
+			i += 1
 			continue
+
+		var b = int(parts[0])
+		if b == ball_no:
+			select(i, 0, i + 1, 0)
+			cut()
+			bounds.end -= 1
+			continue 
 		elif b > ball_no:
-			set_line(start + i, "%s %s" % [str(b - 1), split[1]])
+			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
 		i += 1
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
