@@ -808,3 +808,19 @@ func _on_ItemPopupMenu_about_to_show():
 
 func _on_LnzTextEdit_file_backed_up():
 	rescan(get_selected().get_metadata(0) as String)
+
+func get_expanded_states() -> Dictionary:
+	return {
+		"Examples": examples.collapsed == false if examples else true,
+		"Local Storage": local_storage.collapsed == false if local_storage else true,
+		"Local Textures": local_storage_textures.collapsed == false if local_storage_textures else false,
+		"Base Textures": res_textures.collapsed == false if res_textures else false,
+		"Local Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false
+	}
+
+func set_expanded_states(states: Dictionary):
+	if examples: examples.collapsed = !states.get("Examples", true)
+	if local_storage: local_storage.collapsed = !states.get("Local Storage", true)
+	if local_storage_textures: local_storage_textures.collapsed = !states.get("Local Textures", false)
+	if res_textures: res_textures.collapsed = !states.get("Base Textures", false)
+	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("Local Palettes", false)

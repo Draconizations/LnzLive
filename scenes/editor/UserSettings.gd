@@ -21,6 +21,14 @@ var _cached_window_size = Vector2(1024, 600)
 var _cached_window_pos = Vector2()
 var preferred_delimiter = "comma_space"
 
+var file_tree_expanded_sections = {
+	"Examples": true,
+	"Local Storage": true,
+	"Local Textures": false,
+	"Base Textures": false,
+	"Local Palettes": false
+}
+
 var max_history_size = 25
 var stretch_mode = SceneTree.STRETCH_MODE_2D
 var stretch_aspect = SceneTree.STRETCH_ASPECT_EXPAND
@@ -106,6 +114,11 @@ func save_settings():
 	
 	config.set_value("LNZOptions", "preferred_delimiter", preferred_delimiter)
 	config.set_value("LNZOptions", "max_history_size", max_history_size)
+
+	if file_tree and file_tree.has_method("get_expanded_states"):
+		file_tree_expanded_sections = file_tree.get_expanded_states()
+
+	config.set_value("Display", "file_tree_expanded_sections", file_tree_expanded_sections)
 	
 	var save_err = config.save(SETTINGS_PATH)
 	if save_err != OK:
@@ -129,6 +142,10 @@ func load_settings():
 		stretch_aspect = config.get_value("Display", "stretch_aspect", SceneTree.STRETCH_ASPECT_EXPAND)
 		
 		_apply_screen_shrink(saved_shrink)
+
+		file_tree_expanded_sections = config.get_value("Display", "file_tree_expanded_sections", file_tree_expanded_sections)
+		if file_tree and file_tree.has_method("set_expanded_states"):
+			file_tree.set_expanded_states(file_tree_expanded_sections)
 
 		var saved_size = config.get_value("Display", "window_size", null)
 		var saved_pos = config.get_value("Display", "window_position", null)
