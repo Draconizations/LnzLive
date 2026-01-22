@@ -234,19 +234,31 @@ func set_palette(new_value):
 		palette = DEFAULT_PALETTE
 		$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
 
-func set_species(new_value: int) -> void:
+# func set_species(new_value: int) -> void:
+# 	species = new_value
+# 	if $MeshInstance.material_override != null:
+# 		if species == 3:
+# 			# For Babyz species, use the Babyz palette and enable quantization
+# 			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
+# 			$MeshInstance.material_override.set_shader_param("should_quantize", true)
+# 			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+# 		else:
+# 			# For other species, use the default palette and disable quantization
+# 			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
+# 			$MeshInstance.material_override.set_shader_param("should_quantize", false)
+# 			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+
+func set_species(new_value: int, is_babyz_mode: bool = false) -> void:
 	species = new_value
 	if $MeshInstance.material_override != null:
-		if species == 3:
-			# For Babyz species, use the Babyz palette and enable quantization
+		if is_babyz_mode:
 			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
 			$MeshInstance.material_override.set_shader_param("should_quantize", true)
-			$MeshInstance.material_override.set_shader_param("palette_size", 256)
 		else:
-			# For other species, use the default palette and disable quantization
 			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
 			$MeshInstance.material_override.set_shader_param("should_quantize", false)
-			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+		
+		$MeshInstance.material_override.set_shader_param("palette_size", 256)
 
 func set_transparent_color(new_value):
 	transparent_color = new_value

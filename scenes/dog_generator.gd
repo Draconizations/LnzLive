@@ -67,6 +67,11 @@ var current_bdt_prefix = "CAT"
 
 var _skip_next_rebuild = false
 
+onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+onready var console_log = pet_view.find_node("ConsoleLog", true, false)
+# if console_log:
+# 	console_log.log_message("")
+
 onready var eyelid_button := get_tree().get_root().get_node(
 	"Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer"
 	+ "/VBoxContainer/DropDownMenu/EyeLidButton"
@@ -88,6 +93,8 @@ onready var bhd_prompt_dialog = get_tree().root.get_node("Root/SceneRoot/BhdProm
 onready var bhd_prompt_option = get_tree().root.get_node("Root/SceneRoot/BhdPromptDialog/VBoxContainer/ModelOptionButton") as OptionButton
 
 onready var game_option_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/GameOptionButton") as OptionButton
+
+var is_babyz_mode = false
 
 var current_palette_texture = null
 
@@ -527,8 +534,14 @@ func generate_pet(file_path):
 				var line = f.get_line()
 				if line.begins_with("; MODEL: "):
 					comment_model = line.substr(9).strip_edges()
+					print(comment_model)
+					if console_log:
+						console_log.log_message("Auto-detected %s as game model from LNZ comment!" % comment_model)
 				elif line.begins_with("; GAME: "):
 					comment_game = line.substr(8).strip_edges()
+					print(comment_game)
+					if console_log:
+						console_log.log_message("Auto-detected %s as game palette from LNZ comment!" % comment_game)
 			f.close()
 
 	if game_option_button:
@@ -556,7 +569,54 @@ func generate_pet(file_path):
 	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
 	print("Texture loading completed in " + str(_perf_texture_load_time) + "ms")
 
+func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
+	var pal_texture: Texture = null
+	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	
+	if is_babyz_mode:
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
+
+	if palette_name != null and palette_name != "":
+		var user_res_path = "user://resources/palettes".plus_file(palette_name)
+		var res_res_path = "res://resources/palettes".plus_file(palette_name)
+
+		if ResourceLoader.exists(user_res_path):
+			pal_texture = ResourceLoader.load(user_res_path)
+		elif ResourceLoader.exists(res_res_path):
+			pal_texture = ResourceLoader.load(res_res_path)
+		else:
+			var lookup_key = "palette_" + palette_name.to_lower()
+			if preloader.has_resource(lookup_key):
+				pal_texture = preloader.get_resource(lookup_key)
+
+	if pal_texture == null:
+		pal_texture = default_palette
+
+	return pal_texture
+
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
+	is_babyz_mode = (lnz_info.species == KeyBallsData.Species.BABY)
+	if game_option_button and game_option_button.selected == 1:
+		is_babyz_mode = true
+		if console_log:
+			console_log.log_message("Rendering in Babyz palette!")
+	else:
+		if console_log:
+			console_log.log_message("Rendering in Petz palette!")
+
+	var pal_texture = null
+	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	if is_babyz_mode:
+		default_palette = preload("res://resources/palettes/babyz_palette.png")
+
+	if lnz_info.palette != null:
+		pal_texture = load_palette_resource(lnz_info.palette, is_babyz_mode) 
+
+	if pal_texture == null:
+		pal_texture = default_palette
+	
+	current_palette_texture = pal_texture
+
 	var collated_data = collate_base_ball_data()
 	# dumb code - duplicate the lnz info to prevent movements being applied multiple times
 	var addballs = {}
@@ -578,14 +638,14 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	collated_data = apply_extensions(collated_data, lnz_info)
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
-	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, lnz_info.palette, new_create, lnz_info.no_texture_rotate)
+	generate_balls(collated_data, lnz_info.species, lnz_info.texture_list, current_palette_texture, new_create, lnz_info.no_texture_rotate)
 
 	if new_create:
 		call_deferred("_finish_dependent_geometry", new_create)
 	else:
 		apply_projections()
-		generate_polygons(lnz_info.polygons, lnz_info.species, lnz_info.palette, new_create, lnz_info.texture_list)
-		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
+		generate_polygons(lnz_info.polygons, lnz_info.species, current_palette_texture, new_create, lnz_info.texture_list)
+		generate_lines(lnz_info.lines, lnz_info.species, current_palette_texture, new_create)
 		generate_whiskers(new_create)
 		_restore_hidden_states()
 
@@ -1030,40 +1090,23 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 	var paintballs_parent = root.get_node("petholder/paintballs")
 	var addballs_parent = root.get_node("petholder/addballs")
 
-	# Figure out belly position and default palette
+	# Figure out belly position
 	var belly_position
+	
 	if species == KeyBallsData.Species.DOG:
 		belly_position = ball_data[KeyBallsData.belly_dog].position
 	elif species == KeyBallsData.Species.CAT:
 		belly_position = ball_data[KeyBallsData.belly_cat].position
 	elif species == KeyBallsData.Species.BABY:
 		belly_position = ball_data[KeyBallsData.belly_bab].position
+	else:
+		if ball_data.size() > 0:
+			belly_position = ball_data[ball_data.keys()[0]].position
+		else:
+			belly_position = Vector3.ZERO
 
 	belly_position.y *= -1
 	belly_position *= pixel_world_size
-
-	var default_palette = preload("res://resources/palettes/petz_palette.png")
-	if (species == KeyBallsData.Species.BABY):
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
-
-	var pal_texture: Texture = null
-	if palette != null:
-		var user_res_path = "user://resources/palettes".plus_file(palette)
-		var res_res_path = "res://resources/palettes".plus_file(palette)
-
-		if ResourceLoader.exists(user_res_path):
-			pal_texture = ResourceLoader.load(user_res_path)
-		elif ResourceLoader.exists(res_res_path):
-			pal_texture = ResourceLoader.load(res_res_path)
-		else:
-			var lookup_key = "palette_" + palette.to_lower()
-			if preloader.has_resource(lookup_key):
-				pal_texture = preloader.get_resource(lookup_key)
-
-	if pal_texture == null:
-		pal_texture = default_palette
-
-	current_palette_texture = pal_texture
 
 	# If we're creating everything fresh, clear out old visuals
 	if new_create:
@@ -1105,7 +1148,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
-				visual_ball.species = species
+				#visual_ball.species = species
+				visual_ball.set_species(species, is_babyz_mode)
 
 				paintballs_parent.add_child(visual_ball)
 				visual_ball.set_owner(root)
@@ -1138,7 +1182,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.ball_size = get_real_ball_size(ball.size)
 				visual_ball.outline = ball.outline
 				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
-				visual_ball.palette = pal_texture
+				visual_ball.palette = palette
 
 				if no_texture_rotate.has(int(key)):
 					visual_ball.set_tile_texture(false)
@@ -1192,7 +1236,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				var skip_texture_rotation = no_texture_rotate.has(int(key))
 				visual_ball.set_tile_texture(!skip_texture_rotation)
 
-				visual_ball.species = species
+				#visual_ball.species = species
+				visual_ball.set_species(species, is_babyz_mode)
 
 			else:
 				visual_ball = ball_map[key]
@@ -1218,7 +1263,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.ball_size = get_real_ball_size(ball.size)
 				visual_ball.outline = ball.outline
 				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
-				visual_ball.palette = pal_texture
+				visual_ball.palette = palette
 
 			visual_ball.rotation_degrees = ball.rotation
 			ball_map[ball.ball_no] = visual_ball
@@ -1274,7 +1319,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			var skip_texture_rotation = no_texture_rotate.has(int(key))
 			add_visual_ball.set_tile_texture(!skip_texture_rotation)
 
-			add_visual_ball.species = species
+			#add_visual_ball.species = species
+			add_visual_ball.set_species(species, is_babyz_mode)
 
 		var add_pos = add_ball.position
 		add_pos.y *= -1.0
@@ -1295,7 +1341,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 					if tex_info_add.has("texture_size") and tex_info_add.texture_size != null:
 						add_visual_ball.texture_size = tex_info_add.texture_size
 			add_visual_ball.color_index = add_ball.color_index
-			add_visual_ball.palette = pal_texture
+			add_visual_ball.palette = palette
 
 		ball_map[add_ball.ball_no] = add_visual_ball
 
@@ -1351,7 +1397,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				pb_visual_ball.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
 				pb_visual_ball.connect("paintball_mouse_exit", self, "signal_paintball_mouse_exit")
 
-				pb_visual_ball.species = species
+				#pb_visual_ball.species = species
+				pb_visual_ball.set_species(species, is_babyz_mode)
 
 				####
 				# normalised_position (direction from ball center) to shader
@@ -1369,7 +1416,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 						if tex_info_pb.has("texture_size") and tex_info_pb.texture_size != null:
 							pb_visual_ball.texture_size = tex_info_pb.texture_size
 				pb_visual_ball.color_index = paintball.color_index
-				pb_visual_ball.palette = pal_texture
+				pb_visual_ball.palette = palette
 
 			pb_visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			pb_visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
@@ -1460,7 +1507,8 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 			else:
 				# If no texture is defined, default to first ball
 				visual_polygon.texture = point1.texture
-			visual_polygon.species = species
+			#visual_polygon.species = species
+			visual_polygon.set_species(species, is_babyz_mode)
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
 
@@ -1555,7 +1603,8 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 
 		if new_create:
 			visual_line.texture = start.texture
-			visual_line.species = species
+			#visual_line.species = species
+			visual_line.set_species(species, is_babyz_mode)
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = start.palette
 			if line.color_index == -1:
@@ -1946,7 +1995,8 @@ func add_pending_paintball(paintball_info):
 	final_size -= 1 - fmod(final_size, 2)
 	pb_visual_ball.ball_size = final_size
 
-	pb_visual_ball.species = lnz.species
+	#pb_visual_ball.species = lnz.species
+	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
 	pb_visual_ball.base_ball_no = base_ball_no
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
@@ -1996,7 +2046,8 @@ func _on_randomize_auto_paintballz(paintballz):
 		final_size -= 1 - fmod(final_size, 2)
 		pb_visual_ball.ball_size = final_size
 
-		pb_visual_ball.species = lnz.species
+		#pb_visual_ball.species = lnz.species
+		pb_visual_ball.set_species(lnz.species, is_babyz_mode)
 		pb_visual_ball.base_ball_no = base_ball_no
 		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 		pb_visual_ball.base_ball_size = base_ball_node.ball_size

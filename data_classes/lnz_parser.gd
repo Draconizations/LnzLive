@@ -157,8 +157,8 @@ func get_species(file: File):
 			print("[Default Linez File] path contained 'baby'. Setting species to Babyz (Species = 3).")
 			species = 3
 		else:
-			print("Could not determine species from file. Defaulting to Catz (Species = 1).")
-			species = 1
+			print("Could not determine species from file.")
+			species = 0
 	else:
 		species = parsed_lines[0].species
 		if species == 1:
@@ -168,7 +168,7 @@ func get_species(file: File):
 		elif species == 3:
 			print("[Species] detected: Babyz (Species = " + str(species) + ")")
 		else:
-			print("[Species] detected: ??? (Species = " + str(species) + ")")		
+			print("[Species] detected: ??? (Species = " + str(species) + ")")	
 
 func get_texture_list(file: File):
 	get_next_section(file, "Texture List")
