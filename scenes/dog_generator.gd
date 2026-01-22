@@ -1518,6 +1518,13 @@ func generate_whiskers(new_create: bool):
 	if lnz.species != KeyBallsData.Species.CAT:
 		return 
 
+	var root = get_root()
+	var parent = root.get_node("petholder/lines")
+	
+	if new_create:
+		for c in get_tree().get_nodes_in_group("whisker_lines"):
+			c.queue_free()
+
 	var used_whiskers = {}
 	for connection in lnz.whisker_connections:
 		used_whiskers[int(connection.start)] = true
@@ -1532,9 +1539,7 @@ func generate_whiskers(new_create: bool):
 	if lnz.whisker_connections.empty():
 		return
 
-	var root = get_root()
-	var parent = root.get_node("petholder/lines")
-	
+	var i = 0
 	for connection in lnz.whisker_connections:
 		var start_node = ball_map.get(connection.start)
 		var end_node = ball_map.get(connection.end)
@@ -1542,31 +1547,40 @@ func generate_whiskers(new_create: bool):
 		if not start_node or not end_node:
 			continue
 
-		var visual_line = line_scene.instance()
-		visual_line.add_to_group("lines")
-		visual_line.add_to_group("whisker_lines")
+		var visual_line
+		if new_create:
+			visual_line = line_scene.instance()
+			visual_line.add_to_group("lines")
+			visual_line.add_to_group("whisker_lines")
+			parent.add_child(visual_line)
+			visual_line.set_owner(root)
+			
+			visual_line.texture = start_node.texture
+			visual_line.palette = start_node.palette
+			visual_line.color_index = start_node.color_index
+			visual_line.l_color_index = start_node.color_index
+			visual_line.r_color_index = start_node.color_index
+			visual_line.line_widths = Vector2(start_node.ball_size, 1.0)
+		else:
+			var whiskers = get_tree().get_nodes_in_group("whisker_lines")
+			if i < whiskers.size():
+				visual_line = whiskers[i]
+		
+		if visual_line:
+			_update_whisker_position(visual_line, start_node, end_node)
+		i += 1
 
-		visual_line.ball_world_pos1 = start_node.global_transform.origin
-		visual_line.ball_world_pos2 = end_node.global_transform.origin
-
-		visual_line.texture = start_node.texture
-		visual_line.palette = start_node.palette
-		visual_line.color_index = start_node.color_index
-		visual_line.l_color_index = start_node.color_index
-		visual_line.r_color_index = start_node.color_index
-		
-		visual_line.line_widths = Vector2(start_node.ball_size, 1.0)
-		
-		var start_pos = start_node.global_transform.origin
-		var target_pos = end_node.global_transform.origin
-		var middle_point = lerp(start_pos, target_pos, 0.5)
-		
-		visual_line.look_at_from_position(middle_point, target_pos, Vector3.UP)
-		visual_line.rotation_degrees.x += 90
-		visual_line.scale.y = (target_pos - start_pos).length()
-		
-		parent.add_child(visual_line)
-		visual_line.set_owner(root)
+func _update_whisker_position(visual_line: Spatial, start_node: Spatial, end_node: Spatial):
+	var start_pos = start_node.global_transform.origin
+	var target_pos = end_node.global_transform.origin
+	var middle_point = lerp(start_pos, target_pos, 0.5)
+	
+	visual_line.ball_world_pos1 = start_pos
+	visual_line.ball_world_pos2 = target_pos
+	
+	visual_line.look_at_from_position(middle_point, target_pos, Vector3.UP)
+	visual_line.rotation_degrees.x += 90
+	visual_line.scale.y = (target_pos - start_pos).length()
 
 func update_eyelids(tilt_deg: float):
 	var tilt = deg2rad(tilt_deg)
