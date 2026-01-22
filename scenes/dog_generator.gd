@@ -472,7 +472,7 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 # 			init_ball_data(0, "res://resources/animations/" + comment_model + ".bhd")
 # 		elif selected_idx != -1:
 # 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-# 			init_ball_data(0, "res://resources/animations/" + bhd_name)
+# 			init_ball_data(0, false, "res://resources/animations/" + bhd_name)
 # 			# Continue generation
 # 		else:
 # 			# Prompt user
@@ -591,7 +591,7 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 
 func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
-	init_ball_data(0, "res://resources/animations/" + bhd_name)
+	init_ball_data(0, false, "res://resources/animations/" + bhd_name)
 	if lnz:
 		init_visual_balls(lnz, true)
 
@@ -604,7 +604,7 @@ func _on_BhdPrompt_confirmed():
 				bhd_option_button.select(i)
 				break
 
-		init_ball_data(0, "res://resources/animations/" + bhd_name)
+		init_ball_data(0, false, "res://resources/animations/" + bhd_name)
 		init_visual_balls(lnz, true)
 		emit_signal("palette_changed", lnz.palette)
 
@@ -614,7 +614,7 @@ func _on_GameSwitcher_item_selected(index):
 		var selected_idx = bhd_option_button.selected
 		if selected_idx != -1:
 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-			init_ball_data(0, "res://resources/animations/" + bhd_name)
+			init_ball_data(0, false, "res://resources/animations/" + bhd_name)
 	else:
 		init_ball_data(lnz.species)
 	
