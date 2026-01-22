@@ -427,39 +427,7 @@ func is_special_baby_ball(species: int, ball_no: int) -> bool:
 # 	init_visual_balls(lnz_info, true)
 # 	emit_signal("palette_changed", lnz.palette)
 
-# func _on_BhdSwitcher_item_selected(index):
-# 	var bhd_name = bhd_option_button.get_item_text(index)
-# 	init_ball_data(0, "res://resources/animations/" + bhd_name)
-# 	# Re-run visual generation to apply the new model to the existing LNZ data
-# 	if lnz:
-# 		init_visual_balls(lnz, true)
 
-# func _on_BhdPrompt_confirmed():
-# 	var selected_idx = bhd_prompt_option.selected
-# 	if selected_idx != -1:
-# 		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
-# 		# Set the main switcher too
-# 		for i in range(bhd_option_button.get_item_count()):
-# 			if bhd_option_button.get_item_text(i) == bhd_name:
-# 				bhd_option_button.select(i)
-# 				break
-
-# 		init_ball_data(0, "res://resources/animations/" + bhd_name)
-# 		init_visual_balls(lnz, true)
-# 		emit_signal("palette_changed", lnz.palette)
-
-# func _on_GameSwitcher_item_selected(index):
-# 	if !lnz: return
-# 	if lnz.species == 0:
-# 		var selected_idx = bhd_option_button.selected
-# 		if selected_idx != -1:
-# 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-# 			init_ball_data(0, "res://resources/animations/" + bhd_name)
-# 	else:
-# 		init_ball_data(lnz.species)
-	
-# 	init_visual_balls(lnz, true)
-# 	emit_signal("palette_changed", lnz.palette)
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
@@ -513,6 +481,38 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		generate_lines(lnz_info.lines, lnz_info.species, lnz_info.palette, new_create)
 		generate_whiskers(new_create)
 		_restore_hidden_states()
+
+func _on_BhdSwitcher_item_selected(index):
+	var bhd_name = bhd_option_button.get_item_text(index)
+	init_ball_data(0, "res://resources/animations/" + bhd_name)
+	if lnz:
+		init_visual_balls(lnz, true)
+
+func _on_BhdPrompt_confirmed():
+	var selected_idx = bhd_prompt_option.selected
+	if selected_idx != -1:
+		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
+		for i in range(bhd_option_button.get_item_count()):
+			if bhd_option_button.get_item_text(i) == bhd_name:
+				bhd_option_button.select(i)
+				break
+
+		init_ball_data(0, "res://resources/animations/" + bhd_name)
+		init_visual_balls(lnz, true)
+		emit_signal("palette_changed", lnz.palette)
+
+func _on_GameSwitcher_item_selected(index):
+	if !lnz: return
+	if lnz.species == 0:
+		var selected_idx = bhd_option_button.selected
+		if selected_idx != -1:
+			var bhd_name = bhd_option_button.get_item_text(selected_idx)
+			init_ball_data(0, "res://resources/animations/" + bhd_name)
+	else:
+		init_ball_data(lnz.species)
+	
+	init_visual_balls(lnz, true)
+	emit_signal("palette_changed", lnz.palette)
 
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
