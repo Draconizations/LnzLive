@@ -62,6 +62,9 @@ var _orig_world_pos := {}
 var eyelid_dir_map := {}
 var eyelid_mode := 0
 
+var bhd_file_list = []
+var current_bdt_prefix = "CAT"
+
 var _skip_next_rebuild = false
 
 onready var eyelid_button := get_tree().get_root().get_node(
@@ -79,6 +82,12 @@ const EYELID_ICONS  = [
 ]
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
+
+onready var bhd_option_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/ModelOptionButton") as OptionButton
+onready var bhd_prompt_dialog = get_tree().root.get_node("Root/SceneRoot/BhdPromptDialog") as ConfirmationDialog
+onready var bhd_prompt_option = get_tree().root.get_node("Root/SceneRoot/BhdPromptDialog/VBoxContainer/ModelOptionButton") as OptionButton
+
+onready var game_option_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher/GameOptionButton") as OptionButton
 
 var current_palette_texture = null
 
@@ -122,6 +131,41 @@ func _ready():
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	t_pose_checkbox = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/TPoseCheckBox")
 
+	populate_bhd_list()
+
+	if bhd_option_button:
+		bhd_option_button.connect("item_selected", self, "_on_BhdSwitcher_item_selected")
+	if bhd_prompt_dialog:
+		bhd_prompt_dialog.connect("confirmed", self, "_on_BhdPrompt_confirmed")
+
+	if game_option_button:
+		game_option_button.clear()
+		game_option_button.add_item("Petz")
+		game_option_button.add_item("Babyz")
+		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
+
+func populate_bhd_list():
+	bhd_file_list.clear()
+	var dir = Directory.new()
+	if dir.open("res://resources/animations") == OK:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		while file_name != "":
+			if !dir.current_is_dir() and file_name.ends_with(".bhd"):
+				bhd_file_list.append(file_name)
+			file_name = dir.get_next()
+
+	bhd_file_list.sort()
+
+	bhd_option_button.clear()
+	bhd_prompt_option.clear()
+	for file in bhd_file_list:
+		bhd_option_button.add_item(file)
+		bhd_prompt_option.add_item(file)
+
+	bhd_option_button.select(-1)
+	bhd_prompt_option.select(-1)
+
 func set_skip_next_rebuild(val: bool):
 	_skip_next_rebuild = val
 
@@ -162,13 +206,11 @@ func symmetrize_skeleton():
 func set_animation(anim_index: int):
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
 	bhd.get_frame_offsets_for(anim_index)
-	var species = "CAT"
-	if lnz.species == KeyBallsData.Species.DOG:
-		species = "DOG"
-	if lnz.species == KeyBallsData.Species.BABY:
-		species = "BABY"
+
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
-	current_bdt = BdtParser.new(species + str(anim_index) + ".bdt", anim_frames, bhd.num_balls)
+	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
+
+	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 	set_frame(0)
 	emit_signal("animation_loaded", anim_frames.size())
 	
@@ -216,6 +258,67 @@ func clear_lnz_data(keep_visuals: bool = false):
 		paintball_map.clear()
 		polygons_map.clear()
 		lines_map.clear()
+
+# TBD: merge with below
+# func init_ball_data(species, custom_bhd_path = ""):
+# 	if t_pose_checkbox:
+# 		t_pose_active = t_pose_checkbox.pressed
+
+# 	clear_lnz_data()
+	
+# 	var bhd_file = ""
+# 	var bdt_prefix = ""
+	
+# 	var anim_to_load = current_animation
+# 	var frame_to_use = current_frame
+# 	if t_pose_active:
+# 		anim_to_load = 0
+# 		frame_to_use = 0
+	
+# 	if custom_bhd_path != "":
+# 		bhd_file = custom_bhd_path
+# 		# Assume BDT prefix matches BHD filename
+# 		bdt_prefix = custom_bhd_path.get_file().get_basename()
+# 	elif species == KeyBallsData.Species.DOG:
+# 		bhd_file = "res://resources/animations/DOG.bhd"
+# 		bdt_prefix = "DOG"
+# 	elif species == KeyBallsData.Species.CAT:
+# 		bhd_file = "res://resources/animations/CAT.bhd"
+# 		bdt_prefix = "CAT"
+# 	elif species == KeyBallsData.Species.BABY:
+# 		bhd_file = "res://resources/animations/BABY.bhd"
+# 		bdt_prefix = "BABY"
+
+# 	if bhd_file == "":
+# 		bhd_file = "res://resources/animations/CAT.bhd"
+# 		bdt_prefix = "CAT"
+
+# 	current_bdt_prefix = bdt_prefix
+# 	bhd = BhdParser.new(bhd_file)
+
+# 	# Update dropdown selection to match loaded file
+# 	var filename = bhd_file.get_file()
+# 	for i in range(bhd_option_button.get_item_count()):
+# 		if bhd_option_button.get_item_text(i) == filename:
+# 			bhd_option_button.select(i)
+# 			break
+
+# 	emit_signal("bhd_loaded", bhd.animation_ranges.size())
+# 	if bhd.animation_ranges.empty():
+# 		print("BHD file has no animations or failed to load.")
+# 		return
+
+# 	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+# 	var bdt = BdtParser.new(bdt_prefix + str(anim_to_load) + ".bdt", first_anim_frames, bhd.num_balls)
+# 	emit_signal("animation_loaded", first_anim_frames.size())
+# 	current_bdt = bdt
+# 	for n in bhd.num_balls:
+# 		balls.append(BallData.new(bhd.ball_sizes[n], bdt.frames[frame_to_use][n].position, n, bdt.frames[frame_to_use][n].rotation))
+
+# 	KeyBallsData.max_base_ball_num = bhd.num_balls
+
+# 	if t_pose_active:
+# 		symmetrize_skeleton()
 
 func init_ball_data(species, keep_visuals: bool = false):
 	if t_pose_checkbox:
@@ -276,6 +379,88 @@ func init_ball_data(species, keep_visuals: bool = false):
 func is_special_baby_ball(species: int, ball_no: int) -> bool:
 	return species == KeyBallsData.Species.BABY and ball_no >= 120 and ball_no <= 137
 
+
+# TBD: merge with below
+# func generate_pet(file_path):
+# 	var lnz_info = LnzParser.new(file_path)
+# 	lnz = lnz_info
+# 	KeyBallsData.species = lnz_info.species
+# 	KeyBallsData.build_bodyarea_map()
+
+# 	var comment_model = ""
+# 	var comment_game = ""
+# 	if lnz_info.species == 0:
+# 		var f = File.new()
+# 		if f.open(file_path, File.READ) == OK:
+# 			for i in range(10):
+# 				if f.eof_reached(): break
+# 				var line = f.get_line()
+# 				if line.begins_with("; MODEL: "):
+# 					comment_model = line.substr(9).strip_edges()
+# 				elif line.begins_with("; GAME: "):
+# 					comment_game = line.substr(8).strip_edges()
+# 			f.close()
+
+# 	if game_option_button:
+# 		if lnz_info.species == KeyBallsData.Species.BABY or comment_game == "BABYZ":
+# 			game_option_button.select(1) # Babyz
+# 		else:
+# 			game_option_button.select(0) # Petz (default for Dogz/Catz/custom BHD)
+
+# 	if lnz_info.species == 0:
+# 		# Check if we already have a BHD selected from the dropdown/previous load
+# 		var selected_idx = bhd_option_button.selected
+		
+# 		if comment_model != "":
+# 			init_ball_data(0, "res://resources/animations/" + comment_model + ".bhd")
+# 		elif selected_idx != -1:
+# 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
+# 			init_ball_data(0, "res://resources/animations/" + bhd_name)
+# 			# Continue generation
+# 		else:
+# 			# Prompt user
+# 			bhd_prompt_dialog.popup_centered()
+# 			return # Stop generation until user selects
+# 	else:
+# 		init_ball_data(lnz_info.species)
+
+# 	init_visual_balls(lnz_info, true)
+# 	emit_signal("palette_changed", lnz.palette)
+
+# func _on_BhdSwitcher_item_selected(index):
+# 	var bhd_name = bhd_option_button.get_item_text(index)
+# 	init_ball_data(0, "res://resources/animations/" + bhd_name)
+# 	# Re-run visual generation to apply the new model to the existing LNZ data
+# 	if lnz:
+# 		init_visual_balls(lnz, true)
+
+# func _on_BhdPrompt_confirmed():
+# 	var selected_idx = bhd_prompt_option.selected
+# 	if selected_idx != -1:
+# 		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
+# 		# Set the main switcher too
+# 		for i in range(bhd_option_button.get_item_count()):
+# 			if bhd_option_button.get_item_text(i) == bhd_name:
+# 				bhd_option_button.select(i)
+# 				break
+
+# 		init_ball_data(0, "res://resources/animations/" + bhd_name)
+# 		init_visual_balls(lnz, true)
+# 		emit_signal("palette_changed", lnz.palette)
+
+# func _on_GameSwitcher_item_selected(index):
+# 	if !lnz: return
+# 	if lnz.species == 0:
+# 		var selected_idx = bhd_option_button.selected
+# 		if selected_idx != -1:
+# 			var bhd_name = bhd_option_button.get_item_text(selected_idx)
+# 			init_ball_data(0, "res://resources/animations/" + bhd_name)
+# 	else:
+# 		init_ball_data(lnz.species)
+	
+# 	init_visual_balls(lnz, true)
+# 	emit_signal("palette_changed", lnz.palette)
+
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
 	_perf_texture_load_time = 0
@@ -295,28 +480,6 @@ func generate_pet(file_path):
 
 	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
 	print("Texture loading completed in " + str(_perf_texture_load_time) + "ms")
-
-func generate_color_icon(color_index: int) -> ImageTexture:
-	if not current_palette_texture:
-		return null
-
-	if color_index < 0 or color_index > 255:
-		return null
-
-	var img = current_palette_texture.get_data()
-	if not img: return null
-
-	img.lock()
-	var color = img.get_pixel(color_index, 0)
-	img.unlock()
-
-	var icon_img = Image.new()
-	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
-	icon_img.fill(color)
-
-	var tex = ImageTexture.new()
-	tex.create_from_image(icon_img)
-	return tex
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	var collated_data = collate_base_ball_data()
@@ -413,13 +576,16 @@ func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
 		
 		for b in KeyBallsData.eyes_cat:
 			head_ext.erase(b)
-	else:
+	elif lnz.species == KeyBallsData.Species.BABY:
 		legs = KeyBallsData.legs_bab
 		body_ext = KeyBallsData.body_ext_bab
 		face_ext = KeyBallsData.face_ext_bab
 		head_ext = KeyBallsData.head_ext_bab
 		foot_ext = KeyBallsData.foot_ext_bab
 		ear_ext = KeyBallsData.ear_ext_bab
+	else:
+		# Unknown species, assume no extensions
+		return all_ball_dict
 		
 	# legs
 	# for ball_no in legs[0]:
@@ -1904,3 +2070,25 @@ func restore_ball_visual_states(ball_nos: Array):
 			
 		if visual_node.has_method("update_ball"):
 			visual_node.update_ball()
+
+func generate_color_icon(color_index: int) -> ImageTexture:
+	if not current_palette_texture:
+		return null
+
+	if color_index < 0 or color_index > 255:
+		return null
+
+	var img = current_palette_texture.get_data()
+	if not img: return null
+
+	img.lock()
+	var color = img.get_pixel(color_index, 0)
+	img.unlock()
+
+	var icon_img = Image.new()
+	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
+	icon_img.fill(color)
+
+	var tex = ImageTexture.new()
+	tex.create_from_image(icon_img)
+	return tex
