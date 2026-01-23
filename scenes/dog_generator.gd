@@ -211,11 +211,24 @@ func symmetrize_skeleton():
 						r_ball.rotation.z = -l_ball.rotation.z
 
 func set_animation(anim_index: int):
+	if not bhd or bhd.animation_ranges.empty():
+		print("Error: No valid BHD loaded.")
+		return
+		
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
 	bhd.get_frame_offsets_for(anim_index)
 
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
+	if anim_frames.empty():
+		print("Error: Animation %d has no frames in BHD." % anim_index)
+		anim_frames = [0]
+	
 	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
+	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
+
+	if new_bdt.frames.empty():
+		print("Error: Failed to load BDT frames for: ", bdt_filename)
+		return
 
 	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 	set_frame(0)
@@ -224,12 +237,39 @@ func set_animation(anim_index: int):
 	var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
 	anim_picker.text = str(anim_index)
 
+# func set_frame(frame: int):
+# 	if not current_bdt or current_bdt.frames.empty():
+# 		return
+
+# 	current_frame = clamp(frame, 0, current_bdt.frames.size() - 1)
+	
+# 	balls = []
+# 	for n in bhd.num_balls:
+# 		if current_frame < current_bdt.frames.size():
+# 			var x = current_bdt.frames[current_frame][n]
+# 			balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+	
+# 	if t_pose_active:
+# 		symmetrize_skeleton()
+
+# 	init_visual_balls(lnz, false)
+
 func set_frame(frame: int):
-	current_frame = frame
-	balls = []
-	for n in bhd.num_balls:
-		var x = current_bdt.frames[frame][n]
-		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+	if not current_bdt or current_bdt.frames.empty():
+		return
+
+	current_frame = clamp(frame, 0, current_bdt.frames.size() - 1)
+	
+	if balls.empty():
+		for n in bhd.num_balls:
+			var x = current_bdt.frames[current_frame][n]
+			balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+	else:
+		for n in bhd.num_balls:
+			var x = current_bdt.frames[current_frame][n]
+			var b = balls[n]
+			b.position = x.position
+			b.rotation = x.rotation
 	
 	if t_pose_active:
 		symmetrize_skeleton()
@@ -393,12 +433,6 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 	var bhd_file = ""
 	var bdt_prefix = ""
 	
-	var anim_to_load = current_animation
-	var frame_to_use = current_frame
-	if t_pose_active:
-		anim_to_load = 0
-		frame_to_use = 0
-	
 	if custom_bhd_path != "":
 		bhd_file = custom_bhd_path
 		bdt_prefix = custom_bhd_path.get_file().get_basename()
@@ -418,6 +452,14 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 	current_bdt_prefix = bdt_prefix
 	bhd = BhdParser.new(bhd_file)
 
+	if current_animation >= bhd.animation_ranges.size():
+		current_animation = 0
+		var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
+		if anim_picker:
+			anim_picker.text = "0"
+
+	var anim_to_load = 0 if t_pose_active else current_animation
+
 	var filename = bhd_file.get_file()
 	for i in range(bhd_option_button.get_item_count()):
 		if bhd_option_button.get_item_text(i) == filename:
@@ -430,6 +472,12 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 		return
 
 	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+	
+	if current_frame >= first_anim_frames.size():
+		current_frame = 0
+		
+	var frame_to_use = 0 if t_pose_active else current_frame
+
 	var bdt_filename = bdt_prefix + str(anim_to_load) + ".bdt"
 	current_bdt = BdtParser.new(bdt_filename, first_anim_frames, bhd.num_balls)
 	
@@ -598,11 +646,6 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	is_babyz_mode = (lnz_info.species == KeyBallsData.Species.BABY)
 	if game_option_button and game_option_button.selected == 1:
 		is_babyz_mode = true
-		if console_log:
-			console_log.log_message("Rendering in Babyz palette!")
-	else:
-		if console_log:
-			console_log.log_message("Rendering in Petz palette!")
 
 	var pal_texture = null
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
@@ -617,7 +660,14 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	
 	current_palette_texture = pal_texture
 
-	var collated_data = collate_base_ball_data()
+	# var collated_data = collate_base_ball_data() 
+	
+	var base_balls_temp = {}
+	for b in balls:
+		# Create a fresh copy of the BallData so apply_sizes doesn't ruin the original animation data
+		base_balls_temp[b.ball_no] = BallData.new(b.size, b.position, b.ball_no, b.rotation)
+	var collated_data = base_balls_temp
+
 	# dumb code - duplicate the lnz info to prevent movements being applied multiple times
 	var addballs = {}
 	for k in lnz_info.addballs:
@@ -1417,6 +1467,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 							pb_visual_ball.texture_size = tex_info_pb.texture_size
 				pb_visual_ball.color_index = paintball.color_index
 				pb_visual_ball.palette = palette
+			else:
+				pb_visual_ball = paintball_map[key][count]
 
 			pb_visual_ball.base_ball_position = ball_map[key].global_transform.origin
 			pb_visual_ball.transform.origin = paintball.normalised_position * Vector3(1, -1, 1) * (base_ball.size / 2.0) * pixel_world_size
