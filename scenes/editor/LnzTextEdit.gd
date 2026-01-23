@@ -122,6 +122,8 @@ func _setup_context_menu():
 		menu.add_item("Find/Replace", 100)
 	if menu.get_item_index(101) == -1:
 		menu.add_item("Toggle Comment", 101)
+	if menu.get_item_index(102) == -1:
+		menu.add_item("Set Delimiter", 102)
 
 func _setup_fonts():
 	default_font = get_font("font")
@@ -4429,6 +4431,8 @@ func _on_menu_id_pressed(id):
 		self.readonly = true
 	elif id == 101: # Toggle Comment
 		_toggle_comment()
+	elif id == 102: # Set Delimiter
+		_set_delimiter()
 
 func _on_NotificationTimer_timeout():
 	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
@@ -4714,3 +4718,55 @@ func _toggle_comment():
 	# Restore selection to cover the lines we just modified
 	deselect()
 	select(start_line, 0, end_line, get_line(end_line).length())
+
+func _set_delimiter():
+	var start_line = 0
+	var end_line = 0
+	
+	if is_selection_active():
+		start_line = get_selection_from_line()
+		end_line = get_selection_to_line()
+		# Adjust if selection ends exactly at the start of a new line
+		if get_selection_to_column() == 0 and end_line > start_line:
+			end_line -= 1
+	else:
+		start_line = cursor_get_line()
+		end_line = cursor_get_line() 
+
+	# Get the user's preferred delimiter if set
+	var preferred_delim = _get_user_preferred_delimiter()
+	if preferred_delim == "auto":
+		preferred_delim = " "
+	
+	for i in range(start_line, end_line + 1):
+		var line_text = get_line(i)
+		var stripped = line_text.strip_edges()
+		
+		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
+			continue
+		
+		var parts = _split_line(line_text) 
+		if parts.size() == 0:
+			continue
+			
+		var comment_part = ""
+		var data_parts = []
+		
+		var last_part = parts[parts.size() - 1]
+		if last_part.begins_with(";"):
+			comment_part = last_part
+			for j in range(parts.size() - 1):
+				data_parts.append(parts[j])
+		else:
+			data_parts = Array(parts) 
+			
+		# Reconstruct the line data with the consistent delimiter
+		var new_line_data = _join_array(data_parts, preferred_delim)
+		
+		# Append the comment back if it exists
+		var final_line = new_line_data
+		if not comment_part.empty():
+			# Ensure there is at least one space before the comment for readability
+			final_line += " " + comment_part 
+			
+		set_line(i, final_line)
