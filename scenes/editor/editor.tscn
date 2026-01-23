@@ -1363,7 +1363,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-36"
+text = "PB-beta-v1.4.6-preview-36 x load-alt-bhd"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1601,7 +1601,7 @@ text = "Close"
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_top = 28.0
 margin_right = 757.0
-margin_bottom = 1078.0
+margin_bottom = 1044.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_fonts/font = ExtResource( 32 )
@@ -2156,8 +2156,8 @@ __meta__ = {
 [connection signal="pressed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/FindPanel/VBoxContainer/HBoxContainer/CloseButton" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_FindCloseButton_pressed"]
 [connection signal="ball_number_changed" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/BallNo" method="_update_ball_label"]
 [connection signal="file_backed_up" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="_on_LnzTextEdit_file_backed_up"]
-[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree" method="rescan"]
+[connection signal="file_saved" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="generate_pet"]
 [connection signal="find_ball" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="PetRoot/Node" method="_on_LnzTextEdit_find_ball"]
 [connection signal="gui_input" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_LnzTextEdit_gui_input"]
 [connection signal="mouse_entered" from="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" to="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer" method="_on_LnzTextEdit_mouse_entered"]
