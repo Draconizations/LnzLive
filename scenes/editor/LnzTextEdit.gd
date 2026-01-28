@@ -32,6 +32,10 @@ var filepath: String
 
 var split_regex = RegEx.new()
 
+var set_column_popup: ConfirmationDialog
+var col_input: LineEdit
+var val_input: LineEdit
+
 var bookmarks: Array = []
 
 var history_stack: Array = []
@@ -109,6 +113,7 @@ func _ready():
 		search_input.connect("text_entered", self, "_on_FindNextButton_pressed")
 
 	_update_section_bookmarks()
+	_setup_set_column_popup()
 
 func _safe_connect(target, sig, method):
 	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
@@ -124,6 +129,8 @@ func _setup_context_menu():
 		menu.add_item("Toggle Comment", 101)
 	if menu.get_item_index(102) == -1:
 		menu.add_item("Set Delimiter", 102)
+	if menu.get_item_index(103) == -1:
+		menu.add_item("Set Column in Selection", 103)
 
 func _setup_fonts():
 	default_font = get_font("font")
@@ -134,6 +141,32 @@ func _setup_fonts():
 		cascadia_font.use_filter = true
 	else:
 		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+
+func _setup_set_column_popup():
+	set_column_popup = ConfirmationDialog.new()
+	set_column_popup.window_title = "Set Column Value"
+	add_child(set_column_popup)
+	
+	var vbox = VBoxContainer.new()
+	set_column_popup.add_child(vbox)
+	
+	var label_col = Label.new()
+	label_col.text = "Column # (0-based):"
+	vbox.add_child(label_col)
+	
+	col_input = LineEdit.new()
+	col_input.placeholder_text = "e.g., 0 is 1st column"
+	vbox.add_child(col_input)
+	
+	var label_val = Label.new()
+	label_val.text = "New Value:"
+	vbox.add_child(label_val)
+	
+	val_input = LineEdit.new()
+	val_input.placeholder_text = "Enter value..."
+	vbox.add_child(val_input)
+	
+	set_column_popup.connect("confirmed", self, "_on_set_column_confirmed")
 
 func _load_file(filepath: String, user_flag: bool):
 	if pet_node and pet_node.has_method("unhide_all_balls"):
@@ -4433,6 +4466,9 @@ func _on_menu_id_pressed(id):
 		_toggle_comment()
 	elif id == 102: # Set Delimiter
 		_set_delimiter()
+	elif id == 103: # Set Column in Selection
+		set_column_popup.popup_centered(Vector2(250, 150))
+		col_input.grab_focus()
 
 func _on_NotificationTimer_timeout():
 	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
@@ -4770,3 +4806,55 @@ func _set_delimiter():
 			final_line += " " + comment_part 
 			
 		set_line(i, final_line)
+
+	save_file(true) 
+	commit_visual_change("Set delimiter of LNZ selection")
+
+func _on_set_column_confirmed():
+	var col_idx = col_input.text.to_int()
+	var new_value = val_input.text
+	
+	var start_line = 0
+	var end_line = 0
+	
+	if is_selection_active():
+		start_line = get_selection_from_line()
+		end_line = get_selection_to_line()
+		if get_selection_to_column() == 0 and end_line > start_line:
+			end_line -= 1
+	else:
+		start_line = cursor_get_line()
+		end_line = cursor_get_line()
+
+	save_backup()
+	
+	for i in range(start_line, end_line + 1):
+		var line_text = get_line(i)
+		var stripped = line_text.strip_edges()
+		
+		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
+			continue
+			
+		var parts = _split_line(line_text)
+		if parts.size() <= 1:
+			continue
+			
+		var comment_part = parts[parts.size() - 1]
+		var data_parts = []
+		for j in range(parts.size() - 1):
+			data_parts.append(parts[j])
+			
+		if col_idx >= 0 and col_idx < data_parts.size():
+			data_parts[col_idx] = new_value
+			
+			var delim = _detect_delimiter(i, i + 1) 
+			var new_data = _join_array(data_parts, delim) 
+			
+			var final_line = new_data
+			if not comment_part.empty():
+				final_line += " " + comment_part
+				
+			set_line(i, final_line)
+
+	save_file(true)
+	commit_visual_change("Set column " + str(col_idx) + " to '" + new_value + "' in LNZ selection")
