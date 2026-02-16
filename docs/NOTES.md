@@ -1,8 +1,42 @@
 # Notes
 
+All minor notes about LnzLive development will be dropped in this document. Major tasks will be added as Issues to the [LnzLive Task Tracker](https://github.com/users/tabbzi/projects/3/views/6) associated with the GitHub repository.
+
 ## Bugs
 
 Recording observations about bugs here... making issues when the problem and solution are more clear...
+
+### Headshot angles do not appear correct
+
+Could be related to the inverted camera view in LnzLive
+
+### Texture scale on rotating ballz
+
+Scaling on rotating textures still seems off
+
+### Paintballz not appearing from certain Toyz LNZ
+
+needing two copies of paintballz on addballz in DOLL.bhd babyz?
+
+### Ball numbers of alternative BHD models not consistent with LNZ
+
+issue with [Move] in Babyz toyz: when 18 is addball not baseball cant do moves on addball, it crashes; review how ball # computed from BHD
+
+### New entries entered after blank lines
+
+Figure out why new entries coming in after the last comment line within a section, e.g.:
+
+```
+(last part of LNZ section)
+(blank line)
+126,	127,	1,	-1,	244,	244,	100,	100
+127,	128,	1,	-1,	244,	244,	100,	100
+
+;Base ball,diameter(% of baseball),direction (x,y,z),colour,outline colour,fuzz,outline,group,texture
+132	131	0	-1	150	150	100	100	0	0
+```
+
+## Archived
 
 ### 2025-09-01
 
@@ -10,13 +44,13 @@ Recording observations about bugs here... making issues when the problem and sol
 - [x]  Hotkey jumps don't loop
 - [x]  Fix mirror project to propogate Fixed <> Projected pair swaps
 - [x]  Clicking headers for Mirror and Lock should set/unset all in Project Mode
-- [ ]  If applyling paintballz, then unselect from Text Editor first, otherwise it replaces all
-- [ ]  Render option draw paintballz hides the irises but not on reload of LNZ
+- [x]  If applyling paintballz, then unselect from Text Editor first, otherwise it replaces all
+- [x]  Render option draw paintballz hides the irises but not on reload of LNZ
 - [x]  Frame number doesn't copy right when entering into animation frame? or just frame isnt captured right? -1?
 - [x]  Quick flash with CTRL+Q does not affect addballz
-- [ ]  Add texture color to recolor menu
-- [ ]  Links in Options Menu -> Help open both URLs at once
-- [ ]  Scale up overshoots size
+- [x]  Add texture color to recolor menu
+- [x]  Links in Options Menu -> Help open both URLs at once
+- [x]  Scale up overshoots size
 - [x]  Parse species from `[Default Linez File]` for breed file LNZ, if not `[Species]` as in pet file LNZ
 
 ### 2025-09-14
