@@ -1363,7 +1363,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.6-preview-37"
+text = "PB-beta-v1.4.7-preview-01"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]
@@ -1601,7 +1601,7 @@ text = "Close"
 [node name="LnzTextEdit" type="TextEdit" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
 margin_top = 28.0
 margin_right = 757.0
-margin_bottom = 1078.0
+margin_bottom = 1044.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_fonts/font = ExtResource( 32 )
@@ -1619,6 +1619,59 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="ModelSwitcher" type="HBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer"]
+margin_top = 1048.0
+margin_right = 757.0
+margin_bottom = 1078.0
+rect_min_size = Vector2( 0, 30 )
+
+[node name="ModelLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_top = 5.0
+margin_right = 186.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 35 )
+text = "Current Model:"
+align = 1
+
+[node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 190.0
+margin_right = 376.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 25, 20 )
+size_flags_horizontal = 3
+size_flags_vertical = 0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
+
+[node name="GameLabel" type="Label" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 380.0
+margin_top = 5.0
+margin_right = 566.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 35 )
+text = "Current Game:"
+align = 1
+
+[node name="GameOptionButton" type="OptionButton" parent="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/ModelSwitcher"]
+margin_left = 570.0
+margin_right = 757.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 25, 20 )
+size_flags_horizontal = 3
+size_flags_vertical = 0
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 35 )
 
 [node name="BallLabel" type="Label" parent="SceneRoot"]
 visible = false
@@ -1927,6 +1980,23 @@ dialog_autowrap = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="BhdPromptDialog" type="ConfirmationDialog" parent="SceneRoot"]
+margin_right = 300.0
+margin_bottom = 100.0
+window_title = "Select Base Model"
+dialog_text = "No species or base model could be determined from the file. Please select a base model (BHD) to use:"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/BhdPromptDialog"]
+margin_left = 8.0
+margin_top = 22.0
+margin_right = 668.0
+margin_bottom = 64.0
+
+[node name="ModelOptionButton" type="OptionButton" parent="SceneRoot/BhdPromptDialog/VBoxContainer"]
+margin_right = 284.0
+margin_bottom = 20.0
+custom_fonts/font = ExtResource( 35 )
 
 [node name="HeadMovePopup" type="Popup" parent="SceneRoot"]
 margin_left = 450.228

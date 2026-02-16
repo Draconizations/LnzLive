@@ -48,29 +48,29 @@ func populate_colors():
 		vbox.remove_child(child)
 		child.queue_free()
 
-	if dog_generator.lnz == null or dog_generator.lnz == null:
+	if dog_generator == null or dog_generator.lnz == null:
 		title_label.text = "No palette loaded"
 		var label = Label.new()
 		label.text = "No pet loaded"
 		vbox.add_child(label)
 		return
 
-	var pal_texture = null
+	var pal_texture = dog_generator.current_palette_texture
 	var palette_path = dog_generator.lnz.palette
-	if palette_path == null:
-		if dog_generator.lnz.species == 3: # KeyBallsData.Species.BABY
+	
+	if palette_path == null or palette_path == "":
+		if dog_generator.is_babyz_mode:
 			title_label.text = "default Babyz game palette"
-			pal_texture = load("res://resources/palettes/babyz_palette.png")
 		else:
 			title_label.text = "default Petz game palette"
-			pal_texture = load("res://resources/palettes/petz_palette.png")
 	else:
 		title_label.text = "Palette: " + palette_path.get_basename()
-		pal_texture = load_palette_texture(palette_path)
+		if dog_generator.is_babyz_mode and dog_generator.lnz.species != 3:
+			title_label.text += " (game: Babyz)"
 
 	if pal_texture == null:
 		var label = Label.new()
-		label.text = "Palette texture not found."
+		label.text = "palette not found"
 		vbox.add_child(label)
 		return
 
