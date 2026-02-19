@@ -11,6 +11,7 @@ const UTILITY_TABS = ["FileTree", "Palette"]
 const TAB_ICONS = {
 	"FileTree": "res://resources/icons/ico_tab_file.png",
 	"Palette": "res://resources/icons/ico_tab_palette.png",
+	"Variations": "res://resources/icons/ico_tab_variation.png",
 	"Paint": "res://resources/icons/ico_tab_paint.png",
 	"Recolor": "res://resources/icons/ico_tab_recolor.png",
 	"AutoPaint": "res://resources/icons/ico_tab_autopaint.png",
@@ -54,6 +55,9 @@ func add_tool_tab(control: Control, title: String):
 		tab_container.move_child(control, 0)
 	elif title == "Palette":
 		var target_idx = 1 if tab_container.get_child(0).name == "FileTree" else 0
+		tab_container.move_child(control, target_idx)
+	elif title == "Variations":
+		var target_idx = 2 if tab_container.get_child(0).name == "FileTree" else 0
 		tab_container.move_child(control, target_idx)
 
 	if control.has_method("set_docked"):
