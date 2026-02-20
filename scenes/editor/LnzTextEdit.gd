@@ -140,7 +140,7 @@ func _setup_fonts():
 		cascadia_font.font_data = font_data
 		cascadia_font.use_filter = true
 	else:
-		print("Error: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+		print("WARNING: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
 
 func _setup_set_column_popup():
 	set_column_popup = ConfirmationDialog.new()
@@ -370,9 +370,9 @@ func undo_visual_edit():
 				if log_item.type == HistoryItem.Type.LOGICAL:
 					_apply_logical_line(log_item.target_section, log_item.target_id, log_item.new_line_data)
 		else:
-			print("[HISTORY] ERROR: No snapshot found to restore")
+			print("[HISTORY] WARNING: No snapshot found to restore")
 			if console_log:
-				console_log.log_message("[HISTORY] ERROR: No snapshot found to restore")
+				console_log.log_message("[HISTORY] WARNING: No snapshot found to restore")
 
 	print("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
 	if console_log:

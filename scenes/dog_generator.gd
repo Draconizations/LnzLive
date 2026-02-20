@@ -215,7 +215,7 @@ func symmetrize_skeleton():
 
 func set_animation(anim_index: int):
 	if not bhd or bhd.animation_ranges.empty():
-		print("Error: No valid BHD loaded.")
+		print("ERROR: No valid BHD loaded.")
 		return
 		
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
@@ -223,14 +223,14 @@ func set_animation(anim_index: int):
 
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
 	if anim_frames.empty():
-		print("Error: Animation %d has no frames in BHD." % anim_index)
+		print("ERROR: Animation %d has no frames in BHD." % anim_index)
 		anim_frames = [0]
 	
 	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
 	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 
 	if new_bdt.frames.empty():
-		print("Error: Failed to load BDT frames for: ", bdt_filename)
+		print("ERROR: Failed to load BDT frames for: ", bdt_filename)
 		return
 
 	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
