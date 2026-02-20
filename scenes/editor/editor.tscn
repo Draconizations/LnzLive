@@ -1,4 +1,4 @@
-[gd_scene load_steps=51 format=2]
+[gd_scene load_steps=55 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -30,6 +30,7 @@
 [ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="DynamicFont" id=28]
 [ext_resource path="res://resources/fonts/font_pixel_operator_default.tres" type="DynamicFont" id=29]
 [ext_resource path="res://resources/fonts/font_messe_duesseldorf_default.tres" type="DynamicFont" id=30]
+[ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=31]
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
 [ext_resource path="res://resources/fonts/font_pixel_code_14.tres" type="DynamicFont" id=35]
@@ -39,6 +40,7 @@
 [ext_resource path="res://scenes/editor/UserSettingsDialog.tscn" type="PackedScene" id=40]
 [ext_resource path="res://scenes/editor/SidebarController.gd" type="Script" id=41]
 [ext_resource path="res://scenes/editor/ActiveHotkeys.gd" type="Script" id=42]
+[ext_resource path="res://scenes/editor/VariationTree.tscn" type="PackedScene" id=43]
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -112,6 +114,14 @@ corner_radius_top_right = 2
 corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
+
+[sub_resource type="DynamicFont" id=12]
+size = 36
+font_data = ExtResource( 31 )
+
+[sub_resource type="DynamicFont" id=13]
+size = 30
+font_data = ExtResource( 31 )
 
 [sub_resource type="DynamicFontData" id=8]
 font_path = "res://resources/fonts/PixelCode.ttf"
@@ -372,6 +382,15 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = ExtResource( 27 )
 text = "Open User Folder"
+
+[node name="Variations" parent="SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs" instance=ExtResource( 43 )]
+visible = false
+margin_left = 1.0
+margin_top = 25.0
+margin_right = -1.0
+margin_bottom = -1.0
+custom_fonts/title_button_font = SubResource( 12 )
+custom_fonts/font = SubResource( 13 )
 
 [node name="SidebarSpacer" type="Control" parent="SceneRoot/HSplitContainer/VBoxContainer"]
 visible = false

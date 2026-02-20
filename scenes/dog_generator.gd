@@ -67,6 +67,9 @@ var current_bdt_prefix = "CAT"
 
 var _skip_next_rebuild = false
 
+var current_variation_config = {}
+var last_loaded_filepath = ""
+
 onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 onready var console_log = pet_view.find_node("ConsoleLog", true, false)
 # if console_log:
@@ -212,7 +215,7 @@ func symmetrize_skeleton():
 
 func set_animation(anim_index: int):
 	if not bhd or bhd.animation_ranges.empty():
-		print("Error: No valid BHD loaded.")
+		print("ERROR: No valid BHD loaded.")
 		return
 		
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
@@ -220,14 +223,14 @@ func set_animation(anim_index: int):
 
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
 	if anim_frames.empty():
-		print("Error: Animation %d has no frames in BHD." % anim_index)
+		print("ERROR: Animation %d has no frames in BHD." % anim_index)
 		anim_frames = [0]
 	
 	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
 	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 
 	if new_bdt.frames.empty():
-		print("Error: Failed to load BDT frames for: ", bdt_filename)
+		print("ERROR: Failed to load BDT frames for: ", bdt_filename)
 		return
 
 	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
@@ -569,6 +572,33 @@ func generate_pet(file_path):
 	
 	var lnz_info = LnzParser.new(file_path)
 	lnz = lnz_info
+	lnz.get_species()
+
+	if file_path != last_loaded_filepath:
+		last_loaded_filepath = file_path
+		current_variation_config = {}
+		for section_name in lnz.sections_map:
+			current_variation_config[section_name] = [0]
+			if lnz.sections_map[section_name].has(1):
+				current_variation_config[section_name].append(1)
+	else:
+		var old_config = current_variation_config.duplicate()
+		current_variation_config = {}
+		for section_name in lnz.sections_map:
+			current_variation_config[section_name] = [0]
+
+			if old_config.has(section_name):
+				var old_ids = old_config[section_name]
+				for id in old_ids:
+					if id != 0 and lnz.sections_map[section_name].has(id):
+						if not current_variation_config[section_name].has(id):
+							current_variation_config[section_name].append(id)
+				current_variation_config[section_name].sort()
+
+	var variation_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/Variations")
+	if variation_tree:
+		variation_tree.setup(self, lnz)
+
 	KeyBallsData.species = lnz_info.species
 	KeyBallsData.build_bodyarea_map()
 
@@ -611,11 +641,96 @@ func generate_pet(file_path):
 	else:
 		init_ball_data(lnz_info.species, !full_rebuild)
 	
-	init_visual_balls(lnz_info, full_rebuild)
-	emit_signal("palette_changed", lnz.palette)
+	recompose_model()
 
 	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
 	print("Texture loading completed in " + str(_perf_texture_load_time) + "ms")
+
+func recompose_model():
+	# Clear LNZ data structures
+	lnz.balls.clear()
+	lnz.paintballs.clear()
+	lnz.lines.clear()
+	lnz.addballs.clear()
+	lnz.omissions.clear()
+	lnz.project_ball.clear()
+	lnz.polygons.clear()
+	lnz.moves.clear()
+	lnz.texture_list.clear()
+	lnz.whisker_connections.clear()
+
+	# Parse Sections
+	var ordered_sections = [
+		"Texture List",
+		"Palette",
+		"No Texture Rotate",
+		"Default Scales",
+		"Leg Extension",
+		"Body Extension",
+		"Face Extension",
+		"Ear Extension",
+		"Head Enlargement",
+		"Feet Enlargement",
+		"Z Shade Slope",
+		"256 Eyelid Color",
+		"Eyelash Info",
+		"Whiskers",
+		"Ballz Info",
+		"Add Ball",
+		"Linez",
+		"Polygons",
+		"Ball Size Override",
+		"Fuzz Override",
+		"Add Ball Override",
+		"Color Info Override",
+		"Outline Color Override",
+		"Omissions"
+	]
+
+	var section_methods = {
+		"Texture List": "get_texture_list",
+		"Palette": "get_palette",
+		"No Texture Rotate": "get_no_texture_rotate",
+		"Default Scales": "get_default_scales",
+		"Leg Extension": "get_leg_extensions",
+		"Body Extension": "get_body_extension",
+		"Face Extension": "get_face_extension",
+		"Ear Extension": "get_ear_extension",
+		"Head Enlargement": "get_head_enlargement",
+		"Feet Enlargement": "get_feet_enlargement",
+		"Omissions": "get_omissions",
+		"Linez": "get_lines",
+		"Polygons": "get_polygons",
+		"Ballz Info": "get_balls",
+		"Add Ball": "get_addballs",
+		"256 Eyelid Color": "get_eyelid_color",
+		"Eyelash Info": "get_eyelash_info",
+		"Whiskers": "get_whiskers",
+		"Z Shade Slope": "get_z_shade_slope",
+		"Ball Size Override": "get_ball_size_override",
+		"Fuzz Override": "get_fuzz_override",
+		"Add Ball Override": "get_add_ball_override",
+		"Color Info Override": "get_color_info_override",
+		"Outline Color Override": "get_outline_color_override"
+	}
+
+	for section in ordered_sections:
+		if current_variation_config.has(section):
+			var method = section_methods[section]
+			var reader = lnz.compile_section(section, current_variation_config[section])
+			lnz.call(method, reader)
+
+	if current_variation_config.has("Paint Ballz"):
+		lnz.parse_paintballs(lnz.compile_section("Paint Ballz", current_variation_config["Paint Ballz"]))
+
+	if current_variation_config.has("Move"):
+		lnz.parse_moves(lnz.compile_section("Move", current_variation_config["Move"]))
+
+	if current_variation_config.has("Project Ball"):
+		lnz.get_project_balls(lnz.compile_section("Project Ball", current_variation_config["Project Ball"]))
+
+	init_visual_balls(lnz, true)
+	emit_signal("palette_changed", lnz.palette)
 
 func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
 	var pal_texture: Texture = null
