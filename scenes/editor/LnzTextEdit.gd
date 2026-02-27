@@ -1421,6 +1421,9 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 			raw_outline_color = addball_data.outline_color
 		elif "outline_color_index" in addball_data: 
 			raw_outline_color = addball_data.outline_color_index
+
+		if "outline" in addball_data:
+			raw_outline = addball_data.outline
 	elif ball_data != null:
 		if "color" in ball_data: raw_color = ball_data.color
 		
@@ -1428,6 +1431,9 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 			raw_outline_color = ball_data.outline_color
 		elif "outline_color_index" in ball_data: 
 			raw_outline_color = ball_data.outline_color_index
+
+		if "outline" in ball_data:
+			raw_outline = ball_data.outline
 
 	var real_base_ball = ball_no
 	if reference_ball.base_ball_no != -1:
@@ -4009,6 +4015,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 		end_line = get_line_count()
 
 	if is_addball:
+		var delim = _detect_delimiter(start_line, end_line)
 		var addball_index = ball_no - max_base_ball_no
 		var count = 0
 		for i in range(start_line, end_line):
@@ -4021,7 +4028,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 				if parts.size() > size_field_index:
 					var new_size = size_dif
 					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, " ")
+					var new_line = _join_array(parts, delim)
 					set_line(i, new_line)
 					save_file(true)
 
@@ -4033,6 +4040,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 					return
 			count += 1
 	else:
+		var delim = _detect_delimiter(start_line, end_line)
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
@@ -4044,7 +4052,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 				if parts.size() > size_field_index:
 					var new_size = size_dif
 					parts[size_field_index] = str(new_size)
-					var new_line = _join_array(parts, " ")
+					var new_line = _join_array(parts, delim)
 					set_line(i, new_line)
 					save_file(true)
 
@@ -4108,7 +4116,7 @@ func _on_Node_ball_translation_changed(ball_no: int, new_pos: Vector3):
 							parts[1] = str(round(new_relative_pos.x))
 							parts[2] = str(round(new_relative_pos.y))
 							parts[3] = str(round(new_relative_pos.z))
-							var new_line = _join_array(parts, " ")
+							var new_line = _join_array(parts, delim)
 							set_line(i, new_line)
 							save_file(true)
 
@@ -4263,6 +4271,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					lnz_delta -= base_lnz_delta
 
 		if ball_no < KeyBallsData.max_base_ball_num:
+			var delim = _detect_delimiter(move_start, move_end)
 			var updated = false
 			var head_id = KeyBallsData.get_ball_id_by_name("head")
 			var head_group = KeyBallsData.get_group_balls("Head")
@@ -4286,7 +4295,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 								if parts.size() < 5: parts.resize(5)
 								parts[4] = str(head_id)
 					
-					set_line(i, _join_array(parts, " "))
+					set_line(i, _join_array(parts, delim))
 					updated = true
 					break
 					
@@ -4300,7 +4309,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					if abs(ny) > 25 or abs(nz) > 25:
 						parts.append(str(head_id))
 				
-				var line_txt = _join_array(parts, " ")
+				var line_txt = _join_array(parts, delim)
 				var insert_at = _find_insertion_line(move_start, move_end)
 				_insert_text_at_cursor_at_line(insert_at, line_txt + "\n")
 				move_end += 1
@@ -4309,6 +4318,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					add_end += 1
 		else:
 			if add_start != -1:
+				var delim = _detect_delimiter(add_start, add_end)
 				var idx = ball_no - KeyBallsData.max_base_ball_num
 				var count = 0
 				for i in range(add_start, add_end):
@@ -4320,7 +4330,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 							parts[1] = str(parts[1].to_int() + lnz_delta.x)
 							parts[2] = str(parts[2].to_int() + lnz_delta.y)
 							parts[3] = str(parts[3].to_int() + lnz_delta.z)
-							set_line(i, _join_array(parts, " "))
+							set_line(i, _join_array(parts, delim))
 						break
 					count += 1
 	
