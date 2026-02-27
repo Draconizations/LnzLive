@@ -572,6 +572,8 @@ func get_ball_size_override(reader):
 	for line in parsed_lines:
 		if balls.has(line.ball):
 			balls[line.ball].size = line.size
+		elif addballs.has(line.ball):
+			addballs[line.ball].size = line.size
 		else:
 			print("Warning: [Ball Size Override] override attempted for non-existent ball ", line.ball)
 
@@ -586,6 +588,14 @@ func get_color_info_override(reader):
 				ball_data.group = line.group
 			if "texture_id" in ball_data and line.has("texture"):
 				ball_data.texture_id = line.texture
+		elif addballs.has(line.ball):
+			var ball_data = addballs[line.ball]
+			if "color" in ball_data:
+				ball_data.color = line.color
+			if "group" in ball_data and line.has("group"):
+				ball_data.group = line.group
+			if "texture_id" in ball_data and line.has("texture"):
+				ball_data.texture_id = line.texture
 		else:
 			print("Warning: [Color Info Override] override attempted for non-existent ball ", line.ball)
 
@@ -596,6 +606,10 @@ func get_outline_color_override(reader):
 			var ball_data = balls[line.ball]
 			if "outline_color_index" in ball_data:
 				ball_data.outline_color_index = line.outline_color
+		elif addballs.has(line.ball):
+			var ball_data = addballs[line.ball]
+			if "outline_color" in ball_data:
+				ball_data.outline_color = line.outline_color
 		else:
 			print("Warning: [Outline Color Override] override for non-existent ball ", line.ball)
 
@@ -604,6 +618,10 @@ func get_fuzz_override(reader):
 	for line in parsed_lines:
 		if balls.has(line.ball):
 			var ball_data = balls[line.ball]
+			if "fuzz" in ball_data:
+				ball_data.fuzz = line.fuzz
+		elif addballs.has(line.ball):
+			var ball_data = addballs[line.ball]
 			if "fuzz" in ball_data:
 				ball_data.fuzz = line.fuzz
 		else:
