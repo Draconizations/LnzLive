@@ -1,4 +1,4 @@
-# LnzLive Guide
+# LnzLive - User Guide
 
 LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk you through the various features of LnzLive and how to use them!
 
