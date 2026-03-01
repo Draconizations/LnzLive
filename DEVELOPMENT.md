@@ -1,0 +1,162 @@
+# LnzLive - Developer Guide
+
+LnzLive is an interactive editor for P.F. Magic LNZ data. This guide will walk you through how to contribute to the codebase!
+
+## Contributing to LnzLive
+
+We welcome contributions of all sizes! If you're new to the codebase, the best way to start is to familiarize yourself with the **Pipeline** and **Logic** below. LnzLive is built using a custom version of the Godot 3.2 game engine, which can be found in `engine/godot.zip`, and can be exported using the export templates included under `export/` for executable (`windows`) or web (`javascript`) versions. Most logic is written in GDScript (`.gd`) and uses custom shaders (`.tres`) to emulate the aesthetic of the original P.F. Magic games. Contributors are welcome to extend to other languages supported by Godot, though, especially if inclusion will help optimize the program!
+
+### Where to Begin?
+
+#### 1. **Check the LnzLive Task Tracker**
+
+Start by checking out the [LnzLive Task Tracker](https://github.com/users/tabbzi/projects/3), which logs tasks slated for upcoming versions of LnzLive. Those in the Status "Ready" and labeled as "good first issue" are a good place to start, and the ticket should describe what is needed to complete these tasks.
+
+#### 2. **Fork the Repository**
+
+Before you can change the code, you need your own "copy" of the project on GitHub where you have permission to save your work. Navigate to the [tabbzi/LnzLive](https://github.com/tabbzi/LnzLive) on GitHub and click "Fork". GitHub will create a copy of the entire repository under your own account. You now have a version at `github.com/YourUsername/LnzLive`.
+
+#### 3. **Clone the Codebase to your Computer**
+
+Now, you need to get those files onto your computer so that you can open them in the Godot editor. On your new fork page, click the green `<>` Code button and copy the URL.
+
+Go to your `Documents/GitHub` (or wherever you'd like to store the code) in your terminal and type:
+
+`git clone https://github.com/YourUsername/LnzLive.git`
+
+Or, you can use [GitHub Desktop](https://desktop.github.com/download/) to manage.
+
+#### 4. **Create a Feature Branch**
+
+You don't want to work directly on the "main" branch. Creating a new branch keeps your additions separate from the main code.
+
+Before starting a new task, open your terminal in the project folder and type:
+
+`git checkout -b feature-name`
+
+(Replace "feature-name" with something short, like `add-variation-viewer` or `fix-eyelash-shader`.)
+
+#### 5. **Open LnzLive in Godot**
+
+Navigate to where LnzLive repository has been cloned (probably `Documents/GitHub/LnzLive`) and copy and extract the contents of `engine/godot.zip` somewhere else on your computer. This is the custom Godot engine executable. Open Godot using this executable, and load the LnzLive folder. You can test that the program works as expected by pressing `F5` in the editor.
+
+#### 6. **???**
+
+Start making changes! Be sure to refer to the [Godot 3.2 docs](https://docs.godotengine.org/en/3.2/) and not newer versions of Godot like Godot 4, which has undergone major changes. Don't even try opening LnzLive into Godot 4 engine, it is futile. Unless you have a lot of fortitude to port it...
+
+#### 7. **Save Your Work (Commit & Push)**
+
+As you write your code and test it in Godot, you need to "save" those snapshots to GitHub.
+
+Stage your changes: `git add .`
+
+Commit with a message: `git commit -m "Added the basic UI for the variation viewer"`
+
+Upload to GitHub: `git push origin feature-name`
+
+#### 5. **Submit a Pull Request**
+
+Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into the original LnzLive repository.
+
+Go to GitHub and navigate to your fork. You will usually see a yellow bar saying "Compare & pull request." Click it.
+
+Ensure the "base repository" is the original LnzLive (`tabbzi/LnzLive`) "main" branch and that the "head repository" is your fork.
+
+Give the pull request a clear title and summary (e.g., "Add Move Mode functionality"). Cite the specific Issue # or Task this PR addresses. Explain what you changed and how to test it.
+
+Once submitted, maintainer(s) will look over your code and might suggest small changes. If they do, just make the edits on your computer, commit, and push again. The pull request will update automatically!
+
+### Pipeline
+
+The LnzLive engine operates on a reactive, data-driven pipeline. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Visual changes in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
+
+The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
+
+1. **Text Input (`scenes/editor/LnzTextEdit.gd`)**: The user loads an LNZ file. This script manages the raw string representation, regex searching, and maintains the undo/redo history states.  
+2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in specialized, typed memory structures that map to their respective `.lnz` sections. The raw text array is scanned, delimited into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), and compiled into a structured memory map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse the model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
+3. **Model Generator (`scenes/dog_generator.gd`)**: This central controller consumes the structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically instantiate and configure Godot visual nodes.
+4. **Interative Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
+
+### Logic
+
+To achieve a "Live Update" without performance stutter, LnzLive uses a specific handshake loop:
+
+1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into Petz engine integer units.  
+2. **Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly for permanence.
+3. **Text Editor modifies strings:** LnzTextEdit scans its internal string array to find the exact line within the currently active variation block (`_get_active_config`). If an override exists, it updates it. If not, it creates a new `[... Override] `header and injects the line, bypassing comments and preserving whitespace.  
+4. **Text Editor triggers Generator:** LnzTextEdit emits an apply_changes signal to notify `dog_generator`.gd that the file content has changed.  
+5. **Generator reconstructs 3D:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
+
+## Codebase
+
+Below is a detailed breakdown of the scripts and shaders organized by directory.
+
+### `data_classes/`
+
+This directory holds the parsers, utils, and memory structures that bridge raw text and the 3D generator.
+
+* `lnz_parser.gd`: The core text parser. Scans the file to build a sections_map of VariationBlocks. Uses a VirtualFileLineReader to seamlessly compile active variation blocks into strings for extraction, allowing non-destructive variation toggling. Populates arrays of ballz, addballz, linez, etc.
+* `bhd_parser.gd`: Parses binary .bhd animation headers to extract metadata (number of ballz, default sizes) and the specific memory offset ranges mapping to .bdt frames. Uses heuristic fallback scanning for custom/non-standard files.
+* `bdt_parser.gd`: Parses binary .bdt animation frames to extract precise Vector3 position and rotation data for every ball at a given frame. Relies heavily on exact byte-level struct unpacking.
+* `key_balls_data.gd`: A Singleton/Autoload acting as the central anatomy metadata repository. Maps hardcoded integer IDs to semantic names (e.g., 48: belly), symmetry pairs, and body groups. Critical for Mirror and Group operations.
+* `lnzlive_utils.gd`: Static utility class providing regex number list parsing (expanding "1-5" to `[1,2,3,4,5]`), Petz-specific color ramp calculation logic, and 3D raycast math.
+* `ball_data.gd`: Memory structure for `[Ballz Info]` attributes (size, position, rotation, color index, fuzz).
+* `addball_data.gd`: Extends ball data for `[Add Ball]`, including properties specific to relative attachments (base ball, body area).
+* `paintball_data.gd`: Memory structure for `[Paint Ballz]`. Pre-calculates normalised_position which is required for spherical wrapping onto base ballz.
+* `line_data.gd`: Memory structure for `[Linez]`, storing start/end node indices, thicknesses, and distinct left/right edge colors.  
+* `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat colored/textured 2D surfaces connecting 3 or 4 ballz.
+* `section_enum.gd`: Simple enum defining basic LNZ sections (BALL, MOVE, PROJECT, LINE).
+
+### `shaders/`
+
+Custom Spatial shaders (`.tres`) designed to emulate P.F. Magic games rendering logic inside Godot's 3D engine.
+
+* `ball.tres`: Highly complex unshaded shader for LNZ ballz. Uses VERTEX billboarding so spheres always face the camera. Employs a 256-pixel wide lookup texture to map 8-bit palette indices to RGB. Includes math for pixelated outlines, fuzz jitter, "eyelash" projection via polar coordinates, and dynamic Z-shading logic to darken/lighten colors based on camera distance.  
+* `line.tres`: Renders 3D Linez connecting two nodes. Modifies mesh vertices to form a 2D strip facing the camera. Calculates true screen-space distance to construct linez of proper thickness regardless of camera angle. Handles distinct retro "left edge" and "right edge" coloring.  
+* `paintball.tres`: Handles decals anchored to base ballz. Heavily utilizes z_add depth offsetting to float perfectly above the sphere. Calculates view_normal to immediately discard fragments facing away from the camera, maintaining the illusion of a solid 3D object without z-fighting.  
+* `polygon.tres`: Renders `[Polygons]`. Unlike ballz/linez, these are flat 3D planes (not billboarded). Uses CULL_DISABLED and calculates face normal directions to apply distinct left/right shading based on camera viewing angles.
+
+### `scenes/`
+
+Root controllers and initialization scripts.
+
+* `dog_generator.gd`: **"Model Generator"**. The massive central controller coordinating the entire app. It takes structured LNZ data and .bhd/.bdt animations, computes extensions and scales, and generates actual Godot spatial nodes (Ball.tscn, Paintball.tscn). It maintains dictionaries mapping LNZ IDs to actual nodes (e.g., ball_map`[48]` \= \<Node\>) allowing the UI to cross-reference 3D clicks back to text IDs. Rebuilds the visual tree when `recompose_model()` is called.  
+* `bootsplash.tscn / bootsplash.gd`: Handles the initial loading screen, restoring persistent window positions/sizes from user://settings.cfg before launching the main editor scene.
+
+### `scenes/editor/`
+
+The core UI, Viewport, and Text Editor functionalities.
+
+#### **Core Editors & Interaction**
+
+* `LnzTextEdit.gd`: The textual source of truth. Manages the raw string array, handles file saving, backup creation, and undo/redo history (differentiating between full "Snapshots" and rapid "Logical Commits"). Exposes an API allowing visual 3D interactions to safely rewrite specific .lnz text blocks using precise regex line-number tracking.  
+* `PetViewContainer.gd`: The 2D viewport overlay translating mouse inputs (clicks, drags) into 3D raycasts. It acts as a massive state machine for "Tool Modes" (Select, Move, Recolor, Paintball). Calculates 3D-to-2D dragging math and commits visual modifications back to `LnzTextEdit.gd` via strictly formatted string update signals.  
+* `editor.tscn`: The root UI scene containing all layouts, panels, and viewports.
+
+#### **User Interface**
+
+* `FileTree.gd`: Tree UI scanning `res://` and `user://` to display files. Handles import logic, crucially converting legacy 8-bit `.bmp` palettes into standard RGBA .png files during upload.  
+* `SidebarController.gd`: Manages the left-hand dockable sidebar, allowing panels to snap into tabs or pop out into floating CanvasLayer windows.  
+* `ToolsMenu.gd`: The dynamic right-click context menu in the 3D viewport. Rewrites its own options and enabled states based on whether the selected node is a base ball, addball, or line.  
+* `UserSettings.gd` / `UserSettingsDialog.gd`: Manages global preferences (background color, screen scaling, undo history size, delimiter defaults) saving to settings.cfg to persist across sessions.  
+* `VariationTree.gd`: Displays LNZ variation logic. Handles mutual exclusivity and "Global" toggling, modifying `current_variation_config` to tell `dog_generator.gd` exactly what code blocks to compile.  
+* `PaletteViewer.gd` / `ColorSelector.gd`: Generates a dynamic popup grid of all 256 colors in the loaded palette. Calculates luminance on the fly to ensure index text (black or white) remains readable over different background colors.  
+* `ActiveHotkeys.gd` / `HotkeyOverlay.gd`: Dynamic fading text labels catching raw InputEventKey events to display currently pressed shortcut combinations, plus a static F1 cheat sheet overlay.  
+* `ExportButtonOBJ.gd`: Iterates over the visible ball_map nodes to generate and export standard 3D Wavefront .obj mesh strings (vertices and faces) programmatically.  
+* `ExportClothes.gd` / `ExportButtonClothes.gd`: Filters out a targeted root base ball and its attached addballz/linez, re-mapping their indices to generate CLZ expected for a clothing (`.clo`) file.  
+* `AxisOverlay.gd`: Projects the inverse 3D basis vectors of the main camera into 2D space to draw a responsive, screen-aligned XYZ widget in the corner of the viewport.  
+* `ConsoleLog.gd, FPSLabel.gd, BallNo.gd`: Simple UI scripts for transient system messages, framerate, and hovering ID tooltips respectively.  
+* `MenuButton.gd, OptionButton.gd, PlayButton.gd, FrameSlider.gd`: Standard UI behavioral wrappers for links, hover-to-open dropdown menus, animation playback, and timeline scrubbing.
+* `RecolorLine.tscn`: A small, reusable UI snippet (two LineEdits and an arrow) used dynamically in recolor rule generation.
+
+#### **Settings Panels**
+
+Most tools and modes have settings panels that extend `DraggablePanel.gd` to allow them to be docked in the sidebar or float.
+
+* `AutoPaintballerSettings.gd`:  **"Auto Paintballer"**. Procedurally generates complex arrays of paintballz. Contains massive algorithmic math for distributions like Uniform, Voronoi, Reaction-Diffusion (Stripes), and L-System Fractals mapped as paintballz coordinates.  
+* `LineModeSettings.gd`: **"Line Mode"**. Dictates thickness, color, outline, and fuzz for connecting elements, with toggles for replacing specific attributes versus untouched data.  
+* `MoveModeSettings.gd`: **"Mode Mode"**. UI and logic for translating, aligning, rotating, flipping, scaling, and mirroring selections. Centralizes transformation math (like Pivot rotations) before applying them to the file.  
+* `PaintballSettings.gd`: **"Paintball Mode"**. Settings for drawing individual spots, freelines, or drawn patterns. Handles the math to project 2D canvas designs (`paste_paintball_design()`) onto a 3D spherical surface using tangent and binormal vectors. Includes the `DesignCanvas.gd` logic.  
+* `PresetSettings.gd`: **"Preset Mode"**. Allows users to define properties (color, texture, addballz) or sample them via eyedropper, and batch-apply them to other ballz. Includes its own embedded 3D viewport for previewing copied setups.  
+* `ProjectSettings.gd`: **"Shape Mode"**. Manages `[Project Ball]` definitions, body proportion randomizers, and move randomizers. Autogenerates mirrored symmetry pairs based on species models.  
+* `RecolorSettings.gd`: **"Recolor Mode"**. Supports targeted Paint Bucket fills and batch Color Swap rules. Features an "Autofill" scanner that finds the most common color/texture pairings. Understands palette "Ramps" via LnzLiveUtils to shift entire shading gradients simultaneously.
