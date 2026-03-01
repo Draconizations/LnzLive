@@ -1305,6 +1305,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 		# If the ball key is in the "eyes" dictionary, treat it like a paintball
 		if key in eyes:
+			var base_key = eyes[key]
+			var base_def = ball_data[base_key]
+			var base_no  = base_def.ball_no
+			var base_node = ball_map.get(base_no)
+
 			if new_create:
 				visual_ball = paintball_scene.instance()
 				visual_ball.add_to_group("balls")
@@ -1355,11 +1360,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			visual_ball.rotation_degrees = ball.rotation
 
 			# Initialize eyelid properties
-			var base_key = eyes[key]
-			var base_def = ball_data[base_key]
-			var base_no  = base_def.ball_no
-
-			var base_node = ball_map.get(base_no)
 			if base_node:
 				# Mirror sign by world X: left eye x<0 = -1, right = +1
 				var eye_dir = 1.0
