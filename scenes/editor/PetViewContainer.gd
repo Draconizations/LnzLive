@@ -283,6 +283,10 @@ func _ready():
 
 	_setup_3d_gizmos()
 
+	# check flipped view...
+	tex.rect_scale.x = -1.0
+	tex.rect_pivot_offset = tex.rect_size / 2.0 
+
 func _ensure_panel_visible(panel):
 	if panel.is_docked:
 		if sidebar_controller and sidebar_controller.tab_container.current_tab != panel.get_index():
@@ -1325,12 +1329,14 @@ func _gui_input(event):
 
 		if space_and_left or middle_drag:
 			var motion = event.relative
+			#camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
+			camera.transform.origin.y -= motion.y * 0.001 / tex.rect_scale.x
 			camera.transform.origin.x += motion.x * 0.001 / tex.rect_scale.x
-			camera.transform.origin.y += motion.y * 0.001 / tex.rect_scale.x
 		elif Input.is_mouse_button_pressed(BUTTON_LEFT):
 			var motion = event.relative
 			camera_holder.rotation.x += motion.y * 0.01
-			camera_holder.rotation.y += motion.x * -0.01
+			#camera_holder.rotation.y += motion.x * -0.01
+			camera_holder.rotation.y -= motion.x * -0.01
 
 		# Highlight hovered ball in line creation mode:
 		if linez_mode and not selecting_on:
