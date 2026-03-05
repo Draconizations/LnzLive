@@ -54,7 +54,35 @@ Commit with a message: `git commit -m "Added the basic UI for the variation view
 
 Upload to GitHub: `git push origin feature-name`
 
-#### 5. **Submit a Pull Request**
+#### 8. **Test LnzLive**
+
+LnzLive includes a suite of unit tests under `scripts/tests/` for [GdUnit3](https://godotengine.org/asset-library/asset/867) that ensure existing functions stay functional. We recommend running these tests before submitting  Even better if your new feature adds to this test! Check out [GdUnit3 documentation](https://mikeschulze.github.io/gdUnit3/) and this [Intro to Unit Tests](https://medium.com/interleap/intro-to-unit-tests-f2b7750c2d3c) blog post.
+
+ugh or maybe use GUT since it has nice tutorial. needs to be v7
+https://gut.readthedocs.io/en/v7.4.3/
+https://youtu.be/5DrhMiuLRl0?si=xYc7ewrJqfZhFoYb
+
+https://github.com/bitwes/Gut/releases/tag/v7.4.3
+
+1. Enable GUT and Open the Interface
+In the Godot editor, go to Project -> Project Settings.
+
+Click the Plugins tab at the top.
+
+Find Gut in the list and check the Enable box.
+
+Close the settings. You will now see a new GUT tab at the very bottom of your editor window (next to Output, Debugger, etc.). Click it to open the testing panel.
+
+2. Get the Tester to Use Your Suite
+Inside the GUT panel, scroll down until you see a section called Test Directories.
+
+Click the toggle switch on row 0 to turn it on (it will turn blue).
+
+In the text box next to it, type the folder path where you saved test_lnz_live_consensus.gd (for example, res://test).
+
+Scroll back to the top of the GUT panel and click the Run All button. GUT will automatically find your script and execute all functions starting with test_.
+
+#### 9. **Submit a Pull Request**
 
 Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into the original LnzLive repository.
 
@@ -68,7 +96,7 @@ Once submitted, maintainer(s) will look over your code and might suggest small c
 
 ### Pipeline
 
-The LnzLive engine operates on a reactive, data-driven pipeline. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Visual changes in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
+The LnzLive engine operates on a reactive, data-driven pipeline. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
 
 The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
 
@@ -106,6 +134,16 @@ This directory holds the parsers, utils, and memory structures that bridge raw t
 * `line_data.gd`: Memory structure for `[Linez]`, storing start/end node indices, thicknesses, and distinct left/right edge colors.  
 * `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat colored/textured 2D surfaces connecting 3 or 4 ballz.
 * `section_enum.gd`: Simple enum defining basic LNZ sections (BALL, MOVE, PROJECT, LINE).
+
+### `scripts/`
+
+TBD Includes Spatial scripts that define variables fed to the shaders and unit test script.
+
+The following scripts contain instructions on how to run within the Godot editor, and get used to generate resource files. It is unlikely that you will have to run these again since the base game resources rarely change.
+
+* `resources/textures/texture_atlas_baker.gd`: 
+* `resources/textures/texture_reimporter.gd`:
+* `resoruces/textures/thumbnail_baker.gd`:
 
 ### `shaders/`
 
@@ -160,3 +198,7 @@ Most tools and modes have settings panels that extend `DraggablePanel.gd` to all
 * `PresetSettings.gd`: **"Preset Mode"**. Allows users to define properties (color, texture, addballz) or sample them via eyedropper, and batch-apply them to other ballz. Includes its own embedded 3D viewport for previewing copied setups.  
 * `ProjectSettings.gd`: **"Shape Mode"**. Manages `[Project Ball]` definitions, body proportion randomizers, and move randomizers. Autogenerates mirrored symmetry pairs based on species models.  
 * `RecolorSettings.gd`: **"Recolor Mode"**. Supports targeted Paint Bucket fills and batch Color Swap rules. Features an "Autofill" scanner that finds the most common color/texture pairings. Understands palette "Ramps" via LnzLiveUtils to shift entire shading gradients simultaneously.
+
+## Resources
+
+TBD
