@@ -50,16 +50,27 @@ float random (float x) {
 }
 
 vec3 get_shifted_color(int palette_index) {
-	int modded_color = color_index - int(mod(float(color_index), 10.0));
-	int amount_to_shift_index = int(mod(float(palette_index), 10.0));
-	if(z_center_line < z_center_pet) {
-		amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
+	int new_palette_index;
+	if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
+		int base_decade = color_index - int(mod(float(color_index), 10.0));
+		if (palette_index == 0) {
+			new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
+		} else {
+			new_palette_index = (base_decade - 10) + palette_index;
+		}
+	} else {
+		int modded_color = color_index - int(mod(float(color_index), 10.0));
+		int amount_to_shift_index = int(mod(float(palette_index), 10.0));
+		
+		if(z_center_line < z_center_pet) {
+			amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
+		}
+		else if (z_center_line > z_center_pet) {
+			amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
+		}
+		new_palette_index = modded_color + amount_to_shift_index;
 	}
-	else if (z_center_line > z_center_pet) {
-		amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
-	}
-	int new_palette_index = modded_color + amount_to_shift_index;
-	vec3 new_color = texture(palette, vec2(float(new_palette_index)/255.0, 0.0)).rgb;
+	vec3 new_color = texture(palette, vec2(float(new_palette_index) / float(palette_size), 0.5)).rgb;
 	return new_color;
 }
 
