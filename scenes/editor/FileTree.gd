@@ -353,6 +353,12 @@ func rescan_textures():
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
+	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if pet_node and pet_node.has_method("clear_texture_cache"):
+		pet_node.clear_texture_cache()
+		if pet_node.lnz:
+			pet_node.recompose_model()
+
 func rescan_res_textures():
 	var was_collapsed = true
 	if res_textures != null:
@@ -413,6 +419,12 @@ func scan_local_textures():
 				ImageTexture.FLAG_REPEAT
 			)
 			preloader.add_resource(filename.to_lower(), full_tex)
+
+			# Replace existing resource if it already exists
+			var res_name = filename.to_lower()
+			if preloader.has_resource(res_name):
+				preloader.remove_resource(res_name)
+			preloader.add_resource(res_name, full_tex)
 
 			# Load image for preview
 			var file = File.new()
