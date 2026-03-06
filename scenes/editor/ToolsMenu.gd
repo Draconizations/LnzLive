@@ -157,6 +157,20 @@ func _on_RecolorMenuButton_pressed():
 		pet_view.recolor_mode_check_box.pressed = true
 
 func _on_ToolsMenu_index_pressed(index):
+	if index >= get_item_count(): return
+
+	if get_item_text(index).begins_with("Exit "):
+		var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		if is_instance_valid(pet_view):
+			pet_view.paintball_check_box.pressed = false
+			pet_view.line_mode_check_box.pressed = false
+			pet_view.move_mode_check_box.pressed = false
+			pet_view.preset_mode_check_box.pressed = false
+			pet_view.recolor_mode_check_box.pressed = false
+			pet_view.project_mode_check_box.pressed = false
+			pet_view.auto_paintballer_check_box.pressed = false
+		return
+
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
@@ -222,11 +236,30 @@ func _on_ToolsMenu_index_pressed(index):
 		return
 
 func _on_ToolsMenu_about_to_show():
+	while get_item_count() > 14:
+		remove_item(get_item_count() - 1)
+
+	for i in range(14):
+		set_item_disabled(i, false)
+
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
 	var is_ball_selected = false
 	var b_name = "Unknown Ball"
+	
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var active_mode = ""
+	if is_instance_valid(pet_view):
+		if pet_view.move_mode: active_mode = "Move Mode"
+		elif pet_view.paintball_mode: active_mode = "Paintball Mode"
+		elif pet_view.linez_mode: active_mode = "Line Mode"
+		elif pet_view.preset_mode: active_mode = "Preset Mode"
+		elif pet_view.project_mode: active_mode = "Project Mode"
+		elif pet_view.auto_paintballer_mode: active_mode = "Auto Paintballer"
+		elif pet_view.recolor_mode: active_mode = "Recolor Mode"
+
+	var in_mode = active_mode != ""
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
@@ -329,6 +362,16 @@ func _on_ToolsMenu_about_to_show():
 
 	# 12: Copy Ballz Colors to Clipboard
 	set_item_text(12, "Copy Ballz Colors to Clipboard")
+
+	if in_mode:
+		# Disable everything involving interactive left-click
+		for i in range(14):
+			if i != 3 and i != 4 and i != 9 and i != 10 and i != 12 and i != 13:
+				set_item_disabled(i, true)
+
+		# Add separator and Exit item
+		add_separator()
+		add_item("Exit " + active_mode)
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
