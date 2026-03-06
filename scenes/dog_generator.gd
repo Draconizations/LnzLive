@@ -1234,6 +1234,10 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 	return texture
 
+func clear_texture_cache():
+	_texture_cache.clear()
+	print("[DEBUG] Texture cache cleared for model refresh.")
+
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
 	if texture_id < 0 or texture_id >= texture_list.size():
 		return null
