@@ -56,35 +56,29 @@ Upload to GitHub: `git push origin feature-name`
 
 #### 8. **Test LnzLive**
 
-LnzLive includes a suite of unit tests under `scripts/tests/` for [GdUnit3](https://godotengine.org/asset-library/asset/867) that ensure existing functions stay functional. We recommend running these tests before submitting  Even better if your new feature adds to this test! Check out [GdUnit3 documentation](https://mikeschulze.github.io/gdUnit3/) and this [Intro to Unit Tests](https://medium.com/interleap/intro-to-unit-tests-f2b7750c2d3c) blog post.
+Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;)
 
-ugh or maybe use GUT since it has nice tutorial. needs to be v7
-https://gut.readthedocs.io/en/v7.4.3/
-https://youtu.be/5DrhMiuLRl0?si=xYc7ewrJqfZhFoYb
+LnzLive includes a suite of unit tests under `test/` for the [GUT](https://gut.readthedocs.io/en/v7.4.3/) test system intended to keep existing functions functional. We don't yet have every test or edge case covered, though. We recommend running these tests before moving to the next step, or the reviewer will do so.
 
-https://github.com/bitwes/Gut/releases/tag/v7.4.3
+Even better if your new feature adds unit test(s) for new functions! When writing unit tests, focus on pure logic and isolated math.
+
+Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/index.html) and this [video tutorial on GUT](https://youtu.be/5DrhMiuLRl0?si=xYc7ewrJqfZhFoYb) or this [longer talk on unit tests by the GUT developer](https://youtu.be/ImqhHLlPfZg?si=qrk4ZZwU3IsV_s_p). This version of GUT is already included in the repository under `addons/gut/`, but does need to be enabled in Godot editor...
 
 1. Enable GUT and Open the Interface
-In the Godot editor, go to Project -> Project Settings.
+   - In the Godot editor, go to Project -> Project Settings.
+   - Click the Plugins tab at the top.
+   - Find Gut in the list and check the Enable box.
+   - Close the settings. You will now see a new GUT tab at the very bottom of your editor window (next to Output, Debugger, etc.). Click it to open the testing panel.
 
-Click the Plugins tab at the top.
-
-Find Gut in the list and check the Enable box.
-
-Close the settings. You will now see a new GUT tab at the very bottom of your editor window (next to Output, Debugger, etc.). Click it to open the testing panel.
-
-2. Get the Tester to Use Your Suite
-Inside the GUT panel, scroll down until you see a section called Test Directories.
-
-Click the toggle switch on row 0 to turn it on (it will turn blue).
-
-In the text box next to it, type the folder path where you saved test_lnz_live_consensus.gd (for example, res://test).
-
-Scroll back to the top of the GUT panel and click the Run All button. GUT will automatically find your script and execute all functions starting with test_.
+2. Run `test_LnzLive.gd`
+   - Inside the GUT panel, scroll down until you see a section called "Test Directories".
+   - Enter `res://test` into "Directory 0"
+   - Scroll to "XML Output" and enter `res://test/test.xml` (this will save a success/fail test record)
+   - Click the Run All button. GUT will automatically find your script and execute all functions starting with `test_`.
 
 #### 9. **Submit a Pull Request**
 
-Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into the original LnzLive repository.
+Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into this LnzLive repository.
 
 Go to GitHub and navigate to your fork. You will usually see a yellow bar saying "Compare & pull request." Click it.
 
@@ -96,7 +90,7 @@ Once submitted, maintainer(s) will look over your code and might suggest small c
 
 ### Pipeline
 
-The LnzLive engine operates on a reactive, data-driven pipeline. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
+LnzLive renders models from P.F. Magic games using LNZ data and game resources. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
 
 The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
 
@@ -133,7 +127,7 @@ This directory holds the parsers, utils, and memory structures that bridge raw t
 * `paintball_data.gd`: Memory structure for `[Paint Ballz]`. Pre-calculates normalised_position which is required for spherical wrapping onto base ballz.
 * `line_data.gd`: Memory structure for `[Linez]`, storing start/end node indices, thicknesses, and distinct left/right edge colors.  
 * `polygon_data.gd`: Memory structure for `[Polygons]`, representing flat colored/textured 2D surfaces connecting 3 or 4 ballz.
-* `section_enum.gd`: Simple enum defining basic LNZ sections (BALL, MOVE, PROJECT, LINE).
+* `section_enum.gd`: Simple enum defining basic LNZ sections (`BALL`, `MOVE`, `PROJECT`, `LINE`).
 
 ### `scripts/`
 
