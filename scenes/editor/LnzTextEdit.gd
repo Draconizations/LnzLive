@@ -627,13 +627,12 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 	}
 
 func _detect_delimiter(start_line: int, end_line: int) -> String:
-	# If user preference, then return preferred delimiter
+	# 1. Immediate exit if user has a global preference 
 	var preferred = _get_user_preferred_delimiter()
 	if preferred != "auto":
 		return preferred
 
-	# Define join strings and the patterns to find them
-	# Check for most complex (comma + whitespace) first
+	# 2. Setup counters for the standard LNZ delimiters 
 	var delim_counts = {
 		", ": 0,  # "comma-space", "comma-tab", "comma-multispace"
 		",": 0,   # "comma"
@@ -644,38 +643,41 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 	
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
+		# Skip metadata/comments 
 		if line.empty() or line.begins_with(";"):
 			continue
-		lines_scanned += 1
 		
-		var data_part = line.split(";", false)[0] # Only check data part
+		lines_scanned += 1
+		var data_part = line.split(";", false)[0] # Ignore the comment part 
 
-		# Check in order of specificity
-		if data_part.find(",\t") != -1 or data_part.find(", ") != -1:
-			# Catches comma-tab, comma-space, comma-multispace
+		# 3. Check for delimiters in order of highest to lowest specificity.
+		# This prevents a ", " from being counted as just a ",".
+		if data_part.find(", ") != -1 or data_part.find(",\t") != -1:
 			delim_counts[", "] += 1
 		elif data_part.find(",") != -1:
-			# Catches comma-only
 			delim_counts[","] += 1
 		elif data_part.find("\t") != -1:
-			# Catches tab
 			delim_counts["\t"] += 1
 		elif data_part.find(" ") != -1:
-			# Catches space, multispace
+			# Verify it's a delimiter and not just trailing whitespace 
 			if data_part.split(" ", false).size() > 1:
 				delim_counts[" "] += 1
 
+	# Fallback if no valid lines were found 
 	if lines_scanned == 0:
-		return " " # Default joiner
+		return " "
 
+	# 4. Determine the winner using a strict priority tie-breaker.
+	# The order in this array defines the "winner" if counts are equal.
 	var most_frequent_delim = " "
 	var max_count = 0
+	var priority_order = [", ", ",", "\t", " "]
 
-	# Iterate in the same priority order to select the winner
-	for delim in [", ", ",", "\t", " "]:
+	for delim in priority_order:
 		if delim_counts[delim] > max_count:
 			max_count = delim_counts[delim]
 			most_frequent_delim = delim
+			
 	return most_frequent_delim
 
 func _split_line(line: String) -> PoolStringArray:
@@ -1618,34 +1620,38 @@ func _update_pairwise_section(header: String, ball_no: int):
 	if bounds.empty(): return
 	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
-	var i = bounds.start
-	while i < bounds.end:
+	
+	# Iterate backwards so that cutting a line doesn't skip the next one
+	for i in range(bounds.end - 1, bounds.start - 1, -1):
 		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with("["): 
-			i += 1
+		if line == "" or line.begins_with("[") or line.begins_with(";"):
 			continue
 			
-		var parts = _split_line(line) 
-		if parts.size() < 2: 
-			i += 1
+		var parts = _split_line(line)
+		if parts.size() < 2:
 			continue
 			
 		var b1 = int(parts[0])
 		var b2 = int(parts[1])
 		
+		# 1. Handle Deletion
 		if b1 == ball_no or b2 == ball_no:
+			# Note: In Godot TextEdit, select is (from_line, from_col, to_line, to_col)
 			select(i, 0, i + 1, 0)
 			cut()
-			bounds.end -= 1
-			continue 
+			continue
 			
+		# 2. Handle Decrementing
 		var updates = {}
-		if b1 > ball_no: updates[0] = str(b1 - 1)
-		if b2 > ball_no: updates[1] = str(b2 - 1)
+		if b1 > ball_no: 
+			updates[0] = str(b1 - 1)
+		if b2 > ball_no: 
+			updates[1] = str(b2 - 1)
 		
 		if not updates.empty():
-			set_line(i, _update_fields(parts, updates, delim))
-		i += 1
+			# _update_fields handles the reconstruction using the detected delimiter
+			var new_line = _update_fields(parts, updates, delim)
+			set_line(i, new_line)
 
 # Generic for single-number lists like [Omissions]
 func _update_single_number_section(header: String, ball_no: int):
@@ -1936,7 +1942,11 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	commit_visual_change("Applied Colors")
 
 func find_mirrored_ball(ball_no: int) -> int:
-	if ball_no >= KeyBallsData.max_base_ball_num:
+	var max_base = KeyBallsData.max_base_ball_num
+	if max_base == null:
+		return ball_no 
+
+	if ball_no >= max_base:
 		return ball_no
 
 	var species = pet_node.lnz.species 
