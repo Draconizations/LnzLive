@@ -58,7 +58,7 @@ Upload to GitHub: `git push origin feature-name`
 
 Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;)
 
-LnzLive includes a suite of unit tests under `test/` for the [GUT](https://gut.readthedocs.io/en/v7.4.3/) test system intended to keep existing functions functional. We don't yet have every test or edge case covered, though. We recommend running these tests before moving to the next step, or the reviewer will do so.
+LnzLive includes a suite of unit tests under `test/` for the [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) test system intended to keep existing functions functional. We don't yet have every test or edge case covered, though. We recommend running these tests before moving to the next step, or the reviewer will do so.
 
 Even better if your new feature adds unit test(s) for new functions! When writing unit tests, focus on pure logic and isolated math.
 
