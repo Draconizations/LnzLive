@@ -159,6 +159,116 @@ func get_properties():
 	properties["shuffle"] = find_node("Shuffle").pressed
 	return properties
 
+func export_paintball_json():
+	if OS.has_feature("HTML5"):
+		var settings_dict = get_properties()
+		var json_string = JSON.print(settings_dict, "  ")
+		var filename = "LnzLive_paintball-mode_settings_" + str(OS.get_unix_time()) + ".json"
+		var base64_content = Marshalls.raw_to_base64(json_string.to_utf8())
+		var js_code = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + filename + """');
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog = FileDialog.new()
+		file_dialog.window_title = "Export Paintball Preset"
+		file_dialog.mode = FileDialog.MODE_SAVE_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.current_file = "LnzLive_paintball-mode_settings_" + str(OS.get_unix_time()) + ".json"
+		file_dialog.connect("file_selected", self, "_save_settings_file")
+		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _save_settings_file(path):
+	var settings_dict = get_properties()
+	var json_string = JSON.print(settings_dict, "  ")
+	var file = File.new()
+	if file.open(path, File.WRITE) == OK:
+		file.store_string(json_string)
+		file.close()
+		print("Exported settings to: ", path)
+
+func _on_ImportPresetButton_pressed():
+	if OS.has_feature("HTML5"):
+		var js_code = """
+		var input = document.createElement('input');
+		input.type = 'file';
+		input.accept = '.json';
+		input.onchange = e => { 
+		   var file = e.target.files[0]; 
+		   var reader = new FileReader();
+		   reader.readAsText(file,'UTF-8');
+		   reader.onload = readerEvent => {
+		       var content = readerEvent.target.result;
+		       window.godotPaintballImport(content);
+		   }
+		}
+		input.click();
+		"""
+		var callback = JavaScript.create_callback(self, "_on_web_import_completed")
+		JavaScript.get_interface("window").godotPaintballImport = callback
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog = FileDialog.new()
+		file_dialog.window_title = "Import Paintball Preset"
+		file_dialog.mode = FileDialog.MODE_OPEN_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Preset"]
+		file_dialog.rect_min_size = Vector2(400, 400)
+		file_dialog.connect("file_selected", self, "_load_preset_file")
+		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_web_import_completed(args):
+	var content = args[0]
+	var json_res = JSON.parse(content)
+	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		_apply_settings_dict(json_res.result)
+
+func _load_preset_file(path):
+	var file = File.new()
+	if file.open(path, File.READ) == OK:
+		var text = file.get_as_text()
+		var json_res = JSON.parse(text)
+		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+			_apply_settings_dict(json_res.result)
+		file.close()
+
+func _apply_settings_dict(data: Dictionary):
+	_is_loading_settings = true
+	if data.has("diameter_min"): find_node("DiameterMin").value = data["diameter_min"]
+	if data.has("diameter_max"): find_node("DiameterMax").value = data["diameter_max"]
+	if data.has("tapered"): find_node("Tapered").pressed = data["tapered"]
+	if data.has("pixel_mode"): find_node("PixelMode").pressed = data["pixel_mode"]
+	if data.has("color"): find_node("Color").text = str(data["color"])
+	if data.has("outline_color"): find_node("OutlineColor").text = str(data["outline_color"])
+	if data.has("outline_type_min"): find_node("OutlineTypeMin").value = data["outline_type_min"]
+	if data.has("outline_type_max"): find_node("OutlineTypeMax").value = data["outline_type_max"]
+	if data.has("fuzz_min"): find_node("FuzzMin").value = data["fuzz_min"]
+	if data.has("fuzz_max"): find_node("FuzzMax").value = data["fuzz_max"]
+	if data.has("texture"): find_node("Texture").text = str(data["texture"])
+	if data.has("group"): find_node("Group").value = data["group"]
+	if data.has("anchored"): find_node("Anchored").pressed = data["anchored"]
+	if data.has("target_mode"): find_node("Target").selected = data["target_mode"]
+	if data.has("freeline"): find_node("FreelineCheckBox").pressed = data["freeline"]
+	if data.has("spacing"): find_node("Spacing").value = data["spacing"]
+	if data.has("jitter"): find_node("Jitter").value = data["jitter"]
+	if data.has("ordered"): find_node("Ordered").pressed = data["ordered"]
+	if data.has("repeat"): find_node("Repeat").pressed = data["repeat"]
+	if data.has("shuffle"): find_node("Shuffle").pressed = data["shuffle"]
+	_is_loading_settings = false
+	save_settings()
+
 func _compute_distance_transform(mask: Array, size: int) -> Array:
 	var dists = []
 	dists.resize(size * size)
@@ -303,6 +413,11 @@ func _connect_settings_signals():
 	find_node("Repeat").connect("toggled", self, "_on_setting_changed")
 	find_node("Shuffle").connect("toggled", self, "_on_setting_changed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_setting_changed")
+
+	var export_btn = find_node("ExportSettingsButton")
+	if export_btn: export_btn.connect("pressed", self, "export_paintball_json")
+	var import_btn = find_node("ImportSettingsButton")
+	if import_btn: import_btn.connect("pressed", self, "_on_ImportPresetButton_pressed")
 
 	var reset_btn = find_node("ResetDefaultsButton")
 	if reset_btn:
@@ -451,20 +566,39 @@ func _on_clear_design_pressed():
 	find_node("DesignCanvas").emit_signal("design_changed")
 
 func _on_export_pattern_pressed():
+	var author = find_node("PatternInfoDialog").find_node("AuthorEdit").text.strip_edges()
+	var filename = "LnzLive_paintball-mode_design_"
+	if not author.empty():
+		filename += author.replace(" ", "_") + "_"
+	filename += str(OS.get_unix_time()) + ".json"
+
 	if OS.has_feature("HTML5"):
-		JavaScript.eval("window.alert('Exporting patterns is not yet supported in web version.');")
-		return
+		var data = _get_pattern_data_dict()
+		var json_string = JSON.print(data, "\t")
+		var base64_content = Marshalls.raw_to_base64(json_string.to_utf8())
+		var js_code = """
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:application/json;base64,' + '""" + base64_content + """');
+		element.setAttribute('download', '""" + filename + """');
+		element.style.display = 'none';
+		document.body.appendChild(element);
+		element.click();
+		document.body.removeChild(element);
+		"""
+		JavaScript.eval(js_code)
+	else:
+		var file_dialog = FileDialog.new()
+		file_dialog.window_title = "Export Stamp Pattern"
+		file_dialog.mode = FileDialog.MODE_SAVE_FILE
+		file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		file_dialog.filters = ["*.json ; JSON Pattern"]
+		file_dialog.current_file = filename
+		file_dialog.connect("file_selected", self, "_save_pattern_file")
+		file_dialog.connect("popup_hide", file_dialog, "queue_free")
+		get_tree().root.add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
 
-	var file_dialog = FileDialog.new()
-	file_dialog.mode = FileDialog.MODE_SAVE_FILE
-	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.filters = ["*.json ; JSON Pattern"]
-	file_dialog.connect("file_selected", self, "_save_pattern_file")
-	file_dialog.connect("popup_hide", file_dialog, "queue_free")
-	add_child(file_dialog)
-	file_dialog.popup_centered_ratio(0.6)
-
-func _save_pattern_file(path):
+func _get_pattern_data_dict() -> Dictionary:
 	var data = {
 		"header": "LnzLive Stampz Design",
 		"info": {
@@ -486,7 +620,10 @@ func _save_pattern_file(path):
 			slot_copy["display_color_b"] = col.b
 			slot_copy.erase("display_color")
 		data.slots.append(slot_copy)
+	return data
 
+func _save_pattern_file(path):
+	var data = _get_pattern_data_dict()
 	var file = File.new()
 	if file.open(path, File.WRITE) == OK:
 		file.store_string(JSON.print(data, "\t"))
