@@ -24,7 +24,11 @@ onready var cube = get_tree().root.get_node("Root/PetRoot/MeshInstance") as Spat
 onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") as ViewportContainer
 
 onready var auto_paintballer_check_box = find_node("AutoPaintballerModeCheckBox")
+
 onready var view_palette_check_box = find_node("ViewPaletteButton")
+
+onready var view_variations_check_box = find_node("ViewVariationsCheckBox")
+onready var variation_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/Variations")
 
 onready var select_check_box = find_node("SelectCheckBox")
 
@@ -219,6 +223,9 @@ func _ready():
 
 	view_palette_check_box.connect("toggled", self, "_on_view_palette_check_box_toggled")
 	palette_viewer_instance.connect("visibility_changed", self, "_on_palette_visibility_changed")
+
+	view_variations_check_box.connect("toggled", self, "_on_view_variations_toggled")
+	variation_tree.connect("visibility_changed", self, "_on_variation_visibility_changed")
 
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
@@ -1517,7 +1524,10 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				lnz_text_edit._on_HeadShotButton_pressed()
 				get_tree().set_input_as_handled()
 				return true
-
+			KEY_V:
+				view_variations_check_box.pressed = !view_variations_check_box.pressed
+				get_tree().set_input_as_handled()
+				return true
 	return false
 
 func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
@@ -1560,6 +1570,8 @@ func _unhandled_key_input(event):
 		recolor_mode_check_box.pressed = false
 		project_mode_check_box.pressed = false
 		auto_paintballer_check_box.pressed = false
+		view_palette_check_box.pressed = false
+		view_variations_check_box.pressed = false
 		
 		get_tree().set_input_as_handled()
 		return
@@ -2278,23 +2290,24 @@ func _deactivate_other_modes(active_mode_name: String):
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	if is_active:
-		if panel.is_docked:
+		if "is_docked" in panel and panel.is_docked:
 			sidebar_controller.dock_panel(panel)
 			sidebar_controller.switch_to_tab(panel) 
+		elif sidebar_controller and (panel == variation_tree or panel == palette_viewer_instance):
+			sidebar_controller.switch_to_tab(panel)
 		else:
 			panel.show()
 			panel.raise()
 	else:
-		if not panel.is_docked:
+		if "is_docked" in panel and not panel.is_docked:
+			panel.hide()
+		elif panel != variation_tree and panel != palette_viewer_instance:
 			panel.hide()
 		
 		if sidebar_controller:
 			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
 			if tree_tab:
-				sidebar_controller.switch_to_tab(tree_tab) 
-	
-	if sidebar_controller and sidebar_controller.has_method("_update_tab_visibilities"):
-		sidebar_controller._update_tab_visibilities()
+				sidebar_controller.switch_to_tab(tree_tab)
 
 func _on_recolor_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Recolor Mode")
@@ -2396,14 +2409,13 @@ func _on_project_mode_toggled(is_on):
 ### PALETTE VIEWER ###
 
 func _on_view_palette_check_box_toggled(is_on):
-	palette_viewer_instance.visible = is_on
+	if is_instance_valid(palette_viewer_instance):
+		_update_mode_panel_visibility(palette_viewer_instance, is_on)
 	
 	if is_on:
 		if palette_viewer_instance is WindowDialog or palette_viewer_instance is Popup:
 			palette_viewer_instance.popup() 
 		palette_viewer_instance.populate_colors()
-	else:
-		palette_viewer_instance.hide()
 
 func _on_palette_popup_closed():
 	if view_palette_check_box.pressed:
@@ -2412,6 +2424,19 @@ func _on_palette_popup_closed():
 func _on_palette_visibility_changed():
 	if view_palette_check_box.pressed != palette_viewer_instance.visible:
 		view_palette_check_box.pressed = palette_viewer_instance.visible
+
+### VARIATION VIEWER ###
+
+func _on_view_variations_toggled(is_on):
+	if is_instance_valid(variation_tree):
+		_update_mode_panel_visibility(variation_tree, is_on)
+
+	if is_on and sidebar_controller:
+		sidebar_controller.switch_to_tab(variation_tree)
+
+func _on_variation_visibility_changed():
+	if view_variations_check_box.pressed != variation_tree.visible:
+		view_variations_check_box.pressed = variation_tree.visible
 
 ### RECOLOR MODE ###
 
@@ -2965,7 +2990,7 @@ func _update_pivot_limit():
 			total_balls = pet_node.ball_map.size()
 		else:
 			total_balls = get_tree().get_nodes_in_group("balls").size() + \
-						  get_tree().get_nodes_in_group("addballs").size()
+						get_tree().get_nodes_in_group("addballs").size()
 		
 		move_mode_settings_instance.update_pivot_max(total_balls)
 

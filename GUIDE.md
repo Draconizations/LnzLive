@@ -44,6 +44,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Viewport** | `CTRL` + `left-click drag`| Box selection of ballz |
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
+| **Tools** | `V` | Open/Close Variation Viewer |
 | **Tools** | `H` | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
 | **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
