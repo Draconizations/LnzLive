@@ -15,6 +15,8 @@ signal palette_selected(fileprefix)
 enum ImportType { NONE, LNZ, TEXTURE, PALETTE }
 var current_import_type = ImportType.NONE
 
+const MAX_RECURSION_DEPTH = 3
+
 onready var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 
 var examples: TreeItem
@@ -23,6 +25,12 @@ var root: TreeItem
 var local_storage_textures: TreeItem
 var res_textures: TreeItem
 var local_storage_palettes: TreeItem
+
+var new_folder_dialog: ConfirmationDialog
+var new_folder_input: LineEdit
+
+var move_dialog: ConfirmationDialog
+var move_dropdown: OptionButton
 
 export var example_file_location = "res://resources/"
 export var user_file_location = "user://resources/"
@@ -42,6 +50,8 @@ onready var menu_import_pal = get_tree().root.get_node("Root/SceneRoot/HSplitCon
 onready var menu_open_user_folder = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/MenuOpenUserFolder")
 
 onready var file_dialog = get_node("./ItemPopupMenu/FileDialog")
+
+var saved_subfolder_states := {}
 
 signal backup_file
 
@@ -77,6 +87,11 @@ func _ready():
 		upload_popup.connect("about_to_show", self, "_on_FileDialog_about_to_show")
 		upload_popup.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 
+	var popup = $ItemPopupMenu
+	if popup.get_item_count() < 7:
+		popup.add_item("New Folder", 5)
+		popup.add_item("Move To...", 6)
+
 	var dir = Directory.new()
 	var lnz_dir_path = "res://resources/lnz/"
 	if dir.open(lnz_dir_path) == OK:
@@ -102,6 +117,8 @@ func _ready():
 			file_name = dir.get_next()
 		dir.list_dir_end()
 
+	_setup_dynamic_dialogs()
+
 	rescan(null)
 	rescan_textures()
 	rescan_res_textures()
@@ -117,6 +134,37 @@ func _on_RenameDialog_about_to_show():
 func _on_RenameDialog_popup_hide():
 	pet_view_container.input_is_paused = false
 	release_focus()
+
+func _setup_dynamic_dialogs():
+	new_folder_dialog = ConfirmationDialog.new()
+	new_folder_dialog.window_title = "Create New Folder"
+	
+	var vbox1 = VBoxContainer.new()
+	var label1 = Label.new()
+	label1.text = "Enter folder name:"
+	new_folder_input = LineEdit.new()
+	
+	vbox1.add_child(label1)
+	vbox1.add_child(new_folder_input)
+	new_folder_dialog.add_child(vbox1)
+	
+	new_folder_dialog.connect("confirmed", self, "_on_NewFolderDialog_confirmed")
+	add_child(new_folder_dialog)
+	
+	move_dialog = ConfirmationDialog.new()
+	move_dialog.window_title = "Move To..."
+	
+	var vbox2 = VBoxContainer.new()
+	var label2 = Label.new()
+	label2.text = "Select Destination Folder:"
+	move_dropdown = OptionButton.new()
+	
+	vbox2.add_child(label2)
+	vbox2.add_child(move_dropdown)
+	move_dialog.add_child(vbox2)
+	
+	move_dialog.connect("confirmed", self, "_on_MoveFileDialog_confirmed")
+	add_child(move_dialog)
 
 func _on_ImportLNZ_pressed():
 	current_import_type = ImportType.LNZ
@@ -318,30 +366,53 @@ func rescan_with_extension(file_extension: String, dest_path: String):
 
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
-	var filepath = selected.get_metadata(0)
-	var parent = selected.get_parent() as TreeItem
-	if filepath == null:
+	if not selected: return
+	var filepath = str(selected.get_metadata(0)) 
+	
+	if filepath == null or filepath == "Null" or filepath.ends_with("/"):
 		return
+		
+	var parent = selected.get_parent() as TreeItem
+	var is_user_file = false
+	var current_parent = parent
+	while current_parent:
+		if current_parent == local_storage:
+			is_user_file = true
+			break
+		current_parent = current_parent.get_parent()
+
 	if parent == examples or parent.get_parent() == examples:
 		emit_signal("example_file_selected", filepath)
-	elif parent == local_storage:
+	elif is_user_file:
 		emit_signal("user_file_selected", filepath)
 	elif parent == local_storage_palettes:
 		var filename = selected.get_text(0)
 		var filename_no_ext = filename.get_basename()
 		emit_signal("palette_selected", filename_no_ext)
+		
 	release_focus()
 
 func rescan(selected_filepath):
 	var was_collapsed = true
 	if local_storage != null:
-		was_collapsed = local_storage.collapsed 
+		was_collapsed = local_storage.collapsed
+		_save_subfolder_states(local_storage)
 		root.remove_child(local_storage)
 	
 	local_storage = create_item(root, 1)
 	local_storage.set_text(0, "Local Storage")
 	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
+
+func _save_subfolder_states(item: TreeItem):
+	if not item: return
+	var child = item.get_children()
+	while child:
+		var meta = str(child.get_metadata(0))
+		if meta.ends_with("/"):
+			saved_subfolder_states[meta] = child.collapsed
+			_save_subfolder_states(child)
+		child = child.get_next()
 	
 func rescan_textures():
 	var was_collapsed = true
@@ -380,19 +451,50 @@ func rescan_palettes():
 	scan_local_palettes()
 	
 func scan_local_storage(selected_filepath):
-	var dir2 = Directory.new()
-	dir2.open(user_file_location)
-	dir2.list_dir_begin()
-	var filename = dir2.get_next()
-	while(!filename.empty()):
-		if filename.ends_with(".lnz"):
-			var new_item = create_item(local_storage)
+	var safe_filepath = "" if selected_filepath == null else str(selected_filepath)
+	_scan_dir_recursive(user_file_location, local_storage, safe_filepath, true)
+
+func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath: String, is_root: bool = false, depth: int = 0):
+	if depth > MAX_RECURSION_DEPTH:
+		return
+
+	var dir = Directory.new()
+	if dir.open(path) != OK:
+		return
+		
+	dir.list_dir_begin(true, true)
+	var filename = dir.get_next()
+	
+	while filename != "":
+		if dir.current_is_dir():
+			if is_root and (filename == "textures" or filename == "palettes"):
+				filename = dir.get_next()
+				continue
+				
+			var sub_path = path.plus_file(filename)
+			var sub_item = create_item(parent_item)
+			sub_item.set_text(0, filename)
+			
+			var meta_path = sub_path + "/"
+			sub_item.set_metadata(0, meta_path)
+			
+			if saved_subfolder_states.has(meta_path):
+				sub_item.set_collapsed(saved_subfolder_states[meta_path])
+			else:
+				sub_item.set_collapsed(true)
+			
+			_scan_dir_recursive(sub_path, sub_item, selected_filepath, false, depth + 1)
+		elif filename.ends_with(".lnz"):
+			var full_path = path.plus_file(filename)
+			var new_item = create_item(parent_item)
 			new_item.set_text(0, filename)
-			new_item.set_metadata(0, user_file_location + filename)
-			if(user_file_location + filename == selected_filepath):
+			new_item.set_metadata(0, full_path)
+			
+			if full_path == selected_filepath:
 				new_item.select(0)
-		filename = dir2.get_next()
-	dir2.list_dir_end()
+				
+		filename = dir.get_next()
+	dir.list_dir_end()
 
 func scan_local_textures():
 	var dir = Directory.new()
@@ -675,36 +777,62 @@ func get_all_selected() -> Array:
 	return selected_items
 
 func _on_Tree_item_rmb_selected(position):
-	$ItemPopupMenu.rect_global_position = position
 	var items = get_all_selected()
+	if items.size() == 0: return
+	
+	$ItemPopupMenu.rect_global_position = position
 
 	if items.size() > 1:
 		for i in range($ItemPopupMenu.get_item_count()):
-			if i == 0: # Delete
-				$ItemPopupMenu.set_item_disabled(i, false)
-			else:
-				$ItemPopupMenu.set_item_disabled(i, true)
+			var id = $ItemPopupMenu.get_item_id(i)
+			var allowed_multi = (id == 0 or id == 5 or id == 6)
+			$ItemPopupMenu.set_item_disabled(i, !allowed_multi)
 	else:
 		var item = get_selected()
+		if not item: return
+		
 		var p = item.get_parent()
-		var is_local_file = (p == local_storage)
-		var is_local_content = (p == local_storage or p == local_storage_textures or p == local_storage_palettes)
+		var meta = str(item.get_metadata(0))
+		var is_dir = meta != "Null" and meta.ends_with("/")
+		
+		var is_local_content = false
+		var is_local_file = false
+		
+		var curr = p
+		while curr:
+			if curr == local_storage or curr == local_storage_textures or curr == local_storage_palettes:
+				is_local_content = true
+			if curr == local_storage:
+				is_local_file = true
+			curr = curr.get_parent()
 
-		$ItemPopupMenu.set_item_disabled(0, !is_local_content) # Delete
-		$ItemPopupMenu.set_item_disabled(1, !is_local_content) # Rename
-		$ItemPopupMenu.set_item_disabled(2, !is_local_file) # Backup
-		$ItemPopupMenu.set_item_disabled(3, false) # Copy Filename
-		$ItemPopupMenu.set_item_disabled(4, !is_local_file) # Export File
+		for i in range($ItemPopupMenu.get_item_count()):
+			var id = $ItemPopupMenu.get_item_id(i)
+			if id == 0: $ItemPopupMenu.set_item_disabled(i, !is_local_content) # Delete
+			elif id == 1: $ItemPopupMenu.set_item_disabled(i, !is_local_content) # Rename
+			elif id == 2: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Backup
+			elif id == 3: $ItemPopupMenu.set_item_disabled(i, false) # Copy Filename
+			elif id == 4: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Export File
+			elif id == 5: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # New Folder
+			elif id == 6: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # Move To...
 
 	$ItemPopupMenu.popup()
 	
 func _on_ItemPopupMenu_id_pressed(id):
-	if id == 0: # delete file
+	if id == 0: # delete file/folder
 		var items = get_all_selected()
+		if items.size() == 0: return
+		
 		var dir = Directory.new()
 		for item in items:
-			var filepath = item.get_metadata(0)
-			if filepath and dir.file_exists(filepath):
+			var filepath = str(item.get_metadata(0))
+			
+			if filepath == null or filepath == "Null":
+				continue
+			
+			if filepath.ends_with("/"):
+				_delete_dir_recursive(filepath.trim_suffix("/"))
+			elif dir.file_exists(filepath):
 				dir.remove(filepath)
 
 		rescan(null)
@@ -712,20 +840,32 @@ func _on_ItemPopupMenu_id_pressed(id):
 		rescan_palettes()
 
 	elif id == 1: # rename file
-		var item = get_selected() as TreeItem
-		var filepath = item.get_metadata(0) as String
+		var item = get_selected()
+		if not item: return
+		var filepath = str(item.get_metadata(0))
+		if filepath == null or filepath == "Null":
+			return
+		
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
+		
 	elif id == 2: # backup
 		emit_signal("backup_file")
+		
 	elif id == 3: # copy file name
-		var item = get_selected() as TreeItem
-		var filepath = item.get_metadata(0)
-		var filename = filepath.get_file()
-		OS.set_clipboard(filename)
+		var item = get_selected()
+		if not item: return
+		var filepath = str(item.get_metadata(0))
+		if filepath != "Null":
+			var filename = filepath.get_file()
+			OS.set_clipboard(filename)
+			
 	elif id == 4: # export file
-		var item = get_selected() as TreeItem
-		var item_filepath = item.get_metadata(0)
+		var item = get_selected()
+		if not item: return
+		var item_filepath = str(item.get_metadata(0))
+		if item_filepath == null or item_filepath == "Null" or item_filepath.ends_with("/"): return
+		
 		var filename = item.get_text(0)
 		var file = File.new()
 		if file.open(item_filepath, File.READ) != OK:
@@ -735,6 +875,34 @@ func _on_ItemPopupMenu_id_pressed(id):
 		file.close()
 		
 		_save_file_as(filename, content_bytes)
+		
+	elif id == 5: # New Folder
+		var timestamp = str(OS.get_unix_time())
+		new_folder_input.text = "new_folder_" + timestamp 
+		new_folder_dialog.popup_centered(Vector2(250, 100))
+		
+	elif id == 6: # Move To
+		_populate_move_dropdown()
+		move_dialog.popup_centered(Vector2(300, 100))
+
+func _delete_dir_recursive(path: String, depth: int = 0):
+	if depth > MAX_RECURSION_DEPTH:
+		print("Warning: Max deletion depth reached at: ", path)
+		return
+		
+	var dir = Directory.new()
+	if dir.open(path) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name = dir.get_next()
+		while file_name != "":
+			var full_path = path.plus_file(file_name)
+			if dir.current_is_dir():
+				_delete_dir_recursive(full_path, depth + 1)
+			else:
+				dir.remove(full_path)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+		dir.remove(path)
 
 func _on_SaveDialog_file_selected(path, content_bytes):
 	var file = File.new()
@@ -750,7 +918,6 @@ func _on_SaveDialog_file_selected(path, content_bytes):
 			if child is FileDialog and child.window_title == "Save File As":
 				child.queue_free()
 				return
-
 
 func _save_file_as(filename: String, content_bytes: PoolByteArray):	
 	if OS.has_feature("HTML5"):		
@@ -791,43 +958,68 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		save_dialog.popup_centered()
 
 func _on_RenameDialog_confirmed():
-	var item = get_selected() as TreeItem
-	var filepath = item.get_metadata(0) as String
+	var items = get_all_selected()
+	if items.size() != 1: 
+		return
+		
+	var item = items[0]
+	var filepath = item.get_metadata(0)
+	
+	if filepath == null or str(filepath) == "Null": 
+		return
+	
+	var filepath_str = str(filepath)
 	var dir = Directory.new()
-	var new_filename = rename_dialog.get_node("LineEdit").text
-	var new_filepath = filepath.replace(filepath.get_file(), new_filename)
-	dir.rename(filepath, new_filepath)
+	var new_filename = rename_dialog.get_node("LineEdit").text.strip_edges()
+	
+	if new_filename == "" or new_filename == filepath_str.get_file():
+		return
 
-	rescan(null)
-	rescan_textures()
-	rescan_palettes()
+	var base_dir = filepath_str.get_base_dir()
+	var new_filepath = base_dir.plus_file(new_filename)
+	
+	if filepath_str.ends_with("/"):
+		new_filepath += "/"
 
-	if new_filepath.ends_with(".lnz"):
-		emit_signal("user_file_selected", new_filepath)
+	if dir.rename(filepath_str, new_filepath) == OK:
+		rescan(null)
+		rescan_textures()
+		rescan_palettes()
+
+		if new_filepath.ends_with(".lnz"):
+			emit_signal("user_file_selected", new_filepath)
 
 	release_focus()
 
 func _on_ItemPopupMenu_about_to_show():
 	var items = get_all_selected()
-	if items.size() > 1:
-		return
+	if items.size() > 1: return
 
 	var clicked_item = get_selected() as TreeItem
+	if not clicked_item: return
+
 	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit") as TextEdit
 	var clicked_filepath = clicked_item.get_metadata(0)
-	if (clicked_filepath != null):
+	
+	if clicked_filepath != null:
 		$ItemPopupMenu.set_item_disabled(2, !textlnz.filepath == clicked_filepath)
 
 func _on_LnzTextEdit_file_backed_up():
-	rescan(get_selected().get_metadata(0) as String)
+	var item = get_selected()
+	var path = str(item.get_metadata(0)) if item else null
+	if path == null or path == "Null": 
+		path = null
+	rescan(path)
 
 func get_expanded_states() -> Dictionary:
+	_save_subfolder_states(local_storage)
 	return {
 		"Examples": examples.collapsed == false if examples else true,
 		"Local Storage": local_storage.collapsed == false if local_storage else true,
 		"Local Textures": local_storage_textures.collapsed == false if local_storage_textures else false,
 		"Base Textures": res_textures.collapsed == false if res_textures else false,
-		"Local Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false
+		"Local Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false,
+		"Subfolders": saved_subfolder_states
 	}
 
 func set_expanded_states(states: Dictionary):
@@ -836,3 +1028,106 @@ func set_expanded_states(states: Dictionary):
 	if local_storage_textures: local_storage_textures.collapsed = !states.get("Local Textures", false)
 	if res_textures: res_textures.collapsed = !states.get("Base Textures", false)
 	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("Local Palettes", false)
+	if states.has("Subfolders"):
+		saved_subfolder_states = states.get("Subfolders")
+
+func _populate_move_dropdown():
+	move_dropdown.clear()
+	move_dropdown.add_item("Root (user://resources/)")
+	move_dropdown.set_item_metadata(0, user_file_location) 
+	
+	var dirs = []
+	_get_all_subdirs(user_file_location, dirs)
+	
+	var idx = 1
+	for d in dirs:
+		var display_name = d.replace(user_file_location, "")
+		move_dropdown.add_item(display_name)
+		move_dropdown.set_item_metadata(idx, d)
+		idx += 1
+
+func _get_all_subdirs(path: String, out_array: Array, depth: int = 0):
+	if depth > MAX_RECURSION_DEPTH:
+		return
+
+	var dir = Directory.new()
+	if dir.open(path) == OK:
+		dir.list_dir_begin(true, true)
+		var file_name = dir.get_next()
+		while file_name != "":
+			if dir.current_is_dir():
+				if path == user_file_location and (file_name == "textures" or file_name == "palettes"):
+					file_name = dir.get_next()
+					continue
+					
+				var full_path = path.plus_file(file_name)
+				out_array.append(full_path + "/")
+				_get_all_subdirs(full_path, out_array, depth + 1)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+
+func _on_NewFolderDialog_confirmed():
+	var items = get_all_selected()
+	if items.size() == 0: return
+	
+	var folder_name = new_folder_input.text.strip_edges()
+	if folder_name == "": return
+	
+	var first_item = items[0]
+	var first_meta = str(first_item.get_metadata(0))
+	var base_is_dir = first_meta.ends_with("/")
+	var base_dir = first_meta if base_is_dir else first_meta.get_base_dir() + "/"
+	
+	var new_dir_path = base_dir.plus_file(folder_name)
+	var dir = Directory.new()
+	
+	if not dir.dir_exists(new_dir_path):
+		dir.make_dir(new_dir_path)
+		
+	for item in items:
+		var item_meta = str(item.get_metadata(0))
+		if item_meta == null or item_meta == "Null":
+			continue
+		
+		if item_meta == base_dir:
+			continue 
+		
+		var clean_meta = item_meta.trim_suffix("/")
+		var item_name = clean_meta.get_file()
+		
+		dir.rename(clean_meta, new_dir_path.plus_file(item_name))
+			
+	rescan(null)
+
+func _on_MoveFileDialog_confirmed():
+	var items = get_all_selected()
+	if items.size() == 0: return
+	
+	var target_dir = move_dropdown.get_selected_metadata()
+	if not target_dir: return
+	
+	var dir = Directory.new()
+	var any_moved = false
+	var last_lnz_path = ""
+	
+	for item in items:
+		var current_path = str(item.get_metadata(0))
+		if current_path == null or current_path == "Null":
+			continue
+		
+		var clean_path = current_path.trim_suffix("/")
+		var file_name = clean_path.get_file()
+		
+		if current_path.ends_with("/") and target_dir.begins_with(current_path):
+			print("Cannot move a folder into itself!")
+			continue
+		
+		var new_path = target_dir.plus_file(file_name)
+		
+		if dir.rename(clean_path, new_path) == OK:
+			any_moved = true
+			if new_path.ends_with(".lnz"):
+				last_lnz_path = new_path
+			
+	if any_moved:
+		rescan(null)
