@@ -1509,6 +1509,31 @@ hint_tooltip = "Anchor Paintballz to not rotate over parent ball"
 size_flags_horizontal = 3
 pressed = true
 
+[node name="ImportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
+margin_right = 233.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
+text = "Import JSON"
+
+[node name="ExportSettingsButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer11"]
+margin_left = 237.0
+margin_right = 470.0
+margin_bottom = 25.0
+size_flags_horizontal = 3
+custom_styles/hover = SubResource( 2 )
+custom_styles/pressed = SubResource( 2 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 4 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
+text = "Export JSON"
+
 [node name="ApplyButton" type="Button" parent="VBoxContainer"]
 margin_top = 616.0
 margin_right = 470.0
