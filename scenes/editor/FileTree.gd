@@ -120,7 +120,7 @@ func _ready():
 	_setup_dynamic_dialogs()
 
 	rescan(null)
-	rescan_textures()
+	rescan_textures(true)
 	rescan_res_textures()
 	rescan_palettes()
 
@@ -360,7 +360,7 @@ func rescan_with_extension(file_extension: String, dest_path: String):
 		rescan(dest_path)
 		emit_signal("user_file_selected", dest_path)
 	elif file_extension == "bmp":
-		rescan_textures()
+		rescan_textures(true)
 	elif file_extension == "png":
 		rescan_palettes()
 
@@ -414,7 +414,7 @@ func _save_subfolder_states(item: TreeItem):
 			_save_subfolder_states(child)
 		child = child.get_next()
 	
-func rescan_textures():
+func rescan_textures(reload_model: bool = false):
 	var was_collapsed = true
 	if local_storage_textures != null:
 		was_collapsed = local_storage_textures.collapsed
@@ -424,11 +424,12 @@ func rescan_textures():
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
-	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-	if pet_node and pet_node.has_method("clear_texture_cache"):
-		pet_node.clear_texture_cache()
-		if pet_node.lnz:
-			pet_node.recompose_model()
+	if reload_model:
+		var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+		if pet_node and pet_node.has_method("clear_texture_cache"):
+			pet_node.clear_texture_cache()
+			if pet_node.lnz:
+				pet_node.recompose_model()
 
 func rescan_res_textures():
 	var was_collapsed = true
