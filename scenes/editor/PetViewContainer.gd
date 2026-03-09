@@ -6,6 +6,8 @@ extends Control
 # - Handles coordinate conversion between spatial world and LNZ units
 # - Coordinates viewport visuals (gizmos, labels, and cursors)
 
+var ui_is_dirty := true
+
 onready var default_font = get_font("font")
 
 onready var file_tree = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
@@ -322,6 +324,11 @@ func _reset_tab_state():
 	_current_tab_index = -1
 	_nearby_balls_cache.clear()
 	_tab_activation_mouse_pos = Vector2.ZERO
+	mark_ui_dirty()
+
+func mark_ui_dirty():
+	# Use to trigger _process so it's not triggering every time the mouse moves...
+	ui_is_dirty = true
 
 func _process(_delta):
 	if is_instance_valid(_overlay_camera):
@@ -329,6 +336,10 @@ func _process(_delta):
 
 	# AXIS GIZMO
 	_update_3d_gizmo_visibility()
+
+	# Skip helper text update, if UI is not dirty
+	if not ui_is_dirty:
+		return
 
 	# HELPER TEXT
 	var header = ""
@@ -455,6 +466,8 @@ func _process(_delta):
 
 	if helper_label.text != final_text:
 		helper_label.text = final_text
+
+	ui_is_dirty = false
 
 func _draw():
 	# BOX SELECTION
@@ -744,6 +757,8 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 				pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 
+	mark_ui_dirty()
+
 func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 	if not move_mode:
 		return false
@@ -843,6 +858,8 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 					move_mode_settings_instance.set_queued_count(pending_moves.size())
 					_record_move_end_state("Drag Move")
 					return true
+
+				mark_ui_dirty()
 
 	elif event is InputEventMouseMotion and is_dragging and drag_ball:
 		if is_resizing:
@@ -1564,12 +1581,17 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				move_mode_settings_instance.change_nudge_value(nudge_axis, -1.0)
 				_record_move_end_state("Nudge -")
 				get_tree().set_input_as_handled()
+				mark_ui_dirty()
 				return true
 	return false
 
 func _unhandled_key_input(event):
 	if input_is_paused:
 		return
+
+	if event is InputEventKey:
+		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
+			mark_ui_dirty()
 
 	if event is InputEventKey and event.pressed and event.scancode == KEY_TAB:
 		if selecting_on:
@@ -1676,6 +1698,7 @@ func _on_SelectCheckBox_pressed():
 			if b and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
 		tex.update()
+	mark_ui_dirty()
 
 func _on_HelpButton_pressed():
 	help_popup.popup_centered()
@@ -1700,12 +1723,14 @@ func set_active_selected_ball(ball):
 	active_selected_ball = ball
 	active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.ACTIVE_SELECTED)
 	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
 
 func clear_active_selected_ball():
 	if active_selected_ball and is_instance_valid(active_selected_ball) and "ball_no" in active_selected_ball:
 		active_selected_ball.apply_outline_state(active_selected_ball.OutlineState.NONE)
 	active_selected_ball = null
 	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
 
 func get_visual_state_for_ball(b):
 	if not "ball_no" in b:
@@ -1734,12 +1759,14 @@ func last_selected_is_valid():
 func deal_with_last_selected():
 	if last_selected != null and is_instance_valid(last_selected):
 		last_selected._on_Area_mouse_exited()
+		mark_ui_dirty()
 				
 func _on_Node_ball_mouse_enter(ball_info):
 	if selecting_on:
 		ball_label.text = str(ball_info.ball_no)
 		ball_label.rect_global_position = get_viewport().get_mouse_position() + Vector2(25,15)
 		ball_label.show()
+		mark_ui_dirty()
 
 func _find_visual_ball_by_no(no: int) -> Spatial:
 	if is_instance_valid(pet_node) and pet_node.ball_map:
@@ -1880,6 +1907,8 @@ func _cycle_nearby_ballz():
 		_reset_tab_state()
 		# Set a temporary message for the helper label if no balls are found
 		helper_label.text = "No nearby ballz found for cycling (Radius: %s px)." % [NEARBY_SCREEN_RADIUS]
+
+	mark_ui_dirty()
 
 func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
 	# Read current and original world positions
@@ -2051,6 +2080,7 @@ func _on_unselect_all():
 			b.apply_outline_state(get_visual_state_for_ball(b)) 
 			
 	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
 
 func _on_unselect_side(side: String):
 	if selected_balls.empty():
@@ -2100,6 +2130,7 @@ func _on_unselect_side(side: String):
 			b.apply_outline_state(get_visual_state_for_ball(b))
 
 	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
 
 func _update_selected_ballz_in_settings():
 	var ids = []
@@ -2132,6 +2163,7 @@ func _on_select_balls_by_ids(ids: Array):
 				ball.apply_outline_state(ball.OutlineState.ACTIVE_SELECTED)
 				
 	_update_selected_ballz_in_settings()
+	mark_ui_dirty()
 
 func _commit_box_selection():
 	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
@@ -2339,6 +2371,7 @@ func _on_recolor_mode_toggled(is_on):
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 		recolor_settings_instance._on_ClearBucket_pressed()
+	mark_ui_dirty()
 
 func _on_paintball_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Paintball Mode")
@@ -2357,6 +2390,7 @@ func _on_paintball_mode_toggled(is_on):
 		paintball_settings_instance.find_node("Target").selected = 0
 		
 	_update_paintball_mode_ui()
+	mark_ui_dirty()
 
 func _on_move_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Move Mode")
@@ -2371,6 +2405,7 @@ func _on_move_mode_toggled(is_on):
 	else:
 		_on_unselect_all()
 		_on_move_mode_clear()
+	mark_ui_dirty()
 
 func _on_line_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Line Mode")
@@ -2385,6 +2420,7 @@ func _on_line_mode_toggled(is_on):
 			linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 		linez_start_ball = null
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
+	mark_ui_dirty()
 
 func _on_preset_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Preset Mode")
@@ -2403,6 +2439,7 @@ func _on_preset_mode_toggled(is_on):
 	else:
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
+	mark_ui_dirty()
 
 func _on_auto_paintballer_mode_toggled(is_on):
 	if is_on: _deactivate_other_modes("Auto Paintballer")
@@ -2417,11 +2454,14 @@ func _on_auto_paintballer_mode_toggled(is_on):
 		for b in all_balls:
 			if is_instance_valid(b) and b.has_method("apply_outline_state"):
 				b.apply_outline_state(b.OutlineState.NONE)
+	mark_ui_dirty()
 
 func _on_project_mode_toggled(is_on):
-	if is_on: _deactivate_other_modes("Project Mode")
+	if is_on:
+		_deactivate_other_modes("Project Mode")
 	project_mode = is_on
 	_update_mode_panel_visibility(project_settings_instance, is_on)
+	mark_ui_dirty()
 
 ### PALETTE VIEWER ###
 
@@ -2506,6 +2546,7 @@ func _on_paintball_mode_for_ball_toggled(ball):
 	else:
 		_update_paintball_mode_ui()
 	_isolate_target_ball(ball)
+	mark_ui_dirty()
 
 func close_paintball_mode():
 	paintball_check_box.pressed = false
@@ -3000,6 +3041,8 @@ func _on_move_mode_clear():
 			continue
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
+	mark_ui_dirty()
+
 func _update_pivot_limit():
 	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
 		var total_balls = 0
@@ -3034,6 +3077,8 @@ func _track_pending_move(ball):
 	ball.apply_outline_state(get_visual_state_for_ball(ball))
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
 
+	mark_ui_dirty()
+
 func _on_move_mode_apply():
 	if pending_moves.empty():
 		return
@@ -3062,6 +3107,8 @@ func _on_move_mode_apply():
 			continue
 		pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		b.apply_outline_state(get_visual_state_for_ball(b))
+
+	mark_ui_dirty()
 
 func _on_align_selection(axis, mode):
 	if selected_balls.empty():
