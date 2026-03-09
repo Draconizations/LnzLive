@@ -122,6 +122,12 @@ var project_settings_instance: Control
 var preset_settings_instance: Control
 var auto_paintballer_settings_instance: Control
 
+var diameter_min_spinbox: SpinBox
+var diameter_max_spinbox: SpinBox
+var eraser_check_box: CheckBox
+var pivot_ball_spinbox: SpinBox
+var use_pivot_check_box: CheckBox
+
 #var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x.png")
 var hand_neutral = load("res://resources/icons/ico_hand_neutral_2x_64px.png")
 #var hand_move = load("res://resources/icons/ico_hand_move_2x.png")
@@ -275,6 +281,12 @@ func _ready():
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+
+	diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
+	diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
+	eraser_check_box = paintball_settings_instance.find_node("EraserCheckBox")
+	pivot_ball_spinbox = move_mode_settings_instance.find_node("PivotBall")
+	use_pivot_check_box = move_mode_settings_instance.find_node("UsePivotCheckBox")
 
 	Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	Input.set_custom_mouse_cursor(hand_neutral, Input.CURSOR_IBEAM, Vector2(30, 31))
@@ -706,7 +718,8 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 	is_resizing = resizing
 	
 	if resizing:
-		_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
+		#_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
+		_scale_group_pivot = _get_rotation_pivot_origin(int(use_pivot_check_box.value) if use_pivot_check_box.pressed else -1)
 
 		_scale_group_initial_data.clear()
 		for b in selected_balls:
@@ -1046,8 +1059,8 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		return false
 
 	if event is InputEventMouseButton and event.shift and (event.button_index == BUTTON_WHEEL_UP or event.button_index == BUTTON_WHEEL_DOWN):
-		var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
-		var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
+		#var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
+		#var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
 		if event.button_index == BUTTON_WHEEL_UP:
 			diameter_min_spinbox.value += 1
 			diameter_max_spinbox.value += 1
@@ -1099,7 +1112,9 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
+		#var delete_mode = paintball_settings_instance.find_node("EraserCheckBox").pressed or Input.is_key_pressed(KEY_CONTROL)
+		var delete_mode = eraser_check_box.pressed or Input.is_key_pressed(KEY_CONTROL)
+		
 		if delete_mode:
 			var pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
@@ -1697,8 +1712,10 @@ func get_visual_state_for_ball(b):
 		return
 	else:
 		if move_mode:
-			if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
-				var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+			if use_pivot_check_box.pressed:
+			#if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed:
+				#var pivot_id = int(move_mode_settings_instance.find_node("PivotBall").value)
+				var pivot_id = int(pivot_ball_spinbox.value)
 				if b.ball_no == pivot_id:
 					return b.OutlineState.PIVOT
 
