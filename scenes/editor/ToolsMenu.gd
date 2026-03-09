@@ -17,6 +17,7 @@ signal copy_r_to_l(ball_no)
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal apply_global_fuzz(fuzz)
+signal clear_ball_paintballz(ball_no)
 signal print_ball_colors()
 signal paintball_mode_for_ball_toggled(ball)
 
@@ -32,21 +33,55 @@ onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoo
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE, TONGUE }
 
+enum ToolsAction {
+	RECOLOR = 10,
+	CREATE_ADDBALLZ_LINEZ = 1,
+	CREATE_ADDBALLZ = 2,
+	DELETE_ADDBALLZ = 3,
+	OMIT_UNOMIT = 4,
+	CONNECT_LINEZ = 5,
+	COPY_L_TO_R = 6,
+	COPY_R_TO_L = 7,
+	PAINTBALL_MODE = 8,
+	EXPORT_CLOTHES = 9,
+	HIDE_BALLZ = 11,
+	APPLY_FUZZ = 12,
+	COPY_COLORS = 13,
+	BALL_INFO = 14,
+	CLEAR_PAINTBALLZ = 15
+}
+
 func _ready():
-	add_submenu_item("Color...", "RecolorMenu")
-	add_item("Create Addballz + Linez")         # index 1
-	add_item("Create Addballz")                 # index 2
-	add_item("Delete Addballz")                 # index 3
-	add_item("Omit/Unomit Ballz")               # index 4
-	add_item("Connect by Linez")                # index 5
-	add_item("Copy-Mirror (cam L-to-R)")        # index 6
-	add_item("Copy-Mirror (cam R-to-L)")        # index 7
-	add_item("Paintball Mode")                  # index 8
-	add_item("Export to Clothes CLZ")           # index 9
-	add_item("Hide Ballz")                      # index 10
-	add_item("Apply Global Fuzz")               # index 11
-	add_item("Copy Ballz Colors to Clipboard")  # index 12
-	add_item("Ball Info")                       # index 13
+	# add_submenu_item("Color...", "RecolorMenu")
+	# add_item("Create Addballz + Linez")         # index 1
+	# add_item("Create Addballz")                 # index 2
+	# add_item("Delete Addballz")                 # index 3
+	# add_item("Omit/Unomit Ballz")               # index 4
+	# add_item("Connect by Linez")                # index 5
+	# add_item("Copy-Mirror (cam L-to-R)")        # index 6
+	# add_item("Copy-Mirror (cam R-to-L)")        # index 7
+	# add_item("Paintball Mode")                  # index 8
+	# add_item("Export to Clothes CLZ")           # index 9
+	# add_item("Hide Ballz")                      # index 10
+	# add_item("Apply Global Fuzz")               # index 11
+	# add_item("Copy Ballz Colors to Clipboard")  # index 12
+	# add_item("Ball Info")                       # index 13
+
+	add_submenu_item("Color...", "RecolorMenu", ToolsAction.RECOLOR)
+	add_item("Create Addballz + Linez", ToolsAction.CREATE_ADDBALLZ_LINEZ)
+	add_item("Create Addballz", ToolsAction.CREATE_ADDBALLZ)
+	add_item("Delete Addballz / Omit", ToolsAction.DELETE_ADDBALLZ)
+	add_item("Omit/Unomit Ballz", ToolsAction.OMIT_UNOMIT)
+	add_item("Clear Paintballz from Ballz", ToolsAction.CLEAR_PAINTBALLZ)
+	add_item("Connect by Linez", ToolsAction.CONNECT_LINEZ)
+	add_item("Copy-Mirror (cam L-to-R)", ToolsAction.COPY_L_TO_R)
+	add_item("Copy-Mirror (cam R-to-L)", ToolsAction.COPY_R_TO_L)
+	add_item("Paintball Mode", ToolsAction.PAINTBALL_MODE)
+	add_item("Export to Clothes CLZ", ToolsAction.EXPORT_CLOTHES)
+	add_item("Hide Ballz", ToolsAction.HIDE_BALLZ)
+	add_item("Apply Global Fuzz", ToolsAction.APPLY_FUZZ)
+	add_item("Copy Ballz Colors to Clipboard", ToolsAction.COPY_COLORS)
+	add_item("Ball Info", ToolsAction.BALL_INFO)
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 
@@ -171,6 +206,7 @@ func _on_ToolsMenu_index_pressed(index):
 			pet_view.auto_paintballer_check_box.pressed = false
 		return
 
+	var id = get_item_id(index)
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
@@ -178,65 +214,134 @@ func _on_ToolsMenu_index_pressed(index):
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
-		is_ball_selected = is_instance_valid(selected_visual_ball)
+		is_ball_selected = true
 		is_addball = ball_no > KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
 
-	if index == 1: # Create Addballz + Linez
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("add_ball", selected_visual_ball, true)
-	elif index == 2: # Create Addballz
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("add_ball", selected_visual_ball, false)
-	elif index == 3: # Delete Addballz
-		if is_instance_valid(selected_visual_ball):
-			if is_omitted:
-				emit_signal("unomit_ball", ball_no)
-			elif is_addball:
-				emit_signal("delete_ball", ball_no)
-			else:
-				emit_signal("omit_ball", ball_no)
-	elif index == 4: # Omit/Unomit Ballz
-		if is_instance_valid(selected_visual_ball):
-			if is_omitted:
-				emit_signal("unomit_ball", ball_no)
-			else:
-				emit_signal("omit_ball", ball_no)
-	elif index == 5: # Connect by Linez
-		if is_instance_valid(selected_visual_ball):
-			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-			pet_view.line_mode_close = true
-			pet_view.line_mode_check_box.pressed = true
-			pet_view.linez_start_ball = selected_visual_ball
-			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 6: # Copy-Mirror (L-to-R)
-		emit_signal("copy_l_to_r", ball_no)
-	elif index == 7: # Copy-Mirror (R-to-L)
-		emit_signal("copy_r_to_l", ball_no)
-	elif index == 8: # Paintball Mode
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	elif index == 9: # Export to Clothes CLZ
-		get_parent().get_node("ExportClothes").open(ball_no)
-	elif index == 10: # Hide Ballz
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("hide_ball", ball_no)
-	elif index == 11: # Apply Global Fuzz
-		var options = get_parent().get_node("FuzzPopup")
-		options.popup_centered()
+	# Match against IDs so reordering items in _ready() doesn't break logic
+	match id:
+		ToolsAction.CREATE_ADDBALLZ_LINEZ: # Create Addballz + Linez
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("add_ball", selected_visual_ball, true)
+
+		ToolsAction.CREATE_ADDBALLZ: # Create Addballz
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("add_ball", selected_visual_ball, false)
+
+		ToolsAction.DELETE_ADDBALLZ: # Delete Addballz
+			if is_instance_valid(selected_visual_ball):
+				if is_omitted:
+					emit_signal("unomit_ball", ball_no)
+				elif is_addball:
+					emit_signal("delete_ball", ball_no)
+				else:
+					emit_signal("omit_ball", ball_no)
+
+		ToolsAction.OMIT_UNOMIT: # Omit/Unomit Ballz
+			if is_instance_valid(selected_visual_ball):
+				if is_omitted:
+					emit_signal("unomit_ball", ball_no)
+				else:
+					emit_signal("omit_ball", ball_no)
+
+		ToolsAction.CONNECT_LINEZ: # Connect by Linez
+			if is_instance_valid(selected_visual_ball):
+				var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+				pet_view.line_mode_close = true
+				pet_view.line_mode_check_box.pressed = true
+				pet_view.linez_start_ball = selected_visual_ball
+				selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
+
+		ToolsAction.COPY_L_TO_R: # Copy-Mirror (L-to-R)
+			emit_signal("copy_l_to_r", ball_no)
+
+		ToolsAction.COPY_R_TO_L: # Copy-Mirror (R-to-L)
+			emit_signal("copy_r_to_l", ball_no)
+
+		ToolsAction.PAINTBALL_MODE: # Paintball Mode
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
+
+		ToolsAction.EXPORT_CLOTHES: # Export to Clothes CLZ
+			get_parent().get_node("ExportClothes").open(ball_no)
+
+		ToolsAction.HIDE_BALLZ: # Hide Ballz
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("hide_ball", ball_no)
+
+		ToolsAction.APPLY_FUZZ: # Apply Global Fuzz
+			var options = get_parent().get_node("FuzzPopup")
+			options.popup_centered()
+
+		ToolsAction.COPY_COLORS: # Print Ballz Colors
+			emit_signal("print_ball_colors")
+
+		ToolsAction.BALL_INFO: # Jump to ball
+			if is_ball_selected:
+				var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+				if is_instance_valid(lnz_text_edit):
+					lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
+			return
+
+		ToolsAction.CLEAR_PAINTBALLZ: # Clear Paintballz
+			if is_ball_selected:
+				emit_signal("clear_ball_paintballz", ball_no)
+
+	# if index == 1: # Create Addballz + Linez
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		emit_signal("add_ball", selected_visual_ball, true)
+	# elif index == 2: # Create Addballz
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		emit_signal("add_ball", selected_visual_ball, false)
+	# elif index == 3: # Delete Addballz
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		if is_omitted:
+	# 			emit_signal("unomit_ball", ball_no)
+	# 		elif is_addball:
+	# 			emit_signal("delete_ball", ball_no)
+	# 		else:
+	# 			emit_signal("omit_ball", ball_no)
+	# elif index == 4: # Omit/Unomit Ballz
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		if is_omitted:
+	# 			emit_signal("unomit_ball", ball_no)
+	# 		else:
+	# 			emit_signal("omit_ball", ball_no)
+	# elif index == 5: # Connect by Linez
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	# 		pet_view.line_mode_close = true
+	# 		pet_view.line_mode_check_box.pressed = true
+	# 		pet_view.linez_start_ball = selected_visual_ball
+	# 		selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
+	# elif index == 6: # Copy-Mirror (L-to-R)
+	# 	emit_signal("copy_l_to_r", ball_no)
+	# elif index == 7: # Copy-Mirror (R-to-L)
+	# 	emit_signal("copy_r_to_l", ball_no)
+	# elif index == 8: # Paintball Mode
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
+	# elif index == 9: # Export to Clothes CLZ
+	# 	get_parent().get_node("ExportClothes").open(ball_no)
+	# elif index == 10: # Hide Ballz
+	# 	if is_instance_valid(selected_visual_ball):
+	# 		emit_signal("hide_ball", ball_no)
+	# elif index == 11: # Apply Global Fuzz
+	# 	var options = get_parent().get_node("FuzzPopup")
+	# 	options.popup_centered()
 		# var options = get_parent().get_node("HeadMovePopup")
 		# options.popup_centered()
-	elif index == 12: # Print Ballz Colors
-		emit_signal("print_ball_colors")
-	elif index == 13: # Jump to ball
-		if is_ball_selected:
-			var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-			if is_instance_valid(lnz_text_edit):
-				lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
-		return
+	# elif index == 12: # Print Ballz Colors
+	# 	emit_signal("print_ball_colors")
+	# elif index == 13: # Jump to ball
+	# 	if is_ball_selected:
+	# 		var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	# 		if is_instance_valid(lnz_text_edit):
+	# 			lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
+	# 	return
 
 func _on_ToolsMenu_about_to_show():
-	while get_item_count() > 14:
+	while get_item_count() > 15:
 		remove_item(get_item_count() - 1)
 
 	for i in range(14):
@@ -273,103 +378,131 @@ func _on_ToolsMenu_about_to_show():
 		is_omitted = selected_visual_ball.get("omitted") == true
 
 	if is_ball_selected:
-		set_item_text(13, "Jump to #%d (%s)" % [ball_no, b_name])
+		set_item_text(get_item_index(ToolsAction.BALL_INFO), "Jump to #%d (%s)" % [ball_no, b_name])
 	else:
-		set_item_text(13, "No Ballz Selected")
+		set_item_text(get_item_index(ToolsAction.BALL_INFO), "No Ballz Selected")
 
 	var option_text = ""
 
-	# 1: Create Addballz + Linez
+	# Create Addballz + Linez
+	var idx =  get_item_index(ToolsAction.CREATE_ADDBALLZ_LINEZ)
 	option_text = "Create Addballz + Linez"
-	set_item_disabled(1, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(1, option_text)
+	set_item_text(idx, option_text)
 
-	# 2: Create Addballz
+	# Create Addballz
+	idx = get_item_index(ToolsAction.CREATE_ADDBALLZ)
 	option_text = "Create Addballz"
-	set_item_disabled(2, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(2, option_text)
+	set_item_text(idx, option_text)
 
-	# 3: Delete Addballz
+	# Delete Addballz
+	idx = get_item_index(ToolsAction.DELETE_ADDBALLZ)
 	option_text = "Delete Addballz"
-	set_item_disabled(3, !is_ball_selected or !is_addball)
+	set_item_disabled(idx, !is_ball_selected or !is_addball)
 	if is_ball_selected and is_addball:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(3, option_text)
+	set_item_text(idx, option_text)
 
-	# 4: Omit/Unomit Ballz
-	set_item_disabled(4, !is_ball_selected)
+	# Omit/Unomit Ballz
+	idx =  get_item_index(ToolsAction.OMIT_UNOMIT)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		var type_str = "Addballz" if is_addball else "Ballz"
 		if is_omitted:
-			set_item_text(4, "Unomit " + type_str + " (#" + str(ball_no) + ")")
+			set_item_text(idx, "Unomit " + type_str + " (#" + str(ball_no) + ")")
 		else:
-			set_item_text(4, "Omit " + type_str + " (#" + str(ball_no) + ")")
+			set_item_text(idx, "Omit " + type_str + " (#" + str(ball_no) + ")")
 	else:
-		set_item_text(4, "Omit / Unomit Ballz")
-		set_item_disabled(4, !is_ball_selected)
+		set_item_text(idx, "Omit / Unomit Ballz")
+		set_item_disabled(idx, !is_ball_selected)
 
-	# 5: Connect by Linez
+	# Connect by Linez
+	idx = get_item_index(ToolsAction.CONNECT_LINEZ)
 	option_text = "Connect by Linez"
-	set_item_disabled(4, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (Start: #" + str(ball_no) + ")"
-	set_item_text(5, option_text)
+	set_item_text(idx, option_text)
 
-	# 6/7: Copy-Mirror (L-to-R/R-to-L)
+	# Copy-Mirror (L-to-R/R-to-L)
 	if is_ball_selected:
-		set_item_text(6, "Copy-Mirror (#" + str(ball_no) + ")")
-		set_item_disabled(6, false)
+		idx = get_item_index(ToolsAction.COPY_L_TO_R)
+		set_item_text(idx, "Copy-Mirror (#" + str(ball_no) + ")")
+		set_item_disabled(idx, false)
 
-		set_item_text(7, "Copy-Mirror (all ballz)")
-		set_item_disabled(7, true)
+		idx = get_item_index(ToolsAction.COPY_R_TO_L)
+		set_item_text(idx, "Copy-Mirror (all ballz)")
+		set_item_disabled(idx, true)
 	else:
-		set_item_text(6, "Copy-Mirror (cam L-to-R, all ballz)")
-		set_item_disabled(6, false)
-		
-		set_item_text(7, "Copy-Mirror (cam R-to-L, all ballz)")
-		set_item_disabled(7, false)
+		idx = get_item_index(ToolsAction.COPY_L_TO_R)
+		set_item_text(idx, "Copy-Mirror (cam L-to-R, all ballz)")
+		set_item_disabled(idx, false)
 
-	# 8: Paintball Mode
+		idx = get_item_index(ToolsAction.COPY_R_TO_L)
+		set_item_text(idx, "Copy-Mirror (cam R-to-L, all ballz)")
+		set_item_disabled(idx, false)
+
+	# Paintball Mode
+	idx = get_item_index(ToolsAction.PAINTBALL_MODE)
 	option_text = "Paintball Mode"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
 	else:
 		option_text += " (all ballz)"
-	set_item_text(8, option_text)
+	set_item_text(idx, option_text)
 
-	# 9: Move Head Ballz
-	# set_item_text(9, "Move Head Ballz")
-
-	# 9: Export to Clothes CLZ
+	# Export to Clothes CLZ
+	idx = get_item_index(ToolsAction.EXPORT_CLOTHES)
 	option_text = "Export to Clothes CLZ"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(9, option_text)
+	set_item_text(idx, option_text)
 
-	# 10: Hide Ballz
+	# Hide Ballz
+	idx = get_item_index(ToolsAction.HIDE_BALLZ)
 	option_text = "Hide Ballz"
-	set_item_disabled(10, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(10, option_text)
+	set_item_text(idx, option_text)
 
-	# 11: Apply Global Fuzz
-	set_item_text(11, "Apply Global Fuzz")
+	# Apply Global Fuzz
+	idx = get_item_index(ToolsAction.APPLY_FUZZ)
+	set_item_text(idx, "Apply Global Fuzz")
 
-	# 12: Copy Ballz Colors to Clipboard
-	set_item_text(12, "Copy Ballz Colors to Clipboard")
+	# Copy Ballz Colors to Clipboard
+	idx = get_item_index(ToolsAction.COPY_COLORS)
+	set_item_text(idx, "Copy Ballz Colors to Clipboard")
+
+	# Clear Paintballz
+	idx = get_item_index(ToolsAction.CLEAR_PAINTBALLZ)
+	set_item_disabled(idx, !is_ball_selected)
+	set_item_text(idx, "Clear Paintballz (#%d)" % ball_no if is_ball_selected else "Clear Paintballz")
 
 	if in_mode:
 		# Disable everything involving interactive left-click
-		for i in range(14):
-			if i != 3 and i != 4 and i != 9 and i != 10 and i != 12 and i != 13:
+		var allowed_ids = [
+			ToolsAction.RECOLOR,
+			ToolsAction.DELETE_ADDBALLZ,
+			ToolsAction.OMIT_UNOMIT,
+			ToolsAction.EXPORT_CLOTHES,
+			ToolsAction.APPLY_FUZZ,
+			ToolsAction.HIDE_BALLZ,
+			ToolsAction.COPY_COLORS,
+			ToolsAction.BALL_INFO,
+			ToolsAction.CLEAR_PAINTBALLZ
+		]
+		
+		for i in range(15):
+			var item_id = get_item_id(i)
+			if not item_id in allowed_ids:
 				set_item_disabled(i, true)
 
-		# Add separator and Exit item
 		add_separator()
 		add_item("Exit " + active_mode)
 

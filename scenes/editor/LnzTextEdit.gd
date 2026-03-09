@@ -1588,6 +1588,35 @@ func _on_ToolsMenu_unomit_ball(ball_no: int):
 		
 		i += 1
 
+func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
+	save_backup()
+	var bounds = _get_section_bounds("[Paint Ballz]")
+	if bounds.empty(): return
+
+	var comment_count = 0
+
+	# Iterate backwards through the section lines
+	for i in range(bounds.end - 1, bounds.start - 1, -1):
+		var line = get_line(i)
+		var stripped = line.strip_edges()
+		
+		# Skip empty lines or lines already commented out
+		if stripped.empty() or stripped.begins_with(";"): 
+			continue
+
+		var parts = _split_line(stripped) 
+		if parts.size() > 0 and parts[0].is_valid_integer() and int(parts[0]) == ball_no:
+			# Comment out the line by prefixing with semicolon
+			# We use the original 'line' variable to preserve existing indentation
+			set_line(i, "; " + line)
+			comment_count += 1
+
+	if comment_count > 0:
+		save_file(true)
+		commit_visual_change("Commented out %d Paintballz from Ballz #%d" % [comment_count, ball_no])
+		if console_log:
+			console_log.log_message("[LNZ EDIT] Commented out %d Paintballz from Ballz #%d" % [comment_count, ball_no])
+
 # Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
 func _update_all_references(ball_no: int):
 	_update_pairwise_section("[Linez]", ball_no)
