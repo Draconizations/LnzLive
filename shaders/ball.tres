@@ -70,28 +70,123 @@ float random (float x) {
 
 // Apply z-based palette shifts (z-shading)
 vec3 get_shifted_color(int palette_index) {
-	int new_palette_index;
-	if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
-		int base_decade = color_index - int(mod(float(color_index), 10.0));
-		if (palette_index == 0) {
-			new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
-		} else {
-			new_palette_index = (base_decade - 10) + palette_index;
-		}
-	} else {
-		int modded_color = color_index - int(mod(float(color_index), 10.0));
-		int amount_to_shift_index = int(mod(float(palette_index), 10.0));
-		
-		if(z_center_ball < z_center_pet) {
-			amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
-		}
-		else if (z_center_ball > z_center_pet) {
-			amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
-		}
-		new_palette_index = modded_color + amount_to_shift_index;
-	}
-	vec3 new_color = texture(palette, vec2(float(new_palette_index)/255.0, 0.0)).rgb;
-	return new_color;
+    int new_palette_index;
+    if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
+        int base_decade = color_index - int(mod(float(color_index), 10.0));
+        
+        if (palette_index == 0) {
+            new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
+        } else {
+            new_palette_index = (base_decade - 10) + palette_index;
+        }
+    } else {
+        int modded_color = color_index - int(mod(float(color_index), 10.0));
+        int amount_to_shift_index = int(mod(float(palette_index), 10.0));
+        
+        if(z_center_ball < z_center_pet) {
+            amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
+        }
+        else if (z_center_ball > z_center_pet) {
+            amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
+        }
+        new_palette_index = modded_color + amount_to_shift_index;
+    }
+    vec3 new_color = texture(palette, vec2(float(new_palette_index)/255.0, 0.0)).rgb;
+    return new_color;
+}
+
+vec2 calculate_uvs(vec2 offset) {
+    vec2 tex_coords;
+    if (tile_texture) {
+        vec2 uv = offset / float(ball_size) + vec2(0.5);
+        uv *= float(ball_size) / texture_size_raw;
+
+        if (is_atlas) {
+            vec2 tiled_uv = fract(uv);
+            tiled_uv.x = 1.0 - tiled_uv.x;
+            tiled_uv.y = 1.0 - tiled_uv.y;
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+            tex_coords = (atlas_pos + tiled_uv * atlas_dim) / atlas_size;
+        } else {
+            tex_coords = fract(uv);
+            tex_coords.x = 1.0 - tex_coords.x;
+            tex_coords.y = 1.0 - tex_coords.y;
+        }
+    } else {
+        vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
+        vec2 adj_offset = offset - base_center_offset;
+        vec2 snapped_uv = (floor(adj_offset) + 0.5) / texture_size_raw + vec2(0.5);
+
+        if (is_atlas) {
+            snapped_uv.x = 1.0 - snapped_uv.x;
+            snapped_uv.y = 1.0 - snapped_uv.y;
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+            tex_coords = (atlas_pos + snapped_uv * atlas_dim) / atlas_size;
+        } else {
+            tex_coords = snapped_uv;
+            tex_coords.x = 1.0 - tex_coords.x;
+            tex_coords.y = 1.0 - tex_coords.y;
+        }
+    }
+    return tex_coords;
+}
+
+vec3 get_closest_babyz_color(vec4 original_color, out bool is_transp) {
+    if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+        is_transp = true;
+        return TRANSPARENT_COLOR_MAGENTA.rgb;
+    }
+
+    vec4 best_color = vec4(0.0);
+    float best_distance_sq = 1e20;
+    
+    for (int i = 0; i < 256; i++) {
+        if (i >= palette_size) break;
+        if (i == TRANSPARENT_COLOR_INDEX) continue;
+
+        float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
+        vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
+        float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
+        
+        if (distance_sq < best_distance_sq) {
+            best_distance_sq = distance_sq;
+            best_color = babyz_color;
+        }
+    }
+    
+    is_transp = false;
+    return best_color.rgb;
+}
+
+int get_closest_petz_index(vec4 raw_color) {
+    if (distance(raw_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+        return TRANSPARENT_COLOR_INDEX;
+    }
+    
+    int best_index = 0;
+    float best_dist = 1e20;
+    
+    for (int i = 0; i < 256; i++) {
+        vec4 p_col = texture(petz_palette, vec2((float(i) + 0.5) / 256.0, 0.5));
+        float d = distance(raw_color.rgb, p_col.rgb);
+        if (d < best_dist) {
+            best_dist = d;
+            best_index = i;
+        }
+    }
+    
+    return best_index;
+}
+
+vec3 apply_palette_shift(int palette_index) {
+    if (transparent_index > 0) {
+        if (transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
+            return get_shifted_color(palette_index);
+        }
+    }
+    return texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
 }
 
 void fragment() {
@@ -167,175 +262,41 @@ void fragment() {
     }
 
     // TEXTURING & QUANTIZING
-    vec2 tex_coords;
     int texture_limit = is_babyz_mode ? 230 : 150;
-
-    if (tile_texture) {
-        // Offset in screen pixels from the ball center
-        vec2 offset = FRAGCOORD.xy - center_fragcoord;
-
-        // Normalize to ball size
-        vec2 uv = offset / float(ball_size) + vec2(0.5);
-
-        // Normalize to raw texture size
-        uv *= float(ball_size) / texture_size_raw;
-
-        if (is_atlas) {
-            vec2 tiled_uv = fract(uv);
-            tiled_uv.x = 1.0 - tiled_uv.x;
-            tiled_uv.y = 1.0 - tiled_uv.y;
-
-            vec2 atlas_pos = atlas_rect.xy;
-            vec2 atlas_dim = atlas_rect.zw;
-
-            tex_coords = (atlas_pos + tiled_uv * atlas_dim) / atlas_size;
-        } else {
-            // Wrap into [0,1] to tile
-            tex_coords = fract(uv);
-            tex_coords.x = 1.0 - tex_coords.x;
-            tex_coords.y = 1.0 - tex_coords.y;
-        }
-
-    } else {
-        // Get raw pixel offset from ball center
-        vec2 offset = FRAGCOORD.xy - center_fragcoord;
-
-        // Adjust for the difference between declared LNZ size and actual BMP size
-        vec2 base_center_offset = (texture_size - texture_size_raw) / 2.0;
-        offset -= base_center_offset;
-
-        // Targeted center of the texel using floor and adding a half-pixel for pixel-perfect
-        vec2 snapped_uv = (floor(offset) + 0.5) / texture_size_raw + vec2(0.5);
-
-        if (is_atlas) {
-            // Flip for atlas
-            snapped_uv.x = 1.0 - snapped_uv.x;
-            snapped_uv.y = 1.0 - snapped_uv.y;
-            
-            vec2 atlas_pos = atlas_rect.xy;
-            vec2 atlas_dim = atlas_rect.zw;
-            // Map the snapped UV to the atlas coordinates
-            tex_coords = (atlas_pos + snapped_uv * atlas_dim) / atlas_size;
-        } else {
-            tex_coords = snapped_uv;
-            //Flip for non-atlas
-            tex_coords.x = 1.0 - tex_coords.x;
-            tex_coords.y = 1.0 - tex_coords.y;
-        }
-    }
-
-    // restore if needed for GLSL
-    // const int MAX_PALETTE_SIZE = 256;
-    // for (int i = 0; i < MAX_PALETTE_SIZE; i++) {
-    //     if (i >= palette_size) {
-    //         break;
-    //     }
-
     vec3 texture_color;
     bool is_transparent = false;
 
     if (has_texture && color_index >= 10 && color_index < texture_limit) {
-        
+        vec2 offset = FRAGCOORD.xy - center_fragcoord;
+        vec2 tex_coords = calculate_uvs(offset);
+
         if (is_atlas) {
             vec4 raw_color = texture(ball_texture, tex_coords);
             if (raw_color.a < 0.1) is_transparent = true;
 
             if (should_quantize) {
-                // Look up RGB color using the Petz palette
-                vec4 original_color = raw_color;
-
-                // Quantize color to the Babyz palette
-                if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                    texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
-                    is_transparent = true;
-                } else {
-                    vec4 best_color = vec4(0.0);
-                    float best_distance_sq = 1e20;
-                    for (int i = 0; i < 256; i++) {
-                        if (i >= palette_size) break;
-                        if (i == TRANSPARENT_COLOR_INDEX) continue;
-
-                        // Normalized palette index for Babyz palette sampling
-                        float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
-                        vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
-                        float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
-                        if (distance_sq < best_distance_sq) {
-                            best_distance_sq = distance_sq;
-                            best_color = babyz_color;
-                        }
-                    }
-                    texture_color = best_color.rgb;
-                }
+                bool transp;
+                texture_color = get_closest_babyz_color(raw_color, transp);
+                if (transp) is_transparent = true;
             } else {
-                vec4 best_color = vec4(0.0);
-                float best_dist = 1e20;
-                int best_index = 0;
-
-                if (distance(raw_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                    best_index = 253;
-                } else {
-                    for (int i=0; i<256; i++) {
-                        vec4 p_col = texture(petz_palette, vec2((float(i) + 0.5)/256.0, 0.5));
-                        float d = distance(raw_color.rgb, p_col.rgb);
-                        if (d < best_dist) { best_dist = d; best_index = i; }
-                    }
-                }
-
-                int palette_index = best_index;
-                is_transparent = (palette_index == 253);
-                if (raw_color.a < 0.1) is_transparent = true;
-
-                if (transparent_index > 0) {
-                    if (transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
-                        texture_color = get_shifted_color(palette_index);
-                    } else {
-                        texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-                    }
-                } else {
-                    texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-                }
-            }
-        } else if (should_quantize) {
-            // Get palette index from texture
-            int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
-            vec4 original_color = texture(petz_palette, vec2(float(palette_index)/255.0, 0.5));
-            
-            if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
-                is_transparent = true;
-            } else {
-                vec4 best_color = vec4(0.0);
-                float best_distance_sq = 1e20;
-                for (int i = 0; i < 256; i++) {
-                    if (i >= palette_size) break;
-                    if (i == TRANSPARENT_COLOR_INDEX) continue;
-
-                    // Normalized palette index for texture sampling
-                    float babyz_normalized_index = float(i) / float(palette_size);
-                    vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
-                    float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
-                    if (distance_sq < best_distance_sq) {
-                        best_distance_sq = distance_sq;
-                        best_color = babyz_color;
-                    }
-                }
-                texture_color = best_color.rgb;
+                int palette_index = get_closest_petz_index(raw_color);
+                if (palette_index == TRANSPARENT_COLOR_INDEX || raw_color.a < 0.1) is_transparent = true;
+                texture_color = apply_palette_shift(palette_index);
             }
         } else {
+            // Get palette index directly from the RED channel for non-atlas textures
             int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
-            is_transparent = (palette_index == 253);
-
-            if (transparent_index > 0) {
-                if (transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
-                    texture_color = get_shifted_color(palette_index);
-                } else {
-                    texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
-                }
+            
+            if (should_quantize) {
+                vec4 original_color = texture(petz_palette, vec2(float(palette_index) / 255.0, 0.5));
+                bool transp;
+                texture_color = get_closest_babyz_color(original_color, transp);
+                if (transp) is_transparent = true;
             } else {
-                texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.0)).rgb;
+                is_transparent = (palette_index == TRANSPARENT_COLOR_INDEX);
+                texture_color = apply_palette_shift(palette_index);
             }
         }
-
     } else {
         // untextured, if range check failed or has_texture is false
         texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
@@ -393,13 +354,11 @@ void fragment() {
     float lash_mask = 0.0;
     if (has_eyelashes && eyelash_color_index != -1) {
         vec2 vc = mesh_pos * float(ball_size);
-        // vec2 vc = FRAGCOORD.xy - center_fragcoord;
         
         float rot_c = cos(-eyelid_rotation);
         float rot_s = sin(-eyelid_rotation);
         vec2 vcr = vec2(vc.x * rot_c - vc.y * rot_s, vc.x * rot_s + vc.y * rot_c);
         
-        // float total_fan_width = float(ball_size) * eyelash_spacing_norm;
         float total_fan_width = (float(ball_size) * eyelash_spacing_norm) / 2.0;
         float start_x = -total_fan_width * 0.5;
         float denom = max(float(eyelash_count) - 1.0, 1.0);
@@ -441,7 +400,6 @@ void fragment() {
     }
 
     // SET TRANSPARENCY
-    // float alpha_value = 1.0 - step(pct + pct2, 0.0);
     float alpha_value = 1.0 - step(pct + pct2 + lash_mask, 0.0);
 
     if (highlight_pct > 0.0) {
@@ -475,35 +433,33 @@ void vertex() {
     // Store pet-local XY for eyelids:
     mesh_pos = VERTEX.xy;
 
-	// Billboarding textures aligned to camera view
-	MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
-	
+    // Billboarding textures aligned to camera view
+    MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
+    
     // Compute depths for z-shading
-	z_center_ball = (MODELVIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).z;
-	z_center_pet = (INV_CAMERA_MATRIX * vec4(z_center_pet_world, 1.0)).z;
-	
-	// Find the original position of the vertex
-	vec3 vert_in_clip_space = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	vec4 center_clip_space = MODELVIEW_MATRIX * vec4(vec3(0.0), 1.0);
+    z_center_ball = (MODELVIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).z;
+    z_center_pet = (INV_CAMERA_MATRIX * vec4(z_center_pet_world, 1.0)).z;
+    
+    // Find the original position of the vertex
+    vec3 vert_in_clip_space = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
+    vec4 center_clip_space = MODELVIEW_MATRIX * vec4(vec3(0.0), 1.0);
 
-	// Calculate center fragcoord. Do in vertex shader to avoid calculating per frag.
-	center_view = PROJECTION_MATRIX * center_clip_space;
-	vec2 center_ndc = (center_view.xy + 1.0) / 2.0;
-	center_fragcoord = floor(center_ndc * VIEWPORT_SIZE) + 0.5;
-	
-	// float b = (float(ball_size) / 2.0 + 0.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
-    //float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0); // extra space for higlight
+    // Calculate center fragcoord. Do in vertex shader to avoid calculating per frag.
+    center_view = PROJECTION_MATRIX * center_clip_space;
+    vec2 center_ndc = (center_view.xy + 1.0) / 2.0;
+    center_fragcoord = floor(center_ndc * VIEWPORT_SIZE) + 0.5;
+    
     float lash_pad = has_eyelashes ? 10.0 : 0.0; 
     float b = (float(ball_size) / 2.0 + 1.5 + float(fuzz_amount + 3) + lash_pad) / (VIEWPORT_SIZE.x / 2.0);
 
     // Push vertices outwards by half ball size and fuzz amount
-	vert_in_clip_space.z = center_clip_space.z;
-	vert_in_clip_space.z += z_add * 0.001;
+    vert_in_clip_space.z = center_clip_space.z;
+    vert_in_clip_space.z += z_add * 0.001;
 
-	vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
-	vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
+    vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
+    vert_in_clip_space.y = center_clip_space.y + b * sign(vert_in_clip_space.y);
     
-	VERTEX = vert_in_clip_space;
+    VERTEX = vert_in_clip_space;
 }"
 
 [resource]
