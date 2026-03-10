@@ -758,10 +758,12 @@ func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
 	return pal_texture
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
-	is_babyz_mode = (lnz_info.species == KeyBallsData.Species.BABY)
-	if game_option_button and game_option_button.selected == 1:
-		is_babyz_mode = true
 
+	if (lnz_info.species == KeyBallsData.Species.BABY):
+		is_babyz_mode = true
+	elif (game_option_button and game_option_button.selected == 1):
+		is_babyz_mode = true
+	
 	var pal_texture = null
 	var default_palette = preload("res://resources/palettes/petz_palette.png")
 	if is_babyz_mode:
