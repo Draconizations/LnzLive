@@ -538,10 +538,19 @@ func save_backup():
 
 	# Create new backup
 	var file = File.new()
-	file.open(backup_path1, File.WRITE)
+	var err = file.open(backup_path1, File.WRITE)
+	if err != OK:
+		printerr("Failed to open backup file for writing: ", backup_path1)
+		return
+		
 	file.store_string(text)
 	file.close()
 	emit_signal("file_backed_up")
+	
+	var msg = "Created Backup: " + backup_path1.get_file()
+	print(msg)
+	if console_log:
+		console_log.log_message("Created Backup: " + backup_path1.get_file())
 
 func save_file(skip_history: bool = false):
 	if not skip_history and history_index >= 0:
@@ -579,7 +588,11 @@ func save_file(skip_history: bool = false):
 	
 	if is_user_file:
 		var file = File.new()
-		file.open(filepath, File.WRITE)
+		var err = file.open(filepath, File.WRITE)
+		if err != OK:
+			printerr("Failed to open file for writing: ", filepath)
+			return
+			
 		file.store_string(text)
 		file.close()
 	else:
@@ -588,7 +601,12 @@ func save_file(skip_history: bool = false):
 		var file = File.new()
 		if file.file_exists(possible_file_name):
 			possible_file_name = "user://resources/" + filename.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
-		file.open(possible_file_name, File.WRITE)
+			
+		var err = file.open(possible_file_name, File.WRITE)
+		if err != OK:
+			printerr("Failed to open file for writing: ", possible_file_name)
+			return
+			
 		file.store_string(text)
 		file.close()
 		filepath = possible_file_name
@@ -597,9 +615,10 @@ func save_file(skip_history: bool = false):
 	emit_signal("file_saved", filepath)
 	_set_text_preserve(get_text()) 
 	
-	print("Saved LNZ and Applied Changes!")
+	var msg = "Saved LNZ and Applied Changes!"
+	print(msg)
 	if console_log:
-		console_log.log_message("Saved LNZ and Applied Changes!")
+		console_log.log_message(msg)
 
 ### PARSING ###
 
