@@ -785,93 +785,42 @@ func _insert_text_at_line(line_no: int, text: String):
 	set_text(result.strip_edges())
 
 func _toggle_comment():
-	# Get the selection range
-	var start_line
-	var end_line
-	
-	if is_selection_active():
-		start_line = get_selection_from_line()
-		end_line = get_selection_to_line()
-		
-		# If the selection ends at column 0 of a new line,
-		# it shouldn't include that new line.
-		if get_selection_to_column() == 0 and end_line > start_line:
-			end_line -= 1
-	else:
-		# No selection, just use the current line
-		start_line = cursor_get_line()
-		end_line = cursor_get_line()
+	var range_bounds = _get_active_line_range()
+	var start_line = range_bounds[0]
+	var end_line = range_bounds[1]
 
 	var comment_prefix = "; "
 	var lines_to_process = []
 	var should_uncomment = true
 
-	# We only uncomment if ALL non-empty selected lines are already commented.
 	for i in range(start_line, end_line + 1):
 		var line_text = get_line(i)
-		
-		# Skip empty lines
 		if line_text.strip_edges().empty():
 			continue
-		
+			
 		lines_to_process.append(i)
-		var stripped_line = line_text.lstrip(" \t")
-		
-		if not stripped_line.begins_with(comment_prefix):
+		if not line_text.lstrip(" \t").begins_with(comment_prefix):
 			should_uncomment = false
 
 	if lines_to_process.empty():
-		return # Nothing to do
+		return
 
 	if should_uncomment:
-		# --- UNCOMMENT ---
-		for i in lines_to_process:
-			var line_text = get_line(i)
-			# Find the indentation
-			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
-			var indent = line_text.substr(0, indent_len)
-			var content = line_text.lstrip(" \t")
-			
-			# Remove the prefix
-			var new_line = indent + content.substr(comment_prefix.length())
-			set_line(i, new_line)
+		_remove_comments(lines_to_process, comment_prefix)
 	else:
-		# --- COMMENT ---
-		for i in lines_to_process:
-			var line_text = get_line(i)
-			# Find the indentation
-			var indent_len = line_text.length() - line_text.lstrip(" \t").length()
-			var indent = line_text.substr(0, indent_len)
-			var content = line_text.lstrip(" \t")
-			
-			# Add the prefix, preserving indentation
-			var new_line = indent + comment_prefix + content
-			set_line(i, new_line)
+		_apply_comments(lines_to_process, comment_prefix)
 
-	# Restore selection to cover the lines we just modified
 	deselect()
 	select(start_line, 0, end_line, get_line(end_line).length())
 
 func _set_delimiter():
-	var start_line = 0
-	var end_line = 0
+	var range_bounds = _get_active_line_range()
 	
-	if is_selection_active():
-		start_line = get_selection_from_line()
-		end_line = get_selection_to_line()
-		# Adjust if selection ends exactly at the start of a new line
-		if get_selection_to_column() == 0 and end_line > start_line:
-			end_line -= 1
-	else:
-		start_line = cursor_get_line()
-		end_line = cursor_get_line() 
-
-	# Get the user's preferred delimiter if set
 	var preferred_delim = _get_user_preferred_delimiter()
 	if preferred_delim == "auto":
 		preferred_delim = " "
 	
-	for i in range(start_line, end_line + 1):
+	for i in range(range_bounds[0], range_bounds[1] + 1):
 		var line_text = get_line(i)
 		var stripped = line_text.strip_edges()
 		
@@ -882,24 +831,15 @@ func _set_delimiter():
 		if parts.size() == 0:
 			continue
 			
+		var data_parts = Array(parts)
 		var comment_part = ""
-		var data_parts = []
 		
-		var last_part = parts[parts.size() - 1]
+		var last_part = data_parts[data_parts.size() - 1]
 		if last_part.begins_with(";"):
-			comment_part = last_part
-			for j in range(parts.size() - 1):
-				data_parts.append(parts[j])
-		else:
-			data_parts = Array(parts) 
+			comment_part = data_parts.pop_back()
 			
-		# Reconstruct the line data with the consistent delimiter
-		var new_line_data = _join_array(data_parts, preferred_delim)
-		
-		# Append the comment back if it exists
-		var final_line = new_line_data
+		var final_line = _join_array(data_parts, preferred_delim)
 		if not comment_part.empty():
-			# Ensure there is at least one space before the comment for readability
 			final_line += " " + comment_part 
 			
 		set_line(i, final_line)
@@ -911,21 +851,11 @@ func _on_set_column_confirmed():
 	var col_idx = col_input.text.to_int()
 	var new_value = val_input.text
 	
-	var start_line = 0
-	var end_line = 0
-	
-	if is_selection_active():
-		start_line = get_selection_from_line()
-		end_line = get_selection_to_line()
-		if get_selection_to_column() == 0 and end_line > start_line:
-			end_line -= 1
-	else:
-		start_line = cursor_get_line()
-		end_line = cursor_get_line()
+	var range_bounds = _get_active_line_range()
 
 	save_backup()
 	
-	for i in range(start_line, end_line + 1):
+	for i in range(range_bounds[0], range_bounds[1] + 1):
 		var line_text = get_line(i)
 		var stripped = line_text.strip_edges()
 		
@@ -936,18 +866,15 @@ func _on_set_column_confirmed():
 		if parts.size() <= 1:
 			continue
 			
-		var comment_part = parts[parts.size() - 1]
-		var data_parts = []
-		for j in range(parts.size() - 1):
-			data_parts.append(parts[j])
+		var data_parts = Array(parts) # Cast PoolStringArray to standard Array
+		var comment_part = data_parts.pop_back() # Peels off the last element
 			
 		if col_idx >= 0 and col_idx < data_parts.size():
 			data_parts[col_idx] = new_value
 			
 			var delim = _detect_delimiter(i, i + 1) 
-			var new_data = _join_array(data_parts, delim) 
+			var final_line = _join_array(data_parts, delim) 
 			
-			var final_line = new_data
 			if not comment_part.empty():
 				final_line += " " + comment_part
 				
@@ -955,7 +882,6 @@ func _on_set_column_confirmed():
 
 	save_file(true)
 	commit_visual_change("Set column " + str(col_idx) + " to '" + new_value + "' in LNZ selection")
-
 
 ### FINDING ###
 
@@ -1808,29 +1734,27 @@ func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 	var bounds = _get_section_bounds("[Paint Ballz]")
 	if bounds.empty(): return
 
-	var comment_count = 0
+	var lines_to_comment = []
 
-	# Iterate backwards through the section lines
-	for i in range(bounds.end - 1, bounds.start - 1, -1):
+	for i in range(bounds.start, bounds.end):
 		var line = get_line(i)
 		var stripped = line.strip_edges()
 		
-		# Skip empty lines or lines already commented out
 		if stripped.empty() or stripped.begins_with(";"): 
 			continue
 
 		var parts = _split_line(stripped) 
 		if parts.size() > 0 and parts[0].is_valid_integer() and int(parts[0]) == ball_no:
-			# Comment out the line by prefixing with semicolon
-			# We use the original 'line' variable to preserve existing indentation
-			set_line(i, "; " + line)
-			comment_count += 1
+			lines_to_comment.append(i)
 
-	if comment_count > 0:
+	if not lines_to_comment.empty():
+		_apply_comments(lines_to_comment, "; ")
+		
+		var count = lines_to_comment.size()
 		save_file(true)
-		commit_visual_change("Commented out %d Paintballz from Ballz #%d" % [comment_count, ball_no])
+		commit_visual_change("Commented out %d Paintballz from Ballz #%d" % [count, ball_no])
 		if console_log:
-			console_log.log_message("[LNZ EDIT] Commented out %d Paintballz from Ballz #%d" % [comment_count, ball_no])
+			console_log.log_message("[LNZ EDIT] Commented out %d Paintballz from Ballz #%d" % [count, ball_no])
 
 # Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
 func _update_all_references(ball_no: int):
