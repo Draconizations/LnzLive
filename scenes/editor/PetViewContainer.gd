@@ -6,6 +6,19 @@ extends Control
 # - Handles coordinate conversion between spatial world and LNZ units
 # - Coordinates viewport visuals (gizmos, labels, and cursors)
 
+# SECTIONS:
+#	SETUP & INITIALIZATION
+#	INPUT HANDLING
+#	MODE MANAGEMENT
+#	PALETTE VIEWER
+#	VARIATION VIEWER
+#	RECOLOR MODE
+#	PAINT MODE
+#	SHAPE MODE
+#	LINE MODE
+#	PRESET MODE
+#	MOVE MODE
+
 var ui_is_dirty := true
 
 onready var default_font = get_font("font")
@@ -178,6 +191,12 @@ var _dimmer_rect: ColorRect = null
 
 var design_rotation_angle: float = 0.0
 var design_scale_multiplier: float = 1.0
+
+### SETUP & INITIALIZATION ###
+
+func _safe_connect(target, sig, method):
+	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
+		target.connect(sig, self, method)
 
 func _ready():
 	hotkey_overlay_instance = hotkey_overlay_scene.instance()
@@ -1325,7 +1344,7 @@ func _gui_input(event):
 			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
 			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
-			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
+			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 		is_dragging = false
 		is_resizing = false
@@ -1416,7 +1435,7 @@ func _gui_input(event):
 			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
 			print("[LNZ EDIT] Dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
-			pet_node.emit_ball_translation(drag_ball.ball_no, lnz_pos)
+			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 			is_dragging = false
 			is_resizing = false
@@ -2328,6 +2347,7 @@ func _wait_for_addball_then_autodrag() -> void:
 		tries -= 1
 
 ### MODE MANAGEMENT ###
+
 func _deactivate_other_modes(active_mode_name: String):
 	if active_mode_name != "Paintball Mode": paintball_check_box.pressed = false
 	if active_mode_name != "Line Mode": line_mode_check_box.pressed = false

@@ -58,8 +58,8 @@ func _ready():
 	# add_item("Delete Addballz")                 # index 3
 	# add_item("Omit/Unomit Ballz")               # index 4
 	# add_item("Connect by Linez")                # index 5
-	# add_item("Copy-Mirror (cam L-to-R)")        # index 6
-	# add_item("Copy-Mirror (cam R-to-L)")        # index 7
+	# add_item("Copy-Mirror (L-to-R)")        # index 6
+	# add_item("Copy-Mirror (R-to-L)")        # index 7
 	# add_item("Paintball Mode")                  # index 8
 	# add_item("Export to Clothes CLZ")           # index 9
 	# add_item("Hide Ballz")                      # index 10
@@ -74,8 +74,8 @@ func _ready():
 	add_item("Omit/Unomit Ballz", ToolsAction.OMIT_UNOMIT)
 	add_item("Clear Paintballz from Ballz", ToolsAction.CLEAR_PAINTBALLZ)
 	add_item("Connect by Linez", ToolsAction.CONNECT_LINEZ)
-	add_item("Copy-Mirror (cam L-to-R)", ToolsAction.COPY_L_TO_R)
-	add_item("Copy-Mirror (cam R-to-L)", ToolsAction.COPY_R_TO_L)
+	add_item("Copy-Mirror (L-to-R)", ToolsAction.COPY_L_TO_R)
+	add_item("Copy-Mirror (R-to-L)", ToolsAction.COPY_R_TO_L)
 	add_item("Paintball Mode", ToolsAction.PAINTBALL_MODE)
 	add_item("Export to Clothes CLZ", ToolsAction.EXPORT_CLOTHES)
 	add_item("Hide Ballz", ToolsAction.HIDE_BALLZ)
@@ -440,11 +440,11 @@ func _on_ToolsMenu_about_to_show():
 		set_item_disabled(idx, true)
 	else:
 		idx = get_item_index(ToolsAction.COPY_L_TO_R)
-		set_item_text(idx, "Copy-Mirror (cam L-to-R, all ballz)")
+		set_item_text(idx, "Copy-Mirror (L-to-R, all ballz)")
 		set_item_disabled(idx, false)
 
 		idx = get_item_index(ToolsAction.COPY_R_TO_L)
-		set_item_text(idx, "Copy-Mirror (cam R-to-L, all ballz)")
+		set_item_text(idx, "Copy-Mirror (R-to-L, all ballz)")
 		set_item_disabled(idx, false)
 
 	# Paintball Mode
