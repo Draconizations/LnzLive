@@ -720,6 +720,9 @@ func _update_3d_gizmo_visibility():
 func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
 	return (screen_pos - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
 
+func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
+	return ((viewport_pos - Vector2(500, 500)) * tex.rect_scale) + (rect_position + rect_size / 2.0)
+
 # TBD: refactor _gui_input with separate functions:
 func _handle_box_selection(event: InputEvent) -> bool:
 	if not (move_mode or preset_mode or auto_paintballer_mode) or not Input.is_key_pressed(KEY_CONTROL):
@@ -735,8 +738,7 @@ func _handle_box_selection(event: InputEvent) -> bool:
 			box_selecting = false
 			update()
 			if box_start_pos.distance_to(event.position) < 5.0:
-				var viewport_pos = _get_viewport_pos_from_screen_pos(event.position)
-				var hover = get_intended_ball(viewport_pos)
+				var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 				if hover:
 					if hover in selected_balls:
 						selected_balls.erase(hover)
@@ -915,16 +917,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var is_addball = b_no >= KeyBallsData.max_base_ball_num
 				var bhd_s = pet_node.bhd.ball_sizes[b_no] if not is_addball else 0
 
-				var req_total
-				if is_addball:
-					req_total = (target_visual / (engine_scale / 255.0))
-				else:
-					req_total = (target_visual / (engine_scale / 255.0)) + 2
-
-				var final_lnz = round(req_total - bhd_s)
-				var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-				snapped_visual -= 1 - fmod(snapped_visual, 2)
-
+				var snapped_visual = LnzLiveUtils.snap_visual_size(target_visual, is_addball, engine_scale, bhd_s)
 				b.set_ball_size(snapped_visual)
 
 			if move_mode_settings_instance.is_mirror_x_active():
@@ -1057,21 +1050,7 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 								var scale = pet_node.lnz.scales[1]
 								var desired_final_size = properties.size
 
-								var new_lnz_size = 0
-								var calculated_size = 0
-								var required_base_size = (desired_final_size / (scale / 255.0)) + 2
-								new_lnz_size = required_base_size - bhd_size
-
-								for i in range(3): 
-									var current_base_size = bhd_size + new_lnz_size
-									calculated_size = round((current_base_size - 2) * (scale / 255.0))
-									calculated_size -= 1 - fmod(calculated_size, 2)
-									if calculated_size == desired_final_size:
-										break
-									var diff = desired_final_size - calculated_size
-									new_lnz_size += diff 
-
-								properties["size"] = int(round(new_lnz_size))
+								properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(desired_final_size, false, scale, bhd_size)
 					
 				var scale_ratio = 1.0
 				if properties["scale_paintballz"]:
@@ -1310,12 +1289,7 @@ func _gui_input(event):
 			var bhd_s = pet_node.bhd.ball_sizes[drag_ball.ball_no] if not is_ab else 0
 			var engine_scale = pet_node.lnz.scales[1]
 			
-			var req_total = (target_visual / (engine_scale / 255.0)) + 2
-			var final_lnz = round(req_total - bhd_s)
-			
-			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-			snapped_visual -= 1 - fmod(snapped_visual, 2)
-			
+			var snapped_visual = LnzLiveUtils.snap_visual_size(target_visual, is_ab, engine_scale, bhd_s)
 			drag_ball.set_ball_size(snapped_visual)
 		else:
 			Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
@@ -1958,24 +1932,10 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
 	var ball_no = drag_ball.ball_no
 	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
-
 	var bhd_size = pet_node.bhd.ball_sizes[ball_no] if not is_addball else 0
-	var scale = pet_node.lnz.scales[1]
-	var desired_visual = drag_ball.ball_size
+	var engine_scale = pet_node.lnz.scales[1]
 	
-	var offset = 0 if is_addball else 2
-	var req_total_size = (desired_visual / (scale / 255.0)) + offset
-	var lnz_value = int(round(req_total_size - bhd_size))
-	
-	for i in range(-1, 2):
-		var test_lnz = lnz_value + i
-		var test_visual = round(((bhd_size + test_lnz) - 2) * (scale / 255.0))
-		test_visual -= 1 - fmod(test_visual, 2)
-		
-		if test_visual == desired_visual:
-			return test_lnz
-			
-	return lnz_value
+	return LnzLiveUtils.visual_size_to_lnz_size(drag_ball.ball_size, is_addball, engine_scale, bhd_size)
 
 func _isolate_target_ball(target_ball):
 	_create_overlay()
@@ -2204,8 +2164,7 @@ func _commit_box_selection():
 			continue
 
 		var projected_pos_local = camera.unproject_position(b.global_transform.origin)
-		var relative_pos = projected_pos_local - Vector2(500, 500)
-		var pos_in_container = (relative_pos * tex.rect_scale) + (rect_size / 2.0) 
+		var pos_in_container = _get_screen_pos_from_viewport_pos(projected_pos_local)
 
 		if rect.has_point(pos_in_container):
 			if not (b in selected_balls):
@@ -3557,12 +3516,7 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 			var bhd_s = pet_node.bhd.ball_sizes[b.ball_no] if not is_ab else 0
 			var engine_scale = pet_node.lnz.scales[1]
 
-			var req_total = (target_visual / (engine_scale / 255.0)) + 2
-			var final_lnz = round(req_total - bhd_s)
-
-			var snapped_visual = round(((bhd_s + final_lnz) - 2) * (engine_scale / 255.0))
-			snapped_visual -= 1 - fmod(snapped_visual, 2)
-
+			var snapped_visual = LnzLiveUtils.snap_visual_size(target_visual, is_ab, engine_scale, bhd_s)
 			b.set_ball_size(snapped_visual)
 
 			pass
