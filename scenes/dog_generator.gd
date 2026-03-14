@@ -1780,6 +1780,10 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.set_species(species, is_babyz_mode)
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = start.palette
+
+			visual_line.full_outline = line.full_outline 
+			visual_line.draw_order = line.draw_order
+
 			if line.color_index == -1:
 				visual_line.color_index = start.color_index
 			else:

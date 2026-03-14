@@ -546,9 +546,20 @@ func get_omissions(reader):
 		omissions[line.ball_no] = true
 		
 func get_lines(reader):
-	var parsed_lines = get_parsed_lines(reader, ["start", "end", "fuzz", "color", "l_color", "r_color", "start_thickness", "end_thickness"])
+	var parsed_lines = get_parsed_lines(reader, ["start", "end", "fuzz", "color", "l_color", "r_color", "start_thickness", "end_thickness", "full_outline", "draw_order"])
 	for line in parsed_lines:
-		var line_data = LineData.new(line.start, line.end, line.start_thickness, line.end_thickness, line.fuzz, line.color, line.l_color, line.r_color)
+		var full_outline = line.get("full_outline", -1)
+		var draw_order = line.get("draw_order", -1)
+		var line_data = LineData.new(
+			line.start,
+			line.end,
+			line.start_thickness,
+			line.end_thickness,
+			line.fuzz, line.color,
+			line.l_color,
+			line.r_color,
+			full_outline,
+			draw_order)
 		lines.append(line_data)
 
 func get_polygons(reader):

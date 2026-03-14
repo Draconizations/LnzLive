@@ -11,6 +11,8 @@ export var fuzz: int = 0
 export var color_index = 0
 export var l_color_index = 0
 export var r_color_index = 0
+export var full_outline: int = -1
+export var draw_order: int = -1
 
 func _init(
 	start: int, 
@@ -20,7 +22,9 @@ func _init(
 	fuzz = 0,
 	color_index = 0,
 	l_color_index = 0,
-	r_color_index = 0):
+	r_color_index = 0,
+	full_outline = -1,
+	draw_order = -1):
 	self.start = start
 	self.end = end
 	self.s_thick = s_thick
@@ -29,4 +33,5 @@ func _init(
 	self.r_color_index = r_color_index
 	self.l_color_index = l_color_index
 	self.color_index = color_index
-	
+	self.full_outline = full_outline
+	self.draw_order = draw_order

@@ -17,6 +17,8 @@ export var texture_size           = Vector2(256, 256)  setget set_texture_size
 export var texture_size_raw       = Vector2.ZERO
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
+export var full_outline           = 0                  setget set_full_outline
+export var draw_order             = 0                  setget set_draw_order
 
 export var species                = 0                  setget set_species
 
@@ -78,6 +80,16 @@ func set_ball_world_pos2(new_value):
 func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)
+
+func set_full_outline(new_value):
+	full_outline = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("full_outline", new_value)
+
+func set_draw_order(new_value):
+	draw_order = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("draw_order", new_value)
 
 func set_texture_size(new_value):
 	texture_size = new_value
