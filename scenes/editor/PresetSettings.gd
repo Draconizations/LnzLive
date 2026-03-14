@@ -214,13 +214,10 @@ func set_palette(palette_name):
 
 func sync_camera(main_camera_transform: Transform):
 	if preview_camera and is_instance_valid(preview_camera):
-		var rot = main_camera_transform.basis.get_euler()
-
+		preview_camera.global_transform.basis = main_camera_transform.basis
 		var dist = 3.0
-		var pos = main_camera_transform.basis.xform(Vector3(0, 0, dist))
-
-		preview_camera.transform.origin = pos
-		preview_camera.look_at(Vector3.ZERO, Vector3.UP)
+		preview_camera.global_transform.origin = main_camera_transform.basis.z * dist
+		preview_camera.global_transform.basis.x *= -1.0
 
 func _on_property_changed(_val = null):
 	if _ignore_ui_changes: return
@@ -488,7 +485,7 @@ func update_preview():
 		base_visual_ball.outline = -1
 
 	if include_fuzz_chk.pressed:
-		base_visual_ball.fuzz_amount = int(fuzz_spinbox.value)
+		base_visual_ball.fuzz_amount = clamp(int(fuzz_spinbox.value) / 2, 0, 5)
 	else:
 		base_visual_ball.fuzz_amount = 0
 
@@ -565,7 +562,7 @@ func update_preview():
 				pb_visual.color_index = col
 				pb_visual.outline_color_index = out_col
 				pb_visual.outline = outline
-				pb_visual.fuzz_amount = fuzz
+				pb_visual.fuzz_amount = clamp(fuzz / 2, 0, 5)
 				pb_visual.palette = active_palette
 
 				pb_visual.z_add = z_add_counter

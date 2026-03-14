@@ -371,6 +371,10 @@ func _process(_delta):
 	# AXIS GIZMO
 	_update_3d_gizmo_visibility()
 
+	# Always sync Preset Mode preview ball
+	if preset_mode and is_instance_valid(preset_settings_instance):
+		preset_settings_instance.sync_camera(camera.global_transform)
+
 	# Skip helper text update, if UI is not dirty
 	if not ui_is_dirty:
 		return
