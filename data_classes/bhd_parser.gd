@@ -1,4 +1,4 @@
-extends Node
+extends Reference
 class_name BhdParser
 ## bhd_parser.gd
 ## A parser for `.bhd` animation header files

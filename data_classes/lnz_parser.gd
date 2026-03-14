@@ -1,4 +1,4 @@
-extends Node
+extends Reference
 class_name LnzParser
 ## lnz_parser.gd
 ## A data class that parses entries from LNZ data

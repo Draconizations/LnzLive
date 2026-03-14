@@ -1,4 +1,4 @@
-extends Node
+extends Reference
 class_name BdtParser
 ## bdt_parser.gd
 ## A parser for `.bdt` animation files
