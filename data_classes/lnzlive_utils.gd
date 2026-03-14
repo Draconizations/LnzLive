@@ -132,3 +132,29 @@ static func flip_camera_view(camera_node: Camera):
 	camera_transform.basis.x *= -1
 	camera_node.transform = camera_transform
 
+### COORDINATE CONVERSIONS ###
+static func world_to_lnz_delta(world_delta: Vector3, pixel_world_size: float, engine_scale: float) -> Vector3:
+	var lnz_scale = engine_scale / 255.0
+	var lnz_delta_raw = world_delta / (pixel_world_size * lnz_scale)
+	lnz_delta_raw.y *= -1.0 # Invert Y for LNZ format
+	return Vector3(round(lnz_delta_raw.x), round(lnz_delta_raw.y), round(lnz_delta_raw.z))
+
+static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engine_scale: float) -> Vector3:
+	var lnz_scale = engine_scale / 255.0
+	var world_delta = lnz_delta
+	world_delta.y *= -1.0 # Invert Y back to world format
+	return world_delta * (pixel_world_size * lnz_scale)
+
+### SIZE CONVERSIONS ###
+static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0) -> int:
+	var offset = 0 if is_addball else 2
+	var req_total = (target_visual / (engine_scale / 255.0)) + offset
+	return int(round(req_total - bhd_size))
+
+static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0) -> float:
+	var final_lnz = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size)
+	var current_base_size = bhd_size + final_lnz
+	var offset = 0 if is_addball else 2
+	var snapped = round((current_base_size - offset) * (engine_scale / 255.0))
+	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
+	return snapped
