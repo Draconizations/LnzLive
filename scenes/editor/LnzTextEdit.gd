@@ -4586,19 +4586,24 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		for i in range(addball_bounds.start, addball_bounds.end):
 			addball_lines.append(get_line(i))
 
+		var data_idx = 0
 		for i in range(addball_lines.size()):
 			var line = addball_lines[i].strip_edges()
-			if line.empty() or line.begins_with(";"): continue
+			if line.empty() or line.begins_with(";"):
+				continue
 
-			var current_addball_no = KeyBallsData.max_base_ball_num + i
+			var current_addball_no = KeyBallsData.max_base_ball_num + data_idx
 			var parts = _split_line(line)
+
 			if parts.empty() or parts[0].to_int() != target_ball_no:
+				data_idx += 1
 				continue
 
 			if omitted_balls.has(current_addball_no):
 				print("[LNZ EDIT] Skipping Addballz #%d because it is in [Omissions]" % current_addball_no)
 				if console_log:
 					console_log.log_message("[LNZ EDIT] Skipping Addballz #%d because it is in [Omissions]" % current_addball_no)
+				data_idx += 1
 				continue
 
 			var mirrored_attrs = _mirror_ball_attributes(parts, true)
@@ -4610,6 +4615,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			new_addball_lines.append(_join_array(mirrored_parts, delim))
 			temp_addball_map[current_addball_no] = new_addball_no
 			new_addball_no += 1
+			data_idx += 1
 			
 		if !new_addball_lines.empty():
 			var insert_line = _find_insertion_line(addball_bounds.start, addball_bounds.end)
