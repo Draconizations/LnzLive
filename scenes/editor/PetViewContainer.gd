@@ -28,6 +28,9 @@ onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitConta
 onready var pet_view = self
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
+var px_scale: float setget , get_px_scale
+var lnz_scale: float setget , get_lnz_scale
+
 onready var camera_holder = get_tree().root.get_node("Root/SceneRoot/ViewportContainer/Viewport/CameraHolder") as Spatial
 onready var camera = camera_holder.get_node("Camera") as Camera
 
@@ -348,6 +351,16 @@ func _reset_tab_state():
 func mark_ui_dirty():
 	# Use to trigger _process so it's not triggering every time the mouse moves...
 	ui_is_dirty = true
+
+func get_px_scale() -> float:
+	if not is_instance_valid(pet_node):
+		return 0.002
+	return pet_node.pixel_world_size
+
+func get_lnz_scale() -> float:
+	if not is_instance_valid(pet_node) or not pet_node.get("lnz") or not pet_node.lnz.has("scales"):
+		return 1.0
+	return pet_node.lnz.scales.x / 255.0
 
 func _process(_delta):
 	if is_instance_valid(_overlay_camera):
@@ -1930,30 +1943,14 @@ func _cycle_nearby_ballz():
 	mark_ui_dirty()
 
 func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
-	# Read current and original world positions
 	var current_world = drag_ball.global_transform.origin
 	var original_world = pet_node._orig_world_pos.get(drag_ball.ball_no, Vector3.ZERO)
+
 	print("[LNZ EDIT] Ball %d world positions: current=%s, original=%s"
 		% [drag_ball.ball_no, current_world, original_world])
 	
-	# Record movement in world coordinates
 	var delta_meters = current_world - original_world
-
-	# Undo pixel_world_size scale then LNZ scales
-	var px_scale = pixel_world_size
-	var lnz_scale = pet_node.lnz.scales.x / 255.0
-	var delta_units = delta_meters / (px_scale * lnz_scale)
-
-	# Flip Y axis to match LNZ coordinate system
-	delta_units.y *= -1
-	print("[LNZ EDIT] Raw LNZ‐space offset (float): %s" % delta_units)
-
-	# Round to nearest whole LNZ unit
-	var lnz_offset = Vector3(
-		round(delta_units.x),
-		round(delta_units.y),
-		round(delta_units.z)
-	)
+	var lnz_offset = LnzLiveUtils.world_to_lnz_delta(delta_meters, pixel_world_size, pet_node.lnz.scales.x)
 	print("[LNZ EDIT] Rounded LNZ‐space offset (int): %s" % lnz_offset)
 
 	return lnz_offset
@@ -2652,8 +2649,8 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 			var pattern_pbs = paintball_settings_instance.paste_paintball_design(normal, basis, target_ball.ball_no, lnz_diam, scaled_footprint, design_rotation_angle)
 
-			var px_scale = pet_node.pixel_world_size
-			var lnz_scale = pet_node.lnz.scales.x / 255.0
+			# var px_scale = pet_node.pixel_world_size
+			# var lnz_scale = pet_node.lnz.scales.x / 255.0
 
 			var pos_arr = pattern_pbs.positions
 			var diam_arr = pattern_pbs.diameters
@@ -2668,11 +2665,8 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			for i in range(pos_arr.size()):
 				var pos_normalized = pos_arr[i]
 				var spot_world_rel = pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
-				
 				var spot_local_rel = target_ball.global_transform.basis.xform_inv(spot_world_rel)
-				
-				var relative_pos_lnz = spot_local_rel / (px_scale * lnz_scale)
-				relative_pos_lnz.y *= -1
+				var relative_pos_lnz = LnzLiveUtils.world_to_lnz_delta(spot_local_rel, px_scale, pet_node.lnz.scales.x)
 
 				var pb_data = {
 					"base_ball_no": target_ball.ball_no,
@@ -2709,10 +2703,7 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 		var local_relative_pos = target_ball.to_local(intersection_point)
 		var world_relative_pos = intersection_point - target_ball.global_transform.origin
-		var px_scale = pet_node.pixel_world_size
-		var lnz_scale = pet_node.lnz.scales.x / 255.0
-		var relative_pos_lnz = world_relative_pos / (px_scale * lnz_scale)
-		relative_pos_lnz.y *= -1
+		var relative_pos_lnz = LnzLiveUtils.world_to_lnz_delta(world_relative_pos, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 
 		var color
 		var outline_color
@@ -3274,12 +3265,13 @@ func _on_nudge_selection(vector: Vector3):
 
 	_record_move_start_state()
 
-	var px_scale = pet_node.pixel_world_size
-	var lnz_scale = pet_node.lnz.scales.x / 255.0
+	# var px_scale = pet_node.pixel_world_size
+	# var lnz_scale = pet_node.lnz.scales.x / 255.0
 	
-	var world_delta = vector
-	world_delta.y *= -1
-	world_delta = world_delta * (px_scale * lnz_scale)
+	# var world_delta = vector
+	# world_delta.y *= -1
+	# world_delta = world_delta * (px_scale * lnz_scale)
+	var world_delta = LnzLiveUtils.lnz_to_world_delta(vector, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 	
 	for b in selected_balls:
 		var addballz_base_selected = false

@@ -31,6 +31,9 @@ onready var lnz_text_edit = self
 onready var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
 
+var px_scale: float setget , get_px_scale
+var lnz_scale: float setget , get_lnz_scale
+
 onready var camera_holder = get_tree().root.get_node(
 	"Root/SceneRoot/ViewportContainer/Viewport/CameraHolder"
 ) as Spatial
@@ -201,6 +204,16 @@ func initialize_history():
 	item.h_scroll = 0
 	history_stack.append(item)
 	history_index = 0
+
+func get_px_scale() -> float:
+	if not is_instance_valid(pet_node):
+		return 0.002
+	return pet_node.pixel_world_size
+
+func get_lnz_scale() -> float:
+	if not is_instance_valid(pet_node) or not pet_node.get("lnz") or not pet_node.lnz.has("scales"):
+		return 1.0
+	return pet_node.lnz.scales.x / 255.0
 
 ### SIGNAL CALLBACKS ###
 
@@ -2512,15 +2525,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var data = pending_moves[ball_no]
 		var orig_pos = data.orig_pos
 		var final_pos = data.new_pos
-		
 		var world_delta = final_pos - orig_pos
-		
-		var px_scale = pet_node.pixel_world_size
-		var lnz_scale = pet_node.lnz.scales.x / 255.0
-		var lnz_delta_raw = world_delta / (px_scale * lnz_scale)
-		lnz_delta_raw.y *= -1
-		
-		var lnz_delta = Vector3(round(lnz_delta_raw.x), round(lnz_delta_raw.y), round(lnz_delta_raw.z))
+		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 		
 		if ball_no >= KeyBallsData.max_base_ball_num:
 			if pet_node.lnz.addballs.has(ball_no):
@@ -2534,8 +2540,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 				if base_ball_no != -1 and pending_moves.has(base_ball_no):
 					var base_data = pending_moves[base_ball_no]
 					var base_world_delta = base_data.new_pos - base_data.orig_pos
-					var base_lnz_delta_raw = base_world_delta / (px_scale * lnz_scale)
-					base_lnz_delta_raw.y *= -1
+					var base_lnz_delta = LnzLiveUtils.world_to_lnz_delta(base_world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 					var base_lnz_delta = Vector3(round(base_lnz_delta_raw.x), round(base_lnz_delta_raw.y), round(base_lnz_delta_raw.z))
 					
 					lnz_delta -= base_lnz_delta
@@ -3015,9 +3020,8 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 			var base_ball_no = moved_ball_node.base_ball_no
 			var base_ball_node = pet_node.ball_map.get(base_ball_no)
 			if base_ball_node:
-				var new_relative_pos = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
-				new_relative_pos /= (pet_node.pixel_world_size * (pet_node.lnz.scales.x / 255.0))
-				new_relative_pos.y *= -1.0
+				var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
+				var new_relative_pos = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 
 				var idx = ball_no - KeyBallsData.max_base_ball_num
 				var count = 0
