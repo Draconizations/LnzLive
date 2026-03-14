@@ -178,6 +178,8 @@ var box_selecting = false
 var box_start_pos = Vector2()
 var box_end_pos = Vector2()
 
+const MAX_INTERACTION_HISTORY = 25
+
 var paint_history = []
 var paint_redo_stack = []
 
@@ -2221,6 +2223,12 @@ func _restore_move_snapshot(snapshot):
 
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
 
+func _cap_history_arrays():
+	if paint_history.size() > MAX_INTERACTION_HISTORY:
+		paint_history.pop_front()
+	if move_history.size() > MAX_INTERACTION_HISTORY:
+		move_history.pop_front()
+
 func _undo_queued_move():
 	if move_history.empty(): return
 	var entry = move_history.pop_back()
@@ -2237,6 +2245,7 @@ func _record_paint_action(paintballs_added):
 	if paintballs_added.empty(): return
 	paint_history.append(paintballs_added)
 	paint_redo_stack.clear()
+	_cap_history_arrays()
 
 func _undo_queued_paintball():
 	if paint_history.empty():
@@ -2267,6 +2276,7 @@ func _record_move_start_state():
 func _record_move_end_state(action_name):
 	var current_state = _capture_pending_state_snapshot()
 	_record_move_history_entry(_pre_move_state, current_state)
+	_cap_history_arrays()
 
 # HELPERS
 func _flatten_symmetry_dict(dict: Dictionary) -> Array:
