@@ -2526,6 +2526,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var orig_pos = data.orig_pos
 		var final_pos = data.new_pos
 		var world_delta = final_pos - orig_pos
+
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 		
 		if ball_no >= KeyBallsData.max_base_ball_num:
@@ -2541,8 +2542,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					var base_data = pending_moves[base_ball_no]
 					var base_world_delta = base_data.new_pos - base_data.orig_pos
 					var base_lnz_delta = LnzLiveUtils.world_to_lnz_delta(base_world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
-					var base_lnz_delta = Vector3(round(base_lnz_delta_raw.x), round(base_lnz_delta_raw.y), round(base_lnz_delta_raw.z))
-					
+
 					lnz_delta -= base_lnz_delta
 
 		if ball_no < KeyBallsData.max_base_ball_num:
