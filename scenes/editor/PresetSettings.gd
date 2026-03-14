@@ -149,6 +149,8 @@ func _ready():
 	autofill_btn.connect("pressed", self, "_on_AutofillRecolorsButton_pressed")
 	apply_recolor_btn.connect("pressed", self, "_on_ApplyRecolorsButton_pressed")
 	clear_recolor_btn.connect("pressed", self, "_on_ClearRecolorsButton_pressed")
+
+	connect("visibility_changed", self, "_on_visibility_changed")
 	
 	var viewport_size = get_viewport().size
 	var panel_size = panel.rect_size
@@ -168,6 +170,20 @@ func _ready():
 	load_settings()
 
 	call_deferred("update_preview")
+
+func _on_visibility_changed():
+	if visible:
+		update_preview()
+	else:
+		clear_preview()
+
+func clear_preview():
+	if not is_instance_valid(preview_world):
+		return
+		
+	for child in preview_world.get_children():
+		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
+			child.queue_free()
 
 func set_texture_list(list):
 	ball_texture_list = list
@@ -440,6 +456,9 @@ func _load_texture(texture_filename: String) -> Texture:
 	return texture
 
 func update_preview():
+	if not visible:
+		return
+		
 	for child in preview_world.get_children():
 		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
 			child.free()
