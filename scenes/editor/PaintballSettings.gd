@@ -208,8 +208,8 @@ func _on_ImportPresetButton_pressed():
 		   var reader = new FileReader();
 		   reader.readAsText(file,'UTF-8');
 		   reader.onload = readerEvent => {
-		       var content = readerEvent.target.result;
-		       window.godotPaintballImport(content);
+			   var content = readerEvent.target.result;
+			   window.godotPaintballImport(content);
 		   }
 		}
 		input.click();

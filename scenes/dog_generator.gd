@@ -296,9 +296,9 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 		set_frame(_saved_frame_index)
 
 func clear_lnz_data(keep_visuals: bool = false):
-	for ball in balls:
-		if ball != null:
-			ball.queue_free()
+	# for ball in balls:
+	# 	if ball != null:
+	# 		ball.queue_free()
 	balls.clear()
 	
 	if not keep_visuals:

@@ -398,6 +398,7 @@ func rescan(selected_filepath):
 		was_collapsed = local_storage.collapsed
 		_save_subfolder_states(local_storage)
 		root.remove_child(local_storage)
+		local_storage.free()
 	
 	local_storage = create_item(root, 1)
 	local_storage.set_text(0, "Local Storage")

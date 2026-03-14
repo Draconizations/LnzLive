@@ -65,7 +65,7 @@ var last_commit_time: int = 0
 var last_commit_action: String = ""
 var last_commit_id: int = -1
 
-class HistoryItem:
+class HistoryItem extends Reference:
 	enum Type { SNAPSHOT, LOGICAL }
 	var type: int
 	var action_name: String

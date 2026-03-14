@@ -1,4 +1,4 @@
-extends Node
+extends Reference
 class_name BallData
 ## ball_data.gd
 ## A data class that holds the properties for objects built from [Ballz Info] LNZ data
