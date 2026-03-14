@@ -108,9 +108,7 @@ signal ball_mouse_exit(ball_no)
 signal ball_selected(ball_no, is_addball)
 signal addball_deleted(ball_no)
 
-signal ball_translation_changed(ball_no, new_position)
-signal ball_translations_done
-
+signal ball_moved(ball_no, new_position)
 signal ball_resized(ball_no, size_dif)
 
 signal addball_created(reference_ball)
@@ -2109,9 +2107,9 @@ func _on_EyeLidButton_pressed():
 	eyelid_button.icon         = EYELID_ICONS[eyelid_mode]
 	update_eyelids(EYELID_TILTS[eyelid_mode])
 
-func emit_ball_translation(ball_no: int, new_position: Vector3):
+func emit_ball_move(ball_no: int, new_position: Vector3):
 	_skip_next_rebuild = true
-	emit_signal("ball_translation_changed", ball_no, new_position)
+	emit_signal("ball_moved", ball_no, new_position)
 
 func emit_ball_resize(ball_no: int, size_dif: int):
 	_skip_next_rebuild = true
