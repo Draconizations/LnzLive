@@ -480,7 +480,26 @@ func get_balls(reader):
 		i += 1
 
 func get_addballs(reader):
-	var parsed_lines = get_parsed_lines(reader, ["base", "x", "y", "z", "color", "outline_color", "speckle", "fuzz", "group", "outline", "size", "body_area", "add_group", "texture"])
+	var parsed_lines = get_parsed_lines(
+		reader,
+		[
+			"base",
+			"x",
+			"y",
+			"z",
+			"color",
+			"outline_color",
+			"speckle",
+			"fuzz",
+			"group",
+			"outline",
+			"size",
+			"body_area",
+			"add_group",
+			"texture",
+			"anchor_ball"
+		]
+	)
 
 	var max_ball_num = 0
 	if balls.size() > 0:
@@ -489,18 +508,21 @@ func get_addballs(reader):
 	for line in parsed_lines:
 		var pos = Vector3(line.x, line.y, line.z)
 		var ball = AddBallData.new(
-		line.base,
-		max_ball_num, 
-		line.size, 
-		pos,
-		line.color, 
-		line.outline_color, 
-		line.outline, 
-		line.fuzz,
-		0, 
-		line.group, 
-		line.body_area, 
-		line.texture)
+			line.base,
+			max_ball_num,
+			line.size,
+			pos,
+			line.color,
+			line.outline_color,
+			line.outline,
+			line.fuzz,
+			0,
+			line.group,
+			line.body_area,
+			line.get("texture", -1),
+			line.get("add_group", 0),
+			line.get("anchor_ball", -1)
+		)
 		addballs[max_ball_num] = ball
 		max_ball_num += 1
 
