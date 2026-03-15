@@ -489,15 +489,15 @@ func get_addballs(reader):
 	for line in parsed_lines:
 		var pos = Vector3(line.x, line.y, line.z)
 		var ball = AddBallData.new(
-			line.base,
-		 max_ball_num, 
+		line.base,
+		max_ball_num, 
 		line.size, 
 		pos,
 		line.color, 
 		line.outline_color, 
 		line.outline, 
 		line.fuzz,
-		 0, 
+		0, 
 		line.group, 
 		line.body_area, 
 		line.texture)
