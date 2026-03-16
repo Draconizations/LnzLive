@@ -26,7 +26,7 @@ onready var paintballz_tree = find_node("PaintballzTree")
 
 #var ball_scene = preload("res://Ball.tscn")
 #var paintball_scene = preload("res://Paintball.tscn")
-var default_palette = preload("res://resources/palettes/petz_palette.png")
+var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")

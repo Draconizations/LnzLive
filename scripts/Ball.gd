@@ -36,9 +36,9 @@ export var eyelash_color          = 244                setget set_eyelash_color
 
 export var species                = 0                  setget set_species
 
-export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
-const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
-const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_palette.png")
+export var palette                = LnzLiveUtils.DEFAULT_PALETTE setget set_palette
+const DEFAULT_PALETTE             = LnzLiveUtils.DEFAULT_PALETTE
+const BABYZ_PALETTE               = LnzLiveUtils.BABYZ_PALETTE
 
 export var petz_palette           = DEFAULT_PALETTE
 

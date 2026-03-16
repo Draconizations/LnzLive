@@ -1,6 +1,14 @@
 extends Reference
 class_name LnzLiveUtils
 
+const DEFAULT_PALETTE = preload("res://resources/textures/petzpalette.png")
+const BABYZ_PALETTE   = preload("res://resources/palettes/babyz_palette.png")
+
+const ICON_EYE_NEUTRAL = preload("res://resources/icons/ico_eyelid_neutral.png")
+const ICON_EYE_NOLID = preload("res://resources/icons/ico_eyelid_nolid.png")
+const ICON_EYE_ANGRY = preload("res://resources/icons/ico_eyelid_angry.png")
+const ICON_EYE_SCARED = preload("res://resources/icons/ico_eyelid_scared.png")
+
 static func parse_number_list(s: String, allow_negatives: bool = false) -> Array:
 	var result = []
 	var parts = s.split(",", false)

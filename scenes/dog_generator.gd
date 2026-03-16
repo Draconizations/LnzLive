@@ -83,10 +83,10 @@ onready var eyelid_button := get_tree().get_root().get_node(
 const EYELID_LABELS = ["neutral", "none", "angry", "scared"]
 const EYELID_TILTS  = [  0.0,      0.0,     -30.0,      30.0 ]
 const EYELID_ICONS  = [
-	preload("res://resources/icons/ico_eyelid_neutral.png"),
-	preload("res://resources/icons/ico_eyelid_nolid.png"),
-	preload("res://resources/icons/ico_eyelid_angry.png"),
-	preload("res://resources/icons/ico_eyelid_scared.png")
+	LnzLiveUtils.ICON_EYE_NEUTRAL,
+	LnzLiveUtils.ICON_EYE_NOLID,
+	LnzLiveUtils.ICON_EYE_ANGRY,
+	LnzLiveUtils.ICON_EYE_SCARED
 ]
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
@@ -558,10 +558,10 @@ func recompose_model():
 
 func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
 	var pal_texture: Texture = null
-	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 
 	if is_babyz_mode:
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
+		default_palette = LnzLiveUtils.BABYZ_PALETTE
 
 	if palette_name != null and palette_name != "":
 		var user_res_path = "user://resources/palettes".plus_file(palette_name)
@@ -591,10 +591,10 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		is_babyz_mode = true
 
 	var pal_texture = null
-	var default_palette = preload("res://resources/palettes/petz_palette.png")
+	var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 
 	if is_babyz_mode:
-		default_palette = preload("res://resources/palettes/babyz_palette.png")
+		default_palette = LnzLiveUtils.BABYZ_PALETTE
 
 	if lnz_info.palette != null and lnz_info.palette != "":
 		pal_texture = load_palette_resource(lnz_info.palette, is_babyz_mode)
