@@ -421,10 +421,13 @@ func _process(_delta):
 
 	# MODES
 	if linez_mode:
-		if is_instance_valid(linez_start_ball):
-			body = "Line Mode: Create a new line or edit existing line.\nLeft-click a 2nd ball to end a line."
+		var intended = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position())) 
+		
+		if is_instance_valid(linez_start_ball): 
+			body = "Line Mode: Left-click target to END line (TAB to cycle ballz)"
 		else:
-			body = "Line Mode: Create a new line or edit existing line.\nLeft-click a 1st ball to start a line."
+			body = "Line Mode: Left-click target to START line (TAB to cycle ballz)"
+		
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 
 	elif paintball_mode:
@@ -3274,21 +3277,19 @@ func _on_randomize_moves(settings: Dictionary):
 
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
-		var hover = get_intended_ball(
-			(
-				(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-				+ Vector2(500, 500)
-			)
-		)
+		var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+		
 		if hover:
 			if !is_instance_valid(linez_start_ball):
 				linez_start_ball = hover
 				linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.ACTIVE_SELECTED)
+				_reset_tab_state() 
 			else:
 				if hover != linez_start_ball:
 					pet_node.emit_signal("line_created", linez_start_ball.ball_no, hover.ball_no)
 					linez_start_ball.apply_outline_state(linez_start_ball.OutlineState.NONE)
 					linez_start_ball = null
+					_reset_tab_state()
 					if line_mode_close:
 						line_mode_check_box.pressed = false
 			return true
