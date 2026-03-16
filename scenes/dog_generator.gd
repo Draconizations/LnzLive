@@ -1030,7 +1030,9 @@ func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
 		var ball = all_ball_dict.addballs[k]
 		ball.size = ball.size - 2
 		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
+		ball.size = max(1, ball.size)
 		ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size)
 #		ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
 		ball.position = (ball.position * (lnz.scales[0] / 255.0))
 		all_ball_dict.addballs[k] = ball
