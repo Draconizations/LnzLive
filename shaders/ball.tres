@@ -61,6 +61,8 @@ varying flat float z_center_pet;                  // depth at pet origin for z-s
 
 varying vec2 mesh_pos;                            // pet‐local XY
 
+varying flat vec3 view_forward;
+
 // Pseudorandom jitter values for rendering fuzz
 float random (float x) {
     return fract(sin(dot(vec2(x),
@@ -100,6 +102,26 @@ vec2 calculate_uvs(vec2 offset) {
     if (tile_texture) {
         vec2 uv = offset / float(ball_size) + vec2(0.5);
         uv *= float(ball_size) / texture_size_raw;
+
+        // Grab true view rotation captured in the vertex shader
+        float m6 = view_forward.x;
+        float m7 = -view_forward.y; 
+        float m8 = view_forward.z;
+
+        // Calculate the turn angles in radians
+        float angle_u = atan(m6, m8);
+        float angle_v = atan(m7, m8);
+
+        // Slide texture a distance equal to angle * radius
+        float radius = float(ball_size) / 2.0;
+        
+        // Divide by texture_size_raw to convert that pixel distance into UV space
+        float shift_u = (angle_u * radius) / texture_size_raw.x;
+        float shift_v = (angle_v * radius) / texture_size_raw.y;
+
+        // Apply shifts
+        uv.x -= shift_u;
+        uv.y += shift_v;
 
         if (is_atlas) {
             vec2 tiled_uv = fract(uv);
@@ -442,6 +464,9 @@ void vertex() {
     // Store pet-local XY for eyelids:
     mesh_pos = VERTEX.xy;
 
+    mat4 original_mv = INV_CAMERA_MATRIX * WORLD_MATRIX;
+    view_forward = normalize(original_mv[2].xyz);
+    
     // Billboarding textures aligned to camera view
     MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
     
