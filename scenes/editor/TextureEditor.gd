@@ -650,10 +650,10 @@ func _on_LoadButton_pressed():
 			if c.a == 0:
 				active_image.set_pixel(x, y, _get_background_color())
 			else:
-				# Use cache for O(1) matching vs O(n) math
-				var best_idx = _get_closest_palette_index(c)
-				if best_idx < palette_colors.size():
-					active_image.set_pixel(x, y, palette_colors[best_idx])
+				# Godot loads indexed BMPs as grayscale where the red channel stores the palette index / 255.0
+				var idx = int(round(c.r * 255.0))
+				if idx < palette_colors.size():
+					active_image.set_pixel(x, y, palette_colors[idx])
 				else:
 					active_image.set_pixel(x, y, _get_background_color())
 					
