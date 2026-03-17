@@ -313,7 +313,7 @@ func _on_ActiveTexturesOption_item_selected(index):
 		
 	var text = active_textures_option.get_item_text(index).to_lower()
 	if text.ends_with(".bmp"):
-		filename_line_edit.text = text
+		filename_line_edit.text = text.get_basename()
 		_on_LoadButton_pressed()
 		
 	active_textures_option.select(0)
