@@ -194,12 +194,14 @@ void fragment() {
     vec2 st = FRAGCOORD.xy;
 
     // FUZZING
+    // Generates pseudo-random value based on fragment screen coordinates and offsets UV coords for jitter effect
     float r = random(st.y - c.y);
     r = (r * 2.0) - 1.0;
     r *= float(fuzz_amount);
     st.x += floor(r);
 
     // OUTLINING
+    // Assigns inner pixels that will compose outline
     float pct2 = 0.0;
     vec2 st2 = st;
     int modified_outline = outline;
@@ -243,7 +245,6 @@ void fragment() {
         modified_outline = 0;
     }
 
-    // DRAWING
     vec2 vector_from_center = st - c;
     float outdist = length(vector_from_center);
     float ball_radius = float(ball_size) / 2.0;
@@ -252,7 +253,8 @@ void fragment() {
         pct2 -= pct;
     }
 
-    // HIGHLIGHT OUTLINE
+    // HIGHLIGHT
+    // Assigns outer pixels that will compose hover highlight
     float highlight_pct = 0.0;
 
     if (highlight_color_index != -1) {
@@ -262,6 +264,7 @@ void fragment() {
     }
 
     // TEXTURING & QUANTIZING
+    // Maps screen or object space to UVs, handling texture atlas rects and texture tiling
     int texture_limit = is_babyz_mode ? 230 : 150;
     vec3 texture_color;
     bool is_transparent = false;
@@ -271,6 +274,7 @@ void fragment() {
         vec2 tex_coords = calculate_uvs(offset);
 
         if (is_atlas) {
+            // Samples texture to snap colors to nearest target palette
             vec4 raw_color = texture(ball_texture, tex_coords);
             if (raw_color.a < 0.1) is_transparent = true;
 
@@ -298,7 +302,7 @@ void fragment() {
             }
         }
     } else {
-        // untextured, if range check failed or has_texture is false
+        // Untextured, if range check failed or has_texture is false
         texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.0)).rgb;
         is_transparent = false;
     }
@@ -320,6 +324,8 @@ void fragment() {
         final_color = vec3(pct * texture_color.rgb + pct2 * outline_color.rgb);
     }
 
+    // COLOR APPLICATION
+    // Applies final albedo, blending base color with outline color
     if (pct + pct2 <= 0.0 && highlight_pct > 0.0) {
         vec3 h_color = texture(palette, vec2(float(highlight_color_index) / 255.0, 0.0)).rgb;
         ALBEDO = h_color;
@@ -328,6 +334,7 @@ void fragment() {
     }
     
     // DRAW EYELIDS
+    // Masks specific sub-regions using rotational matrices for eyelids
     if (eyelid_color != -1) {
         vec2 vc    = mesh_pos * (float(ball_size) * 0.5);
         float half = float(ball_size) * 0.5;
@@ -351,6 +358,7 @@ void fragment() {
     }
 
     // DRAW EYELASHES
+    // Projects lines outward from the center to render eyelashes
     float lash_mask = 0.0;
     if (has_eyelashes && eyelash_color_index != -1) {
         vec2 vc = mesh_pos * float(ball_size);
@@ -400,6 +408,7 @@ void fragment() {
     }
 
     // SET TRANSPARENCY
+    // Evaluates distance fields and transparency flags to output final alpha
     float alpha_value = 1.0 - step(pct + pct2 + lash_mask, 0.0);
 
     if (highlight_pct > 0.0) {
@@ -436,7 +445,7 @@ void vertex() {
     // Billboarding textures aligned to camera view
     MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(CAMERA_MATRIX[0],CAMERA_MATRIX[1],CAMERA_MATRIX[2],WORLD_MATRIX[3]);
     
-    // Compute depths for z-shading
+    // Computes Z-depth of the object center compared to pet root for dynamic palette shifts
     z_center_ball = (MODELVIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).z;
     z_center_pet = (INV_CAMERA_MATRIX * vec4(z_center_pet_world, 1.0)).z;
     

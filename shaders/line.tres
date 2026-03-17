@@ -78,6 +78,54 @@ vec3 get_shifted_color(int palette_index) {
 	return new_color;
 }
 
+vec3 get_closest_babyz_color(vec4 original_color, out bool is_transp) {
+    if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+        is_transp = true;
+        return TRANSPARENT_COLOR_MAGENTA.rgb;
+    }
+    vec4 best_color = vec4(0.0);
+    float best_distance_sq = 1e20;
+    for (int i = 0; i < 256; i++) {
+        if (i >= palette_size) break;
+        if (i == TRANSPARENT_COLOR_INDEX) continue;
+        float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
+        vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
+        float distance_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
+        if (distance_sq < best_distance_sq) {
+            best_distance_sq = distance_sq;
+            best_color = babyz_color;
+        }
+    }
+    is_transp = false;
+    return best_color.rgb;
+}
+
+int get_closest_petz_index(vec4 raw_color) {
+    if (distance(raw_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
+        return TRANSPARENT_COLOR_INDEX;
+    }
+    int best_index = 0;
+    float best_dist = 1e20;
+    for (int i = 0; i < 256; i++) {
+        vec4 p_col = texture(petz_palette, vec2((float(i) + 0.5) / 256.0, 0.5));
+        float d = distance(raw_color.rgb, p_col.rgb);
+        if (d < best_dist) {
+            best_dist = d;
+            best_index = i;
+        }
+    }
+    return best_index;
+}
+
+vec3 apply_palette_shift(int palette_index) {
+    if (transparent_index > 0) {
+        if (transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
+            return get_shifted_color(palette_index);
+        }
+    }
+    return texture(palette, vec2(float(palette_index) / float(palette_size), 0.5)).rgb;
+}
+
 void fragment() {
     vec2 st = FRAGCOORD.xy;
 
