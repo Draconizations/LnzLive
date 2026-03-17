@@ -1268,6 +1268,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.fuzz_amount = clamp(ball.fuzz / 2, 0, 5)
 				visual_ball.palette = palette
 
+				var shader_mat = visual_ball.get_node("MeshInstance").material_override
+				var is_atlas = shader_mat.get_shader_param("is_atlas")
+				shader_mat.set_shader_param("should_quantize", is_babyz_mode and not is_atlas)
+
 				if no_texture_rotate.has(int(key)):
 					visual_ball.set_tile_texture(false)
 
