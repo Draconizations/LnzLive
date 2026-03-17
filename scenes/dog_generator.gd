@@ -22,6 +22,9 @@ var _hidden_lines = []
 var _hidden_polygons = []
 var _hidden_paintballs = []
 
+var _ball_to_lines_map = {}
+var _ball_to_polygons_map = {}
+
 export var draw_balls = true
 export var draw_special_balls = false
 export var draw_addballs = true
@@ -1667,6 +1670,13 @@ func generate_polygons(
 			visual_polygon.visible = draw_polygons
 
 		polygons_map[i] = visual_polygon
+
+		var poly_balls = [polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4]
+		for b_no in poly_balls:
+			if not _ball_to_polygons_map.has(b_no):
+				_ball_to_polygons_map[b_no] = []
+			_ball_to_polygons_map[b_no].append(i)
+
 		i += 1
 
 
@@ -1754,6 +1764,11 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		visual_line.line_widths = final_line_width
 
 		lines_map[i] = visual_line
+
+		for b_no in [line.start, line.end]:
+			if not _ball_to_lines_map.has(b_no):
+				_ball_to_lines_map[b_no] = []
+			_ball_to_lines_map[b_no].append(i)
 
 		var special_line = (
 			is_special_baby_ball(species, line.start)
@@ -2362,28 +2377,21 @@ func _apply_hidden_state_to_visuals(ball_no):
 				if not _hidden_paintballs.has(pb):
 					_hidden_paintballs.append(pb)
 
-	for line_idx in lines_map.keys():
-		var ld = lnz.lines[line_idx]
-
-		if ld.start == ball_no or ld.end == ball_no:
+	if _ball_to_lines_map.has(ball_no):
+		for line_idx in _ball_to_lines_map[ball_no]:
 			var line = lines_map[line_idx]
 			if line.has_method("set_hidden"):
 				line.set_hidden(true)
-
 			if not _hidden_lines.has(line_idx):
 				_hidden_lines.append(line_idx)
 
-	for poly_idx in polygons_map.keys():
-		var pd = lnz.polygons[poly_idx]
-
-		if pd.ball1 == ball_no or pd.ball2 == ball_no or pd.ball3 == ball_no or pd.ball4 == ball_no:
+	if _ball_to_polygons_map.has(ball_no):
+		for poly_idx in _ball_to_polygons_map[ball_no]:
 			var poly = polygons_map[poly_idx]
 			if poly.has_method("set_hidden"):
 				poly.set_hidden(true)
-
 			if not _hidden_polygons.has(poly_idx):
 				_hidden_polygons.append(poly_idx)
-
 
 func unhide_all_balls():
 	for ball_no in _hidden_balls:
