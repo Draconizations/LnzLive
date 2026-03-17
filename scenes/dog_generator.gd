@@ -2314,17 +2314,7 @@ func _on_apply_auto_paintballz():
 		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
 		relative_pos_lnz.y *= -1
 
-		var key = str(
-			pb_data.base,
-			"_",
-			relative_pos_lnz.x,
-			"_",
-			relative_pos_lnz.y,
-			"_",
-			relative_pos_lnz.z,
-			"_",
-			pb_data.size
-		)
+		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
 
 		if processed_paintballs.has(key):
 			continue
