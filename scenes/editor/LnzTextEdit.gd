@@ -4278,8 +4278,10 @@ func _mirror_l_to_r_full(reverse: bool = false):
 			if mirrored_parts.size() > 9:
 				if mirrored_parts[9] == "0": mirrored_parts[9] = "-2"
 				elif mirrored_parts[9] == "-2": mirrored_parts[9] = "0"
-			
-			var mirror_sig = _join_array(mirrored_parts, delim)
+
+			var suffix = "RtoL" if reverse else "LtoR"
+			var inf_comment = " ; copyMirr%s_srcAdd#%d_to_mirAdd#%d" % [suffix, current_scan_id, next_free_id]
+			var mirror_sig = _join_array(mirrored_parts, delim) + inf_comment
 			
 			if existing_signatures.has(mirror_sig):
 				var existing_id = existing_signatures[mirror_sig]
@@ -4366,8 +4368,10 @@ func _mirror_l_to_r_full(reverse: bool = false):
 						mirror_parts[4] = mirror_parts[5]
 						mirror_parts[5] = temp
 					
-					var new_line_sig = _join_array(mirror_parts, delim)
-					
+					var suffix = "RtoL" if reverse else "LtoR"
+					var inf_comment = " ; copyMirr%s_line(%d,%d)" % [suffix, m_s, m_e]
+					var new_line_sig = _join_array(mirror_parts, delim) + inf_comment
+
 					var reverse_mirror_parts = mirror_parts.duplicate()
 					reverse_mirror_parts[0] = mirror_parts[1]
 					reverse_mirror_parts[1] = mirror_parts[0]
@@ -4612,7 +4616,8 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			for key in mirrored_attrs:
 				mirrored_parts[key] = mirrored_attrs[key]
 			
-			new_addball_lines.append(_join_array(mirrored_parts, delim))
+			var comment = " ; copyMirrLtoR_ball%d_to_ball%d" % [target_ball_no, mirrored_ball_no]
+			new_addball_lines.append(_join_array(mirrored_parts, delim) + comment)
 			temp_addball_map[current_addball_no] = new_addball_no
 			new_addball_no += 1
 			data_idx += 1
@@ -4643,7 +4648,8 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			var processed_line = call(method_name, parts, target_ball_no, mirrored_ball_no, associated_left_balls, temp_addball_map)
 			
 			if processed_line != null and processed_line.size() > 0:
-				new_lines.append(_join_array(processed_line, delim))
+				var comment = " ; copyMirrLtoR_ball%d_to_ball%d" % [target_ball_no, mirrored_ball_no]
+				new_lines.append(_join_array(processed_line, delim) + comment)
 		
 		if !new_lines.empty():
 			var insert_line = _find_insertion_line(bounds.start, bounds.end)
