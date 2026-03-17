@@ -1,0 +1,157 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://scenes/editor/ShaderSettings.gd" type="Script" id=1]
+[ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
+[ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=3]
+
+[node name="ShaderSettings" type="Panel"]
+visible = false
+margin_right = 300.0
+margin_bottom = 200.0
+rect_min_size = Vector2( 300, 200 )
+custom_styles/panel = ExtResource( 2 )
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+custom_constants/margin_right = 10
+custom_constants/margin_top = 10
+custom_constants/margin_left = 10
+custom_constants/margin_bottom = 10
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 10.0
+margin_top = 10.0
+margin_right = 290.0
+margin_bottom = 190.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+margin_right = 280.0
+margin_bottom = 20.0
+custom_fonts/font = ExtResource( 3 )
+text = "Shader Settings"
+align = 1
+
+[node name="HSeparatorTitle" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+margin_top = 24.0
+margin_right = 280.0
+margin_bottom = 28.0
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+margin_top = 32.0
+margin_right = 280.0
+margin_bottom = 46.0
+custom_fonts/font = ExtResource( 3 )
+text = "Texture Rotation Mode"
+
+[node name="ModeOptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer"]
+margin_top = 50.0
+margin_right = 280.0
+margin_bottom = 70.0
+custom_fonts/font = ExtResource( 3 )
+text = "Rotate"
+items = [ "Static", null, false, 0, null, "Rotate", null, false, 1, null, "Input", null, false, 2, null ]
+selected = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+margin_top = 74.0
+margin_right = 280.0
+margin_bottom = 78.0
+
+[node name="InputLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+margin_top = 82.0
+margin_right = 280.0
+margin_bottom = 96.0
+custom_fonts/font = ExtResource( 3 )
+text = "Manual Input (Mode: Input)"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 100.0
+margin_right = 280.0
+margin_bottom = 124.0
+
+[node name="LabelX" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_top = 5.0
+margin_right = 12.0
+margin_bottom = 19.0
+custom_fonts/font = ExtResource( 3 )
+text = "X:"
+
+[node name="InputX" type="SpinBox" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 16.0
+margin_right = 90.0
+margin_bottom = 24.0
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+
+[node name="Control" type="Control" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 94.0
+margin_right = 114.0
+margin_bottom = 24.0
+rect_min_size = Vector2( 20, 0 )
+
+[node name="LabelY" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 118.0
+margin_top = 5.0
+margin_right = 129.0
+margin_bottom = 19.0
+custom_fonts/font = ExtResource( 3 )
+text = "Y:"
+
+[node name="InputY" type="SpinBox" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+margin_left = 133.0
+margin_right = 207.0
+margin_bottom = 24.0
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 128.0
+margin_right = 280.0
+margin_bottom = 152.0
+
+[node name="SizeCheckBox" type="CheckBox" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+margin_right = 148.0
+margin_bottom = 24.0
+custom_fonts/font = ExtResource( 3 )
+text = "Affected by Size"
+
+[node name="RotationCheckBox" type="CheckBox" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+margin_left = 152.0
+margin_right = 300.0
+margin_bottom = 24.0
+custom_fonts/font = ExtResource( 3 )
+text = "Affected by Rotation"
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer"]
+margin_top = 156.0
+margin_right = 280.0
+margin_bottom = 180.0
+size_flags_vertical = 3
+
+[node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer"]
+margin_top = 160.0
+margin_right = 280.0
+margin_bottom = 180.0
+custom_styles/hover = ExtResource( 2 )
+custom_styles/pressed = ExtResource( 2 )
+custom_styles/focus = ExtResource( 2 )
+custom_styles/disabled = ExtResource( 2 )
+custom_styles/normal = ExtResource( 2 )
+custom_fonts/font = ExtResource( 3 )
+text = "Close"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/CloseButton" to="." method="_on_CloseButton_pressed"]

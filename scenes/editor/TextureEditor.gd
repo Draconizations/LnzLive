@@ -611,13 +611,37 @@ func _on_LoadButton_pressed():
 		fname += ".bmp"
 
 	var loaded_tex = null
-
-	if dog_generator:
-		var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
-		loaded_tex = dog_generator.load_texture(fname, preloader)
+	
+	# Skip the dog generator atlas and load directly from filesystem / resources
+	var base_name = fname.get_basename()
+	var extension = fname.get_extension()
+	var variants = [
+		fname,
+		fname.to_upper(),
+		fname.to_lower(),
+		base_name + "." + extension.to_upper(),
+		base_name + "." + extension.to_lower(),
+		base_name.to_upper() + "." + extension,
+		base_name.to_lower() + "." + extension,
+		base_name.to_upper() + "." + extension.to_upper(),
+		base_name.to_lower() + "." + extension.to_lower()
+	]
+	
+	for v in variants:
+		if ResourceLoader.exists("user://resources/textures/" + v):
+			loaded_tex = ResourceLoader.load("user://resources/textures/" + v)
+			break
+		elif ResourceLoader.exists("res://resources/textures/" + v):
+			loaded_tex = ResourceLoader.load("res://resources/textures/" + v)
+			break
+			
+	if loaded_tex == null:
+		var preloader = get_tree().root.get_node_or_null("Root/ResourcePreloader")
+		if preloader and preloader.has_resource(fname.to_lower()):
+			loaded_tex = preloader.get_resource(fname.to_lower())
 
 	if not loaded_tex:
-		print("Failed to load texture: ", fname)
+		print("Failed to load standalone texture (bypassed atlas): ", fname)
 		return
 
 	var img = loaded_tex.get_data()

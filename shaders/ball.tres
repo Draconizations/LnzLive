@@ -48,6 +48,10 @@ uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
+uniform int texture_rotation_mode = 1;            // 0: static, 1: rotate, 2: input
+uniform vec2 texture_rotation_input = vec2(0.0, 0.0); // manual UV offset for rotate mode 2
+uniform bool texture_affected_by_size = true;
+uniform bool texture_affected_by_rotation = false;
 
 uniform int highlight_color_index = -1;           // -1 for none
 
@@ -100,31 +104,53 @@ vec3 get_shifted_color(int palette_index) {
 vec2 calculate_uvs(vec2 offset) {
     vec2 tex_coords;
     if (tile_texture) {
-        vec2 uv = offset / float(ball_size) + vec2(0.5);
-        uv *= float(ball_size) / texture_size_raw;
+        float effective_ball_size = texture_affected_by_size ? float(ball_size) : 100.0;
+        vec2 uv = offset / effective_ball_size + vec2(0.5);
+        uv *= effective_ball_size / texture_size_raw;
 
         // attempt #1 to center texture better
-        //uv += vec2(0.5) - (float(ball_size) / texture_size_raw * 0.5);
+        //uv += vec2(0.5) - (effective_ball_size / texture_size_raw * 0.5);
 
-        // Grab true view rotation captured in the vertex shader
-        float m6 = view_forward.x;
-        float m7 = -view_forward.y; 
-        float m8 = view_forward.z;
+        if (texture_rotation_mode == 1) {
+            // Grab true view rotation captured in the vertex shader
+            float m6 = view_forward.x;
+            float m7 = -view_forward.y;
+            float m8 = view_forward.z;
 
-        // Calculate the turn angles in radians
-        float angle_u = atan(m6, m8);
-        float angle_v = atan(m7, m8);
+            // Calculate the turn angles in radians
+            float angle_u = atan(m6, m8);
+            float angle_v = atan(m7, m8);
 
-        // Slide texture a distance equal to angle * radius
-        float radius = float(ball_size) / 2.0;
-        
-        // Divide by texture_size_raw to convert that pixel distance into UV space
-        float shift_u = (angle_u * radius) / texture_size_raw.x;
-        float shift_v = (angle_v * radius) / texture_size_raw.y;
+            // Slide texture a distance equal to angle * radius
+            float radius = effective_ball_size / 2.0;
 
-        // Apply shifts
-        uv.x -= shift_u;
-        uv.y += shift_v;
+            // Divide by texture_size_raw to convert that pixel distance into UV space
+            float shift_u = (angle_u * radius) / texture_size_raw.x;
+            float shift_v = (angle_v * radius) / texture_size_raw.y;
+
+            // Apply shifts
+            uv.x -= shift_u;
+            uv.y += shift_v;
+        } else if (texture_rotation_mode == 2) {
+            uv.x -= texture_rotation_input.x;
+            uv.y += texture_rotation_input.y;
+
+            if (texture_affected_by_rotation) {
+                float m6 = view_forward.x;
+                float m7 = -view_forward.y;
+                float m8 = view_forward.z;
+
+                float angle_u = atan(m6, m8);
+                float angle_v = atan(m7, m8);
+
+                float radius = effective_ball_size / 2.0;
+                float shift_u = (angle_u * radius) / texture_size_raw.x;
+                float shift_v = (angle_v * radius) / texture_size_raw.y;
+
+                uv.x -= shift_u;
+                uv.y += shift_v;
+            }
+        }
 
         if (is_atlas) {
             vec2 tiled_uv = fract(uv);
