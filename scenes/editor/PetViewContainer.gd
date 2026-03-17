@@ -57,6 +57,9 @@ onready var variation_tree = get_tree().root.get_node(
 onready var select_check_box = find_node("SelectCheckBox")
 
 onready var recolor_mode_check_box = find_node("RecolorModeCheckBox")
+onready var texture_editor_mode_check_box = find_node("TextureEditorModeCheckBox")
+var texture_editor_mode = false
+
 onready var paintball_check_box = find_node("PaintballModeCheckBox")
 onready var move_mode_check_box = find_node("MoveModeCheckBox")
 onready var line_mode_check_box = find_node("LineModeCheckBox")
@@ -148,6 +151,7 @@ var line_mode_settings_instance: Control
 var project_settings_instance: Control
 var preset_settings_instance: Control
 var auto_paintballer_settings_instance: Control
+var texture_editor_settings_instance: Control
 
 var diameter_min_spinbox: SpinBox
 var diameter_max_spinbox: SpinBox
@@ -229,6 +233,7 @@ func _ready():
 	move_mode_settings_instance = load("res://scenes/editor/MoveModeSettings.tscn").instance()
 	line_mode_settings_instance = load("res://scenes/editor/LineModeSettings.tscn").instance()
 	recolor_settings_instance = load("res://scenes/editor/RecolorSettings.tscn").instance()
+	texture_editor_settings_instance = load("res://scenes/editor/TextureEditor.tscn").instance()
 
 	var sidebar_node = get_tree().root.find_node("VBoxContainer", true, false)
 	var sidebars = get_tree().get_nodes_in_group("SidebarController")
@@ -240,6 +245,7 @@ func _ready():
 	if sidebar_controller:
 		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
 		sidebar_controller.call_deferred("add_tool_tab", recolor_settings_instance, "Recolor")
+		sidebar_controller.call_deferred("add_tool_tab", texture_editor_settings_instance, "Texture")
 		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
 		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
 		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
@@ -251,6 +257,7 @@ func _ready():
 		print("PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback.")
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", recolor_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", texture_editor_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
@@ -273,6 +280,7 @@ func _ready():
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
+	texture_editor_mode_check_box.connect("toggled", self, "_on_texture_editor_mode_toggled")
 
 	tools_menu.connect(
 		"paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled"
@@ -1859,6 +1867,7 @@ func _unhandled_key_input(event):
 		move_mode_check_box.pressed = false
 		preset_mode_check_box.pressed = false
 		recolor_mode_check_box.pressed = false
+		texture_editor_mode_check_box.pressed = false
 		project_mode_check_box.pressed = false
 		auto_paintballer_check_box.pressed = false
 		view_palette_check_box.pressed = false
@@ -2653,6 +2662,9 @@ func _deactivate_other_modes(active_mode_name: String):
 		auto_paintballer_check_box.pressed = false
 	if active_mode_name != "Recolor Mode":
 		recolor_mode_check_box.pressed = false
+	if active_mode_name != "Texture Editor":
+		texture_editor_mode_check_box.pressed = false
+		texture_editor_mode_check_box.pressed = false
 
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool):
@@ -4004,3 +4016,11 @@ func _on_pivot_changed():
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+
+func _on_texture_editor_mode_toggled(is_on):
+	if is_on:
+		_deactivate_other_modes("Texture Editor")
+	texture_editor_mode = is_on
+	_update_mode_panel_visibility(texture_editor_settings_instance, is_on)
+	mark_ui_dirty()

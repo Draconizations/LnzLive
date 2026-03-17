@@ -1146,6 +1146,11 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 	return texture
 
 
+
+func clear_texture_cache_for(filename: String):
+	if _texture_cache.has(filename):
+		_texture_cache.erase(filename)
+
 func clear_texture_cache():
 	_texture_cache.clear()
 	print("[DEBUG] Texture cache cleared for model refresh.")
