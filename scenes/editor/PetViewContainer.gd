@@ -67,6 +67,9 @@ onready var tools_menu = get_tree().root.get_node("Root/SceneRoot/ToolsMenu")
 
 var _auto_paint_affected_cache: Array = []
 
+var _spatial_grid_2d = {}
+const GRID_CELL_SIZE = 80.0
+
 var _nearby_balls_cache: Array = []
 var _current_tab_index: int = -1
 var _last_selected_by_tab: Spatial = null
@@ -354,6 +357,24 @@ func _ensure_panel_visible(panel):
 	else:
 		panel.show()
 		panel.raise()
+
+
+func _rebuild_spatial_hash():
+	_spatial_grid_2d.clear()
+	var all_balls = _get_all_visual_balls()
+	var viewport_offset = tex.get_global_transform().origin
+	
+	for ball in all_balls:
+		if not is_instance_valid(ball) or not ball.visible: 
+			continue
+			
+		var projected_pos = camera.unproject_position(ball.global_transform.origin) 
+		var screen_pos = viewport_offset + (projected_pos * tex.rect_scale) 
+		
+		var cell = (screen_pos / GRID_CELL_SIZE).floor()
+		if not _spatial_grid_2d.has(cell):
+			_spatial_grid_2d[cell] = []
+		_spatial_grid_2d[cell].append(ball)
 
 
 func _reset_tab_state():
@@ -2099,36 +2120,28 @@ func _sort_by_distance(a, b):
 
 
 func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
-	var balls_list = _get_all_visual_balls()
+	_rebuild_spatial_hash()
 	var nearby_balls = []
+	var center_cell = (raw_mouse_pos / GRID_CELL_SIZE).floor()
+	var viewport_offset = tex.get_global_transform().origin
 
-	var viewport_global_offset = tex.get_global_transform().origin
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			var cell_coord = center_cell + Vector2(x, y)
+			if _spatial_grid_2d.has(cell_coord):
+				for ball in _spatial_grid_2d[cell_coord]:
+					var proj = camera.unproject_position(ball.global_transform.origin) 
+					var ball_global_pos = viewport_offset + (proj * tex.rect_scale) 
+					var dist = ball_global_pos.distance_to(raw_mouse_pos) 
+					
+					if dist < NEARBY_SCREEN_RADIUS: 
+						nearby_balls.append({"ball": ball, "distance": dist})
 
-	for ball in balls_list:
-		if !is_instance_valid(ball):
-			continue
-
-		# Project world pos to 2D screen pos
-		var projected_pos_local = camera.unproject_position(ball.global_transform.origin)
-
-		# Apply ViewportContainer scale and global offset to get ball pos in raw global screen coords
-		var ball_global_pos = viewport_global_offset + (projected_pos_local * tex.rect_scale)
-
-		# Calculate distance in global screen space
-		var screen_distance = ball_global_pos.distance_to(raw_mouse_pos)
-
-		# Only consider ballz within NEARBY_SCREEN_RADIUS
-		if screen_distance < NEARBY_SCREEN_RADIUS:
-			nearby_balls.append({"ball": ball, "distance": screen_distance})
-
-	# Sort by distance (closest first)
-	nearby_balls.sort_custom(self, "_sort_by_distance")
-
-	# Return the ball objects, limited by MAX_NEARBY_BALLS
+	nearby_balls.sort_custom(self, "_sort_by_distance") 
+	
 	var result_balls = []
-	for i in range(min(nearby_balls.size(), MAX_NEARBY_BALLS)):
-		result_balls.append(nearby_balls[i].ball)
-
+	for i in range(min(nearby_balls.size(), MAX_NEARBY_BALLS)): 
+		result_balls.append(nearby_balls[i].ball) 
 	return result_balls
 
 
