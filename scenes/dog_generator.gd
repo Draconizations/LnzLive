@@ -1787,7 +1787,10 @@ func _on_AnimPicker_text_entered(new_text):
 
 
 func _on_PrevAnim_pressed():
-	set_animation(current_animation - 1)
+	if current_animation > 0:
+		set_animation(current_animation - 1)
+	else:
+		print("Already at the first animation.")
 
 
 func _on_NextAnim_pressed():
