@@ -103,6 +103,9 @@ vec2 calculate_uvs(vec2 offset) {
         vec2 uv = offset / float(ball_size) + vec2(0.5);
         uv *= float(ball_size) / texture_size_raw;
 
+        // attempt #1 to center texture better
+        //uv += vec2(0.5) - (float(ball_size) / texture_size_raw * 0.5);
+
         // Grab true view rotation captured in the vertex shader
         float m6 = view_forward.x;
         float m7 = -view_forward.y; 
