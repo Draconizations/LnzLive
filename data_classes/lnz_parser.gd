@@ -224,7 +224,10 @@ func get_parsed_lines(reader, keys: Array):
 			break
 		if line.empty() or line.begins_with(";") or line.begins_with("#"):
 			continue
-		var parsed = r.search_all(line)
+		
+		var data_only = line.split(";")[0] 
+		var parsed = r.search_all(data_only) 
+
 		if parsed.size() == 0:
 			continue
 		var dict = {}
