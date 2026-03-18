@@ -2,6 +2,8 @@ extends PanelContainer
 
 # gdlint: disable=max-line-length
 
+const SETTINGS_PATH = "user://settings.cfg"
+
 enum Tool {
 	PENCIL,
 	ERASER,
@@ -38,9 +40,10 @@ var active_image = null
 var active_texture = null
 
 var palette_colors = []
-var _color_hash_cache = {} # Cache for fast color-to-palette-index lookups
+var _color_hash_cache = {} 
 var last_draw_pos = Vector2(-1, -1)
 var is_drawing = false
+var _canvas_dirty = false # Flag to prevent GPU stalling
 
 var dog_generator = null
 
@@ -74,6 +77,8 @@ onready var filename_line_edit = $VBoxContainer/SaveHBox/FileNameLineEdit
 onready var active_textures_option = $VBoxContainer/SaveHBox/ActiveTexturesOption
 
 func _ready():
+	set_process(true)
+	
 	var dir = Directory.new()
 	if not dir.dir_exists("user://resources/textures"):
 		dir.make_dir_recursive("user://resources/textures")
@@ -93,17 +98,25 @@ func _ready():
 
 	brush_shape_option.add_item("Square", BrushShape.SQUARE)
 	brush_shape_option.add_item("Circle", BrushShape.CIRCLE)
-	brush_shape_option.select(0)
-
+	
 	brush_pattern_option.add_item("Solid", BrushPattern.SOLID)
 	brush_pattern_option.add_item("Checker", BrushPattern.CHECKER)
 	brush_pattern_option.add_item("V-Stripes", BrushPattern.V_STRIPES)
 	brush_pattern_option.add_item("H-Stripes", BrushPattern.H_STRIPES)
 	brush_pattern_option.add_item("Bayer", BrushPattern.BAYER)
 	brush_pattern_option.add_item("Noise", BrushPattern.NOISE)
-	brush_pattern_option.select(0)
 
+	load_settings()
 	_initialize_canvas()
+
+	# Attach saving hooks to inputs
+	brush_size_spin.connect("value_changed", self, "_trigger_setting_save")
+	brush_spacing_spin.connect("value_changed", self, "_trigger_setting_save")
+	dither_amount_spin.connect("value_changed", self, "_trigger_setting_save")
+	contiguous_check_box.connect("toggled", self, "_trigger_setting_save")
+	use_secondary_check.connect("toggled", self, "_trigger_setting_save")
+	mirror_h_btn.connect("toggled", self, "_trigger_setting_save")
+	mirror_v_btn.connect("toggled", self, "_trigger_setting_save")
 
 	if get_tree().get_root().has_node("Root/PetRoot/Node"):
 		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
@@ -113,7 +126,6 @@ func _ready():
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")
 
-		# Use the full correct path to LnzTextEdit so it properly triggers on text edits
 		var lte = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 		if lte:
 			lte.connect("text_changed", self, "_on_lnz_text_changed")
@@ -122,6 +134,12 @@ func _ready():
 		call_deferred("_populate_active_textures")
 
 	_update_tool_buttons()
+
+func _process(_delta):
+	# GPU Optimization: Only upload image to GPU once per frame when dirty
+	if _canvas_dirty and active_texture and active_image:
+		active_texture.set_data(active_image)
+		_canvas_dirty = false
 
 func _initialize_canvas():
 	active_image = Image.new()
@@ -133,6 +151,44 @@ func _initialize_canvas():
 	texture_rect.texture = active_texture
 	texture_rect.rect_min_size = canvas_size * current_zoom
 
+func load_settings():
+	var config = ConfigFile.new()
+	if config.load(SETTINGS_PATH) == OK:
+		brush_size_spin.value = config.get_value("TextureEditor", "brush_size", 1.0)
+		brush_spacing_spin.value = config.get_value("TextureEditor", "brush_spacing", 1.0)
+		dither_amount_spin.value = config.get_value("TextureEditor", "dither_amount", 0.5)
+		
+		var shape_idx = config.get_value("TextureEditor", "brush_shape", BrushShape.SQUARE)
+		brush_shape_option.select(shape_idx)
+		current_brush_shape = shape_idx
+		
+		var pat_idx = config.get_value("TextureEditor", "brush_pattern", BrushPattern.SOLID)
+		brush_pattern_option.select(pat_idx)
+		current_brush_pattern = pat_idx
+		
+		contiguous_check_box.pressed = config.get_value("TextureEditor", "contiguous", true)
+		use_secondary_check.pressed = config.get_value("TextureEditor", "use_secondary", false)
+		mirror_h_btn.pressed = config.get_value("TextureEditor", "mirror_h", false)
+		mirror_v_btn.pressed = config.get_value("TextureEditor", "mirror_v", false)
+
+func save_settings():
+	var config = ConfigFile.new()
+	config.load(SETTINGS_PATH) # Load existing to prevent overwriting other sections
+	
+	config.set_value("TextureEditor", "brush_size", brush_size_spin.value)
+	config.set_value("TextureEditor", "brush_spacing", brush_spacing_spin.value)
+	config.set_value("TextureEditor", "dither_amount", dither_amount_spin.value)
+	config.set_value("TextureEditor", "brush_shape", current_brush_shape)
+	config.set_value("TextureEditor", "brush_pattern", current_brush_pattern)
+	config.set_value("TextureEditor", "contiguous", contiguous_check_box.pressed)
+	config.set_value("TextureEditor", "use_secondary", use_secondary_check.pressed)
+	config.set_value("TextureEditor", "mirror_h", mirror_h_btn.pressed)
+	config.set_value("TextureEditor", "mirror_v", mirror_v_btn.pressed)
+	
+	config.save(SETTINGS_PATH)
+
+func _trigger_setting_save(_ignored_value = null):
+	save_settings()
 
 func _on_ZoomOptionButton_item_selected(index):
 	current_zoom = zoom_option_btn.get_item_id(index)
@@ -145,9 +201,11 @@ func _on_SizeOptionButton_item_selected(index):
 
 func _on_BrushShapeOption_item_selected(index):
 	current_brush_shape = brush_shape_option.get_item_id(index)
+	save_settings()
 
 func _on_BrushPatternOption_item_selected(index):
 	current_brush_pattern = brush_pattern_option.get_item_id(index)
+	save_settings()
 
 func populate_palette():
 	for child in palette_grid.get_children():
@@ -155,7 +213,7 @@ func populate_palette():
 		child.queue_free()
 
 	palette_colors.clear()
-	_color_hash_cache.clear() # Clear cache when palette regenerates
+	_color_hash_cache.clear()
 
 	if dog_generator == null or dog_generator.current_palette_texture == null:
 		return
@@ -191,9 +249,8 @@ func populate_palette():
 		else:
 			_on_palette_color_selected(0)
 
-# --- Palette Hashing Cache Helper ---
 func _get_closest_palette_index(c: Color) -> int:
-	var key = c.to_html(false) # Use HTML RRGGBB as unique hash key
+	var key = c.to_html(false)
 	
 	if _color_hash_cache.has(key):
 		return _color_hash_cache[key]
@@ -209,7 +266,6 @@ func _get_closest_palette_index(c: Color) -> int:
 			
 	_color_hash_cache[key] = best_idx
 	return best_idx
-# ------------------------------------
 
 func _on_palette_color_selected(index):
 	current_color_index = index
@@ -367,7 +423,6 @@ func _handle_canvas_input(pos: Vector2):
 	var spacing = int(brush_spacing_spin.value)
 
 	active_image.lock()
-
 	var brush_size = int(brush_size_spin.value)
 
 	if current_tool in [Tool.PENCIL, Tool.ERASER]:
@@ -406,7 +461,7 @@ func _handle_canvas_input(pos: Vector2):
 	active_image.unlock()
 
 	if current_tool != Tool.EYEDROPPER:
-		active_texture.set_data(active_image)
+		_canvas_dirty = true
 
 func _draw_brush(cx: int, cy: int, size: int, color: Color):
 	if size == 1:
@@ -415,13 +470,11 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color):
 
 	var half_size = size / 2.0
 	var center = Vector2(cx, cy)
-
 	if size % 2 == 0:
 		center += Vector2(0.5, 0.5)
 
 	var start_x = cx - int(size / 2)
 	var start_y = cy - int(size / 2)
-
 	if size % 2 == 0:
 		start_x += 1
 		start_y += 1
@@ -512,7 +565,6 @@ func _flood_fill(x: int, y: int, target_color: Color):
 func _on_pen_up():
 	last_draw_pos = Vector2(-1, -1)
 
-
 func _on_SaveButton_pressed():
 	var fname = filename_line_edit.text.strip_edges()
 	if fname == "":
@@ -588,7 +640,7 @@ func save_indexed_bmp(path: String):
 			if c.a == 0:
 				f.store_8(0)
 			else:
-				f.store_8(_get_closest_palette_index(c)) # Uses hash cache now!
+				f.store_8(_get_closest_palette_index(c))
 
 		for p in range(row_size - w):
 			f.store_8(0)
@@ -600,7 +652,7 @@ func save_indexed_bmp(path: String):
 func _get_background_color() -> Color:
 	if palette_colors.size() > 253:
 		return palette_colors[253]
-	return Color(1, 0, 1, 1) # Magenta fallback if no palette yet
+	return Color(1, 0, 1, 1)
 
 func _on_LoadButton_pressed():
 	var fname = filename_line_edit.text.strip_edges()
@@ -612,7 +664,6 @@ func _on_LoadButton_pressed():
 
 	var loaded_tex = null
 	
-	# Skip the dog generator atlas and load directly from filesystem / resources
 	var base_name = fname.get_basename()
 	var extension = fname.get_extension()
 	var variants = [
@@ -641,7 +692,7 @@ func _on_LoadButton_pressed():
 			loaded_tex = preloader.get_resource(fname.to_lower())
 
 	if not loaded_tex:
-		print("Failed to load standalone texture (bypassed atlas): ", fname)
+		print("Failed to load texture: ", fname)
 		return
 
 	var img = loaded_tex.get_data()
@@ -674,7 +725,6 @@ func _on_LoadButton_pressed():
 			if c.a == 0:
 				active_image.set_pixel(x, y, _get_background_color())
 			else:
-				# Godot loads indexed BMPs as grayscale where the red channel stores the palette index / 255.0
 				var idx = int(round(c.r * 255.0))
 				if idx < palette_colors.size():
 					active_image.set_pixel(x, y, palette_colors[idx])

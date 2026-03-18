@@ -1,5 +1,7 @@
 extends Panel
 
+const SETTINGS_PATH = "user://settings.cfg"
+
 signal texture_rotation_mode_changed(mode)
 signal texture_rotation_input_changed(input_vec)
 signal texture_affected_by_size_changed(is_affected)
@@ -43,6 +45,15 @@ func set_settings(
 		size_checkbox.pressed = affected_by_size
 		rotation_checkbox.pressed = affected_by_rotation
 
+func _save_self_settings():
+	var config = ConfigFile.new()
+	config.load(SETTINGS_PATH)
+	config.set_value("LNZOptions", "shader_texture_rotation_mode", mode_option.selected)
+	config.set_value("LNZOptions", "shader_texture_rotation_input", Vector2(input_x_spinbox.value, input_y_spinbox.value))
+	config.set_value("LNZOptions", "shader_texture_affected_by_size", size_checkbox.pressed)
+	config.set_value("LNZOptions", "shader_texture_affected_by_rotation", rotation_checkbox.pressed)
+	config.save(SETTINGS_PATH)
+
 func get_mode() -> int:
 	return mode_option.selected
 
@@ -57,16 +68,20 @@ func get_affected_by_rotation() -> bool:
 
 func _on_mode_selected(index):
 	emit_signal("texture_rotation_mode_changed", index)
+	_save_self_settings()
 
 func _on_input_changed(_value):
 	var input_vec = Vector2(input_x_spinbox.value, input_y_spinbox.value)
 	emit_signal("texture_rotation_input_changed", input_vec)
+	_save_self_settings()
 
 func _on_size_toggled(is_on):
 	emit_signal("texture_affected_by_size_changed", is_on)
+	_save_self_settings()
 
 func _on_rotation_toggled(is_on):
 	emit_signal("texture_affected_by_rotation_changed", is_on)
+	_save_self_settings()
 
 func _on_CloseButton_pressed():
 	hide()
