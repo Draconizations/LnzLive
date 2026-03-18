@@ -802,11 +802,11 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 
 
 func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
-	return (screen_pos - (rect_position + rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
+	return (screen_pos - (rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
 
 
 func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
-	return ((viewport_pos - Vector2(500, 500)) * tex.rect_scale) + (rect_position + rect_size / 2.0)
+	return ((viewport_pos - Vector2(500, 500)) * tex.rect_scale) + (rect_size / 2.0)
 
 
 # TBD: refactor _gui_input with separate functions:
