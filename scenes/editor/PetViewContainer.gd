@@ -857,7 +857,7 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 	if resizing:
 		#_scale_group_pivot = _get_rotation_pivot_origin(int(move_mode_settings_instance.find_node("PivotBall").value) if move_mode_settings_instance.find_node("UsePivotCheckBox").pressed else -1)
 		_scale_group_pivot = _get_rotation_pivot_origin(
-			int(use_pivot_check_box.value) if use_pivot_check_box.pressed else -1
+			int(pivot_ball_spinbox.value) if use_pivot_check_box.pressed else -1
 		)
 
 		_scale_group_initial_data.clear()
@@ -877,8 +877,9 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 	else:
 		_record_move_start_state()
 		for b in selected_balls:
-			if not pet_node._orig_world_pos.has(b.ball_no):
-				pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
+			if is_instance_valid(b) and "ball_no" in b:
+				if not pet_node._orig_world_pos.has(b.ball_no):
+					pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 
 	mark_ui_dirty()
@@ -1509,8 +1510,12 @@ func _gui_input(event):
 		and not move_mode
 	):
 		if is_resizing:
-			var size_dif = get_lnz_size_difference(original_scale, drag_ball, pet_node)
-			pet_node.emit_ball_resize(drag_ball.ball_no, size_dif)
+			var delta = event.position - drag_start_pos
+			var change = delta.dot(Vector2(1, -1).normalized()) * 0.5
+			var raw_target_visual = clamp(original_scale + change, 1.0, 500.0)
+
+			var final_size = get_absolute_lnz_size(raw_target_visual, drag_ball, pet_node)
+			pet_node.emit_ball_resize(drag_ball.ball_no, final_size)
 		else:
 			print("[LNZ EDIT] Final world pos:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
@@ -2211,7 +2216,7 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 	return lnz_offset
 
 
-func get_lnz_size_difference(original_scale, drag_ball: Spatial, pet_node: Node) -> int:
+func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_node: Node) -> int:
 	var ball_no = drag_ball.ball_no
 	var sizing_info = _get_ball_sizing_info(pet_node, ball_no)
 	var is_addball = sizing_info.is_addball
@@ -3471,20 +3476,37 @@ func _on_move_mode_apply():
 	var needs_rebuild = false
 	for b_no in pending_moves:
 		var data = pending_moves[b_no]
+		
 		if data.has("orig_basis") and data.has("new_basis"):
 			if data.orig_basis != data.new_basis:
 				needs_rebuild = true
-				break
+			else:
+				data.erase("orig_basis")
+				data.erase("new_basis")
+				
 		if data.has("orig_size") and data.has("new_size"):
 			if data.orig_size != data.new_size:
 				needs_rebuild = true
-				break
+			else:
+				data.erase("orig_size")
+				data.erase("new_size")
+
+	var selected_ids = []
+	for b in selected_balls:
+		if is_instance_valid(b) and "ball_no" in b:
+			selected_ids.append(b.ball_no)
 
 	pet_node.set_skip_next_rebuild(!needs_rebuild)
 	lnz_text_edit.apply_batch_moves(pending_moves)
 
 	pending_moves.clear()
 	move_mode_settings_instance.set_queued_count(0)
+
+	selected_balls.clear()
+	for id in selected_ids:
+		var new_b = _find_visual_ball_by_no(id)
+		if new_b and is_instance_valid(new_b):
+			selected_balls.append(new_b)
 
 	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
@@ -3493,6 +3515,7 @@ func _on_move_mode_apply():
 		pet_node._orig_world_pos[b.ball_no] = b.global_transform.origin
 		b.apply_outline_state(get_visual_state_for_ball(b))
 
+	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
 
 
