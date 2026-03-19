@@ -99,10 +99,17 @@ margin_top = 31.0
 margin_right = 1906.0
 margin_bottom = 35.0
 
-[node name="BrushHBox" type="HBoxContainer" parent="VBoxContainer"]
+[node name="Label" type="Label" parent="VBoxContainer"]
 margin_top = 39.0
 margin_right = 1906.0
-margin_bottom = 66.0
+margin_bottom = 60.0
+custom_fonts/font = SubResource( 1 )
+text = "Ramp Recolor converts 2nd color to 1st color in ramps"
+
+[node name="BrushHBox" type="HBoxContainer" parent="VBoxContainer"]
+margin_top = 64.0
+margin_right = 1906.0
+margin_bottom = 91.0
 
 [node name="SizeLabel" type="Label" parent="VBoxContainer/BrushHBox"]
 margin_top = 3.0
@@ -151,9 +158,17 @@ custom_fonts/font = SubResource( 1 )
 text = "Square"
 
 [node name="ToolsHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 70.0
+margin_top = 95.0
 margin_right = 1906.0
-margin_bottom = 99.0
+margin_bottom = 124.0
+
+[node name="CurrentToolLabel" type="Label" parent="VBoxContainer/ToolsHBox"]
+margin_top = 4.0
+margin_right = 100.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 1 )
+custom_colors/font_color = Color( 0.4, 1, 0.8, 1 )
+text = "Tool: Pencil"
 
 [node name="PencilButton" type="Button" parent="VBoxContainer/ToolsHBox"]
 margin_right = 58.0
@@ -215,10 +230,17 @@ custom_fonts/font = SubResource( 1 )
 toggle_mode = true
 text = "Eyedropper"
 
+[node name="RampRecolorCheckBox" type="CheckBox" parent="VBoxContainer/ToolsHBox"]
+margin_left = 402.0
+margin_right = 540.0
+margin_bottom = 29.0
+custom_fonts/font = SubResource( 1 )
+text = "Ramp Recolor"
+
 [node name="DitherHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 103.0
+margin_top = 128.0
 margin_right = 1906.0
-margin_bottom = 132.0
+margin_bottom = 157.0
 
 [node name="PatternLabel" type="Label" parent="VBoxContainer/DitherHBox"]
 margin_top = 4.0
@@ -274,9 +296,9 @@ align = 1
 valign = 1
 
 [node name="MirrorHBox" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 136.0
+margin_top = 161.0
 margin_right = 1906.0
-margin_bottom = 165.0
+margin_bottom = 190.0
 
 [node name="MirrorHCheckBox" type="CheckBox" parent="VBoxContainer/MirrorHBox"]
 margin_right = 176.0
@@ -292,14 +314,14 @@ custom_fonts/font = SubResource( 1 )
 text = "Mirror Vertical"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
-margin_top = 169.0
+margin_top = 194.0
 margin_right = 1906.0
-margin_bottom = 173.0
+margin_bottom = 198.0
 
 [node name="ActiveColorRect" type="ColorRect" parent="VBoxContainer"]
-margin_top = 177.0
+margin_top = 202.0
 margin_right = 1906.0
-margin_bottom = 202.0
+margin_bottom = 227.0
 rect_min_size = Vector2( 0, 25 )
 
 [node name="ColorIndexLabel" type="Label" parent="VBoxContainer/ActiveColorRect"]
@@ -312,12 +334,12 @@ align = 1
 valign = 1
 
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
-margin_top = 206.0
+margin_top = 231.0
 margin_right = 1906.0
-margin_bottom = 210.0
+margin_bottom = 235.0
 
 [node name="CanvasScroll" type="ScrollContainer" parent="VBoxContainer"]
-margin_top = 214.0
+margin_top = 239.0
 margin_right = 1906.0
 margin_bottom = 939.0
 rect_min_size = Vector2( 0, 250 )
@@ -325,15 +347,15 @@ size_flags_vertical = 3
 
 [node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/CanvasScroll"]
 margin_right = 1906.0
-margin_bottom = 725.0
+margin_bottom = 700.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/CanvasScroll/CenterContainer"]
 margin_left = 921.0
-margin_top = 330.0
+margin_top = 318.0
 margin_right = 985.0
-margin_bottom = 394.0
+margin_bottom = 382.0
 rect_min_size = Vector2( 64, 64 )
 expand = true
 stretch_mode = 1

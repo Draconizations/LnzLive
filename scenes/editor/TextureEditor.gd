@@ -64,11 +64,14 @@ onready var use_secondary_check = $VBoxContainer/DitherHBox/UseSecondaryCheckBox
 onready var active_secondary_color_rect = $VBoxContainer/DitherHBox/ActiveSecondaryColorRect
 onready var secondary_color_label = $VBoxContainer/DitherHBox/ActiveSecondaryColorRect/SecondaryColorIndexLabel
 
+onready var current_tool_label = $VBoxContainer/ToolsHBox/CurrentToolLabel
+
 onready var pencil_btn = $VBoxContainer/ToolsHBox/PencilButton
 onready var eraser_btn = $VBoxContainer/ToolsHBox/EraserButton
 onready var fill_btn = $VBoxContainer/ToolsHBox/FillButton
 onready var contiguous_check_box = $VBoxContainer/ToolsHBox/ContiguousCheckBox
 onready var eyedropper_btn = $VBoxContainer/ToolsHBox/EyedropperButton
+onready var ramp_recolor_check = $VBoxContainer/ToolsHBox/RampRecolorCheckBox
 
 onready var mirror_h_btn = $VBoxContainer/MirrorHBox/MirrorHCheckBox
 onready var mirror_v_btn = $VBoxContainer/MirrorHBox/MirrorVCheckBox
@@ -114,6 +117,7 @@ func _ready():
 	brush_spacing_spin.connect("value_changed", self, "_trigger_setting_save")
 	dither_amount_spin.connect("value_changed", self, "_trigger_setting_save")
 	contiguous_check_box.connect("toggled", self, "_trigger_setting_save")
+	ramp_recolor_check.connect("toggled", self, "_trigger_setting_save")
 	use_secondary_check.connect("toggled", self, "_trigger_setting_save")
 	mirror_h_btn.connect("toggled", self, "_trigger_setting_save")
 	mirror_v_btn.connect("toggled", self, "_trigger_setting_save")
@@ -167,13 +171,14 @@ func load_settings():
 		current_brush_pattern = pat_idx
 		
 		contiguous_check_box.pressed = config.get_value("TextureEditor", "contiguous", true)
+		ramp_recolor_check.pressed = config.get_value("TextureEditor", "ramp_recolor", false)
 		use_secondary_check.pressed = config.get_value("TextureEditor", "use_secondary", false)
 		mirror_h_btn.pressed = config.get_value("TextureEditor", "mirror_h", false)
 		mirror_v_btn.pressed = config.get_value("TextureEditor", "mirror_v", false)
 
 func save_settings():
 	var config = ConfigFile.new()
-	config.load(SETTINGS_PATH) # Load existing to prevent overwriting other sections
+	config.load(SETTINGS_PATH)
 	
 	config.set_value("TextureEditor", "brush_size", brush_size_spin.value)
 	config.set_value("TextureEditor", "brush_spacing", brush_spacing_spin.value)
@@ -181,6 +186,7 @@ func save_settings():
 	config.set_value("TextureEditor", "brush_shape", current_brush_shape)
 	config.set_value("TextureEditor", "brush_pattern", current_brush_pattern)
 	config.set_value("TextureEditor", "contiguous", contiguous_check_box.pressed)
+	config.set_value("TextureEditor", "ramp_recolor", ramp_recolor_check.pressed)
 	config.set_value("TextureEditor", "use_secondary", use_secondary_check.pressed)
 	config.set_value("TextureEditor", "mirror_h", mirror_h_btn.pressed)
 	config.set_value("TextureEditor", "mirror_v", mirror_v_btn.pressed)
@@ -249,9 +255,15 @@ func populate_palette():
 		else:
 			_on_palette_color_selected(0)
 
-func _get_closest_palette_index(c: Color) -> int:
+func _get_closest_palette_index(c: Color, preferred_base: int = -1) -> int:
+	if preferred_base >= 0 and preferred_base + 10 <= palette_colors.size():
+		for i in range(preferred_base, preferred_base + 10):
+			var pc = palette_colors[i]
+			var d = abs(pc.r - c.r) + abs(pc.g - c.g) + abs(pc.b - c.b)
+			if d < 0.001:
+				return i
+				
 	var key = c.to_html(false)
-	
 	if _color_hash_cache.has(key):
 		return _color_hash_cache[key]
 		
@@ -373,12 +385,22 @@ func _on_ActiveTexturesOption_item_selected(index):
 		_on_LoadButton_pressed()
 		
 	active_textures_option.select(0)
-
+	
 func _update_tool_buttons():
 	pencil_btn.pressed = (current_tool == Tool.PENCIL)
 	eraser_btn.pressed = (current_tool == Tool.ERASER)
 	fill_btn.pressed = (current_tool == Tool.FILL)
 	eyedropper_btn.pressed = (current_tool == Tool.EYEDROPPER)
+	
+	match current_tool:
+		Tool.PENCIL:
+			current_tool_label.text = "Tool: Pencil"
+		Tool.ERASER:
+			current_tool_label.text = "Tool: Eraser"
+		Tool.FILL:
+			current_tool_label.text = "Tool: Fill"
+		Tool.EYEDROPPER:
+			current_tool_label.text = "Tool: Eyedrop"
 
 func _on_PencilButton_pressed():
 	current_tool = Tool.PENCIL
@@ -520,24 +542,82 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color):
 				else:
 					_draw_pixel(px, py, color)
 
+func _apply_pixel_color(px: int, py: int, brush_color: Color):
+	if px < 0 or px >= canvas_size.x or py < 0 or py >= canvas_size.y:
+		return
+		
+	var final_color = brush_color
+	
+	if ramp_recolor_check and ramp_recolor_check.pressed and current_color_index >= 10 and current_color_index <= 199:
+		var c = active_image.get_pixel(px, py)
+		if c.a > 0:
+			var source_base = -1
+			if secondary_color_index >= 10 and secondary_color_index <= 199:
+				source_base = int(secondary_color_index / 10) * 10
+				
+			var p_idx = _get_closest_palette_index(c, source_base)
+			
+			if source_base == -1 and p_idx >= 10 and p_idx <= 199:
+				source_base = int(p_idx / 10) * 10 
+				
+			if source_base >= 10 and p_idx >= source_base and p_idx < source_base + 10:
+				var target_base = int(current_color_index / 10) * 10
+				final_color = palette_colors[target_base + (p_idx - source_base)]
+			else:
+				return
+		else:
+			return
+			
+	active_image.set_pixel(px, py, final_color)
+
 func _draw_pixel(x: int, y: int, color: Color):
-	active_image.set_pixel(x, y, color)
+	_apply_pixel_color(x, y, color)
 
 	if mirror_h_btn.pressed:
 		var mx = canvas_size.x - 1 - x
-		active_image.set_pixel(mx, y, color)
+		_apply_pixel_color(mx, y, color)
 		if mirror_v_btn.pressed:
 			var my = canvas_size.y - 1 - y
-			active_image.set_pixel(mx, my, color)
+			_apply_pixel_color(mx, my, color)
 
 	if mirror_v_btn.pressed:
 		var my = canvas_size.y - 1 - y
-		active_image.set_pixel(x, my, color)
+		_apply_pixel_color(x, my, color)
 
 func _flood_fill(x: int, y: int, target_color: Color):
 	var start_color = active_image.get_pixel(x, y)
-	if start_color == target_color:
-		return
+	
+	if start_color.a == 0 and not (ramp_recolor_check and ramp_recolor_check.pressed):
+		pass
+	
+	var is_ramp_recolor = false
+	var source_base = -1
+	var target_base = -1
+	var start_idx = -1
+	
+	if ramp_recolor_check and ramp_recolor_check.pressed and current_color_index >= 10 and current_color_index <= 199:
+		if secondary_color_index >= 10 and secondary_color_index <= 199:
+			source_base = int(secondary_color_index / 10) * 10
+			
+		start_idx = _get_closest_palette_index(start_color, source_base)
+		
+		if start_idx >= 10 and start_idx <= 199:
+			is_ramp_recolor = true
+			target_base = int(current_color_index / 10) * 10
+			
+			if source_base == -1:
+				source_base = int(start_idx / 10) * 10
+				
+			if source_base == target_base:
+				return
+				
+			if start_idx < source_base or start_idx >= source_base + 10:
+				return
+		else:
+			return
+	else:
+		if start_color == target_color:
+			return
 
 	if contiguous_check_box and contiguous_check_box.pressed:
 		var stack = [Vector2(x, y)]
@@ -550,8 +630,20 @@ func _flood_fill(x: int, y: int, target_color: Color):
 				continue
 
 			var c = active_image.get_pixel(px, py)
-			if c == start_color:
-				active_image.set_pixel(px, py, target_color)
+			var match_found = false
+			var fill_color = target_color
+			
+			if is_ramp_recolor:
+				var p_idx = _get_closest_palette_index(c, source_base)
+				if p_idx >= source_base and p_idx < source_base + 10:
+					match_found = true
+					fill_color = palette_colors[target_base + (p_idx - source_base)]
+			else:
+				if c == start_color:
+					match_found = true
+					
+			if match_found:
+				active_image.set_pixel(px, py, fill_color)
 				stack.append(Vector2(px + 1, py))
 				stack.append(Vector2(px - 1, py))
 				stack.append(Vector2(px, py + 1))
@@ -559,8 +651,14 @@ func _flood_fill(x: int, y: int, target_color: Color):
 	else:
 		for py in range(int(canvas_size.y)):
 			for px in range(int(canvas_size.x)):
-				if active_image.get_pixel(px, py) == start_color:
-					active_image.set_pixel(px, py, target_color)
+				var c = active_image.get_pixel(px, py)
+				if is_ramp_recolor:
+					var p_idx = _get_closest_palette_index(c, source_base)
+					if p_idx >= source_base and p_idx < source_base + 10:
+						active_image.set_pixel(px, py, palette_colors[target_base + (p_idx - source_base)])
+				else:
+					if c == start_color:
+						active_image.set_pixel(px, py, target_color)
 
 func _on_pen_up():
 	last_draw_pos = Vector2(-1, -1)
