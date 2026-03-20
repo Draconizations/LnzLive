@@ -79,6 +79,9 @@ onready var mirror_v_btn = $VBoxContainer/MirrorHBox/MirrorVCheckBox
 onready var filename_line_edit = $VBoxContainer/SaveHBox/FileNameLineEdit
 onready var active_textures_option = $VBoxContainer/SaveHBox/ActiveTexturesOption
 
+onready var show_quadrants_check = $VBoxContainer/MirrorHBox/ShowQuadrantsCheckBox
+onready var quadrant_overlay = $VBoxContainer/CanvasScroll/CenterContainer/TextureRect/QuadrantOverlay
+
 func _ready():
 	set_process(true)
 	
@@ -139,6 +142,10 @@ func _ready():
 
 	_update_tool_buttons()
 
+	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
+	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
+	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
+
 func _process(_delta):
 	# GPU Optimization: Only upload image to GPU once per frame when dirty
 	if _canvas_dirty and active_texture and active_image:
@@ -154,6 +161,8 @@ func _initialize_canvas():
 	active_texture.create_from_image(active_image, 0)
 	texture_rect.texture = active_texture
 	texture_rect.rect_min_size = canvas_size * current_zoom
+	if quadrant_overlay:
+		quadrant_overlay.update()
 
 func load_settings():
 	var config = ConfigFile.new()
@@ -176,6 +185,8 @@ func load_settings():
 		mirror_h_btn.pressed = config.get_value("TextureEditor", "mirror_h", false)
 		mirror_v_btn.pressed = config.get_value("TextureEditor", "mirror_v", false)
 
+		show_quadrants_check.pressed = config.get_value("TextureEditor", "show_quadrants", false)
+
 func save_settings():
 	var config = ConfigFile.new()
 	config.load(SETTINGS_PATH)
@@ -190,6 +201,7 @@ func save_settings():
 	config.set_value("TextureEditor", "use_secondary", use_secondary_check.pressed)
 	config.set_value("TextureEditor", "mirror_h", mirror_h_btn.pressed)
 	config.set_value("TextureEditor", "mirror_v", mirror_v_btn.pressed)
+	config.set_value("TextureEditor", "show_quadrants", show_quadrants_check.pressed)
 	
 	config.save(SETTINGS_PATH)
 
@@ -199,11 +211,13 @@ func _trigger_setting_save(_ignored_value = null):
 func _on_ZoomOptionButton_item_selected(index):
 	current_zoom = zoom_option_btn.get_item_id(index)
 	texture_rect.rect_min_size = canvas_size * current_zoom
+	quadrant_overlay.update()
 
 func _on_SizeOptionButton_item_selected(index):
 	var size_val = size_option_btn.get_item_id(index)
 	canvas_size = Vector2(size_val, size_val)
 	_initialize_canvas()
+	quadrant_overlay.update()
 
 func _on_BrushShapeOption_item_selected(index):
 	current_brush_shape = brush_shape_option.get_item_id(index)
@@ -385,7 +399,7 @@ func _on_ActiveTexturesOption_item_selected(index):
 		_on_LoadButton_pressed()
 		
 	active_textures_option.select(0)
-	
+
 func _update_tool_buttons():
 	pencil_btn.pressed = (current_tool == Tool.PENCIL)
 	eraser_btn.pressed = (current_tool == Tool.ERASER)
@@ -834,3 +848,36 @@ func _on_LoadButton_pressed():
 
 	active_texture.set_data(active_image)
 	print("Loaded texture: ", fname)
+
+func _on_show_quadrants_toggled(_pressed):
+	quadrant_overlay.update()
+
+func _on_QuadrantOverlay_draw():
+	if show_quadrants_check.pressed:
+		var size = quadrant_overlay.rect_size
+		var cx = size.x / 2.0
+		var cy = size.y / 2.0
+		
+		# Draw Crosshair
+		quadrant_overlay.draw_line(Vector2(cx, 0), Vector2(cx, size.y), Color(1, 0, 0, 0.4), max(1.0, current_zoom / 2.0))
+		quadrant_overlay.draw_line(Vector2(0, cy), Vector2(size.x, cy), Color(1, 0, 0, 0.4), max(1.0, current_zoom / 2.0))
+		
+		# Draw Labels
+		var font = show_quadrants_check.get_font("font")
+		var text_color = Color(0, 0, 0, 0.5) # Semi-transparent black
+		var scale_factor = 2.0
+		quadrant_overlay.draw_set_transform(Vector2.ZERO, 0.0, Vector2(scale_factor, scale_factor))
+		
+		# Calculate positions in the scaled coordinate space
+		var f_pos = Vector2(cx / 4.0 - 6, cy / 4.0 + 6)
+		var b_pos = Vector2((cx + cx/2) / 2.0 - 6, cy / 4.0 + 6)
+		var r_pos = Vector2(cx / 4.0 - 6, (cy + cy/2) / 2.0 + 6)
+		var l_pos = Vector2((cx + cx/2) / 2.0 - 6, (cy + cy/2) / 2.0 + 6)
+		
+		quadrant_overlay.draw_string(font, f_pos, "F", text_color)
+		quadrant_overlay.draw_string(font, b_pos, "B", text_color)
+		quadrant_overlay.draw_string(font, r_pos, "R", text_color)
+		quadrant_overlay.draw_string(font, l_pos, "L", text_color)
+		
+		# Reset transform to prevent affecting subsequent draw calls
+		quadrant_overlay.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)

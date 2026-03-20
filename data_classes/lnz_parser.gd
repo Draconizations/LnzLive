@@ -67,6 +67,7 @@ var omissions = {}
 var project_ball = []
 var texture_list = []
 var no_texture_rotate = []
+var quadrant_balls = []
 var palette = null
 
 var sections_map = {}
@@ -305,10 +306,17 @@ func get_texture_list(reader):
 		texture_list.append({filename = filename, transparent_color = line.transparent_color, texture_size = texture_size})
 
 func get_no_texture_rotate(reader):
-	var parsed_lines = get_parsed_lines(reader, ["ball_no"])
-	no_texture_rotate = []
+	var parsed_lines = get_parsed_lines(reader, ["ball", "use_quadrants"])
+	
+	no_texture_rotate.clear()
+	quadrant_balls.clear()
+
 	for line in parsed_lines:
-		no_texture_rotate.append(line.ball_no)
+		var ball_id = line.ball
+		no_texture_rotate.append(ball_id) 
+		
+		if line.has("use_quadrants") and line.use_quadrants == 1:
+			quadrant_balls.append(ball_id)
 
 func get_palette(reader):
 	var raw_line = reader.get_line().strip_edges()

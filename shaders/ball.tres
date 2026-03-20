@@ -53,6 +53,8 @@ uniform vec2 texture_rotation_input = vec2(0.0, 0.0); // manual UV offset for ro
 uniform bool texture_affected_by_size = true;
 uniform bool texture_affected_by_rotation = false;
 
+uniform bool use_quadrants = false;
+
 uniform int highlight_color_index = -1;           // -1 for none
 
 uniform bool hide_fill = false;
@@ -103,10 +105,55 @@ vec3 get_shifted_color(int palette_index) {
 
 vec2 calculate_uvs(vec2 offset) {
     vec2 tex_coords;
-    if (tile_texture) {
+    
+    if (use_quadrants) {
+        vec2 adj_offset = offset;
+        
+        // Base UV relative to the single quadrant space
+        vec2 local_uv = (floor(adj_offset) + 0.5) / (texture_size * 0.5) + vec2(0.5);
+        
+        // Bypass tiling to prevent bleeding into adjacent quadrants
+        local_uv = fract(local_uv);
+        
+        // Standard Petz inversion
+        local_uv.x = 1.0 - local_uv.x;
+        local_uv.y = 1.0 - local_uv.y;
+        
+        // Determine view angle relative to ball's local +Z axis
+        float angle = atan(view_forward.x, view_forward.z);
+        vec2 shift = vec2(0.0);
+        
+        float pi4 = 0.785398;
+        float pi34 = 2.356194;
+        
+        // DIRECTION
+        if (angle >= -pi4 && angle < pi4) {
+            shift = vec2(0.5, 0.0);       // Back (Top-Right, Quadrant B)
+        } else if (angle >= pi4 && angle < pi34) {
+            shift = vec2(0.5, 0.5);       // Left (Bottom-Right, Quadrant L)
+        } else if (angle >= -pi34 && angle < -pi4) {
+            shift = vec2(0.0, 0.5);       // Right (Bottom-Left, Quadrant R)
+        } else {
+            shift = vec2(0.0, 0.0);       // Front (Top-Left, Quadrant F)
+        }
+        
+        // Scale local UV (0..1) to quadrant size (0..0.5) and shift to correct corner
+        vec2 final_uv = local_uv * 0.5 + shift;
+        
+        if (is_atlas) {
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+            tex_coords = (atlas_pos + final_uv * atlas_dim) / atlas_size;
+        } else {
+            tex_coords = final_uv;
+        }
+        
+    } else if (tile_texture) {
         float effective_ball_size = texture_affected_by_size ? float(ball_size) : 100.0;
         vec2 uv = offset / effective_ball_size + vec2(0.5);
-        uv *= effective_ball_size / texture_size_raw;
+        
+        // This keeps the tiling scale consistent regardless of actual BMP dimensions.
+        uv *= effective_ball_size / texture_size;
 
         // attempt #1 to center texture better
         //uv += vec2(0.5) - (effective_ball_size / texture_size_raw * 0.5);
@@ -563,6 +610,7 @@ shader_param/texture_rotation_mode = 1
 shader_param/texture_rotation_input = Vector2( 0, 0 )
 shader_param/texture_affected_by_size = true
 shader_param/texture_affected_by_rotation = false
+shader_param/use_quadrants = false
 shader_param/highlight_color_index = -1
 shader_param/hide_fill = false
 shader_param/hide_outline = false

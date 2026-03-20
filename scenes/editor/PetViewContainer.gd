@@ -345,6 +345,7 @@ func _ready():
 		shader_settings_instance.connect("texture_rotation_input_changed", self, "_on_texture_rotation_input_changed")
 		shader_settings_instance.connect("texture_affected_by_size_changed", self, "_on_texture_affected_by_size_changed")
 		shader_settings_instance.connect("texture_affected_by_rotation_changed", self, "_on_texture_affected_by_rotation_changed")
+		shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
 		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
@@ -1970,8 +1971,6 @@ func _set_camera_view(view_name: String):
 		"isolefttop":
 			camera_holder.rotation_degrees = Vector3(35, -45, 0)
 
-
-# MODES
 func _on_ShaderSettingsButton_pressed():
 	if is_instance_valid(shader_settings_instance):
 		shader_settings_instance.popup_centered()
@@ -2016,10 +2015,24 @@ func _on_texture_affected_by_rotation_changed(is_affected):
 				if child.get_node("MeshInstance").material_override:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_rotation", is_affected)
 
+func _on_texture_use_quadrants_changed(is_using: bool):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		# Update the main ball
+		if b.has_method("set_use_quadrants"):
+			b.set_use_quadrants(is_using)
+			
+		# Update any attached paintballs
+		for child in b.get_children():
+			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+				var mat = child.get_node("MeshInstance").material_override
+				if mat:
+					mat.set_shader_param("use_quadrants", is_using)
+
+# MODES
 
 func _on_ModePopup_about_to_show():
 	select_check_box.pressed = selecting_on
-
 
 func _on_SelectCheckBox_pressed():
 	selecting_on = select_check_box.pressed

@@ -484,6 +484,8 @@ func recompose_model():
 	lnz.moves.clear()
 	lnz.texture_list.clear()
 	lnz.whisker_connections.clear()
+	lnz.no_texture_rotate.clear()
+	lnz.quadrant_balls.clear()
 
 	# Parse Sections
 	var ordered_sections = [
@@ -1282,6 +1284,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				if no_texture_rotate.has(int(key)):
 					visual_ball.set_tile_texture(false)
+					if lnz.quadrant_balls.has(int(key)):
+						visual_ball.use_quadrants = true
 
 			visual_ball.rotation_degrees = ball.rotation
 
@@ -1330,6 +1334,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				var skip_texture_rotation = no_texture_rotate.has(int(key))
 				visual_ball.set_tile_texture(!skip_texture_rotation)
+
+				if no_texture_rotate.has(int(key)):
+					visual_ball.set_tile_texture(false)
+					if lnz.quadrant_balls.has(int(key)):
+						visual_ball.use_quadrants = true
 
 				#visual_ball.species = species
 				visual_ball.set_species(species, is_babyz_mode)
@@ -1414,6 +1423,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			var skip_texture_rotation = no_texture_rotate.has(int(key))
 			add_visual_ball.set_tile_texture(!skip_texture_rotation)
+
+			if no_texture_rotate.has(int(key)):
+				add_visual_ball.set_tile_texture(false)
+				if lnz.quadrant_balls.has(int(key)):
+					add_visual_ball.use_quadrants = true
 
 			#add_visual_ball.species = species
 			add_visual_ball.set_species(species, is_babyz_mode)

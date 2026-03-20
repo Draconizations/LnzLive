@@ -23,6 +23,8 @@ export var texture                : Texture            setget set_texture
 export var texture_size           = Vector2(256, 256)  setget set_texture_size
 export var texture_size_raw       = Vector2.ZERO
 
+export var use_quadrants          = false              setget set_use_quadrants
+
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
 
@@ -80,6 +82,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("tiling_unit", 128.0)
 	$MeshInstance.material_override.set_shader_param("texture_size", texture_size)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+	$MeshInstance.material_override.set_shader_param("use_quadrants", use_quadrants)
 	$MeshInstance.material_override.set_shader_param("eyelid_rotation", eyelid_rotation)
 	$MeshInstance.material_override.set_shader_param("eyelid_color",    eyelid_color)
 	
@@ -108,6 +111,11 @@ func set_tile_texture(new_value):
 	tile_texture = new_value
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 	$MeshInstance.material_override.set_shader_param("tile_texture", new_value)
+
+func set_use_quadrants(new_value):
+	use_quadrants = new_value
+	if $MeshInstance.material_override:
+		$MeshInstance.material_override.set_shader_param("use_quadrants", new_value)
 
 func set_ball_size(new_value):
 	ball_size = new_value
