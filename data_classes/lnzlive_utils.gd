@@ -155,14 +155,16 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 
 ### SIZE CONVERSIONS ###
 static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0) -> int:
-	var offset = 0 if is_addball else 2
+	# var offset = 0 if is_addball else 2
+	var offset = 2
 	var req_total = (target_visual / (engine_scale / 255.0)) + offset
 	return int(round(req_total - bhd_size))
 
 static func snap_visual_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0) -> float:
 	var final_lnz = visual_size_to_lnz_size(target_visual, is_addball, engine_scale, bhd_size)
 	var current_base_size = bhd_size + final_lnz
-	var offset = 0 if is_addball else 2
+	# var offset = 0 if is_addball else 2
+	var offset = 2
 	var snapped = round((current_base_size - offset) * (engine_scale / 255.0))
 	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
 	return snapped
