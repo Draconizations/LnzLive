@@ -43,28 +43,30 @@ float random(float x) {
 }
 
 vec3 get_shifted_color(int palette_index) {
-	int new_palette_index;
-	if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
-		int base_decade = color_index - int(mod(float(color_index), 10.0));
-		if (palette_index == 0) {
-			new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
-		} else {
-			new_palette_index = (base_decade - 10) + palette_index;
-		}
-	} else {
-		int modded_color = color_index - int(mod(float(color_index), 10.0));
-		int amount_to_shift_index = int(mod(float(palette_index), 10.0));
-		
-		if(z_center_line < z_center_pet) {
-			amount_to_shift_index = int(min(float(amount_to_shift_index + 2), 9.0));
-		}
-		else if (z_center_line > z_center_pet) {
-			amount_to_shift_index = int(max(float(amount_to_shift_index - 1), 0.0));
-		}
-		new_palette_index = modded_color + amount_to_shift_index;
-	}
-	vec3 new_color = texture(palette, vec2(float(new_palette_index) / float(palette_size), 0.5)).rgb;
-	return new_color;
+    int new_palette_index;
+
+    if (transparent_index == 1 && palette_index >= 0 && palette_index <= 9) {
+        int base_decade = color_index - int(mod(float(color_index), 10.0));
+        if (palette_index == 0) {
+            new_palette_index = ((base_decade - 21) % 120 + 120) % 120;
+        } else {
+            new_palette_index = (base_decade - 10) + palette_index;
+        }
+    } else {
+        int base_decade = color_index - int(mod(float(color_index), 10.0));
+        
+        int ramp_offset = int(mod(float(palette_index), 10.0));
+
+        if (z_center_line < z_center_pet) {
+            ramp_offset = int(min(float(ramp_offset + 2), 9.0));
+        } else if (z_center_line > z_center_pet) {
+            ramp_offset = int(max(float(ramp_offset - 1), 0.0));
+        }
+        
+        new_palette_index = base_decade + ramp_offset;
+    }
+
+    return texture(palette, vec2(float(new_palette_index) / float(palette_size), 0.5)).rgb;
 }
 
 vec3 get_closest_babyz_color(vec4 original_color, out bool is_transp) {
@@ -107,12 +109,23 @@ int get_closest_petz_index(vec4 raw_color) {
 }
 
 vec3 apply_palette_shift(int palette_index) {
+    int effective_index = palette_index;
+
+    if (transparent_index == 80 && palette_index == 1) {
+        effective_index = 89;
+    } else if (transparent_index == 130 && palette_index == 2) {
+        effective_index = 139;
+    } else if (transparent_index == 140 && palette_index == 4) {
+        effective_index = 149;
+    }
+
     if (transparent_index > 0) {
-        if (transparent_index == 1 || (palette_index >= transparent_index && palette_index < transparent_index + 10)) {
-            return get_shifted_color(palette_index);
+        if (transparent_index == 1 || (effective_index >= transparent_index && effective_index < transparent_index + 10)) {
+            return get_shifted_color(effective_index);
         }
     }
-    return texture(palette, vec2(float(palette_index) / float(palette_size), 0.5)).rgb;
+
+    return texture(palette, vec2(float(effective_index) / float(palette_size), 0.5)).rgb;
 }
 
 void fragment() {
@@ -180,15 +193,7 @@ void fragment() {
                  }
                  is_transparent = (best_index == 253);
                  if (raw_color.a < 0.1) is_transparent = true;
-                 if (transparent_index > 0) {
-                    if(transparent_index == 1 || (best_index >= transparent_index && best_index < transparent_index + 10)) {
-                        texture_color = get_shifted_color(best_index);
-                    } else {
-                        texture_color = texture(palette, vec2(float(best_index) / float(palette_size), 0.5)).rgb;
-                    }
-                } else {
-                    texture_color = texture(palette, vec2(float(best_index) / float(palette_size), 0.5)).rgb;
-                }
+                 texture_color = apply_palette_shift(best_index);
              }
         } else if (should_quantize) {
             int p_idx = int(texture(polygon_texture, tex_coords).r * 255.0);
@@ -212,15 +217,7 @@ void fragment() {
         } else {
             int p_idx = int(texture(polygon_texture, tex_coords).r * 255.0);
             is_transparent = (p_idx == 253);
-            if (transparent_index > 0) {
-                if(transparent_index == 1 || (p_idx >= transparent_index && p_idx < transparent_index + 10)) {
-                    texture_color = get_shifted_color(p_idx);
-                } else {
-                    texture_color = texture(palette, vec2(float(p_idx) / float(palette_size), 0.5)).rgb;
-                }
-            } else {
-                texture_color = texture(palette, vec2(float(p_idx) / float(palette_size), 0.5)).rgb;
-            }
+            texture_color = apply_palette_shift(p_idx);
         }
     } else {
         // untextured, if range check failed or has_texture is false
