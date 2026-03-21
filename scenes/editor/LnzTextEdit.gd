@@ -1271,6 +1271,14 @@ func _get_section_bounds(section_tag: String) -> Dictionary:
 		"empties": empty_count
 	}
 
+func get_current_section_name() -> String:
+	var current_line = cursor_get_line()
+	for i in range(current_line, -1, -1):
+		var line = get_line(i).strip_edges()
+		if line.begins_with("["):
+			return line.split(";")[0].strip_edges()
+	return ""
+
 func _detect_delimiter(start_line: int, end_line: int) -> String:
 	var preferred = _get_user_preferred_delimiter()
 	if preferred != "auto":
@@ -1363,6 +1371,34 @@ func _for_each_line_in_section(tag: String, callback):
 		if line.strip_edges() == "" or line.begins_with(";"):
 			continue
 		callback.call(i, line)
+
+func check_linez_limits(b1: int, b2: int) -> bool:
+	var bounds = _get_section_bounds("[Linez]")
+	if bounds.empty():
+		return false
+	
+	var total_valid = 0
+	var count_b1 = 0
+	var count_b2 = 0
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
+		
+		var parts = _split_line(line)
+		if parts.size() < 2:
+			continue
+		
+		total_valid += 1
+		var lb1 = int(parts[0])
+		var lb2 = int(parts[1])
+		
+		if lb1 == b1 or lb2 == b1: count_b1 += 1
+		if lb1 == b2 or lb2 == b2: count_b2 += 1
+	
+	# Limits: 256 total valid linez OR 32 linez for either ball
+	return total_valid >= 256 or count_b1 >= 32 or count_b2 >= 32
 
 ### LNZ TEXT EDITING ###
 
