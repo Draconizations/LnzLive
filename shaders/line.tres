@@ -14,6 +14,8 @@ uniform int palette_size = 256;
 const vec4 TRANSPARENT_COLOR_MAGENTA = vec4(1.0, 0.0, 1.0, 1.0);
 const int TRANSPARENT_COLOR_INDEX = 253;
 
+uniform bool render_flat_colors = false;
+
 uniform int line_width_in_pixels_start = 20;
 uniform int fuzz_amount = 0;
 uniform int line_width_in_pixels_end = 20;
@@ -183,7 +185,7 @@ void fragment() {
     } else if (is_left_edge && l_color_index != -1) {
         texture_color = texture(palette, vec2(float(l_color_index) / float(palette_size), 0.5)).rgb;
     } else {
-        if (has_texture && color_index >= 10 && color_index < texture_limit) {
+        if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
             if (is_atlas) {
                  vec4 raw_color = texture(line_texture, tex_coords);
                  if (raw_color.a < 0.1) is_transparent = true;
@@ -385,6 +387,7 @@ shader_param/debug_mode = true
 shader_param/is_babyz_mode = false
 shader_param/should_quantize = false
 shader_param/palette_size = 256
+shader_param/render_flat_colors = false
 shader_param/line_width_in_pixels_start = 20
 shader_param/fuzz_amount = 0
 shader_param/line_width_in_pixels_end = 20

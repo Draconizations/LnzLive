@@ -54,6 +54,8 @@ var _pending_paintball_nodes = []
 var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
+var render_flat_colors_global = false
+
 var _texture_cache = {}
 var _atlas_manifest = {}
 var _atlas_textures = {}
@@ -1342,6 +1344,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				#visual_ball.species = species
 				visual_ball.set_species(species, is_babyz_mode)
+				visual_ball.set_render_flat_colors(render_flat_colors_global)
 
 			else:
 				visual_ball = ball_map[key]
@@ -1431,6 +1434,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			#add_visual_ball.species = species
 			add_visual_ball.set_species(species, is_babyz_mode)
+			add_visual_ball.set_render_flat_colors(render_flat_colors_global)
 
 		var add_pos = add_ball.position
 		add_pos.y *= -1.0
@@ -1511,6 +1515,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 				#pb_visual_ball.species = species
 				pb_visual_ball.set_species(species, is_babyz_mode)
+				pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
 
 				####
 				# normalised_position (direction from ball center) to shader
@@ -1647,6 +1652,7 @@ func generate_polygons(
 				visual_polygon.texture = point1.texture
 			#visual_polygon.species = species
 			visual_polygon.set_species(species, is_babyz_mode)
+			visual_polygon.set_render_flat_colors(render_flat_colors_global)
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("Polygon color and texture set.")
 
@@ -1756,6 +1762,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.texture = start.texture
 			#visual_line.species = species
 			visual_line.set_species(species, is_babyz_mode)
+			visual_line.set_render_flat_colors(render_flat_colors_global)
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = start.palette
 
@@ -2218,6 +2225,7 @@ func add_pending_paintball(paintball_info):
 
 	#pb_visual_ball.species = lnz.species
 	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
+	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
 	pb_visual_ball.base_ball_no = base_ball_no
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
@@ -2271,6 +2279,7 @@ func _on_randomize_auto_paintballz(paintballz):
 
 		#pb_visual_ball.species = lnz.species
 		pb_visual_ball.set_species(lnz.species, is_babyz_mode)
+		pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
 		pb_visual_ball.base_ball_no = base_ball_no
 		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 		pb_visual_ball.base_ball_size = base_ball_node.ball_size

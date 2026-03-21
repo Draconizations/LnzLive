@@ -345,7 +345,8 @@ func _ready():
 		shader_settings_instance.connect("texture_rotation_input_changed", self, "_on_texture_rotation_input_changed")
 		shader_settings_instance.connect("texture_affected_by_size_changed", self, "_on_texture_affected_by_size_changed")
 		shader_settings_instance.connect("texture_affected_by_rotation_changed", self, "_on_texture_affected_by_rotation_changed")
-		shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
+		shader_settings_instance.connect("texture_flat_colors_changed", self, "_on_texture_flat_colors_changed")
+		# shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
 		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
@@ -2015,19 +2016,40 @@ func _on_texture_affected_by_rotation_changed(is_affected):
 				if child.get_node("MeshInstance").material_override:
 					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_rotation", is_affected)
 
-func _on_texture_use_quadrants_changed(is_using: bool):
+# func _on_texture_use_quadrants_changed(is_using: bool):
+# 	var all_balls = _get_all_visual_balls()
+# 	for b in all_balls:
+# 		# Update the main ball
+# 		if b.has_method("set_use_quadrants"):
+# 			b.set_use_quadrants(is_using)
+			
+# 		# Update any attached paintballs
+# 		for child in b.get_children():
+# 			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+# 				var mat = child.get_node("MeshInstance").material_override
+# 				if mat:
+# 					mat.set_shader_param("use_quadrants", is_using)
+
+func _on_texture_flat_colors_changed(is_flat: bool):
 	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
-		# Update the main ball
-		if b.has_method("set_use_quadrants"):
-			b.set_use_quadrants(is_using)
+		if is_instance_valid(b) and b.has_method("set_render_flat_colors"):
+			b.set_render_flat_colors(is_flat)
 			
-		# Update any attached paintballs
-		for child in b.get_children():
-			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
-				var mat = child.get_node("MeshInstance").material_override
-				if mat:
-					mat.set_shader_param("use_quadrants", is_using)
+			for child in b.get_children():
+				if child.is_in_group("paintballs") and child.has_method("set_render_flat_colors"):
+					child.set_render_flat_colors(is_flat)
+
+	for l in get_tree().get_nodes_in_group("lines"):
+		if is_instance_valid(l) and l.has_method("set_render_flat_colors"):
+			l.set_render_flat_colors(is_flat)
+
+	for p in get_tree().get_nodes_in_group("polygons"):
+		if is_instance_valid(p) and p.has_method("set_render_flat_colors"):
+			p.set_render_flat_colors(is_flat)
+
+	if is_instance_valid(pet_node):
+		pet_node.render_flat_colors_global = is_flat
 
 # MODES
 

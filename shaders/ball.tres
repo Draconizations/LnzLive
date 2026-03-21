@@ -54,6 +54,7 @@ uniform bool texture_affected_by_size = true;
 uniform bool texture_affected_by_rotation = false;
 
 uniform bool use_quadrants = false;
+uniform bool render_flat_colors = false;
 
 uniform int highlight_color_index = -1;           // -1 for none
 
@@ -378,7 +379,7 @@ void fragment() {
     vec3 texture_color;
     bool is_transparent = false;
 
-    if (has_texture && color_index >= 10 && color_index < texture_limit) {
+    if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
         vec2 tex_coords = calculate_uvs(offset);
 
@@ -622,6 +623,7 @@ shader_param/texture_rotation_input = Vector2( 0, 0 )
 shader_param/texture_affected_by_size = true
 shader_param/texture_affected_by_rotation = false
 shader_param/use_quadrants = false
+shader_param/render_flat_colors = false
 shader_param/highlight_color_index = -1
 shader_param/hide_fill = false
 shader_param/hide_outline = false

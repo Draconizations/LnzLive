@@ -24,6 +24,7 @@ export var texture_size           = Vector2(256, 256)  setget set_texture_size
 export var texture_size_raw       = Vector2.ZERO
 
 export var use_quadrants          = false              setget set_use_quadrants
+export var render_flat_colors     = false              setget set_render_flat_colors
 
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
@@ -83,6 +84,7 @@ func _ready():
 	$MeshInstance.material_override.set_shader_param("texture_size", texture_size)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
 	$MeshInstance.material_override.set_shader_param("use_quadrants", use_quadrants)
+	$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 	$MeshInstance.material_override.set_shader_param("eyelid_rotation", eyelid_rotation)
 	$MeshInstance.material_override.set_shader_param("eyelid_color",    eyelid_color)
 	
@@ -106,6 +108,11 @@ func set_visible(new_value):
 	$MeshInstance.visible = new_value
 	$Area/CollisionShape.disabled = !new_value
 	$Area/CollisionShape.visible = new_value
+
+func set_render_flat_colors(new_value):
+	render_flat_colors = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("render_flat_colors", new_value)
 
 func set_tile_texture(new_value):
 	tile_texture = new_value
