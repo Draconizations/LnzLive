@@ -269,6 +269,9 @@ margin_right = 442.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
+min_value = -1.0
+max_value = 1.0
+value = -1.0
 
 [node name="ReplaceOutlineType" type="CheckBox" parent="VBoxContainer/HBoxContainer7"]
 margin_left = 446.0
@@ -297,7 +300,9 @@ margin_right = 442.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
+min_value = -1.0
 max_value = 1.0
+value = -1.0
 
 [node name="ReplaceDrawOrder" type="CheckBox" parent="VBoxContainer/HBoxContainer8"]
 margin_left = 446.0
