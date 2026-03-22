@@ -15,9 +15,13 @@ signal palette_selected(fileprefix)
 enum ImportType { NONE, LNZ, TEXTURE, PALETTE }
 var current_import_type = ImportType.NONE
 
+enum SortMode { ALPHABETICAL, MODIFIED_DATE }
+var current_sort_mode = SortMode.ALPHABETICAL
+
 const MAX_RECURSION_DEPTH = 3
 
 onready var pet_view_container = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+onready var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 
 var examples: TreeItem
 var local_storage: TreeItem
@@ -93,7 +97,7 @@ func _ready():
 		popup.add_item("Move To...", 6)
 
 	var dir = Directory.new()
-	var lnz_dir_path = "res://resources/lnz/"
+	var lnz_dir_path = example_file_location + "lnz/"
 	if dir.open(lnz_dir_path) == OK:
 		dir.list_dir_begin(true, true)
 		var file_name = dir.get_next()
@@ -118,6 +122,12 @@ func _ready():
 		dir.list_dir_end()
 
 	_setup_dynamic_dialogs()
+
+	var config = ConfigFile.new()
+	if config.load("user://settings.cfg") == OK:
+		current_sort_mode = config.get_value("Display", "file_tree_sort_mode", SortMode.ALPHABETICAL)
+
+	_setup_sort_ui()
 
 	rescan(null)
 	rescan_textures(true)
@@ -165,6 +175,54 @@ func _setup_dynamic_dialogs():
 	
 	move_dialog.connect("confirmed", self, "_on_MoveFileDialog_confirmed")
 	add_child(move_dialog)
+
+func _setup_sort_ui():
+	var sort_hbox = HBoxContainer.new()
+	sort_hbox.alignment = BoxContainer.ALIGN_END
+	
+	var sort_label = Label.new()
+	sort_label.text = "Sort LNZ: "
+	
+	var sort_dropdown = OptionButton.new()
+	sort_dropdown.add_item("Alphabetical (A-Z)")
+	sort_dropdown.add_item("Modified (Newest)")
+
+	sort_dropdown.select(current_sort_mode as int)
+	sort_dropdown.connect("item_selected", self, "_on_sort_mode_changed")
+	
+	var custom_font = import_lnz_button.get_font("font")
+	if custom_font:
+		sort_label.add_font_override("font", custom_font)
+		sort_dropdown.add_font_override("font", custom_font)
+	
+	sort_hbox.add_child(sort_label)
+	sort_hbox.add_child(sort_dropdown)
+	
+	call_deferred("_inject_sort_ui", sort_hbox)
+
+func _inject_sort_ui(sort_hbox: HBoxContainer):
+	var parent = get_parent()
+	parent.add_child(sort_hbox)
+	parent.move_child(sort_hbox, 0)
+
+func _on_sort_mode_changed(index: int):
+	current_sort_mode = index 
+
+	var config = ConfigFile.new()
+	var err = config.load("user://settings.cfg") 
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading config to save sort mode: ", err)
+		
+	config.set_value("Display", "file_tree_sort_mode", current_sort_mode)
+	config.save("user://settings.cfg")
+	
+	var selected_path = null
+	var selected = get_selected()
+	if selected:
+		selected_path = str(selected.get_metadata(0))
+		if selected_path == "Null": selected_path = null
+		
+	rescan(selected_path)
 
 func _on_ImportLNZ_pressed():
 	current_import_type = ImportType.LNZ
@@ -254,7 +312,6 @@ func _on_FileDialog_file_selected(selected_path):
 
 	var copy_success = false
 	if file_extension == "txt" and current_import_type == ImportType.LNZ:
-		# Copy content manually for txt to lnz
 		var f_in = File.new()
 		if f_in.open(selected_path, File.READ) == OK:
 			var content = f_in.get_as_text()
@@ -467,36 +524,58 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 	dir.list_dir_begin(true, true)
 	var filename = dir.get_next()
 	
+	var folders = []
+	var files = []
+	
+	var file_checker = File.new()
+	
 	while filename != "":
 		if dir.current_is_dir():
 			if is_root and (filename == "textures" or filename == "palettes"):
 				filename = dir.get_next()
 				continue
-				
-			var sub_path = path.plus_file(filename)
-			var sub_item = create_item(parent_item)
-			sub_item.set_text(0, filename)
-			
-			var meta_path = sub_path + "/"
-			sub_item.set_metadata(0, meta_path)
-			
-			if saved_subfolder_states.has(meta_path):
-				sub_item.set_collapsed(saved_subfolder_states[meta_path])
-			else:
-				sub_item.set_collapsed(true)
-			
-			_scan_dir_recursive(sub_path, sub_item, selected_filepath, false, depth + 1)
+			folders.append({"name": filename, "time": 0})
 		elif filename.ends_with(".lnz"):
 			var full_path = path.plus_file(filename)
-			var new_item = create_item(parent_item)
-			new_item.set_text(0, filename)
-			new_item.set_metadata(0, full_path)
+			var mod_time = file_checker.get_modified_time(full_path)
+			files.append({"name": filename, "path": full_path, "time": mod_time})
 			
-			if full_path == selected_filepath:
-				new_item.select(0)
-				
 		filename = dir.get_next()
 	dir.list_dir_end()
+	
+	folders.sort_custom(self, "_sort_by_name")
+	
+	if current_sort_mode == SortMode.ALPHABETICAL:
+		files.sort_custom(self, "_sort_by_name")
+	elif current_sort_mode == SortMode.MODIFIED_DATE:
+		files.sort_custom(self, "_sort_by_time")
+		
+	for folder_data in folders:
+		var f_name = folder_data["name"]
+		var sub_path = path.plus_file(f_name)
+		var sub_item = create_item(parent_item)
+		sub_item.set_text(0, f_name)
+		
+		var meta_path = sub_path + "/"
+		sub_item.set_metadata(0, meta_path)
+		
+		if saved_subfolder_states.has(meta_path):
+			sub_item.set_collapsed(saved_subfolder_states[meta_path])
+		else:
+			sub_item.set_collapsed(true)
+		
+		_scan_dir_recursive(sub_path, sub_item, selected_filepath, false, depth + 1)
+		
+	for file_data in files:
+		var f_name = file_data["name"]
+		var full_path = file_data["path"]
+		
+		var new_item = create_item(parent_item)
+		new_item.set_text(0, f_name)
+		new_item.set_metadata(0, full_path)
+		
+		if full_path == selected_filepath:
+			new_item.select(0)
 
 func scan_local_textures():
 	var dir = Directory.new()
@@ -524,7 +603,6 @@ func scan_local_textures():
 			)
 			preloader.add_resource(filename.to_lower(), full_tex)
 
-			# Replace existing resource if it already exists
 			var res_name = filename.to_lower()
 			if preloader.has_resource(res_name):
 				preloader.remove_resource(res_name)
@@ -582,6 +660,7 @@ func scan_res_textures():
 				new_item.set_metadata(0, textures_dir.plus_file(texture_name))
 				
 				var thumb_path = textures_dir.plus_file(texture_name.get_basename() + "_thumb.png")
+				
 				if ResourceLoader.exists(thumb_path):
 					var thumb = ResourceLoader.load(thumb_path)
 					new_item.set_icon(0, thumb)
@@ -622,9 +701,10 @@ func scan_res_textures():
 
 				var thumb_path = full_path.get_basename() + "_thumb.png"
 				
-				var thumb_tex = load(thumb_path)
-				if thumb_tex:
-					new_item.set_icon(0, thumb_tex)
+				if ResourceLoader.exists(thumb_path):
+					var thumb_tex = load(thumb_path)
+					if thumb_tex:
+						new_item.set_icon(0, thumb_tex)
 
 			filename = dir.get_next()
 		dir.list_dir_end()
@@ -664,12 +744,10 @@ func scan_local_palettes():
 				if w >= 200:
 					img.lock()
 					
-					# Create the thumbnail 32 x 20 thumbnail
 					var preview_img = Image.new()
 					preview_img.create(32, 20, false, Image.FORMAT_RGBA8)
 					preview_img.lock()
 					
-					# 38 colors total (19 ranges * 2 samples)
 					var color_index = 0
 					
 					for i in range(10, 200, 10):
@@ -745,14 +823,15 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	img.create(256, 1, false, Image.FORMAT_RGBA8)
 	img.lock()
 	
+	var buffer = f.get_buffer(1024) # 256 colors * 4 bytes per color
+	
 	for i in range(256):
-		if f.get_position() >= pixel_offset:
+		if f.get_position() >= pixel_offset or (i * 4 + 3) >= buffer.size():
 			break
 			
-		var b = f.get_8() / 255.0
-		var g = f.get_8() / 255.0
-		var r = f.get_8() / 255.0
-		var _reserved = f.get_8()
+		var b = buffer[i * 4] / 255.0
+		var g = buffer[i * 4 + 1] / 255.0
+		var r = buffer[i * 4 + 2] / 255.0
 		
 		img.set_pixel(i, 0, Color(r, g, b, 1.0))
 		
@@ -1000,11 +1079,11 @@ func _on_ItemPopupMenu_about_to_show():
 	var clicked_item = get_selected() as TreeItem
 	if not clicked_item: return
 
-	var textlnz = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit") as TextEdit
 	var clicked_filepath = clicked_item.get_metadata(0)
 	
 	if clicked_filepath != null:
-		$ItemPopupMenu.set_item_disabled(2, !textlnz.filepath == clicked_filepath)
+		if lnz_text_edit:
+			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == clicked_filepath))
 
 func _on_LnzTextEdit_file_backed_up():
 	var item = get_selected()
@@ -1133,3 +1212,9 @@ func _on_MoveFileDialog_confirmed():
 			
 	if any_moved:
 		rescan(null)
+
+func _sort_by_name(a: Dictionary, b: Dictionary) -> bool:
+	return a["name"].to_lower() < b["name"].to_lower()
+
+func _sort_by_time(a: Dictionary, b: Dictionary) -> bool:
+	return a["time"] > b["time"]
