@@ -336,7 +336,7 @@ func _ready():
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
 
-	var shader_settings_btn = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ShaderSettingsButton")
+	var shader_settings_btn = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
 	if is_instance_valid(shader_settings_btn):
 		shader_settings_btn.connect("pressed", self, "_on_ShaderSettingsButton_pressed")
 
