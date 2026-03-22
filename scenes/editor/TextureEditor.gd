@@ -1,5 +1,7 @@
 extends PanelContainer
 
+var is_docked = true
+
 # gdlint: disable=max-line-length
 
 const SETTINGS_PATH = "user://settings.cfg"
