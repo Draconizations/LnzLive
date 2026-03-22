@@ -116,12 +116,6 @@ func save_settings():
 	config.set_value("LNZOptions", "preferred_delimiter", preferred_delimiter)
 	config.set_value("LNZOptions", "max_history_size", max_history_size)
 
-	if is_instance_valid(pet_view_container) and is_instance_valid(pet_view_container.shader_settings_instance):
-		config.set_value("LNZOptions", "shader_texture_rotation_mode", pet_view_container.shader_settings_instance.get_mode())
-		config.set_value("LNZOptions", "shader_texture_rotation_input", pet_view_container.shader_settings_instance.get_input_vec())
-		config.set_value("LNZOptions", "shader_texture_affected_by_size", pet_view_container.shader_settings_instance.get_affected_by_size())
-		config.set_value("LNZOptions", "shader_texture_affected_by_rotation", pet_view_container.shader_settings_instance.get_affected_by_rotation())
-
 	if file_tree and file_tree.has_method("get_expanded_states"):
 		file_tree_expanded_sections = file_tree.get_expanded_states()
 
@@ -138,17 +132,6 @@ func load_settings():
 	var default_color = Color( 0.168627, 0.45098, 0.45098, 1 )
 	
 	if err == OK:
-		var tex_rot_mode = config.get_value("LNZOptions", "shader_texture_rotation_mode", 1)
-		var tex_rot_input = config.get_value("LNZOptions", "shader_texture_rotation_input", Vector2(0.0, 0.0))
-		var tex_affected_by_size = config.get_value("LNZOptions", "shader_texture_affected_by_size", true)
-		var tex_affected_by_rot = config.get_value("LNZOptions", "shader_texture_affected_by_rotation", false)
-		if is_instance_valid(pet_view_container) and is_instance_valid(pet_view_container.shader_settings_instance):
-			pet_view_container.shader_settings_instance.set_settings(tex_rot_mode, tex_rot_input, tex_affected_by_size, tex_affected_by_rot)
-			pet_view_container._on_texture_rotation_mode_changed(tex_rot_mode)
-			pet_view_container._on_texture_rotation_input_changed(tex_rot_input)
-			pet_view_container._on_texture_affected_by_size_changed(tex_affected_by_size)
-			pet_view_container._on_texture_affected_by_rotation_changed(tex_affected_by_rot)
-
 		var bg_color = config.get_value("Display", "background_color", default_color)
 		color_rect.color = bg_color
 		color_picker.color = bg_color

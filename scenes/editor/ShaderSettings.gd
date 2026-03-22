@@ -8,6 +8,8 @@ signal texture_affected_by_size_changed(is_affected)
 signal texture_affected_by_rotation_changed(is_affected)
 signal texture_flat_colors_changed(is_flat)
 
+var _is_loading_settings = false
+
 var _pending_mode = 1
 var _pending_input_vec = Vector2.ZERO
 var _pending_affected_by_size = true
@@ -22,13 +24,7 @@ onready var rotation_checkbox = $MarginContainer/VBoxContainer/HBoxContainer2/Ro
 onready var flat_colors_checkbox = $MarginContainer/VBoxContainer/HBoxContainer3/FlatColorsCheckBox
 
 func _ready():
-	mode_option.connect("item_selected", self, "_on_mode_selected")
-	input_x_spinbox.connect("value_changed", self, "_on_input_changed")
-	input_y_spinbox.connect("value_changed", self, "_on_input_changed")
-	size_checkbox.connect("toggled", self, "_on_size_toggled")
-	rotation_checkbox.connect("toggled", self, "_on_rotation_toggled")
-	flat_colors_checkbox.connect("toggled", self, "_on_flat_colors_toggled")
-
+	# Apply initial pending values before connecting signals
 	mode_option.selected = _pending_mode
 	input_x_spinbox.value = _pending_input_vec.x
 	input_y_spinbox.value = _pending_input_vec.y
@@ -36,38 +32,23 @@ func _ready():
 	rotation_checkbox.pressed = _pending_affected_by_rotation
 	flat_colors_checkbox.pressed = _pending_render_flat_colors
 
-func set_settings(
-	mode: int, input_vec: Vector2, affected_by_size: bool, affected_by_rotation: bool, render_flat_colors: bool = false
-):
-	_pending_mode = mode
-	_pending_input_vec = input_vec
-	_pending_affected_by_size = affected_by_size
-	_pending_affected_by_rotation = affected_by_rotation
-	_pending_render_flat_colors = render_flat_colors
-	if is_inside_tree():
-		mode_option.selected = mode
-		input_x_spinbox.value = input_vec.x
-		input_y_spinbox.value = input_vec.y
-		size_checkbox.pressed = affected_by_size
-		rotation_checkbox.pressed = affected_by_rotation
-		flat_colors_checkbox.pressed = render_flat_colors
+	mode_option.connect("item_selected", self, "_on_mode_selected")
+	input_x_spinbox.connect("value_changed", self, "_on_input_changed")
+	input_y_spinbox.connect("value_changed", self, "_on_input_changed")
+	size_checkbox.connect("toggled", self, "_on_size_toggled")
+	rotation_checkbox.connect("toggled", self, "_on_rotation_toggled")
+	flat_colors_checkbox.connect("toggled", self, "_on_flat_colors_toggled")
 
-func _save_self_settings():
-	var config = ConfigFile.new()
-	config.load(SETTINGS_PATH)
-	config.set_value("LNZOptions", "shader_texture_rotation_mode", mode_option.selected)
-	config.set_value("LNZOptions", "shader_texture_rotation_input", Vector2(input_x_spinbox.value, input_y_spinbox.value))
-	config.set_value("LNZOptions", "shader_texture_affected_by_size", size_checkbox.pressed)
-	config.set_value("LNZOptions", "shader_texture_affected_by_rotation", rotation_checkbox.pressed)
-	config.set_value("LNZOptions", "shader_render_flat_colors", flat_colors_checkbox.pressed)
-	config.save(SETTINGS_PATH)
+	# Load stored values to overwrite defaults
+	load_settings()
 
 func get_render_flat_colors() -> bool:
 	return flat_colors_checkbox.pressed
 
 func _on_flat_colors_toggled(is_on):
 	emit_signal("texture_flat_colors_changed", is_on)
-	_save_self_settings()
+	if not _is_loading_settings:
+		save_settings()
 	
 func get_mode() -> int:
 	return mode_option.selected
@@ -83,20 +64,24 @@ func get_affected_by_rotation() -> bool:
 
 func _on_mode_selected(index):
 	emit_signal("texture_rotation_mode_changed", index)
-	_save_self_settings()
+	if not _is_loading_settings:
+		save_settings()
 
 func _on_input_changed(_value):
 	var input_vec = Vector2(input_x_spinbox.value, input_y_spinbox.value)
 	emit_signal("texture_rotation_input_changed", input_vec)
-	_save_self_settings()
+	if not _is_loading_settings:
+		save_settings()
 
 func _on_size_toggled(is_on):
 	emit_signal("texture_affected_by_size_changed", is_on)
-	_save_self_settings()
+	if not _is_loading_settings:
+		save_settings()
 
 func _on_rotation_toggled(is_on):
 	emit_signal("texture_affected_by_rotation_changed", is_on)
-	_save_self_settings()
+	if not _is_loading_settings:
+		save_settings()
 
 func _on_CloseButton_pressed():
 	hide()
@@ -107,3 +92,38 @@ func popup_centered():
 	rect_global_position = (viewport_size - panel_size) / 2
 	show()
 	raise()
+
+func save_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading settings for save: ", err)
+		return
+
+	config.set_value("ShaderProperties", "mode", mode_option.selected)
+	config.set_value("ShaderProperties", "input_x", input_x_spinbox.value)
+	config.set_value("ShaderProperties", "input_y", input_y_spinbox.value)
+	config.set_value("ShaderProperties", "affected_by_size", size_checkbox.pressed)
+	config.set_value("ShaderProperties", "affected_by_rotation", rotation_checkbox.pressed)
+	config.set_value("ShaderProperties", "flat_colors", flat_colors_checkbox.pressed)
+
+	var save_err = config.save(SETTINGS_PATH)
+	if save_err != OK:
+		print("Error saving ShaderSettings: ", save_err)
+
+func load_settings():
+	var config = ConfigFile.new()
+	var err = config.load(SETTINGS_PATH)
+	if err != OK:
+		return
+
+	_is_loading_settings = true
+
+	mode_option.selected = config.get_value("ShaderProperties", "mode", 1)
+	input_x_spinbox.value = config.get_value("ShaderProperties", "input_x", 0.0)
+	input_y_spinbox.value = config.get_value("ShaderProperties", "input_y", 0.0)
+	size_checkbox.pressed = config.get_value("ShaderProperties", "affected_by_size", true)
+	rotation_checkbox.pressed = config.get_value("ShaderProperties", "affected_by_rotation", false)
+	flat_colors_checkbox.pressed = config.get_value("ShaderProperties", "flat_colors", false)
+
+	_is_loading_settings = false
