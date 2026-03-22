@@ -2565,22 +2565,6 @@ func apply_batch_moves(pending_moves: Dictionary):
 
 		var lnz_delta = LnzLiveUtils.world_to_lnz_delta(world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
 		
-		if ball_no >= KeyBallsData.max_base_ball_num:
-			if pet_node.lnz.addballs.has(ball_no):
-				var addball_data = pet_node.lnz.addballs[ball_no]
-				var base_ball_no = -1
-				if typeof(addball_data) == TYPE_OBJECT:
-					base_ball_no = addball_data.base
-				elif typeof(addball_data) == TYPE_DICTIONARY:
-					base_ball_no = addball_data.base
-				
-				if base_ball_no != -1 and pending_moves.has(base_ball_no):
-					var base_data = pending_moves[base_ball_no]
-					var base_world_delta = base_data.new_pos - base_data.orig_pos
-					var base_lnz_delta = LnzLiveUtils.world_to_lnz_delta(base_world_delta, pet_node.pixel_world_size, pet_node.lnz.scales.x)
-
-					lnz_delta -= base_lnz_delta
-
 		if ball_no < KeyBallsData.max_base_ball_num:
 			var delim = _detect_delimiter(move_start, move_end)
 			var updated = false
@@ -2592,9 +2576,9 @@ func apply_batch_moves(pending_moves: Dictionary):
 				if raw == "" or raw.begins_with(";"): continue
 				var parts = _split_line(raw)
 				if parts.size() >= 4 and parts[0].to_int() == ball_no:
-					var nx = parts[1].to_int() + lnz_delta.x
-					var ny = parts[2].to_int() + lnz_delta.y
-					var nz = parts[3].to_int() + lnz_delta.z
+					var nx = int(round(parts[1].to_float() + lnz_delta.x))
+					var ny = int(round(parts[2].to_float() + lnz_delta.y))
+					var nz = int(round(parts[3].to_float() + lnz_delta.z))
 					
 					parts[1] = str(nx)
 					parts[2] = str(ny)
@@ -2611,9 +2595,9 @@ func apply_batch_moves(pending_moves: Dictionary):
 					break
 					
 			if !updated:
-				var nx = int(lnz_delta.x)
-				var ny = int(lnz_delta.y)
-				var nz = int(lnz_delta.z)
+				var nx = int(round(lnz_delta.x))
+				var ny = int(round(lnz_delta.y))
+				var nz = int(round(lnz_delta.z))
 				var parts = [str(ball_no), str(nx), str(ny), str(nz)]
 				
 				if head_group.has(ball_no) and head_id != -1:
@@ -2638,9 +2622,25 @@ func apply_batch_moves(pending_moves: Dictionary):
 					if count == idx:
 						var parts = _split_line(raw)
 						if parts.size() >= 4:
-							parts[1] = str(parts[1].to_int() + lnz_delta.x)
-							parts[2] = str(parts[2].to_int() + lnz_delta.y)
-							parts[3] = str(parts[3].to_int() + lnz_delta.z)
+							var moved_ball_node = pet_node.ball_map.get(ball_no)
+							if is_instance_valid(moved_ball_node) and "base_ball_no" in moved_ball_node:
+								var base_ball_no = moved_ball_node.base_ball_no
+								var base_ball_node = pet_node.ball_map.get(base_ball_no)
+								if is_instance_valid(base_ball_node):
+									var world_rel = moved_ball_node.global_transform.origin - base_ball_node.global_transform.origin
+									var new_rel = LnzLiveUtils.world_to_lnz_delta(world_rel, pet_node.pixel_world_size, pet_node.lnz.scales.x)
+									parts[1] = str(int(round(new_rel.x)))
+									parts[2] = str(int(round(new_rel.y)))
+									parts[3] = str(int(round(new_rel.z)))
+								else:
+									parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+									parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+									parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+							else:
+								parts[1] = str(int(round(parts[1].to_float() + lnz_delta.x)))
+								parts[2] = str(int(round(parts[2].to_float() + lnz_delta.y)))
+								parts[3] = str(int(round(parts[3].to_float() + lnz_delta.z)))
+								
 							set_line(i, _join_array(parts, delim))
 						break
 					count += 1

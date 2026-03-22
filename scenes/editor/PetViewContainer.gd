@@ -3485,7 +3485,8 @@ func _on_move_mode_apply():
 				data.erase("new_basis")
 				
 		if data.has("orig_size") and data.has("new_size"):
-			if data.orig_size != data.new_size:
+			# if data.orig_size != data.new_size:
+			if not is_equal_approx(data.orig_size, data.new_size):
 				needs_rebuild = true
 			else:
 				data.erase("orig_size")
