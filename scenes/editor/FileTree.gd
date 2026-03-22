@@ -122,6 +122,11 @@ func _ready():
 		dir.list_dir_end()
 
 	_setup_dynamic_dialogs()
+
+	var config = ConfigFile.new()
+	if config.load("user://settings.cfg") == OK:
+		current_sort_mode = config.get_value("Display", "file_tree_sort_mode", SortMode.ALPHABETICAL)
+
 	_setup_sort_ui()
 
 	rescan(null)
@@ -181,6 +186,8 @@ func _setup_sort_ui():
 	var sort_dropdown = OptionButton.new()
 	sort_dropdown.add_item("Alphabetical (A-Z)")
 	sort_dropdown.add_item("Modified (Newest)")
+
+	sort_dropdown.select(current_sort_mode as int)
 	sort_dropdown.connect("item_selected", self, "_on_sort_mode_changed")
 	
 	var custom_font = import_lnz_button.get_font("font")
@@ -200,6 +207,14 @@ func _inject_sort_ui(sort_hbox: HBoxContainer):
 
 func _on_sort_mode_changed(index: int):
 	current_sort_mode = index 
+
+	var config = ConfigFile.new()
+	var err = config.load("user://settings.cfg") 
+	if err != OK and err != ERR_FILE_NOT_FOUND:
+		print("Error loading config to save sort mode: ", err)
+		
+	config.set_value("Display", "file_tree_sort_mode", current_sort_mode)
+	config.save("user://settings.cfg")
 	
 	var selected_path = null
 	var selected = get_selected()
