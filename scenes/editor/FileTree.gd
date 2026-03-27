@@ -273,12 +273,25 @@ func _on_FileDialog_file_selected(selected_path):
 	if current_import_type == ImportType.LNZ:
 		dest_dir = user_file_location
 	elif current_import_type == ImportType.TEXTURE:
-		dest_dir = user_file_location + "/textures"
+		dest_dir = user_file_location.plus_file("textures")
 	elif current_import_type == ImportType.PALETTE:
-		dest_dir = user_file_location + "/palettes"
+		dest_dir = user_file_location.plus_file("palettes")
 	else:
 		print("Unknown import type")
 		return
+
+	var dest_filename = selected_path.get_file()
+	if current_import_type == ImportType.LNZ and file_extension == "txt":
+		dest_filename = dest_filename.get_basename() + ".lnz"
+	
+	var dest_path = dest_dir.plus_file(dest_filename)
+
+	var dir = Directory.new()
+	if not dir.dir_exists(dest_dir):
+		var err = dir.make_dir_recursive(dest_dir)
+		if err != OK:
+			print("Error creating directory: ", err)
+			return
 
 	if current_import_type == ImportType.PALETTE and file_extension == "bmp":
 		var success = convert_bmp_to_palette_png(selected_path, dest_dir)
@@ -295,19 +308,6 @@ func _on_FileDialog_file_selected(selected_path):
 				return
 		else:
 			print("Error loading image.")
-			return
-
-	var dest_filename = selected_path.get_file()
-	if current_import_type == ImportType.LNZ and file_extension == "txt":
-		dest_filename = dest_filename.get_basename() + ".lnz"
-	
-	var dest_path = dest_dir.plus_file(dest_filename)
-
-	var dir = Directory.new()
-	if not dir.dir_exists(dest_dir):
-		var err = dir.make_dir_recursive(dest_dir)
-		if err != OK:
-			print("Error creating directory: ", err)
 			return
 
 	var copy_success = false
@@ -826,7 +826,12 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	var buffer = f.get_buffer(1024) # 256 colors * 4 bytes per color
 	
 	for i in range(256):
-		if f.get_position() >= pixel_offset or (i * 4 + 3) >= buffer.size():
+		# if f.get_position() >= pixel_offset or (i * 4 + 3) >= buffer.size():
+		# 	break
+			
+		var current_byte_pos = palette_offset + (i * 4) 
+		
+		if current_byte_pos >= pixel_offset or (i * 4 + 3) >= buffer.size():
 			break
 			
 		var b = buffer[i * 4] / 255.0
