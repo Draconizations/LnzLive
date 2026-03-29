@@ -785,21 +785,50 @@ func _update_3d_gizmo_visibility():
 
 ### INPUT HANDLING ###
 
-
 func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
 	var bhd_size = 0
+	var enl_x = 100.0
+	var enl_y = 0.0
+
 	if not is_addball:
 		bhd_size = pet_node.bhd.ball_sizes[ball_no]
+		
+		# Determine if the ball is part of an enlarged group
+		var head_ext = []
+		var foot_ext = []
+		if pet_node.lnz.species == KeyBallsData.Species.DOG:
+			head_ext = KeyBallsData.head_ext_dog
+			foot_ext = KeyBallsData.foot_ext_dog
+		elif pet_node.lnz.species == KeyBallsData.Species.CAT:
+			head_ext = KeyBallsData.head_ext_cat
+			foot_ext = KeyBallsData.foot_ext_cat
+		elif pet_node.lnz.species == KeyBallsData.Species.BABY:
+			head_ext = KeyBallsData.head_ext_bab
+			foot_ext = KeyBallsData.foot_ext_bab
+
+		if ball_no in head_ext:
+			enl_x = pet_node.lnz.head_enlargement.x
+			enl_y = pet_node.lnz.head_enlargement.y
+		else:
+			for foot_group in foot_ext:
+				if ball_no in foot_group:
+					enl_x = pet_node.lnz.foot_enlargement.x
+					enl_y = pet_node.lnz.foot_enlargement.y
+					break
 	else:
 		if pet_node.lnz.addballs.has(ball_no):
 			var ab = pet_node.lnz.addballs[ball_no]
 			if ab.anchor_ball != -1:
-				is_addball = false
 				if ab.anchor_ball < pet_node.bhd.ball_sizes.size():
 					bhd_size = pet_node.bhd.ball_sizes[ab.anchor_ball]
-	return {"is_addball": is_addball, "bhd_size": bhd_size}
 
+	return {
+		"is_addball": is_addball, 
+		"bhd_size": bhd_size,
+		"enl_x": enl_x,
+		"enl_y": enl_y
+	}
 
 func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
 	return (screen_pos - (rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
@@ -1029,7 +1058,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 				var bhd_s = sizing_info.bhd_size
 
 				var snapped_visual = LnzLiveUtils.snap_visual_size(
-					target_visual, is_addball, engine_scale, bhd_s
+					target_visual, is_addball, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
 				)
 				b.set_ball_size(snapped_visual)
 
@@ -1112,12 +1141,14 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
+			var ball_no = target_ball.ball_no
+			var sizing_info = _get_ball_sizing_info(pet_node, ball_no)
+			
 			var is_eyedropper_active = (
 				preset_settings_instance.find_node("EyedropperToggle").pressed
 				or Input.is_key_pressed(KEY_ALT)
 			)
 			if is_eyedropper_active:
-				var ball_no = target_ball.ball_no
 				var ball_data = null
 				if pet_node.lnz.balls.has(ball_no):
 					ball_data = pet_node.lnz.balls[ball_no]
@@ -1131,26 +1162,15 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 						"color_index": ball_data.color_index,
 						"outline_color_index": ball_data.outline_color_index,
 						"texture_id": ball_data.texture_id,
-						"group": ball_data.group
+						"group": ball_data.group,
+						"size": int(round(target_ball.ball_size))
 					}
-
-					if pet_node.lnz.balls.has(ball_no):  # It's a base ball
-						var bhd_size = pet_node.bhd.ball_sizes[ball_no]
-						var lnz_size = ball_data.size
-						var scale = pet_node.lnz.scales[1]
-						var current_base_size = bhd_size + lnz_size
-						var final_size = round((current_base_size - 2) * (scale / 255.0))
-						final_size -= 1 - fmod(final_size, 2)
-						properties["size"] = int(round(final_size))
-					else:  # It's an addball
-						properties["size"] = int(round(ball_data.size))
 
 					if pet_node.lnz.paintballs.has(ball_no):
 						properties["paintballz"] = pet_node.lnz.paintballs[ball_no]
 					preset_settings_instance.set_properties(properties)
 			else:  # Brush mode
 				var properties = preset_settings_instance.get_properties()
-				var ball_no = target_ball.ball_no
 				var ref_size = int(round(preset_settings_instance.size_spinbox.value))
 				var size_mode = preset_settings_instance.size_mode_option.selected
 
@@ -1169,40 +1189,30 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 
 					preset_settings_instance.SizeMode.TRUE:
 						if properties.has("size"):
-							if pet_node.lnz.balls.has(ball_no):  # Only for base ballz
-								var bhd_size = pet_node.bhd.ball_sizes[ball_no]
-								var scale = pet_node.lnz.scales[1]
-								var desired_final_size = properties.size
-
-								properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
-									desired_final_size, false, scale, bhd_size
-								)
+							var scale = pet_node.lnz.scales[1]
+							properties["size"] = LnzLiveUtils.visual_size_to_lnz_size(
+								properties.size, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+							)
 
 				var scale_ratio = 1.0
-				if properties["scale_paintballz"]:
-					var target_lnz_size = 0
-					if pet_node.lnz.balls.has(ball_no):
-						var bhd_size = pet_node.bhd.ball_sizes[ball_no]
-						var scale = pet_node.lnz.scales[1]
-						var current_base_size = bhd_size + pet_node.lnz.balls[ball_no].size
-						target_lnz_size = round((current_base_size - 2) * (scale / 255.0))
-					elif pet_node.lnz.addballs.has(ball_no):
-						var ab = pet_node.lnz.addballs[ball_no]
-						if ab.anchor_ball != -1 and ab.anchor_ball < pet_node.bhd.ball_sizes.size():
-							var bhd_size = pet_node.bhd.ball_sizes[ab.anchor_ball]
-							var scale = pet_node.lnz.scales[1]
-							var current_base_size = bhd_size + ab.size
-							target_lnz_size = round((current_base_size - 2) * (scale / 255.0))
-						else:
-							target_lnz_size = ab.size
+				if properties.get("scale_paintballz", false) and properties.has("paintballz"):
+					var source_ref = preset_settings_instance.source_ball_reference_size
+					
+					var final_lnz = properties.size
+					var current_base_size = sizing_info.bhd_size + final_lnz
+					if not sizing_info.is_addball:
+						current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
+					
+					var scale = pet_node.lnz.scales[1]
+					var target_visual_size = round((current_base_size - 2.0) * (scale / 255.0))
+					target_visual_size -= 1.0 - fmod(target_visual_size, 2.0)
+					
+					scale_ratio = float(target_visual_size) / float(source_ref) if source_ref > 0 else 1.0
 
-					scale_ratio = float(target_lnz_size) / float(ref_size) if ref_size > 0 else 1.0
+					var p_size_mod = properties.get("paintball_size_scale", 1.0)
+					var p_pos_mod = properties.get("paintball_pos_scale", 1.0)
 
-				var p_size_mod = properties.get("paintball_size_scale", 1.0)
-				var p_pos_mod = properties.get("paintball_pos_scale", 1.0)
-
-				if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
-					if properties.has("paintballz"):
+					if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
 						var scaled_paintballz = []
 						for pb in properties.paintballz:
 							var new_pb = pb.duplicate()
@@ -1210,11 +1220,11 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 							new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
 							scaled_paintballz.append(new_pb)
 						properties["paintballz"] = scaled_paintballz
+						
 				lnz_text_edit.write_preset_to_ball(target_ball.ball_no, properties, null, false)
 		return true
 
 	return false
-
 
 func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 	if not paintball_mode:
@@ -1466,7 +1476,7 @@ func _gui_input(event):
 			var engine_scale = pet_node.lnz.scales[1]
 
 			var snapped_visual = LnzLiveUtils.snap_visual_size(
-				target_visual, is_ab, engine_scale, bhd_s
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
 			)
 			drag_ball.set_ball_size(snapped_visual)
 		else:
@@ -2217,16 +2227,12 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 
 
 func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_node: Node) -> int:
-	var ball_no = drag_ball.ball_no
-	var sizing_info = _get_ball_sizing_info(pet_node, ball_no)
-	var is_addball = sizing_info.is_addball
-	var bhd_size = sizing_info.bhd_size
+	var sizing_info = _get_ball_sizing_info(pet_node, drag_ball.ball_no)
 	var engine_scale = pet_node.lnz.scales[1]
 
 	return LnzLiveUtils.visual_size_to_lnz_size(
-		drag_ball.ball_size, is_addball, engine_scale, bhd_size
+		drag_ball.ball_size, sizing_info.is_addball, engine_scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
 	)
-
 
 func _isolate_target_ball(target_ball):
 	_create_overlay()
@@ -3349,6 +3355,7 @@ func _on_preset_apply_selection():
 
 		var ball_no = b.ball_no
 		var per_ball_props = base_properties.duplicate()
+		var sizing_info = _get_ball_sizing_info(pet_node, ball_no)
 
 		var size_mode = base_properties.get("size_mode", 0)
 		var ref_val = base_properties.get("size", 10)
@@ -3362,24 +3369,36 @@ func _on_preset_apply_selection():
 			per_ball_props["size"] = original + ref_val
 
 		elif size_mode == preset_settings_instance.SizeMode.TRUE:
-			if pet_node.lnz.balls.has(ball_no):
-				var bhd_size = pet_node.bhd.ball_sizes[ball_no]
-				var scale = pet_node.lnz.scales[1]
-				var required_base_size = (ref_val / (scale / 255.0)) + 2
-				per_ball_props["size"] = int(round(required_base_size - bhd_size))
+			var scale = pet_node.lnz.scales[1]
+			per_ball_props["size"] = LnzLiveUtils.visual_size_to_lnz_size(
+				ref_val, sizing_info.is_addball, scale, sizing_info.bhd_size, sizing_info.enl_x, sizing_info.enl_y
+			)
 
 		if per_ball_props.get("scale_paintballz", false) and per_ball_props.has("paintballz"):
 			var source_ref = preset_settings_instance.source_ball_reference_size
-			var target_lnz_size = per_ball_props["size"]
-			var scale_ratio = float(target_lnz_size) / float(source_ref) if source_ref > 0 else 1.0
+			
+			var final_lnz = per_ball_props["size"]
+			var current_base_size = sizing_info.bhd_size + final_lnz
+			if not sizing_info.is_addball:
+				current_base_size = floor(current_base_size * (sizing_info.enl_x / 100.0)) + sizing_info.enl_y
+			
+			var scale = pet_node.lnz.scales[1]
+			var target_visual_size = round((current_base_size - 2.0) * (scale / 255.0))
+			target_visual_size -= 1.0 - fmod(target_visual_size, 2.0)
+			
+			var scale_ratio = float(target_visual_size) / float(source_ref) if source_ref > 0 else 1.0
 
-			var scaled_paintballz = []
-			for pb in per_ball_props["paintballz"]:
-				var new_pb = pb.duplicate()
-				new_pb.position *= scale_ratio
-				new_pb.size = int(round(new_pb.size * scale_ratio))
-				scaled_paintballz.append(new_pb)
-			per_ball_props["paintballz"] = scaled_paintballz
+			var p_size_mod = per_ball_props.get("paintball_size_scale", 1.0)
+			var p_pos_mod = per_ball_props.get("paintball_pos_scale", 1.0)
+
+			if scale_ratio != 1.0 or p_size_mod != 1.0 or p_pos_mod != 1.0:
+				var scaled_paintballz = []
+				for pb in per_ball_props["paintballz"]:
+					var new_pb = pb.duplicate()
+					new_pb.position *= (scale_ratio * p_pos_mod)
+					new_pb.size = int(round(new_pb.size * scale_ratio * p_size_mod))
+					scaled_paintballz.append(new_pb)
+				per_ball_props["paintballz"] = scaled_paintballz
 
 		batch_changes[ball_no] = per_ball_props
 
@@ -4007,7 +4026,7 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 			var bhd_s = sizing_info.bhd_size
 			var engine_scale = pet_node.lnz.scales[1]
 			var snapped_visual = LnzLiveUtils.snap_visual_size(
-				target_visual, is_ab, engine_scale, bhd_s
+				target_visual, is_ab, engine_scale, bhd_s, sizing_info.enl_x, sizing_info.enl_y
 			)
 			b.set_ball_size(snapped_visual)
 
