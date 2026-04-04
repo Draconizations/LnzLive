@@ -90,13 +90,13 @@ Once submitted, maintainer(s) will look over your code and might suggest small c
 
 ### Pipeline
 
-LnzLive renders models from P.F. Magic games using LNZ data and game resources. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds. Heavy modifications to 3D nodes should be channeled through the text editor's injection system to maintain file integrity and the undo/redo history.
+LnzLive renders models from P.F. Magic games using LNZ data and game resources. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds.
 
 The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
 
 1. **Text Input (`scenes/editor/LnzTextEdit.gd`)**: The user loads an LNZ file. This script manages the raw string representation, regex searching, and maintains the undo/redo history states.  
 2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in specialized, typed memory structures that map to their respective `.lnz` sections. The raw text array is scanned, delimited into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), and compiled into a structured memory map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse the model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
-3. **Model Generator (`scenes/dog_generator.gd`)**: This central controller consumes the structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically instantiate and configure Godot visual nodes.
+3. **Model Generator (`scenes/dog_generator.gd`)**: This central controller takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
 4. **Interative Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
 
 ### Logic
@@ -106,7 +106,7 @@ To achieve a "Live Update" without performance stutter, LnzLive uses a specific 
 1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into Petz engine integer units.  
 2. **Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly for permanence.
 3. **Text Editor modifies strings:** LnzTextEdit scans its internal string array to find the exact line within the currently active variation block (`_get_active_config`). If an override exists, it updates it. If not, it creates a new `[... Override] `header and injects the line, bypassing comments and preserving whitespace.  
-4. **Text Editor triggers Generator:** LnzTextEdit emits an apply_changes signal to notify `dog_generator`.gd that the file content has changed.  
+4. **Text Editor triggers Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator`.gd that the file content has changed.  
 5. **Generator reconstructs 3D:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
 
 ## Codebase

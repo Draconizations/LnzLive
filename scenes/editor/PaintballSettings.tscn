@@ -6,15 +6,15 @@
 [ext_resource path="res://resources/icons/ico_arr_UD.png" type="Texture" id=4]
 [ext_resource path="res://scenes/editor/DesignCanvas.gd" type="Script" id=5]
 
-[sub_resource type="DynamicFont" id=12]
+[sub_resource type="DynamicFont" id=1]
 size = 36
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=13]
+[sub_resource type="DynamicFont" id=2]
 size = 30
 font_data = ExtResource( 3 )
 
-[sub_resource type="StyleBoxFlat" id=14]
+[sub_resource type="StyleBoxFlat" id=3]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -26,7 +26,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=15]
+[sub_resource type="StyleBoxFlat" id=4]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -38,13 +38,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="Environment" id=16]
-background_mode = 1
-background_color = Color( 0.176471, 0.176471, 0.176471, 1 )
-ambient_light_color = Color( 1, 1, 1, 1 )
-ambient_light_energy = 0.5
-
-[sub_resource type="StyleBoxFlat" id=17]
+[sub_resource type="StyleBoxFlat" id=5]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -56,7 +50,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=18]
+[sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -68,7 +62,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=19]
+[sub_resource type="StyleBoxFlat" id=7]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -80,7 +74,13 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=20]
+[sub_resource type="Environment" id=8]
+background_mode = 1
+background_color = Color( 0.176471, 0.176471, 0.176471, 1 )
+ambient_light_color = Color( 1, 1, 1, 1 )
+ambient_light_energy = 0.5
+
+[sub_resource type="StyleBoxFlat" id=9]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -92,7 +92,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=21]
+[sub_resource type="StyleBoxFlat" id=10]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -127,7 +127,7 @@ __meta__ = {
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 margin_right = 470.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 12 )
+custom_fonts/font = SubResource( 1 )
 text = "Paintball Mode"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
@@ -140,7 +140,7 @@ margin_top = 1.0
 margin_right = 154.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Diameter"
 
 [node name="DiameterMin" type="SpinBox" parent="VBoxContainer/HBoxContainer"]
@@ -173,7 +173,7 @@ margin_right = 233.0
 margin_bottom = 29.0
 hint_tooltip = "Gradually decrease size at start and end of stroke"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Tapered"
 
 [node name="PixelMode" type="CheckBox" parent="VBoxContainer/HBoxContainerDiameterOptions"]
@@ -182,7 +182,7 @@ margin_right = 470.0
 margin_bottom = 29.0
 hint_tooltip = "Use effective pixel size instead of diameter relative to ball size"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Pixel Size"
 
 [node name="TabContainer" type="TabContainer" parent="VBoxContainer"]
@@ -190,11 +190,11 @@ margin_top = 90.0
 margin_right = 470.0
 margin_bottom = 508.0
 size_flags_vertical = 3
-custom_styles/tab_fg = SubResource( 14 )
-custom_styles/tab_disabled = SubResource( 15 )
-custom_styles/tab_bg = SubResource( 15 )
-custom_styles/panel = SubResource( 14 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/tab_fg = SubResource( 3 )
+custom_styles/tab_disabled = SubResource( 4 )
+custom_styles/tab_bg = SubResource( 4 )
+custom_styles/panel = SubResource( 3 )
+custom_fonts/font = SubResource( 2 )
 tab_align = 0
 
 [node name="Standard" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
@@ -215,7 +215,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Color"
 
 [node name="Color" type="LineEdit" parent="VBoxContainer/TabContainer/Standard/HBoxContainer2"]
@@ -236,7 +236,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Texture"
 
 [node name="Texture" type="LineEdit" parent="VBoxContainer/TabContainer/Standard/HBoxContainer6"]
@@ -258,7 +258,7 @@ margin_right = 150.0
 margin_bottom = 29.0
 hint_tooltip = "Cycle through colors/sizes in order instead of random"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Ordered"
 
 [node name="Repeat" type="CheckBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
@@ -267,7 +267,7 @@ margin_right = 305.0
 margin_bottom = 29.0
 hint_tooltip = "Repeat the sequence when ordered cycle ends"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Repeated"
 
 [node name="Shuffle" type="CheckBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainerOptions"]
@@ -276,7 +276,7 @@ margin_right = 460.0
 margin_bottom = 29.0
 hint_tooltip = "Shuffle layer of paintballz in stroke"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Shuffled"
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer/TabContainer/Standard"]
@@ -289,7 +289,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Outline Color"
 
 [node name="OutlineColor" type="LineEdit" parent="VBoxContainer/TabContainer/Standard/HBoxContainer3"]
@@ -313,7 +313,7 @@ margin_bottom = 22.0
 hint_tooltip = "-2 = left-side, -1 = none, 0 = right-side, 1+ = thickness"
 mouse_filter = 0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Outline Type"
 
 [node name="OutlineTypeMin" type="SpinBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainer4"]
@@ -348,7 +348,7 @@ margin_top = 1.0
 margin_right = 150.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Fuzz"
 
 [node name="FuzzMin" type="SpinBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainer5"]
@@ -377,7 +377,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Group"
 
 [node name="Group" type="SpinBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainer7"]
@@ -398,7 +398,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Anchored"
 
 [node name="Anchored" type="CheckBox" parent="VBoxContainer/TabContainer/Standard/HBoxContainer8"]
@@ -420,7 +420,7 @@ margin_top = 3.0
 margin_right = 228.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Target"
 
 [node name="Target" type="OptionButton" parent="VBoxContainer/TabContainer/Standard/HBoxContainer9"]
@@ -429,7 +429,7 @@ margin_right = 460.0
 margin_bottom = 27.0
 hint_tooltip = "Ballz where Paintballz can be placed (Hovered vs Selected)"
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Hovered Ball"
 items = [ "Hovered Ball", null, false, 0, null, "Selected Ball", null, false, 1, null ]
 selected = 0
@@ -443,7 +443,7 @@ margin_bottom = 322.0
 margin_right = 460.0
 margin_bottom = 29.0
 hint_tooltip = "Draw continuous lines (hold SHIFT key)"
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Freeline"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Standard/FreelineContainer"]
@@ -456,7 +456,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Spacing"
 
 [node name="Spacing" type="SpinBox" parent="VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer"]
@@ -479,7 +479,7 @@ margin_top = 1.0
 margin_right = 228.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Jitter"
 
 [node name="Jitter" type="SpinBox" parent="VBoxContainer/TabContainer/Standard/FreelineContainer/HBoxContainer2"]
@@ -500,12 +500,12 @@ alignment = 1
 margin_right = 228.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Import JSON"
 
 [node name="ExportSettingsButton" type="Button" parent="VBoxContainer/TabContainer/Standard/PresetContainer"]
@@ -513,12 +513,12 @@ margin_left = 232.0
 margin_right = 460.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Export JSON"
 
 [node name="Design" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
@@ -574,7 +574,7 @@ size = 0.5
 transform = Transform( 0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 0, 0 )
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer/Viewport/PreviewWorld"]
-environment = SubResource( 16 )
+environment = SubResource( 8 )
 
 [node name="DesignOptions" type="HBoxContainer" parent="VBoxContainer/TabContainer/Design"]
 margin_top = 205.0
@@ -588,7 +588,7 @@ margin_bottom = 115.0
 [node name="BrushSizeLabel" type="Label" parent="VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions"]
 margin_right = 116.0
 margin_bottom = 21.0
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Brush Size"
 
 [node name="BrushSizeSlider" type="HSlider" parent="VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions"]
@@ -603,7 +603,7 @@ value = 30.0
 margin_top = 45.0
 margin_right = 116.0
 margin_bottom = 66.0
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Brush Spacing"
 
 [node name="BrushSpaceSlider" type="HSlider" parent="VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions"]
@@ -619,12 +619,12 @@ value = 10.0
 margin_top = 90.0
 margin_right = 116.0
 margin_bottom = 115.0
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Clear Design"
 
 [node name="DesignTools" type="VBoxContainer" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
@@ -636,7 +636,7 @@ margin_bottom = 115.0
 margin_right = 84.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "X"
 
 [node name="MirrorY" type="CheckBox" parent="VBoxContainer/TabContainer/Design/DesignOptions/DesignTools"]
@@ -644,7 +644,7 @@ margin_top = 33.0
 margin_right = 84.0
 margin_bottom = 62.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Y"
 
 [node name="CanvasEraser" type="CheckBox" parent="VBoxContainer/TabContainer/Design/DesignOptions/DesignTools"]
@@ -652,7 +652,7 @@ margin_top = 66.0
 margin_right = 84.0
 margin_bottom = 95.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Eraser"
 
 [node name="ImportStampContainer" type="VBoxContainer" parent="VBoxContainer/TabContainer/Design/DesignOptions"]
@@ -664,12 +664,12 @@ margin_bottom = 115.0
 margin_right = 111.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Import JSON"
 
 [node name="ImportTatButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer"]
@@ -678,12 +678,12 @@ margin_left = 300.0
 margin_right = 365.0
 margin_bottom = 29.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Import PWS TAT"
 
 [node name="ExportPatternButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer"]
@@ -691,12 +691,12 @@ margin_top = 29.0
 margin_right = 111.0
 margin_bottom = 54.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Export JSON"
 
 [node name="PatternInfoButton" type="Button" parent="VBoxContainer/TabContainer/Design/DesignOptions/ImportStampContainer"]
@@ -704,12 +704,12 @@ margin_top = 58.0
 margin_right = 111.0
 margin_bottom = 83.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Info"
 
 [node name="DesignJitterContainer" type="HBoxContainer" parent="VBoxContainer/TabContainer/Design"]
@@ -722,7 +722,7 @@ margin_top = 1.0
 margin_right = 52.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Jitter"
 
 [node name="DesignJitter" type="SpinBox" parent="VBoxContainer/TabContainer/Design/DesignJitterContainer"]
@@ -740,7 +740,7 @@ margin_top = 1.0
 margin_right = 207.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Rotate"
 
 [node name="RotateJitter" type="SpinBox" parent="VBoxContainer/TabContainer/Design/DesignJitterContainer"]
@@ -758,7 +758,7 @@ margin_top = 1.0
 margin_right = 366.0
 margin_bottom = 22.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Spread"
 
 [node name="SpreadJitter" type="SpinBox" parent="VBoxContainer/TabContainer/Design/DesignJitterContainer"]
@@ -785,7 +785,7 @@ margin_top = 2.0
 margin_right = 150.0
 margin_bottom = 23.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Color Slots"
 
 [node name="AddSlotButton" type="Button" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
@@ -793,12 +793,12 @@ margin_left = 154.0
 margin_right = 305.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Add Slot"
 
 [node name="RemoveSlotButton" type="Button" parent="VBoxContainer/TabContainer/Design/SlotActionContainer"]
@@ -806,12 +806,12 @@ margin_left = 309.0
 margin_right = 460.0
 margin_bottom = 25.0
 size_flags_horizontal = 3
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Remove"
 
 [node name="SlotsTree" type="Tree" parent="VBoxContainer/TabContainer/Design"]
@@ -833,7 +833,7 @@ margin_left = 133.0
 margin_right = 217.0
 margin_bottom = 29.0
 hint_tooltip = "Enable Eraser Mode (hold CTRL and left-click to delete)"
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Eraser"
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/HBoxContainer10"]
@@ -842,12 +842,12 @@ margin_right = 277.0
 margin_bottom = 29.0
 hint_tooltip = "Apply pending Paintballz to the model"
 mouse_default_cursor_shape = 2
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Apply"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/HBoxContainer10"]
@@ -856,24 +856,24 @@ margin_right = 336.0
 margin_bottom = 29.0
 hint_tooltip = "Clear all pending Paintballz"
 mouse_default_cursor_shape = 2
-custom_styles/hover = SubResource( 17 )
-custom_styles/pressed = SubResource( 17 )
-custom_styles/focus = SubResource( 18 )
-custom_styles/disabled = SubResource( 19 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 5 )
+custom_styles/pressed = SubResource( 5 )
+custom_styles/focus = SubResource( 6 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Clear"
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer"]
 margin_top = 545.0
 margin_right = 470.0
 margin_bottom = 570.0
-custom_styles/hover = SubResource( 20 )
-custom_styles/pressed = SubResource( 20 )
-custom_styles/focus = SubResource( 14 )
-custom_styles/disabled = SubResource( 21 )
-custom_styles/normal = SubResource( 14 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 10 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = SubResource( 2 )
 text = "Reset Defaults"
 
 [node name="PatternInfoDialog" type="WindowDialog" parent="."]
@@ -898,7 +898,7 @@ custom_constants/separation = 10
 [node name="Label" type="Label" parent="PatternInfoDialog/VBoxContainer"]
 margin_right = 380.0
 margin_bottom = 21.0
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Pattern Metadata"
 align = 1
 
@@ -915,7 +915,7 @@ margin_top = 5.0
 margin_right = 100.0
 margin_bottom = 26.0
 rect_min_size = Vector2( 100, 0 )
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Author:"
 
 [node name="AuthorEdit" type="LineEdit" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
@@ -923,14 +923,14 @@ margin_left = 110.0
 margin_right = 380.0
 margin_bottom = 31.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 placeholder_text = "Your Name"
 
 [node name="LabelWeb" type="Label" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
 margin_top = 46.0
 margin_right = 100.0
 margin_bottom = 67.0
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Website:"
 
 [node name="WebsiteEdit" type="LineEdit" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
@@ -939,14 +939,14 @@ margin_top = 41.0
 margin_right = 380.0
 margin_bottom = 72.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 placeholder_text = "https://..."
 
 [node name="LabelDesc" type="Label" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
 margin_top = 111.0
 margin_right = 100.0
 margin_bottom = 132.0
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 text = "Description:"
 
 [node name="DescEdit" type="TextEdit" parent="PatternInfoDialog/VBoxContainer/GridContainer"]
@@ -956,16 +956,16 @@ margin_right = 380.0
 margin_bottom = 162.0
 rect_min_size = Vector2( 0, 80 )
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 13 )
+custom_fonts/font = SubResource( 2 )
 
 [node name="CloseButton" type="Button" parent="PatternInfoDialog/VBoxContainer"]
 margin_top = 203.0
 margin_right = 380.0
 margin_bottom = 228.0
-custom_styles/hover = SubResource( 20 )
-custom_styles/pressed = SubResource( 20 )
-custom_styles/focus = SubResource( 14 )
-custom_styles/disabled = SubResource( 21 )
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 13 )
+custom_styles/hover = SubResource( 9 )
+custom_styles/pressed = SubResource( 9 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 10 )
+custom_styles/normal = SubResource( 6 )
+custom_fonts/font = SubResource( 2 )
 text = "Close"

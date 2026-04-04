@@ -9,7 +9,7 @@
 
 ## Quick Start
 
-For full instructions, see the [User Guide](GUIDE.md)!
+For full instructions, see the [User Guide](docs/GUIDE.md)!
 
 1. **Download the Launcher:** Use the [LnzLive Launcher](https://github.com/tabbzi/LnzLive/releases/tag/launcher-v1.0) for automatic beta updates.
 2. **Load your LNZ:** * **Import:** `File > Import LNZ` to load a `.lnz` or `.txt` file.
@@ -35,7 +35,7 @@ The web version of LnzLive Petz & Babyz beta can be accessed here:
 
 ## Contribute
 
-We welcome contributions! Please see the [Developer Guide](DEVELOPMENT.md) for setup instructions.
+We welcome contributions! Please see the [Developer Guide](docs/DEVELOPMENT.md) for setup instructions.
 
 If you would like to add suggestions or report bugs, raise [an issue](https://github.com/tabbzi/LnzLive/issues) (as long as it's not covered above) or a pull request.
 
