@@ -14,9 +14,11 @@ var dog_generator = null
 
 var color_grid: GridContainer
 
-onready var vbox = $MarginContainer/MainVBox/PaletteViewerScrollContainer/PaletteViewerVBoxContainer
-onready var title_label = $MarginContainer/MainVBox/TitleLabel
-onready var main_container = $MarginContainer
+
+onready var vbox = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/PaletteViewerScrollContainer/PaletteViewerVBoxContainer
+onready var title_label = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/TitleLabel
+onready var main_container = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer
+onready var scroll_view = $VBoxContainer/ScrollContainer
 onready var pixel_font = load("res://resources/fonts/font_pixel_code_14.tres")
 # onready var close_button = $CloseButton
 
@@ -39,6 +41,8 @@ func _ready():
 	var user_settings = get_tree().root.find_node("SceneRoot", true, false)
 	if user_settings:
 		user_settings.connect("global_font_updated", self, "populate_colors")
+
+	scroll_view.connect("resized", self, "_on_vbox_resized")
 
 # func _gui_input(event):
 # 	if event is InputEventMouseButton:
@@ -118,13 +122,26 @@ func populate_colors():
 	call_deferred("_on_vbox_resized")
 
 func _on_vbox_resized():
-	if color_grid and color_grid.get_child_count() > 0:
-		var cell_width = color_grid.get_child(0).rect_min_size.x
-		var spacing = color_grid.get_constant("hseparation")
-		var available_width = vbox.rect_size.x
-		
-		var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
-		color_grid.columns = calculated_columns
+    if not color_grid or color_grid.get_child_count() == 0:
+        return
+        
+    var available_width = scroll_view.rect_size.x
+    
+    var v_scroll = scroll_view.get_v_scrollbar()
+    if v_scroll.is_visible_in_tree():
+        available_width -= v_scroll.rect_size.x
+
+    var margin_container = vbox.get_parent() 
+    if margin_container is MarginContainer:
+        available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
+
+    var cell_width = color_grid.get_child(0).rect_min_size.x
+    var spacing = color_grid.get_constant("hseparation")
+    
+    if cell_width + spacing > 0:
+        var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
+        if color_grid.columns != calculated_columns:
+            color_grid.columns = calculated_columns
 		
 func load_palette_texture(palette_filename: String) -> Texture:
 	var texture = null

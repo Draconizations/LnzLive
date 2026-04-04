@@ -41,7 +41,9 @@ corner_radius_bottom_left = 2
 anti_aliasing = false
 
 [node name="RecolorSettings" type="Panel"]
-rect_min_size = Vector2( 500, 625 )
+margin_right = 500.0
+margin_bottom = 625.0
+rect_min_size = Vector2( 250, 625 )
 rect_clip_content = true
 custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 1 )
@@ -49,58 +51,72 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 15.0
 margin_top = 15.0
 margin_right = -15.0
 margin_bottom = -15.0
-size_flags_vertical = 3
-scroll_horizontal_enabled = false
-
-[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
-margin_right = 458.0
-margin_bottom = 748.0
+rect_min_size = Vector2( 250, 0 )
+rect_clip_content = true
 size_flags_horizontal = 3
-custom_constants/separation = 10
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="TitleLabel" type="Label" parent="ScrollContainer/VBoxContainer"]
-margin_right = 458.0
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+margin_right = 470.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Recolor Mode"
 
-[node name="HSeparator" type="HSeparator" parent="ScrollContainer/VBoxContainer"]
-margin_top = 35.0
-margin_right = 458.0
-margin_bottom = 39.0
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 29.0
+margin_right = 470.0
+margin_bottom = 595.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
-[node name="SwapContainer" type="VBoxContainer" parent="ScrollContainer/VBoxContainer"]
-margin_top = 49.0
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 458.0
-margin_bottom = 445.0
+margin_bottom = 713.0
+size_flags_horizontal = 3
+custom_constants/separation = 10
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_right = 458.0
+margin_bottom = 4.0
+
+[node name="SwapContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 14.0
+margin_right = 458.0
+margin_bottom = 410.0
 custom_constants/separation = 5
 
-[node name="Title" type="Label" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="Title" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_right = 458.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 2 )
 text = "Color Swap"
 
-[node name="CheckContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="CheckContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 26.0
 margin_right = 458.0
 margin_bottom = 51.0
 
-[node name="Balls" type="CheckBox" parent="ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+[node name="Balls" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
 margin_right = 63.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Ballz"
 
-[node name="Ball outlines" type="CheckBox" parent="ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+[node name="Ball outlines" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
 margin_left = 67.0
 margin_right = 149.0
 margin_bottom = 25.0
@@ -108,7 +124,7 @@ custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Outlines"
 
-[node name="Paintballs" type="CheckBox" parent="ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+[node name="Paintballs" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
 margin_left = 153.0
 margin_right = 250.0
 margin_bottom = 25.0
@@ -116,7 +132,7 @@ custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Paintballz"
 
-[node name="Lines" type="CheckBox" parent="ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
+[node name="Lines" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
 margin_left = 254.0
 margin_right = 315.0
 margin_bottom = 25.0
@@ -124,36 +140,36 @@ custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Linez"
 
-[node name="CheckContainer2" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="CheckContainer2" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 56.0
 margin_right = 458.0
 margin_bottom = 81.0
 
-[node name="Polygons" type="CheckBox" parent="ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
+[node name="Polygons" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
 margin_right = 88.0
 margin_bottom = 25.0
 custom_fonts/font = SubResource( 3 )
 pressed = true
 text = "Polygons"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 86.0
 margin_right = 458.0
 margin_bottom = 336.0
 rect_min_size = Vector2( 0, 250 )
 scroll_horizontal_enabled = false
 
-[node name="RecolorLines" type="VBoxContainer" parent="ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer"]
+[node name="RecolorLines" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer"]
 margin_right = 458.0
 size_flags_horizontal = 3
 
-[node name="Header" type="HBoxContainer" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="Header" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 341.0
 margin_right = 458.0
 margin_bottom = 366.0
 alignment = 1
 
-[node name="ClearButton" type="Button" parent="ScrollContainer/VBoxContainer/SwapContainer/Header"]
+[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_left = 113.0
 margin_right = 168.0
 margin_bottom = 25.0
@@ -165,7 +181,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 2 )
 text = "Clear"
 
-[node name="AutofillButton" type="Button" parent="ScrollContainer/VBoxContainer/SwapContainer/Header"]
+[node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_left = 172.0
 margin_right = 245.0
 margin_bottom = 25.0
@@ -177,7 +193,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 2 )
 text = "Autofill"
 
-[node name="RandomizeButton" type="Button" parent="ScrollContainer/VBoxContainer/SwapContainer/Header"]
+[node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_left = 249.0
 margin_right = 345.0
 margin_bottom = 25.0
@@ -189,7 +205,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 2 )
 text = "Randomize"
 
-[node name="RecolorButton" type="Button" parent="ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 371.0
 margin_right = 458.0
 margin_bottom = 396.0
@@ -201,24 +217,24 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 2 )
 text = "Recolor"
 
-[node name="HSeparator2" type="HSeparator" parent="ScrollContainer/VBoxContainer"]
-margin_top = 455.0
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 420.0
 margin_right = 458.0
-margin_bottom = 459.0
+margin_bottom = 424.0
 
-[node name="BucketContainer" type="VBoxContainer" parent="ScrollContainer/VBoxContainer"]
-margin_top = 469.0
+[node name="BucketContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
+margin_top = 434.0
 margin_right = 458.0
-margin_bottom = 748.0
+margin_bottom = 713.0
 custom_constants/separation = 10
 
-[node name="Title2" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_right = 458.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 2 )
 text = "Paint Bucket"
 
-[node name="Hint" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="Hint" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 31.0
 margin_right = 458.0
 margin_bottom = 48.0
@@ -226,20 +242,20 @@ custom_fonts/font = SubResource( 3 )
 text = "Click Ballz to queue visual changes"
 autowrap = true
 
-[node name="GridContainer" type="GridContainer" parent="ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 58.0
 margin_right = 458.0
 margin_bottom = 209.0
 columns = 3
 
-[node name="LabelC" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="LabelC" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 5.0
 margin_right = 84.0
 margin_bottom = 22.0
 custom_fonts/font = SubResource( 3 )
 text = "Color:"
 
-[node name="ColorEdit" type="LineEdit" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="ColorEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 88.0
 margin_right = 430.0
 margin_bottom = 27.0
@@ -247,7 +263,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 55"
 
-[node name="ColorIcon" type="TextureRect" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="ColorIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
 margin_right = 458.0
 margin_bottom = 27.0
@@ -255,14 +271,14 @@ rect_min_size = Vector2( 24, 24 )
 expand = true
 stretch_mode = 6
 
-[node name="LabelO" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="LabelO" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 36.0
 margin_right = 84.0
 margin_bottom = 53.0
 custom_fonts/font = SubResource( 3 )
 text = "Outline Col:"
 
-[node name="OutlineEdit" type="LineEdit" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="OutlineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 88.0
 margin_top = 31.0
 margin_right = 430.0
@@ -271,7 +287,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 245"
 
-[node name="OutlineIcon" type="TextureRect" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="OutlineIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
 margin_top = 31.0
 margin_right = 458.0
@@ -280,14 +296,14 @@ rect_min_size = Vector2( 24, 24 )
 expand = true
 stretch_mode = 6
 
-[node name="LabelT" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="LabelT" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 67.0
 margin_right = 84.0
 margin_bottom = 84.0
 custom_fonts/font = SubResource( 3 )
 text = "Outline Type:"
 
-[node name="TypeEdit" type="LineEdit" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="TypeEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 88.0
 margin_top = 62.0
 margin_right = 430.0
@@ -296,20 +312,20 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 0"
 
-[node name="Spacer1" type="Control" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="Spacer1" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
 margin_top = 62.0
 margin_right = 458.0
 margin_bottom = 89.0
 
-[node name="LabelF" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="LabelF" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 98.0
 margin_right = 84.0
 margin_bottom = 115.0
 custom_fonts/font = SubResource( 3 )
 text = "Fuzz:"
 
-[node name="FuzzEdit" type="LineEdit" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="FuzzEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 88.0
 margin_top = 93.0
 margin_right = 430.0
@@ -318,20 +334,20 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 0"
 
-[node name="Spacer2" type="Control" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="Spacer2" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
 margin_top = 93.0
 margin_right = 458.0
 margin_bottom = 120.0
 
-[node name="LabelTex" type="Label" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="LabelTex" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_top = 129.0
 margin_right = 84.0
 margin_bottom = 146.0
 custom_fonts/font = SubResource( 3 )
 text = "Texture:"
 
-[node name="TextureEdit" type="LineEdit" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="TextureEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 88.0
 margin_top = 124.0
 margin_right = 430.0
@@ -340,7 +356,7 @@ size_flags_horizontal = 3
 custom_fonts/font = SubResource( 3 )
 placeholder_text = "e.g. 0"
 
-[node name="TextureIcon" type="TextureRect" parent="ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
+[node name="TextureIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
 margin_left = 434.0
 margin_top = 124.0
 margin_right = 458.0
@@ -349,7 +365,7 @@ rect_min_size = Vector2( 24, 24 )
 expand = true
 stretch_mode = 6
 
-[node name="ApplyButton" type="Button" parent="ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 219.0
 margin_right = 458.0
 margin_bottom = 244.0
@@ -361,7 +377,7 @@ custom_styles/normal = SubResource( 5 )
 custom_fonts/font = SubResource( 2 )
 text = "Apply Bucket"
 
-[node name="ClearButton" type="Button" parent="ScrollContainer/VBoxContainer/BucketContainer"]
+[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 254.0
 margin_right = 458.0
 margin_bottom = 279.0

@@ -6,7 +6,7 @@ onready var spacer = get_node("SidebarSpacer")
 onready var collapse_btn = get_node("CollapseButton")
 
 var floating_layer: CanvasLayer = null
-const UTILITY_TABS = ["FileTree", "Palette"]
+const UTILITY_TABS = ["FileTree", "Palette", "Variations"]
 
 const TAB_ICONS = {
 	"FileTree": "res://resources/icons/ico_tab_file.png",
@@ -51,29 +51,28 @@ func add_tool_tab(control: Control, title: String):
 	tab_container.add_child(control)
 	control.name = title
 
-	if title == "FileTree":
-		tab_container.move_child(control, 0)
-	elif title == "Palette":
-		var target_idx = 1 if tab_container.get_child(0).name == "FileTree" else 0
-		tab_container.move_child(control, target_idx)
-	elif title == "Variations":
-		var target_idx = 2 if tab_container.get_child(0).name == "FileTree" else 0
-		tab_container.move_child(control, target_idx)
+	_ensure_tab_order()
 
 	if control.has_method("set_docked"):
 		control.set_docked(true) 
 	
 	_update_tab_visibilities()
 
+func _ensure_tab_order():
+	for i in range(UTILITY_TABS.size()):
+		var tab_name = UTILITY_TABS[i]
+		var tab_node = tab_container.find_node(tab_name, false, false)
+		
+		if tab_node and tab_node.get_parent() == tab_container:
+			tab_container.move_child(tab_node, i)
+
 func dock_panel(panel: Control):
-	if panel.get_parent() == tab_container:
-		switch_to_tab(panel)
-		return
-
-	if panel.get_parent():
-		panel.get_parent().remove_child(panel)
-
-	tab_container.add_child(panel)
+	if panel.get_parent() != tab_container:
+		if panel.get_parent():
+			panel.get_parent().remove_child(panel)
+		tab_container.add_child(panel)
+	
+	_ensure_tab_order()
 	
 	if panel.has_method("set_docked"):
 		panel.set_docked(true)
@@ -137,6 +136,7 @@ func _on_tab_changed(tab_index: int):
 
 	match control.name:
 		"Palette": pet_view.view_palette_check_box.pressed = true
+		"Variations": pet_view.view_variations_check_box.pressed = true
 		"Recolor": pet_view.recolor_mode_check_box.pressed = true
 		"Paint": pet_view.paintball_check_box.pressed = true
 		"Move": pet_view.move_mode_check_box.pressed = true

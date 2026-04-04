@@ -4,21 +4,21 @@ signal recolor(recolor_info)
 signal apply_bucket(ball_no, properties)
 signal apply_batch_bucket(changes)
 
-onready var swap_scroll = $ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
-onready var swap_lines_container = $ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
-onready var bucket_container = $ScrollContainer/VBoxContainer/BucketContainer
+onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
+onready var swap_lines_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
+onready var bucket_container = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer
 
-onready var color_swap_check_container = $ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
+onready var color_swap_check_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
 
-onready var bucket_color_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorEdit
-onready var bucket_outline_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineEdit
-onready var bucket_type_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
-onready var bucket_fuzz_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
-onready var bucket_texture_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
+onready var bucket_color_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorEdit
+onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineEdit
+onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
+onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
+onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
 
-onready var bucket_color_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
-onready var bucket_outline_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
-onready var bucket_texture_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
+onready var bucket_color_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
+onready var bucket_outline_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
+onready var bucket_texture_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
 
 var recolor_line_scene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes = {} # ball_no -> properties
@@ -32,13 +32,13 @@ func _ready():
 	bucket_outline_edit.connect("text_changed", self, "_on_bucket_property_changed")
 	bucket_texture_edit.connect("text_changed", self, "_on_bucket_property_changed")
 
-	$ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
-	$ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
 
-	$ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
 
 func set_docked(docked: bool):
 	is_docked = docked
