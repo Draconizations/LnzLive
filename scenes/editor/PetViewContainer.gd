@@ -2685,7 +2685,9 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 		if sidebar_controller:
 			var tree_tab = sidebar_controller.tab_container.get_node_or_null("FileTree")
 			if tree_tab:
-				sidebar_controller.switch_to_tab(tree_tab)
+				var current_tab = sidebar_controller.tab_container.get_current_tab_control()
+				if current_tab == null or current_tab == panel:
+					sidebar_controller.switch_to_tab(tree_tab)
 
 
 func _on_recolor_mode_toggled(is_on):
@@ -3002,8 +3004,11 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 				design_rotation_angle
 			)
 
-			# var px_scale = pet_node.pixel_world_size
-			# var lnz_scale = pet_node.lnz.scales.x / 255.0
+			var px_scale = pet_node.pixel_world_size
+			var lnz_scale = pet_node.lnz.scales.x / 255.0
+
+			if px_scale == 0 or lnz_scale == 0:
+				return
 
 			var pos_arr = pattern_pbs.positions
 			var diam_arr = pattern_pbs.diameters
