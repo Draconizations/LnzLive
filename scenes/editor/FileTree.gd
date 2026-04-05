@@ -263,10 +263,30 @@ func _on_OpenUserFolder_pressed():
 	OS.shell_open(path)
 
 func _on_FileDialog_files_selected(paths: Array):
+	var imported_types := {"lnz": false, "bmp": false, "png": false}
+	var last_lnz_path = ""
+	
 	for p in paths:
-		_on_FileDialog_file_selected(p)
+		var dest_path = _on_FileDialog_file_selected(p, true) 
+		
+		if dest_path != "":
+			var ext = dest_path.get_extension().to_lower()
+			if imported_types.has(ext):
+				imported_types[ext] = true
+			if ext == "lnz":
+				last_lnz_path = dest_path
+				
+	if imported_types["lnz"]:
+		rescan(last_lnz_path)
+		emit_signal("user_file_selected", last_lnz_path)
+		
+	if imported_types["bmp"]:
+		rescan_textures(true)
+		
+	if imported_types["png"]:
+		rescan_palettes()
 
-func _on_FileDialog_file_selected(selected_path):
+func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 	var file_extension = selected_path.get_extension().to_lower()
 	var dest_dir = ""
 	
@@ -278,7 +298,7 @@ func _on_FileDialog_file_selected(selected_path):
 		dest_dir = user_file_location.plus_file("palettes")
 	else:
 		print("Unknown import type")
-		return
+		return ""
 
 	var dest_filename = selected_path.get_file()
 	if current_import_type == ImportType.LNZ and file_extension == "txt":
@@ -291,13 +311,15 @@ func _on_FileDialog_file_selected(selected_path):
 		var err = dir.make_dir_recursive(dest_dir)
 		if err != OK:
 			print("Error creating directory: ", err)
-			return
+			return ""
 
 	if current_import_type == ImportType.PALETTE and file_extension == "bmp":
 		var success = convert_bmp_to_palette_png(selected_path, dest_dir)
 		if success:
-			rescan_palettes()
-			return
+			if not skip_rescan:
+				rescan_palettes()
+			return dest_dir.plus_file(dest_filename.get_basename() + ".png")
+		return ""
 
 	if current_import_type == ImportType.PALETTE:
 		var img = Image.new()
@@ -305,10 +327,10 @@ func _on_FileDialog_file_selected(selected_path):
 		if err == OK:
 			if img.get_height() != 1:
 				print("Palette " + selected_path.get_file() + " is not 1 pixel high.")
-				return
+				return ""
 		else:
 			print("Error loading image.")
-			return
+			return ""
 
 	var copy_success = false
 	if file_extension == "txt" and current_import_type == ImportType.LNZ:
@@ -334,7 +356,11 @@ func _on_FileDialog_file_selected(selected_path):
 			print("Error copying file: ", err)
 
 	if copy_success:
-		rescan_with_extension(dest_path.get_extension(), dest_path)
+		if not skip_rescan:
+			rescan_with_extension(dest_path.get_extension().to_lower(), dest_path)
+		return dest_path
+		
+	return ""
 		
 func web_file_dialog(accept_extensions):
 	JavaScript.eval("""
