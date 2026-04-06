@@ -768,6 +768,43 @@ func _get_background_color() -> Color:
 		return palette_colors[253]
 	return Color(1, 0, 1, 1)
 
+func _load_raw_8bit_bmp(path: String) -> Dictionary:
+	var f = File.new()
+	if f.open(path, File.READ) != OK:
+		return {}
+	
+	f.seek(10)
+	var pixel_offset = f.get_32()
+	
+	f.seek(18)
+	var w = f.get_32()
+	var h_raw = f.get_32()
+	var h = abs(h_raw)
+	var is_bottom_up = (h_raw > 0)
+	
+	f.seek(28)
+	var bpp = f.get_16()
+	
+	if bpp != 8:
+		f.close()
+		return {} # Not an 8-bit indexed BMP
+		
+	f.seek(pixel_offset)
+	var row_size = int((w + 3) / 4) * 4
+	
+	var index_data = PoolByteArray()
+	index_data.resize(w * h)
+	
+	for i in range(h):
+		var y = (h - 1 - i) if is_bottom_up else i
+		var row_data = f.get_buffer(row_size)
+		for x in range(w):
+			if x < row_data.size():
+				index_data[y * w + x] = row_data[x]
+	
+	f.close()
+	return { "w": w, "h": h, "data": index_data }
+
 func _on_LoadButton_pressed():
 	var fname = filename_line_edit.text.strip_edges()
 	if fname == "":
@@ -776,14 +813,10 @@ func _on_LoadButton_pressed():
 	if not fname.to_lower().ends_with(".bmp"):
 		fname += ".bmp"
 
-	var loaded_tex = null
-	
 	var base_name = fname.get_basename()
 	var extension = fname.get_extension()
 	var variants = [
-		fname,
-		fname.to_upper(),
-		fname.to_lower(),
+		fname, fname.to_upper(), fname.to_lower(),
 		base_name + "." + extension.to_upper(),
 		base_name + "." + extension.to_lower(),
 		base_name.to_upper() + "." + extension,
@@ -792,64 +825,99 @@ func _on_LoadButton_pressed():
 		base_name.to_lower() + "." + extension.to_lower()
 	]
 	
+	var loaded_path = ""
+	var dir = Directory.new()
 	for v in variants:
-		if ResourceLoader.exists("user://resources/textures/" + v):
-			loaded_tex = ResourceLoader.load("user://resources/textures/" + v)
+		if dir.file_exists("user://resources/textures/" + v):
+			loaded_path = "user://resources/textures/" + v
 			break
-		elif ResourceLoader.exists("res://resources/textures/" + v):
-			loaded_tex = ResourceLoader.load("res://resources/textures/" + v)
-			break
-			
-	if loaded_tex == null:
-		var preloader = get_tree().root.get_node_or_null("Root/ResourcePreloader")
-		if preloader and preloader.has_resource(fname.to_lower()):
-			loaded_tex = preloader.get_resource(fname.to_lower())
-
-	if not loaded_tex:
-		print("Failed to load texture: ", fname)
-		return
-
-	var img = loaded_tex.get_data()
-	if not img:
-		return
-
-	img.lock()
-	var w = img.get_width()
-	var h = img.get_height()
-
-	canvas_size = Vector2(w, h)
-
-	var found_size = false
-	for i in range(size_option_btn.get_item_count()):
-		if size_option_btn.get_item_id(i) == int(w):
-			size_option_btn.select(i)
-			found_size = true
+		elif dir.file_exists("res://resources/textures/" + v):
+			loaded_path = "res://resources/textures/" + v
 			break
 
-	if not found_size:
-		size_option_btn.add_item(str(w) + " x " + str(h), w)
-		size_option_btn.select(size_option_btn.get_item_count() - 1)
+	var raw_bmp_data = {}
+	if loaded_path != "":
+		raw_bmp_data = _load_raw_8bit_bmp(loaded_path)
 
-	_initialize_canvas()
+	# 8bit BMP
+	if raw_bmp_data.has("data"):
+		var w = raw_bmp_data["w"]
+		var h = raw_bmp_data["h"]
+		var data = raw_bmp_data["data"]
 
-	active_image.lock()
-	for y in range(h):
-		for x in range(w):
-			var c = img.get_pixel(x, y)
-			if c.a == 0:
-				active_image.set_pixel(x, y, _get_background_color())
-			else:
-				var idx = int(round(c.r * 255.0))
-				if idx < palette_colors.size():
+		canvas_size = Vector2(w, h)
+		_sync_size_ui(w, h)
+		_initialize_canvas()
+
+		active_image.lock()
+		for y in range(h):
+			for x in range(w):
+				var idx = data[y * w + x]
+				if idx >= 0 and idx < palette_colors.size():
 					active_image.set_pixel(x, y, palette_colors[idx])
 				else:
 					active_image.set_pixel(x, y, _get_background_color())
-					
-	active_image.unlock()
-	img.unlock()
+		active_image.unlock()
+		
+		active_texture.set_data(active_image)
+		print("Loaded texture purely from raw index: ", fname)
 
-	active_texture.set_data(active_image)
-	print("Loaded texture: ", fname)
+	# RGB or cached texture
+	else:
+		var loaded_tex = null
+		for v in variants:
+			if ResourceLoader.exists("user://resources/textures/" + v):
+				loaded_tex = ResourceLoader.load("user://resources/textures/" + v)
+				break
+			elif ResourceLoader.exists("res://resources/textures/" + v):
+				loaded_tex = ResourceLoader.load("res://resources/textures/" + v)
+				break
+				
+		if loaded_tex == null:
+			var preloader = get_tree().root.get_node_or_null("Root/ResourcePreloader")
+			if preloader and preloader.has_resource(fname.to_lower()):
+				loaded_tex = preloader.get_resource(fname.to_lower())
+
+		if not loaded_tex:
+			print("Failed to load texture: ", fname)
+			return
+
+		var img = loaded_tex.get_data()
+		if not img: return
+
+		img.lock()
+		canvas_size = Vector2(img.get_width(), img.get_height())
+		_sync_size_ui(canvas_size.x, canvas_size.y)
+		_initialize_canvas()
+
+		active_image.lock()
+		for y in range(canvas_size.y):
+			for x in range(canvas_size.x):
+				var c = img.get_pixel(x, y)
+				if c.a == 0:
+					active_image.set_pixel(x, y, _get_background_color())
+				else:
+					var idx = _get_closest_palette_index(c)
+					if idx >= 0 and idx < palette_colors.size():
+						active_image.set_pixel(x, y, palette_colors[idx])
+					else:
+						active_image.set_pixel(x, y, _get_background_color())
+		active_image.unlock()
+		img.unlock()
+		
+		active_texture.set_data(active_image)
+		print("Loaded texture via Godot fallback (RGB mapped): ", fname)
+
+func _sync_size_ui(w: int, h: int):
+	var found_size = false
+	for i in range(size_option_btn.get_item_count()):
+		if size_option_btn.get_item_id(i) == w:
+			size_option_btn.select(i)
+			found_size = true
+			break
+	if not found_size:
+		size_option_btn.add_item(str(w) + " x " + str(h), w)
+		size_option_btn.select(size_option_btn.get_item_count() - 1)
 
 func _on_show_quadrants_toggled(_pressed):
 	quadrant_overlay.update()
