@@ -1147,11 +1147,11 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return -1
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
-	var section_find = search(section_tag, 0, 0, 0)
-	if section_find.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		return -1
 	
-	var start_line = section_find[SEARCH_RESULT_LINE] + 1
+	var start_line = bounds.start
 	var line_counter = -1
 	
 	for i in range(start_line, get_line_count()):
@@ -2037,15 +2037,15 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 	if is_addball:
 		section_tag = "[Add Ball]"
 
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		if console_log:
 			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var line_index = -1
 	if is_addball:
@@ -2916,18 +2916,15 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	if console_log:
 		console_log.log_message("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
 
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		if console_log:
 			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-
-	if end_line == -1:
-		end_line = get_line_count()
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	if is_addball:
 		var delim = _detect_delimiter(start_line, end_line)
@@ -2988,25 +2985,21 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 	var section_tag = "[Move]"
 	if is_addball:
 		section_tag = "[Add Ball]"
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		if section_tag == "[Move]":
 			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section_line, "[Move]")
 			all_lines.insert(first_section_line + 1, "")
 			_set_text_preserve(all_lines.join("\n"))
-			sec = search(section_tag, 0, 0, 0)
 		else:
 			return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var delim = _detect_delimiter(start_line, end_line)
-
-	if end_line == -1:
-		end_line = get_line_count()
 
 	if is_addball:
 		var moved_ball_node = pet_node.ball_map.get(ball_no)
