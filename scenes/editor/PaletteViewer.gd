@@ -12,9 +12,13 @@ extends DraggablePanel
 
 var dog_generator = null
 
-onready var vbox = $MarginContainer/MainVBox/PaletteViewerScrollContainer/PaletteViewerVBoxContainer
-onready var title_label = $MarginContainer/MainVBox/TitleLabel
-onready var main_container = $MarginContainer
+var color_grid: GridContainer
+
+
+onready var vbox = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/PaletteViewerScrollContainer/PaletteViewerVBoxContainer
+onready var title_label = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/TitleLabel
+onready var main_container = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer
+onready var scroll_view = $VBoxContainer/ScrollContainer
 onready var pixel_font = load("res://resources/fonts/font_pixel_code_14.tres")
 # onready var close_button = $CloseButton
 
@@ -31,6 +35,14 @@ func _ready():
 		populate_colors()
 	else:
 		print("PaletteViewer Error: Could not find dog_generator node.")
+
+	vbox.connect("resized", self, "_on_vbox_resized")
+	
+	var user_settings = get_tree().root.find_node("SceneRoot", true, false)
+	if user_settings:
+		user_settings.connect("global_font_updated", self, "populate_colors")
+
+	scroll_view.connect("resized", self, "_on_vbox_resized")
 
 # func _gui_input(event):
 # 	if event is InputEventMouseButton:
@@ -59,10 +71,7 @@ func populate_colors():
 	var palette_path = dog_generator.lnz.palette
 	
 	if palette_path == null or palette_path == "":
-		if dog_generator.is_babyz_mode:
-			title_label.text = "default Babyz game palette"
-		else:
-			title_label.text = "default Petz game palette"
+		title_label.text = "default Babyz game palette" if dog_generator.is_babyz_mode else "default Petz game palette"
 	else:
 		title_label.text = "Palette: " + palette_path.get_basename()
 		if dog_generator.is_babyz_mode and dog_generator.lnz.species != 3:
@@ -74,12 +83,15 @@ func populate_colors():
 		vbox.add_child(label)
 		return
 
-	var grid = GridContainer.new()
-	grid.columns = 16
-	vbox.add_child(grid)
+	color_grid = GridContainer.new()
+	vbox.add_child(color_grid)
 
 	var img = pal_texture.get_data()
 	img.lock()
+
+	var current_font_size = pixel_font.size
+	var dynamic_size = max(24, current_font_size + 12)
+	var cell_vector = Vector2(dynamic_size, dynamic_size)
 
 	var color_index = 0
 	for y in range(img.get_height()):
@@ -88,7 +100,7 @@ func populate_colors():
 
 			var color_rect = ColorRect.new()
 			color_rect.color = color
-			color_rect.rect_min_size = Vector2(24, 24)
+			color_rect.rect_min_size = cell_vector
 
 			var label = Label.new()
 			label.add_font_override("font", pixel_font)
@@ -97,20 +109,40 @@ func populate_colors():
 			label.valign = Label.VALIGN_CENTER
 
 			var luminance = color.r * 0.299 + color.g * 0.587 + color.b * 0.114
-			if luminance > 0.5:
-				label.add_color_override("font_color", Color.black)
-			else:
-				label.add_color_override("font_color", Color.white)
+			label.add_color_override("font_color", Color.black if luminance > 0.5 else Color.white)
 
 			color_rect.add_child(label)
 			label.set_anchors_and_margins_preset(Control.PRESET_WIDE)
 
-			grid.add_child(color_rect)
-
+			color_grid.add_child(color_rect)
 			color_index += 1
 
 	img.unlock()
+	
+	call_deferred("_on_vbox_resized")
 
+func _on_vbox_resized():
+    if not color_grid or color_grid.get_child_count() == 0:
+        return
+        
+    var available_width = scroll_view.rect_size.x
+    
+    var v_scroll = scroll_view.get_v_scrollbar()
+    if v_scroll.is_visible_in_tree():
+        available_width -= v_scroll.rect_size.x
+
+    var margin_container = vbox.get_parent() 
+    if margin_container is MarginContainer:
+        available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
+
+    var cell_width = color_grid.get_child(0).rect_min_size.x
+    var spacing = color_grid.get_constant("hseparation")
+    
+    if cell_width + spacing > 0:
+        var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
+        if color_grid.columns != calculated_columns:
+            color_grid.columns = calculated_columns
+		
 func load_palette_texture(palette_filename: String) -> Texture:
 	var texture = null
 	var clean_filename = palette_filename.strip_edges()

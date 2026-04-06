@@ -83,10 +83,6 @@ class HistoryItem extends Reference:
 
 	var cached_line_index: int = -1
 
-var using_alt_font = false
-var default_font: DynamicFont
-var cascadia_font: DynamicFont
-
 var ball_map = {}
 
 signal file_saved(filepath)
@@ -100,8 +96,6 @@ signal file_backed_up()
 
 signal ball_number_changed(ball_no)
 
-var min_font_size = 4
-
 var max_move_head = 60
 
 ### SETUP & INITIALIZATION ###
@@ -112,11 +106,14 @@ func _safe_connect(target, sig, method):
 
 func _ready():
 	_setup_context_menu()
-	_setup_fonts()
 
 	split_regex.compile("[\\s,]+")
 
 	wrap_enabled = false
+
+	var user_settings = get_tree().root.get_node_or_null("Root/SceneRoot")
+	if user_settings and user_settings.has_signal("global_font_updated"):
+		_safe_connect(user_settings, "global_font_updated", "_on_global_font_updated")
 
 	if apply_changes_button:
 		apply_changes_button.connect("pressed", self, "_on_ApplyChangesButton_pressed")
@@ -155,16 +152,6 @@ func _setup_context_menu():
 		menu.add_item("Set Delimiter", 102)
 	if menu.get_item_index(103) == -1:
 		menu.add_item("Set Column in Selection", 103)
-
-func _setup_fonts():
-	default_font = get_font("font")
-	cascadia_font = DynamicFont.new()
-	var font_data = load("res://resources/fonts/CascadiaCode.ttf")
-	if font_data:
-		cascadia_font.font_data = font_data
-		cascadia_font.use_filter = true
-	else:
-		print("WARNING: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
 
 func _setup_set_column_popup():
 	set_column_popup = ConfirmationDialog.new()
@@ -659,37 +646,8 @@ func _on_cursor_changed():
 	var ball_no = get_current_ball_index()
 	emit_signal("ball_number_changed", ball_no)
 
-func _on_IncreaseFontButton_pressed():
-	var font = get_font("font")
-	if font:
-		font.size += 2
-		_set_text_preserve(get_text())
-
-func _on_DecreaseFontButton_pressed():
-	var font = get_font("font")
-	if font:
-		font.size = max(min_font_size, font.size - 2)
-		_set_text_preserve(get_text())
-
-func _on_FontToggleButton_pressed():
-	var current_font = get_font("font")
-	var current_size = current_font.size
-	
-	using_alt_font = !using_alt_font
-	
-	var new_font
-	var btn = get_node("../HBoxContainer/FontToggleButton")
-	
-	if using_alt_font and cascadia_font.font_data:
-		new_font = cascadia_font
-		if btn: btn.text = "Font: Cascadia"
-	else:
-		new_font = default_font
-		if btn: btn.text = "Font: Pixel"
-		
-	new_font.size = current_size
-	add_font_override("font", new_font)
-	update()
+func _on_global_font_updated():
+	_set_text_preserve(get_text())
 
 func _on_AutowrapButton_pressed():
 	self.wrap_enabled = !self.wrap_enabled
@@ -1189,11 +1147,11 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return -1
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
-	var section_find = search(section_tag, 0, 0, 0)
-	if section_find.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		return -1
 	
-	var start_line = section_find[SEARCH_RESULT_LINE] + 1
+	var start_line = bounds.start
 	var line_counter = -1
 	
 	for i in range(start_line, get_line_count()):
@@ -2079,15 +2037,15 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 	if is_addball:
 		section_tag = "[Add Ball]"
 
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		if console_log:
 			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var line_index = -1
 	if is_addball:
@@ -2958,18 +2916,15 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	if console_log:
 		console_log.log_message("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
 
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		print("[LNZ EDIT] No %s section found" % section_tag)
 		if console_log:
 			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
 		return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-
-	if end_line == -1:
-		end_line = get_line_count()
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	if is_addball:
 		var delim = _detect_delimiter(start_line, end_line)
@@ -3030,25 +2985,21 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 	var section_tag = "[Move]"
 	if is_addball:
 		section_tag = "[Add Ball]"
-	var sec = search(section_tag, 0, 0, 0)
-	if sec.empty():
+	var bounds = _get_section_bounds(section_tag)
+	if bounds.empty():
 		if section_tag == "[Move]":
 			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section_line, "[Move]")
 			all_lines.insert(first_section_line + 1, "")
 			_set_text_preserve(all_lines.join("\n"))
-			sec = search(section_tag, 0, 0, 0)
 		else:
 			return
 
-	var start_line = sec[SEARCH_RESULT_LINE] + 1
-	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var delim = _detect_delimiter(start_line, end_line)
-
-	if end_line == -1:
-		end_line = get_line_count()
 
 	if is_addball:
 		var moved_ball_node = pet_node.ball_map.get(ball_no)
