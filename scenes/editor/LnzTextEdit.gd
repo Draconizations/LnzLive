@@ -3719,6 +3719,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 
 				var color = parsed_line[5]
+				var outline_color = parsed_line[6] # Grab the outline color
 				var texture = parsed_line[10]
 				var updates = {}
 				
@@ -3739,6 +3740,23 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 						updates[5] = new_color
 						if not rule.after_texture.empty():
 							updates[10] = rule.after_texture
+						break
+
+				for rule in recolor_rules:
+					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
+					if not texture_match:
+						continue
+						
+					var new_outline_color = null
+					if rule.is_ramp:
+						new_outline_color = LnzLiveUtils.get_ramp_color(outline_color, rule)
+					else:
+						var outline_color_match = rule.before_color.empty() or rule.before_color == outline_color
+						if outline_color_match and not rule.after_color.empty():
+							new_outline_color = rule.after_color
+					
+					if new_outline_color != null:
+						updates[6] = new_outline_color
 						break
 
 				if not updates.empty():
