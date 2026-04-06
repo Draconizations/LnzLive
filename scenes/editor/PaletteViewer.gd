@@ -122,26 +122,26 @@ func populate_colors():
 	call_deferred("_on_vbox_resized")
 
 func _on_vbox_resized():
-    if not color_grid or color_grid.get_child_count() == 0:
-        return
-        
-    var available_width = scroll_view.rect_size.x
-    
-    var v_scroll = scroll_view.get_v_scrollbar()
-    if v_scroll.is_visible_in_tree():
-        available_width -= v_scroll.rect_size.x
+	if not color_grid or color_grid.get_child_count() == 0:
+		return
+		
+	var available_width = scroll_view.rect_size.x
+	
+	var v_scroll = scroll_view.get_v_scrollbar()
+	if v_scroll.is_visible_in_tree():
+		available_width -= v_scroll.rect_size.x
 
-    var margin_container = vbox.get_parent() 
-    if margin_container is MarginContainer:
-        available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
+	var margin_container = vbox.get_parent() 
+	if margin_container is MarginContainer:
+		available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
 
-    var cell_width = color_grid.get_child(0).rect_min_size.x
-    var spacing = color_grid.get_constant("hseparation")
-    
-    if cell_width + spacing > 0:
-        var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
-        if color_grid.columns != calculated_columns:
-            color_grid.columns = calculated_columns
+	var cell_width = color_grid.get_child(0).rect_min_size.x
+	var spacing = color_grid.get_constant("hseparation")
+	
+	if cell_width + spacing > 0:
+		var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
+		if color_grid.columns != calculated_columns:
+			color_grid.columns = calculated_columns
 		
 func load_palette_texture(palette_filename: String) -> Texture:
 	var texture = null

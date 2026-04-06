@@ -1,10 +1,6 @@
-extends PanelContainer
-
-var is_docked = true
-
-# gdlint: disable=max-line-length
-
-const SETTINGS_PATH = "user://settings.cfg"
+extends DraggablePanel
+## TextureEditor.gd
+## Edit texture BMP files in editor
 
 enum Tool {
 	PENCIL,
@@ -49,40 +45,40 @@ var _canvas_dirty = false # Flag to prevent GPU stalling
 
 var dog_generator = null
 
-onready var size_option_btn = $VBoxContainer/SizeHBox/SizeOptionButton
-onready var zoom_option_btn = $VBoxContainer/SizeHBox/ZoomOptionButton
-onready var texture_rect = $VBoxContainer/CanvasScroll/CenterContainer/TextureRect
-onready var palette_grid = $VBoxContainer/PaletteScroll/PaletteGrid
-onready var active_color_rect = $VBoxContainer/ActiveColorRect
-onready var active_color_label = $VBoxContainer/ActiveColorRect/ColorIndexLabel
+onready var size_option_btn = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/SizeOptionButton
+onready var zoom_option_btn = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton
+onready var texture_rect = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect
+onready var palette_grid = $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll/PaletteGrid
+onready var active_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/ActiveColorRect
+onready var active_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/ActiveColorRect/ColorIndexLabel
 
-onready var brush_size_spin = $VBoxContainer/BrushHBox/BrushSizeSpin
-onready var brush_spacing_spin = $VBoxContainer/BrushHBox/BrushSpacingSpin
-onready var brush_shape_option = $VBoxContainer/BrushHBox/BrushShapeOption
+onready var brush_size_spin = $VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer/BrushSizeSpin
+onready var brush_spacing_spin = $VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer2/BrushSpacingSpin
+onready var brush_shape_option = $VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer3/BrushShapeOption
 
-onready var brush_pattern_option = $VBoxContainer/DitherHBox/BrushPatternOption
-onready var dither_amount_spin = $VBoxContainer/DitherHBox/DitherAmountSpin
-onready var use_secondary_check = $VBoxContainer/DitherHBox/UseSecondaryCheckBox
-onready var active_secondary_color_rect = $VBoxContainer/DitherHBox/ActiveSecondaryColorRect
-onready var secondary_color_label = $VBoxContainer/DitherHBox/ActiveSecondaryColorRect/SecondaryColorIndexLabel
+onready var brush_pattern_option = $VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox/BrushPatternOption
+onready var dither_amount_spin = $VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox/DitherAmountSpin
+onready var use_secondary_check = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/UseSecondaryCheckBox
+onready var active_secondary_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/ActiveSecondaryColorRect
+onready var secondary_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/ActiveSecondaryColorRect/SecondaryColorIndexLabel
 
-onready var current_tool_label = $VBoxContainer/ToolsHBox/CurrentToolLabel
+onready var current_tool_label = $VBoxContainer/ScrollContainer/VBoxContainer/CurrentToolLabel
 
-onready var pencil_btn = $VBoxContainer/ToolsHBox/PencilButton
-onready var eraser_btn = $VBoxContainer/ToolsHBox/EraserButton
-onready var fill_btn = $VBoxContainer/ToolsHBox/FillButton
-onready var contiguous_check_box = $VBoxContainer/ToolsHBox/ContiguousCheckBox
-onready var eyedropper_btn = $VBoxContainer/ToolsHBox/EyedropperButton
-onready var ramp_recolor_check = $VBoxContainer/ToolsHBox/RampRecolorCheckBox
+onready var pencil_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/PencilButton
+onready var eraser_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EraserButton
+onready var fill_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton
+onready var contiguous_check_box = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/ContiguousCheckBox
+onready var eyedropper_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton
+onready var ramp_recolor_check = $VBoxContainer/ScrollContainer/VBoxContainer/RampRecolorCheckBox
 
-onready var mirror_h_btn = $VBoxContainer/MirrorHBox/MirrorHCheckBox
-onready var mirror_v_btn = $VBoxContainer/MirrorHBox/MirrorVCheckBox
+onready var mirror_h_btn = $VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox/MirrorHCheckBox
+onready var mirror_v_btn = $VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox/MirrorVCheckBox
 
-onready var filename_line_edit = $VBoxContainer/SaveHBox/FileNameLineEdit
-onready var active_textures_option = $VBoxContainer/SaveHBox/ActiveTexturesOption
+onready var filename_line_edit = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/FileNameLineEdit
+onready var active_textures_option = $VBoxContainer/ScrollContainer/VBoxContainer/SaveHBox/ActiveTexturesOption
 
-onready var show_quadrants_check = $VBoxContainer/MirrorHBox/ShowQuadrantsCheckBox
-onready var quadrant_overlay = $VBoxContainer/CanvasScroll/CenterContainer/TextureRect/QuadrantOverlay
+onready var show_quadrants_check = $VBoxContainer/ScrollContainer/VBoxContainer/ShowQuadrantsCheckBox
+onready var quadrant_overlay =$VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect/QuadrantOverlay
 
 func _ready():
 	set_process(true)
@@ -147,6 +143,8 @@ func _ready():
 	show_quadrants_check.connect("toggled", self, "_trigger_setting_save")
 	show_quadrants_check.connect("toggled", self, "_on_show_quadrants_toggled")
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
+
+	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
 
 func _process(_delta):
 	# GPU Optimization: Only upload image to GPU once per frame when dirty
@@ -253,11 +251,22 @@ func populate_palette():
 
 			var btn = Button.new()
 			btn.rect_min_size = Vector2(24, 24)
+			
 			var style = StyleBoxFlat.new()
 			style.bg_color = c
+			style.border_width_left = 2
+			style.border_width_right = 2
+			style.border_width_top = 2
+			style.border_width_bottom = 2
+			style.border_color = Color(0, 0, 0, 0) # Transparent
+			
+			var focus_style = style.duplicate()
+			focus_style.border_color = Color(1, 1, 1, 1) # Solid White
+			
 			btn.add_stylebox_override("normal", style)
 			btn.add_stylebox_override("hover", style)
-			btn.add_stylebox_override("pressed", style)
+			btn.add_stylebox_override("pressed", focus_style)
+			btn.add_stylebox_override("focus", focus_style)
 
 			btn.connect("pressed", self, "_on_palette_color_selected", [palette_colors.size() - 1])
 			btn.connect("gui_input", self, "_on_palette_color_gui_input", [palette_colors.size() - 1])
@@ -270,6 +279,8 @@ func populate_palette():
 			_on_palette_color_selected(current_color_index)
 		else:
 			_on_palette_color_selected(0)
+
+	_on_palette_scroll_resized()
 
 func _get_closest_palette_index(c: Color, preferred_base: int = -1) -> int:
 	if preferred_base >= 0 and preferred_base + 10 <= palette_colors.size():
@@ -951,3 +962,9 @@ func _on_QuadrantOverlay_draw():
 		
 		# Reset transform to prevent affecting subsequent draw calls
 		quadrant_overlay.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _on_palette_scroll_resized():
+	if palette_grid and palette_grid is GridContainer:
+		var available_width = $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.rect_size.x
+		var new_columns = max(1, int((available_width - 16) / 28.0))
+		palette_grid.columns = new_columns
