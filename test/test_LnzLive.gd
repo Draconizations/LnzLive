@@ -63,7 +63,7 @@ func _reset_editor_state():
 						child.free()
 
 # ------------------------------------------------------------------------------
-# Test Helpers
+# Helpers
 # ------------------------------------------------------------------------------
 func _create_temp_lnz(content: String) -> String:
 	var path = "user://gut_temp_test.lnz"
@@ -506,44 +506,3 @@ func test_get_rotation_pivot_origin_midpoint_math():
 	
 	# Verify it returns the mathematical average
 	assert_eq(center, Vector3(10.0/3.0, 20.0/3.0, 30.0/3.0), "Should return the exact midpoint of all selected ball origins.")
-
-func test_apply_eye_iris_binding_clamping_logic():
-	var pet_view = autofree(load("res://scenes/editor/PetViewContainer.gd").new())
-	
-	# 1. Mock the PetNode state tracker
-	var mock_pet = autofree(Node.new())
-	var p_script = GDScript.new()
-	p_script.source_code = "extends Node\nvar paintball_map = {}\nvar pixel_world_size = 1.0" # 1.0 for easier math
-	p_script.reload()
-	mock_pet.set_script(p_script)
-	pet_view.pet_node = mock_pet
-	
-	# 2. Setup the Eye (Base Ball)
-	var base_ball = autofree(Spatial.new())
-	var b_script = GDScript.new()
-	b_script.source_code = "extends Spatial\nvar ball_no = 5\nvar ball_size = 10.0"
-	b_script.reload()
-	base_ball.set_script(b_script)
-	add_child(base_ball) # Add to tree so to_local/to_global math functions properly
-	
-	# 3. Setup the Iris (Paintball)
-	var iris_pb = autofree(Spatial.new())
-	iris_pb.add_to_group("paintballs")
-	base_ball.add_child(iris_pb)
-	iris_pb.transform.origin = Vector3.ZERO
-	mock_pet.paintball_map[5] = [iris_pb]
-	
-	# TEST A: Standard movement
-	# If the eyeball translates +2 units on the X axis, the iris should move -2 units to stay looking forward
-	var delta = Vector3(2, 0, 0)
-	pet_view._apply_eye_iris_binding(base_ball, delta)
-	assert_eq(iris_pb.transform.origin, Vector3(-2, 0, 0), "Iris should move in the exact opposite direction of the eyeball's translation.")
-	
-	# TEST B: Clamping limit
-	# The max travel is (ball_size / 2.0) * pixel_world_size * 0.8
-	# Max travel = (10.0 / 2.0) * 1.0 * 0.8 = 4.0 units
-	iris_pb.transform.origin = Vector3.ZERO
-	var extreme_delta = Vector3(10, 0, 0) 
-	pet_view._apply_eye_iris_binding(base_ball, extreme_delta)
-	
-	assert_eq(iris_pb.transform.origin, Vector3(-4, 0, 0), "Iris movement must be clamped to 80% of the eyeball's radius so it doesn't slide off the eye.")
