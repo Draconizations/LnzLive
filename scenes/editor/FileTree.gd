@@ -135,14 +135,17 @@ func _ready():
 	rescan_palettes()
 
 func _on_FileDialog_popup_hide():
-	pet_view_container.input_is_paused = false
+	if pet_view_container:
+		pet_view_container.input_is_paused = false
 	release_focus()
 
 func _on_RenameDialog_about_to_show():
-	pet_view_container.input_is_paused = true
+	if pet_view_container:
+		pet_view_container.input_is_paused = true
 
 func _on_RenameDialog_popup_hide():
-	pet_view_container.input_is_paused = false
+	if pet_view_container:
+		pet_view_container.input_is_paused = false
 	release_focus()
 
 func _setup_dynamic_dialogs():
@@ -219,8 +222,9 @@ func _on_sort_mode_changed(index: int):
 	var selected_path = null
 	var selected = get_selected()
 	if selected:
-		selected_path = str(selected.get_metadata(0))
-		if selected_path == "Null": selected_path = null
+		var meta = selected.get_metadata(0)
+		if typeof(meta) != TYPE_NIL and str(meta) != "Null" and str(meta) != "":
+			selected_path = str(meta)
 		
 	rescan(selected_path)
 
@@ -326,10 +330,10 @@ func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 		var err = img.load(selected_path, false, false)
 		if err == OK:
 			if img.get_height() != 1:
-				print("[ERROR] FileTree: _on_FileDialog_file_selected: Palette " + selected_path.get_file() + " is not 1 pixel high.")
+				print("[ERROR] FileTree: _on_FileDialog_file_selected: palette PNG " + selected_path.get_file() + " is not 1 pixel high, skipping")
 				return ""
 		else:
-			print("Error loading image.")
+			print("[ERROR] FileTree: _on_FileDialog_file_selected: failed to load PNG at: ", selected_path, " error: ", err)
 			return ""
 
 	var copy_success = false
@@ -450,6 +454,12 @@ func rescan_with_extension(file_extension: String, dest_path: String):
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
 	if not selected: return
+	
+	var meta = selected.get_metadata(0)
+	
+	if typeof(meta) == TYPE_NIL or str(meta) == "Null" or str(meta) == "":
+		return
+	
 	var filepath = str(selected.get_metadata(0)) 
 	
 	if filepath == null or filepath == "Null" or filepath.ends_with("/"):
@@ -537,7 +547,11 @@ func rescan_palettes():
 	
 func scan_local_storage(selected_filepath):
 	print("[STATUS] FileTree: scan_local_storage: running")
-	var safe_filepath = "" if selected_filepath == null else str(selected_filepath)
+	
+	var safe_filepath = ""
+	if typeof(selected_filepath) != TYPE_NIL and str(selected_filepath) != "null":
+		safe_filepath = str(selected_filepath)
+		
 	_scan_dir_recursive(user_file_location, local_storage, safe_filepath, true)
 	print("[STATUS] FileTree: scan_local_storage: complete")
 
@@ -854,9 +868,14 @@ func scan_local_palettes():
 func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	var f = File.new()
 	if f.open(source_path, File.READ) != OK:
-		print("[ERROR] FileTree: convert_bmp_to_palette_png: Could not read BMP file.")
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: could not read BMP file")
 		return false
 	
+	if f.get_len() < 54:
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: file too small to be a valid BMP")
+		f.close()
+		return false
+		
 	f.seek(10)
 	var pixel_offset = f.get_32()
 	
@@ -967,15 +986,20 @@ func _on_ItemPopupMenu_id_pressed(id):
 		
 		var dir = Directory.new()
 		for item in items:
-			var filepath = str(item.get_metadata(0))
+			var item_meta = item.get_metadata(0)
 			
-			if filepath == null or filepath == "Null":
+			if typeof(item_meta) == TYPE_NIL or str(item_meta) == "Null" or str(item_meta) == "":
 				continue
+				
+			var filepath = str(item_meta)
 			
 			if filepath.ends_with("/"):
 				_delete_dir_recursive(filepath.trim_suffix("/"))
 			elif dir.file_exists(filepath):
-				dir.remove(filepath)
+				# FIX: Log error code on file deletion failure.
+				var err = dir.remove(filepath)
+				if err != OK:
+					print("[ERROR] FileTree: _on_ItemPopupMenu_id_pressed: Failed to delete ", filepath, " Error: ", err)
 
 		rescan(null)
 		rescan_textures()
@@ -1005,8 +1029,12 @@ func _on_ItemPopupMenu_id_pressed(id):
 	elif id == 4: # export file
 		var item = get_selected()
 		if not item: return
-		var item_filepath = str(item.get_metadata(0))
-		if item_filepath == null or item_filepath == "Null" or item_filepath.ends_with("/"): return
+		var item_meta = item.get_metadata(0)
+		
+		if typeof(item_meta) == TYPE_NIL or str(item_meta) == "Null" or str(item_meta) == "": return
+		
+		var item_filepath = str(item_meta)
+		if item_filepath.ends_with("/"): return
 		
 		var filename = item.get_text(0)
 		var file = File.new()
@@ -1041,10 +1069,15 @@ func _delete_dir_recursive(path: String, depth: int = 0):
 			if dir.current_is_dir():
 				_delete_dir_recursive(full_path, depth + 1)
 			else:
-				dir.remove(full_path)
+				var err = dir.remove(full_path)
+				if err != OK:
+					print("[ERROR] FileTree: _delete_dir_recursive: Failed to delete file ", full_path, " Error: ", err)
 			file_name = dir.get_next()
 		dir.list_dir_end()
-		dir.remove(path)
+		
+		var dir_err = dir.remove(path)
+		if dir_err != OK:
+			print("[ERROR] FileTree: _delete_dir_recursive: Failed to delete directory ", path, " Error: ", dir_err)
 
 func _on_SaveDialog_file_selected(path, content_bytes):
 	var file = File.new()
@@ -1055,11 +1088,11 @@ func _on_SaveDialog_file_selected(path, content_bytes):
 	else:
 		print("[ERROR] FileTree: _on_SaveDialog_file_selected: error saving file to: " + path)
 
-	if is_instance_valid(self):
-		for child in get_children():
-			if child is FileDialog and child.window_title == "Save File As":
-				child.queue_free()
-				return
+	# if is_instance_valid(self):
+	# 	for child in get_children():
+	# 		if child is FileDialog and child.window_title == "Save File As":
+	# 			child.queue_free()
+	# 			return
 
 func _save_file_as(filename: String, content_bytes: PoolByteArray):	
 	if OS.has_feature("HTML5"):		
@@ -1087,6 +1120,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		var save_dialog = FileDialog.new()
 		
 		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
+		save_dialog.connect("popup_hide", save_dialog, "queue_free")
 		
 		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
 		save_dialog.mode = FileDialog.MODE_SAVE_FILE
@@ -1107,7 +1141,7 @@ func _on_RenameDialog_confirmed():
 	var item = items[0]
 	var filepath = item.get_metadata(0)
 	
-	if filepath == null or str(filepath) == "Null": 
+	if typeof(filepath) == TYPE_NIL or str(filepath) == "Null" or str(filepath) == "": 
 		return
 	
 	var filepath_str = str(filepath)
@@ -1122,6 +1156,10 @@ func _on_RenameDialog_confirmed():
 	
 	if filepath_str.ends_with("/"):
 		new_filepath += "/"
+
+	if dir.file_exists(new_filepath) or dir.dir_exists(new_filepath):
+		print("[ERROR] FileTree: _on_RenameDialog_confirmed: Name already exists: ", new_filepath)
+		return
 
 	if dir.rename(filepath_str, new_filepath) == OK:
 		rescan(null)
@@ -1142,9 +1180,9 @@ func _on_ItemPopupMenu_about_to_show():
 
 	var clicked_filepath = clicked_item.get_metadata(0)
 	
-	if clicked_filepath != null:
+	if typeof(clicked_filepath) != TYPE_NIL and str(clicked_filepath) != "Null" and str(clicked_filepath) != "":
 		if lnz_text_edit:
-			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == clicked_filepath))
+			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == str(clicked_filepath)))
 
 func _on_LnzTextEdit_file_backed_up():
 	var item = get_selected()
@@ -1227,9 +1265,12 @@ func _on_NewFolderDialog_confirmed():
 		dir.make_dir(new_dir_path)
 		
 	for item in items:
-		var item_meta = str(item.get_metadata(0))
-		if item_meta == null or item_meta == "Null":
+		var raw_meta = item.get_metadata(0)
+		
+		if typeof(raw_meta) == TYPE_NIL or str(raw_meta) == "Null" or str(raw_meta) == "":
 			continue
+			
+		var item_meta = str(raw_meta)
 		
 		if item_meta == base_dir:
 			continue 
@@ -1253,14 +1294,20 @@ func _on_MoveFileDialog_confirmed():
 	var last_lnz_path = ""
 	
 	for item in items:
-		var current_path = str(item.get_metadata(0))
-		if current_path == null or current_path == "Null":
+		var raw_meta = item.get_metadata(0)
+		
+		if typeof(raw_meta) == TYPE_NIL or str(raw_meta) == "Null" or str(raw_meta) == "":
 			continue
+			
+		var current_path = str(raw_meta)
 		
 		var clean_path = current_path.trim_suffix("/")
 		var file_name = clean_path.get_file()
 		
-		if current_path.ends_with("/") and target_dir.begins_with(current_path):
+		var norm_current = current_path if current_path.ends_with("/") else current_path + "/"
+		var norm_target = target_dir if target_dir.ends_with("/") else target_dir + "/"
+		
+		if norm_current.ends_with("/") and norm_target.begins_with(norm_current):
 			print("[WARNING] FileTree: _on_MoveFileDialog_confirmed: cannot move a folder into itself: ", current_path, " -> ", target_dir)
 			continue
 		
