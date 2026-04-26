@@ -610,6 +610,8 @@ func scan_local_textures():
 		return
 	dir.list_dir_begin()
 	var filename = dir.get_next()
+	var file = File.new()
+
 	while filename != "":
 		if filename.to_lower().ends_with(".bmp"):
 			var full_path = textures_dir.plus_file(filename)
@@ -618,42 +620,60 @@ func scan_local_textures():
 			new_item.set_text(0, filename)
 			new_item.set_metadata(0, full_path)
 
-			# Load image for texture
-			var img_indexed = Image.new()
-			img_indexed.load(full_path, true, true)
-			var full_tex = ImageTexture.new()
-			full_tex.flags = 0
-			full_tex.create_from_image(
-				img_indexed,
-				ImageTexture.FLAG_REPEAT
-			)
-			preloader.add_resource(filename.to_lower(), full_tex)
-
-			var res_name = filename.to_lower()
-			if preloader.has_resource(res_name):
-				preloader.remove_resource(res_name)
-			preloader.add_resource(res_name, full_tex)
-
-			# Load image for preview
-			var file = File.new()
+			# Check whether valid BMP file
+			var is_valid_bmp = false
 			if file.open(full_path, File.READ) == OK:
-				var buf = file.get_buffer(file.get_len())
+				if file.get_len() >= 2:
+					var b1 = file.get_8()
+					var b2 = file.get_8()
+					if b1 == 66 and b2 == 77: # 'B' and 'M'
+						is_valid_bmp = true
 				file.close()
 
-				var icon_img = Image.new()
-				icon_img.load_bmp_from_buffer(buf)
+			if not is_valid_bmp:
+				new_item.set_text(0, filename + " (FILE ISSUE)")
+			else:
+				# Load image for texture
+				var img_indexed = Image.new()
+				var err = img_indexed.load(full_path, true, true)
+				
+				if err != OK or img_indexed.get_width() == 0:
+					new_item.set_text(0, filename + " (FILE ISSUE)")
+				else:
+					var full_tex = ImageTexture.new()
+					full_tex.flags = 0
+					full_tex.create_from_image(img_indexed, ImageTexture.FLAG_REPEAT)
+					
+					var res_name = filename.to_lower()
+					if preloader.has_resource(res_name):
+						preloader.remove_resource(res_name)
+					preloader.add_resource(res_name, full_tex)
 
-				var w = icon_img.get_width()
-				var h = icon_img.get_height()
+					# Load image for preview
+					if file.open(full_path, File.READ) == OK:
+						var buf = file.get_buffer(file.get_len())
+						file.close()
 
-				icon_img.convert(Image.FORMAT_RGBA8)
-				icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
+						var icon_img = Image.new()
+						var icon_err = icon_img.load_bmp_from_buffer(buf)
+						
+						if icon_err == OK and icon_img.get_width() > 0:
+							var w = icon_img.get_width()
+							var h = icon_img.get_height()
 
-				var icon_tex = ImageTexture.new()
-				icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
-				new_item.set_icon(0, icon_tex)
+							icon_img.convert(Image.FORMAT_RGBA8)
+							icon_img.resize(32, 32, Image.INTERPOLATE_NEAREST)
 
-				new_item.set_text(0, filename + " (" + str(w) + "x" + str(h) + ")")
+							var icon_tex = ImageTexture.new()
+							icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
+							new_item.set_icon(0, icon_tex)
+
+							new_item.set_text(0, filename + " (" + str(w) + "x" + str(h) + ")")
+						else:
+							new_item.set_text(0, filename + " (FILE ISSUE)")
+					else:
+						new_item.set_text(0, filename + " (FILE ISSUE)")
+
 		filename = dir.get_next()
 	dir.list_dir_end()
 
