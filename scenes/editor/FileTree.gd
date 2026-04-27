@@ -60,6 +60,12 @@ var saved_subfolder_states := {}
 signal backup_file
 
 func _ready():
+	var user_path = ProjectSettings.globalize_path("user://")
+	print("Your local LnzLive user directory located at: ", user_path)
+	print(" If you experience issues starting LnzLive or loading files:")
+	print("1. Try removing the 'settings.cfg' file in this folder")
+	print("2. Try removing files from the 'resources/textures' or 'resources/palettes' folders")
+
 	select_mode = SELECT_MULTI
 	root = create_item()
 	examples = create_item(root)
@@ -244,7 +250,7 @@ func _on_ImportLNZ_pressed():
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".lnz,.txt")
+		web_file_dialog(".lnz,.txt,text/plain")
 
 func _on_ImportTexture_pressed():
 	current_import_type = ImportType.TEXTURE
@@ -255,18 +261,20 @@ func _on_ImportTexture_pressed():
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".bmp")
+		web_file_dialog(".bmp,image/bmp")
 
 func _on_ImportPalette_pressed():
 	current_import_type = ImportType.PALETTE
 	if (!OS.has_feature("HTML5")):
 		pet_view_container.input_is_paused = true
 		file_dialog.clear_filters()
-		file_dialog.add_filter("*.png, *.bmp ; Palette Files")
+		file_dialog.add_filter("*.png,*.bmp ; All Palette Files")
+		file_dialog.add_filter("*.png ; PNG Files")
+		file_dialog.add_filter("*.bmp ; BMP Files")
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".png")
+		web_file_dialog(".png,.bmp,image/png,image/bmp")
 
 func _on_OpenUserFolder_pressed():
 	var path = ProjectSettings.globalize_path("user://")
@@ -429,14 +437,33 @@ func _on_web_file_upload_popup_confirmed():
 			return
 
 	if current_import_type == ImportType.PALETTE:
-		var img = Image.new()
-		var png_err = img.load_png_from_buffer(file_blob)
-		if png_err == OK:
-			if img.get_height() != 1:
-				print("[WARNING] FileTree: _on_web_file_upload_popup_confirmed: palette " + file_name + " is not 1 pixel high, skipping")
-		else:
-			print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: error loading PNG from buffer")
+		if file_extension == "bmp":
+			var temp_path = dest_dir.plus_file("temp_upload_" + str(OS.get_unix_time()) + ".bmp")
+			var temp_file = File.new()
+			if temp_file.open(temp_path, File.WRITE) == OK:
+				temp_file.store_buffer(file_blob)
+				temp_file.close()
+				
+				var target_filename = file_name.get_basename() + ".png"
+				var success = convert_bmp_to_palette_png(temp_path, dest_dir, target_filename)
+				
+				dir.remove(temp_path)
+				
+				if success:
+					var final_path = dest_dir.plus_file(target_filename)
+					rescan_with_extension(final_path.get_extension(), final_path)
+			else:
+				print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: could not write temp bmp file")
 			return
+		else:
+			var img = Image.new()
+			var png_err = img.load_png_from_buffer(file_blob)
+			if png_err == OK:
+				if img.get_height() != 1:
+					print("[WARNING] FileTree: _on_web_file_upload_popup_confirmed: palette " + file_name + " is not 1 pixel high, skipping")
+			else:
+				print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: error loading PNG from buffer")
+				return
 
 	var file = File.new()
 	var err = file.open(dest_path, File.WRITE)
@@ -871,7 +898,7 @@ func scan_local_palettes():
 	dir2.list_dir_end()
 	print("[STATUS] FileTree: scan_local_palettes: complete")
 
-func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
+func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_dest_filename: String = "") -> bool:
 	var f = File.new()
 	if f.open(source_path, File.READ) != OK:
 		print("[ERROR] FileTree: convert_bmp_to_palette_png: could not read BMP file")
@@ -924,7 +951,9 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	img.unlock()
 	f.close()
 	
-	var dest_filename = source_path.get_file().get_basename() + ".png"
+	var dest_filename = custom_dest_filename
+	if dest_filename == "":
+		dest_filename = source_path.get_file().get_basename() + ".png"
 	var dest_path = dest_dir.plus_file(dest_filename)
 	
 	var err = img.save_png(dest_path)
