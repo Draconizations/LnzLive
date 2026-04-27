@@ -265,9 +265,9 @@ func save_backup():
 	emit_signal("file_backed_up")
 	
 	var msg = "Created Backup: " + backup_path1.get_file()
-	print(msg)
+	print("[STATUS] LnzTextEdit: save_backup: " + msg)
 	if console_log:
-		console_log.log_message("Created Backup: " + backup_path1.get_file())
+		console_log.log_message(msg)
 
 func save_file(skip_history: bool = false):
 	if not skip_history and history_index >= 0:
@@ -276,7 +276,7 @@ func save_file(skip_history: bool = false):
 			var last_snapshot = history_stack[last_snap_idx]
 			if last_snapshot.full_text == self.text:
 				var msg = "No changes detected! Skipping LNZ save..."
-				print(msg)
+				print("[STATUS] LnzTextEdit: save_file: " + msg)
 				if console_log:
 					console_log.log_message(msg)
 				return
@@ -333,7 +333,7 @@ func save_file(skip_history: bool = false):
 	_set_text_preserve(get_text()) 
 	
 	var msg = "Saved LNZ and Applied Changes!"
-	print(msg)
+	print("[STATUS] LnzTextEdit: save_file: " + msg)
 	if console_log:
 		console_log.log_message(msg)
 
@@ -366,9 +366,10 @@ func commit_full_snapshot(action_name: String):
 	history_stack.append(item)
 	history_index += 1
 	_check_history_size()
-	print("[HISTORY] Snapshot Commit: %s" % action_name)
+	var msg = "[HISTORY] Snapshot Commit: %s" % action_name
+	print(msg)
 	if console_log:
-		console_log.log_message("[HISTORY] Snapshot Commit: %s" % action_name)
+		console_log.log_message(msg)
 
 func commit_logical_change(action_name: String, section: String, id: int, old_line: String, new_line: String, line_idx: int = -1) -> bool:
 	if line_idx == -1:
@@ -403,9 +404,10 @@ func commit_logical_change(action_name: String, section: String, id: int, old_li
 	last_commit_action = action_name
 	last_commit_id = id
 	
-	print("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
+	var msg = "[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx]
+	print(msg)
 	if console_log:
-		console_log.log_message("[HISTORY] Logical Commit: %s (Ball %d, Line %d)" % [action_name, id, line_idx])
+		console_log.log_message(msg)
 
 	return true
 
@@ -443,23 +445,26 @@ func undo_visual_edit():
 				if log_item.type == HistoryItem.Type.LOGICAL:
 					_apply_logical_line(log_item.target_section, log_item.target_id, log_item.new_line_data)
 		else:
-			print("[HISTORY] WARNING: No snapshot found to restore")
+			var msg = "[HISTORY] WARNING: No snapshot found to restore"
+			print(msg)
 			if console_log:
-				console_log.log_message("[HISTORY] WARNING: No snapshot found to restore")
+				console_log.log_message(msg)
 
-	print("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
+	var msg = "[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index]
+	print(msg)
 	if console_log:
-		console_log.log_message("[HISTORY] UNDO: %s (ID: %d)" % [item_being_undone.action_name, history_index])
-	
+		console_log.log_message(msg)
+
 	last_commit_action = ""
 	
 	save_file(true)
 
 func redo_visual_edit():
 	if history_index >= history_stack.size() - 1:
-		print("[HISTORY] REDO: Nothing to redo...")
+		var msg = "[HISTORY] REDO: Nothing to redo..."
+		print(msg)
 		if console_log:
-			console_log.log_message("[HISTORY] REDO: Nothing to redo...")
+			console_log.log_message(msg)
 		return
 	
 	history_index += 1
@@ -470,10 +475,11 @@ func redo_visual_edit():
 	else:
 		_apply_logical_line(item.target_section, item.target_id, item.new_line_data)
 
-	print("[HISTORY] REDO: %s" % item.action_name)
+	var msg = "[HISTORY] REDO: %s" % item.action_name
+	print(msg)
 	if console_log:
-		console_log.log_message("[HISTORY] REDO: %s" % item.action_name)
-	
+		console_log.log_message(msg)
+
 	last_commit_action = ""
 	
 	save_file(true)
@@ -538,9 +544,10 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 	if line_idx != -1:
 		set_line(line_idx, line_content)
 	else:
-		print("[HISTORY] WARN: No line found to undo (%s #%d)" % [section, id])
+		var msg = "[HISTORY] No line found to apply change (%s #%d)" % [section, id]
+		print(msg)
 		if console_log:
-			console_log.log_message("[HISTORY] WARN: No line found to undo (%s #%d)" % [section, id])
+			console_log.log_message(msg)
 
 ### TEXT EDITOR ###
 
@@ -1914,9 +1921,10 @@ func _update_paintballz_section(header: String, ball_no: int):
 func update_lnz_section_one_value(section_name, val1):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		print("[LNZ EDIT] Section not found: " + section_name)
+		var msg = "LNZ section not found: " + section_name
+		print("[STATUS] LnzTextEdit: update_lnz_section_one_value: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] Section not found: " + section_name)
+			console_log.log_message(msg)
 		return
 
 	var start_line = bounds["start"]
@@ -1925,9 +1933,10 @@ func update_lnz_section_one_value(section_name, val1):
 func update_lnz_section_two_values(section_name, val1, val2):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		print("[LNZ EDIT] Section not found: " + section_name)
+		var msg = "LNZ section not found: " + section_name
+		print("[STATUS] LnzTextEdit: update_lnz_section_two_values: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] Section not found: " + section_name)
+			console_log.log_message(msg)
 		return
 
 	var start_line = bounds["start"]
@@ -2039,9 +2048,10 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 
 	var bounds = _get_section_bounds(section_tag)
 	if bounds.empty():
-		print("[LNZ EDIT] No %s section found" % section_tag)
+		var msg = "No %s section found" % section_tag
+		print("[WARNING] LnzTextEdit: apply_preset_to_ball: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
+			console_log.log_message(msg)
 		return
 
 	var start_line = bounds.start
@@ -2796,9 +2806,10 @@ func _on_Node_line_created(start_ball, end_ball):
 	var end_line = bounds["end"]
 
 	if start_line == -1:
-		print("[LNZ EDIT] No [Linez] section found")
+		var msg = "No [Linez] section found. Cannot create line between %d and %d." % [start_ball, end_ball]
+		print("[WARNING] LnzTextEdit: _on_Node_line_created: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] No [Linez] section found")
+			console_log.log_message(msg)
 		return
 
 	var delim = _detect_delimiter(start_line, end_line)
@@ -2911,16 +2922,18 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	if is_addball:
 		section_tag = "[Add Ball]"
 		size_field_index = 10  # 11th field is size for addballs
-
-	print("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+	
+	var msg = "Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif]
+	print("[STATUS] LnzTextEdit: _on_Node_ball_resized: " + msg)
 	if console_log:
-		console_log.log_message("[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif])
+		console_log.log_message(msg)
 
 	var bounds = _get_section_bounds(section_tag)
 	if bounds.empty():
-		print("[LNZ EDIT] No %s section found" % section_tag)
+		msg = "No %s section found. Cannot resize ball %d" % [section_tag, ball_no]
+		print("[WARNING] LnzTextEdit: _on_Node_ball_resized: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] No %s section found" % section_tag)
+			console_log.log_message(msg)
 		return
 
 	var start_line = bounds.start
@@ -2946,7 +2959,9 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 
 					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
 					if not success:
-						print("[HISTORY] Fallback: Line not found, committing full snapshot")
+						msg = "[HISTORY] Fallback: Line not found for ball %d in section %s. Committing full snapshot." % [ball_no, section_tag]
+						print(msg)
+						console_log.log_message(msg)
 						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
 
 					return
@@ -2970,7 +2985,9 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 
 					var success = commit_logical_change("Resized Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
 					if not success:
-						print("[HISTORY] Fallback: Line not found, committing full snapshot")
+						msg = "[HISTORY] Fallback: Line not found for ball %d in section %s. Committing full snapshot." % [ball_no, section_tag]
+						print(msg)
+						console_log.log_message(msg)
 						commit_full_snapshot("Resized Ballz #%d [FULL COMMIT]" % ball_no)
 
 					return
@@ -3029,7 +3046,9 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 
 							var success = commit_logical_change("Moved Addballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
 							if not success:
-								print("[HISTORY] Fallback: Line not found, committing full snapshot")
+								var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
+								print(msg)
+								console_log.log_message(msg)
 								commit_full_snapshot("Moved Addballz #%d [FULL COMMIT]" % ball_no)
 						break
 					count += 1
@@ -3067,7 +3086,8 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 
 				var success = commit_logical_change("Moved Ballz #%d" % ball_no, section_tag, ball_no, old_line, new_line, i)
 				if not success:
-					print("[HISTORY] Fallback: Line not found, committing full snapshot")
+					var msg = "[HISTORY] Fallback: Line not found for ball %d in section %s, committing full snapshot" % [ball_no, section_tag]
+					print(msg)
 					commit_full_snapshot("Moved Ballz #%d [FULL COMMIT]" % ball_no)
 				break
 
@@ -3093,9 +3113,10 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	save_backup()
 
 	if reference_ball == null:
-		print("[LNZ EDIT] No reference ball given")
+		var msg = "No reference ball given. Cannot add new ball."
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] No reference ball given")
+			console_log.log_message(msg)
 		return
 
 	var ball_no = reference_ball.ball_no
@@ -3189,15 +3210,17 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	if KeyBallsData.bodyarea_map.has(real_base_ball):
 		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
 	else:
-		print("[LNZ EDIT] Missing bodyarea for ball", real_base_ball)
+		var msg = "Missing bodyarea for ball %d. Defaulting to 1." % real_base_ball
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] Missing bodyarea for ball" + str(real_base_ball))
+			console_log.log_message(msg)
 	
 	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
-		print("[LNZ EDIT] No [Add Ball] section found")
+		var msg = "No [Add Ball] section found. Cannot add new ball."
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] No [Add Ball] section found")
+			console_log.log_message(msg)
 		return
 	var start_line = section_find[SEARCH_RESULT_LINE] + 1
 	var end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]

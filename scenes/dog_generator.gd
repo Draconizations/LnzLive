@@ -121,6 +121,7 @@ signal line_created(start_ball, end_ball)
 
 signal palette_changed(palette_name)
 
+
 func _ready():
 	var t_start = OS.get_ticks_msec()
 	var f = File.new()
@@ -128,12 +129,12 @@ func _ready():
 		var result = JSON.parse(f.get_as_text())
 		if result.error == OK:
 			_atlas_manifest = result.result
-			print("Atlas manifest loaded successfully with " + str(_atlas_manifest.size()) + " entries completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
+			print("[STATUS] dog_generator: read texture atlas manifest with " + str(_atlas_manifest.size()) + " entries in " + str(OS.get_ticks_msec() - t_start) + "ms")
 		else:
-			print("Failed to parse atlas manifest.")
+			print("[ERROR] dog_generator: failed to parse texture atlas manifest")
 		f.close()
 	else:
-		print("Failed to open atlas manifest.")
+		print("[ERROR] dog_generator: failed to open texture atlas manifest")
 
 	var editor = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	editor.connect("find_line", self, "_on_LnzTextEdit_find_line")
@@ -157,6 +158,7 @@ func _ready():
 		game_option_button.add_item("Babyz")
 		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
 
+
 func populate_bhd_list():
 	bhd_file_list.clear()
 	var dir = Directory.new()
@@ -179,8 +181,10 @@ func populate_bhd_list():
 	bhd_option_button.select(-1)
 	bhd_prompt_option.select(-1)
 
+
 func set_skip_next_rebuild(val: bool):
 	_skip_next_rebuild = val
+
 
 func symmetrize_skeleton():
 	var symmetry_data = {}
@@ -219,7 +223,7 @@ func symmetrize_skeleton():
 
 func set_animation(anim_index: int):
 	if not bhd or bhd.animation_ranges.empty():
-		print("ERROR: No valid BHD loaded.")
+		print("[ERROR] dog_generator: set_animation: No valid BHD loaded.")
 		return
 
 	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
@@ -227,14 +231,14 @@ func set_animation(anim_index: int):
 
 	var anim_frames = bhd.get_frame_offsets_for(anim_index)
 	if anim_frames.empty():
-		print("ERROR: Animation %d has no frames in BHD." % anim_index)
+		print("[WARNING] dog_generator: set_animation: animation %d has no frames in BHD" % anim_index)
 		anim_frames = [0]
 
 	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
 	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
 
 	if new_bdt.frames.empty():
-		print("ERROR: Failed to load BDT frames for: ", bdt_filename)
+		print("[ERROR] dog_generator: set_animation: failed to load BDT frames for: ", bdt_filename)
 		return
 
 	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
@@ -243,24 +247,6 @@ func set_animation(anim_index: int):
 	
 	var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
 	anim_picker.text = str(anim_index)
-
-
-# func set_frame(frame: int):
-# 	if not current_bdt or current_bdt.frames.empty():
-# 		return
-
-# 	current_frame = clamp(frame, 0, current_bdt.frames.size() - 1)
-
-# 	balls = []
-# 	for n in bhd.num_balls:
-# 		if current_frame < current_bdt.frames.size():
-# 			var x = current_bdt.frames[current_frame][n]
-# 			balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
-
-# 	if t_pose_active:
-# 		symmetrize_skeleton()
-
-# 	init_visual_balls(lnz, false)
 
 
 func set_frame(frame: int):
@@ -361,7 +347,7 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 
 	emit_signal("bhd_loaded", bhd.animation_ranges.size())
 	if bhd.animation_ranges.empty():
-		print("BHD file has no animations or failed to load.")
+		print("[ERROR] dog_generator: init_ball_data: failed to load animations for BHD: ", bhd_file)
 		return
 
 	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
@@ -470,8 +456,8 @@ func generate_pet(file_path):
 
 	recompose_model()
 
-	print("Pet generation completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
-	print("Texture loading completed in " + str(_perf_texture_load_time) + "ms")
+	print("[INFO] dog_generator: generate_pet: model generation from BHD+LNZ completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
+	print("[INFO] dog_generator: generate_pet: texture loading completed in " + str(_perf_texture_load_time) + "ms")
 
 
 func recompose_model():
@@ -971,7 +957,7 @@ func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
 			continue
 
 		_orig_lnz_pos[k] = b.position  # record LNZ positions
-		#print("Saved raw LNZ position for ball %d: %s" % [k, _orig_lnz_pos[k]])
+		#print("[INFO] dog_generator: munge_balls: saved raw LNZ position for ball %d: %s" % [k, _orig_lnz_pos[k]])
 
 		b.size += v.size
 		b.outline_color_index = v.outline_color_index
@@ -1103,13 +1089,13 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			texture.region = region
 
 			_texture_cache[texture_filename] = texture
-			print("Loaded atlas texture: " + texture_filename)
+			print("[INFO] dog_generator: load_texture: loaded atlas texture: " + texture_filename)
 			_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 			return texture
 		else:
-			print("Atlas texture file not found: " + atlas_path)
+			print("[WARNING] dog_generator: load_texture: texture atlas file not found: " + atlas_path)
 
-	print("Loading individual texture: " + texture_filename)
+	print("[INFO] dog_generator: load_texture: loading individual texture: " + texture_filename)
 	var texture = null
 	var base_name = texture_filename.get_basename()
 	var extension = texture_filename.get_extension()
@@ -1150,15 +1136,13 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 	return texture
 
 
-
 func clear_texture_cache_for(filename: String):
 	if _texture_cache.has(filename):
 		_texture_cache.erase(filename)
 
 func clear_texture_cache():
 	_texture_cache.clear()
-	print("[DEBUG] Texture cache cleared for model refresh.")
-
+	print("[STATUS] dog_generator: clear_texture_cache: texture cache cleared for model refresh")
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
 	if texture_id < 0 or texture_id >= texture_list.size():
@@ -1575,7 +1559,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		var node = ball_map[ball_no]
 		if node and node is Spatial:
 			_orig_world_pos[ball_no] = node.global_transform.origin
-			#print("Saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
+			#print("[INFO] dog_generator: munge_balls: saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
 
 
 func get_real_ball_size(ball_size):
@@ -1585,11 +1569,11 @@ func get_real_ball_size(ball_size):
 func generate_polygons(
 	polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array
 ):
-	#print("Generating polygons")
-	#print("Polygon data size:", polygon_data.size())
+	#print("[INFO] dog_generator: generate_polygons: generating polygons")
+	#print("[INFO] dog_generator: generate_polygons: polygon data size:", polygon_data.size())
 	var root = get_root()
 	var parent = root.get_node("petholder/polygons")
-	#print("Parent node found:", parent)
+	#print("[INFO] dog_generator: generate_polygons: parent node found:", parent)
 
 	if new_create:
 		for c in parent.get_children():
@@ -1620,7 +1604,7 @@ func generate_polygons(
 			)
 			continue
 
-		#print("Creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
+		#print("[INFO] dog_generator: generate_polygons: creating polygon between points:", polygon.ball1, polygon.ball2, polygon.ball3, polygon.ball4)
 
 		# Create or retrieve the visual polygon
 		var visual_polygon
@@ -1633,7 +1617,7 @@ func generate_polygons(
 			visual_polygon = polygons_map[i]
 
 		# Set positions for the polygon's 4 vertices
-		#print("Positioning polygon with vertices at: ", point1.global_transform.origin, point2.global_transform.origin, point3.global_transform.origin, point4.global_transform.origin)
+		#print("[INFO] dog_generator: generate_polygons: positioning polygon with vertices at: ", point1.global_transform.origin, point2.global_transform.origin, point3.global_transform.origin, point4.global_transform.origin)
 		visual_polygon.ball_world_pos1 = point1.global_transform.origin
 		visual_polygon.ball_world_pos2 = point2.global_transform.origin
 		visual_polygon.ball_world_pos3 = point3.global_transform.origin
@@ -1654,7 +1638,7 @@ func generate_polygons(
 			visual_polygon.set_species(species, is_babyz_mode)
 			visual_polygon.set_render_flat_colors(render_flat_colors_global)
 			visual_polygon.transparent_color = point1.transparent_color
-			#print("Polygon color and texture set.")
+			#print("[INFO] dog_generator: generate_polygons: polygon color and texture set")
 
 			visual_polygon.palette = point1.palette
 
@@ -1662,25 +1646,25 @@ func generate_polygons(
 				visual_polygon.color_index = point1.color_index
 			else:
 				visual_polygon.color_index = polygon.color
-			#print("Polygon color set to: ", visual_polygon.color_index)
+			#print("[INFO] dog_generator: generate_polygons: polygon color set to: ", visual_polygon.color_index)
 
 			# Log left and right edge colors
-			#print("Setting edge colors for polygon")
+			#print("[INFO] dog_generator: generate_polygons: setting edge colors for polygon")
 			if polygon.l_edge_color == -1:
 				visual_polygon.l_edge_color = point1.color_index
 			else:
 				visual_polygon.l_edge_color = polygon.l_edge_color
-			#print("Left edge color: ", visual_polygon.l_edge_color)
+			#print("[INFO] dog_generator: generate_polygons: Left edge color: ", visual_polygon.l_edge_color)
 
 			if polygon.r_edge_color == -1:
 				visual_polygon.r_edge_color = point1.color_index
 			else:
 				visual_polygon.r_edge_color = polygon.r_edge_color
-			#print("Right edge color: ", visual_polygon.r_edge_color)
+			#print("[INFO] dog_generator: generate_polygons: Right edge color: ", visual_polygon.r_edge_color)
 
 		# Set other polygon properties like fuzz
 		visual_polygon.fuzz_amount = clamp(polygon.fuzz / 2, 0, 5)
-		#print("Polygon fuzz amount set to:", visual_polygon.fuzz_amount)
+		#print("[INFO] dog_generator: generate_polygons: polygon fuzz amount set to:", visual_polygon.fuzz_amount)
 
 		var special_poly = (
 			is_special_baby_ball(species, polygon.ball1)
@@ -1720,7 +1704,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		var end = ball_map.get(line.end)
 
 		if start == null or end == null:
-			print("Could not make a line between " + str(line.start) + " and " + str(line.end))
+			print("[WARNING] dog_generator: generate_lines: could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
 
 		var omissions = lnz.omissions as Dictionary
@@ -1831,7 +1815,7 @@ func _on_PrevAnim_pressed():
 	if current_animation > 0:
 		set_animation(current_animation - 1)
 	else:
-		print("Already at the first animation.")
+		print("[WARNING] dog_generator: _on_PrevAnim_pressed: already at first animation, cannot go back further")
 
 
 func _on_NextAnim_pressed():
@@ -2049,7 +2033,7 @@ func _on_ToolsMenu_print_ball_colors():
 			if ball_map_string != "":
 				ball_map_string += "\n"
 			ball_map_string += this_ball_string
-			#print(this_ball_string)
+			#print("[INFO] dog_generator: _on_ToolsMenu_print_ball_colors: " + this_ball_string)
 	OS.set_clipboard(ball_map_string)
 
 

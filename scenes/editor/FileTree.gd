@@ -60,6 +60,12 @@ var saved_subfolder_states := {}
 signal backup_file
 
 func _ready():
+	var user_path = ProjectSettings.globalize_path("user://")
+	print("Your local LnzLive user directory located at: ", user_path)
+	print(" If you experience issues starting LnzLive or loading files:")
+	print("1. Try removing the 'settings.cfg' file in this folder")
+	print("2. Try removing files from the 'resources/textures' or 'resources/palettes' folders")
+
 	select_mode = SELECT_MULTI
 	root = create_item()
 	examples = create_item(root)
@@ -134,15 +140,24 @@ func _ready():
 	rescan_res_textures()
 	rescan_palettes()
 
+func is_valid_filepath(meta) -> bool:
+	if typeof(meta) == TYPE_NIL:
+		return false
+	var meta_str = str(meta)
+	return meta_str != "Null" and meta_str != ""
+
 func _on_FileDialog_popup_hide():
-	pet_view_container.input_is_paused = false
+	if pet_view_container:
+		pet_view_container.input_is_paused = false
 	release_focus()
 
 func _on_RenameDialog_about_to_show():
-	pet_view_container.input_is_paused = true
+	if pet_view_container:
+		pet_view_container.input_is_paused = true
 
 func _on_RenameDialog_popup_hide():
-	pet_view_container.input_is_paused = false
+	if pet_view_container:
+		pet_view_container.input_is_paused = false
 	release_focus()
 
 func _setup_dynamic_dialogs():
@@ -211,7 +226,7 @@ func _on_sort_mode_changed(index: int):
 	var config = ConfigFile.new()
 	var err = config.load("user://settings.cfg") 
 	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading config to save sort mode: ", err)
+		print("[ERROR] FileTree: _on_sort_mode_changed: error loading config to save sort mode: ", err)
 		
 	config.set_value("Display", "file_tree_sort_mode", current_sort_mode)
 	config.save("user://settings.cfg")
@@ -219,8 +234,9 @@ func _on_sort_mode_changed(index: int):
 	var selected_path = null
 	var selected = get_selected()
 	if selected:
-		selected_path = str(selected.get_metadata(0))
-		if selected_path == "Null": selected_path = null
+		var meta = selected.get_metadata(0)
+		if is_valid_filepath(meta):
+			selected_path = str(meta)
 		
 	rescan(selected_path)
 
@@ -234,7 +250,7 @@ func _on_ImportLNZ_pressed():
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".lnz,.txt")
+		web_file_dialog(".lnz,.txt,text/plain")
 
 func _on_ImportTexture_pressed():
 	current_import_type = ImportType.TEXTURE
@@ -245,18 +261,20 @@ func _on_ImportTexture_pressed():
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".bmp")
+		web_file_dialog(".bmp,image/bmp")
 
 func _on_ImportPalette_pressed():
 	current_import_type = ImportType.PALETTE
 	if (!OS.has_feature("HTML5")):
 		pet_view_container.input_is_paused = true
 		file_dialog.clear_filters()
-		file_dialog.add_filter("*.png, *.bmp ; Palette Files")
+		file_dialog.add_filter("*.png,*.bmp ; All Palette Files")
+		file_dialog.add_filter("*.png ; PNG Files")
+		file_dialog.add_filter("*.bmp ; BMP Files")
 		file_dialog.mode = FileDialog.MODE_OPEN_FILES
 		file_dialog.popup_centered()
 	else:
-		web_file_dialog(".png")
+		web_file_dialog(".png,.bmp,image/png,image/bmp")
 
 func _on_OpenUserFolder_pressed():
 	var path = ProjectSettings.globalize_path("user://")
@@ -297,7 +315,7 @@ func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 	elif current_import_type == ImportType.PALETTE:
 		dest_dir = user_file_location.plus_file("palettes")
 	else:
-		print("Unknown import type")
+		print("[ERROR] FileTree: _on_FileDialog_file_selected: unknown import type")
 		return ""
 
 	var dest_filename = selected_path.get_file()
@@ -310,7 +328,7 @@ func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 	if not dir.dir_exists(dest_dir):
 		var err = dir.make_dir_recursive(dest_dir)
 		if err != OK:
-			print("Error creating directory: ", err)
+			print("[ERROR] FileTree: _on_FileDialog_file_selected: error creating directory: ", err)
 			return ""
 
 	if current_import_type == ImportType.PALETTE and file_extension == "bmp":
@@ -326,10 +344,10 @@ func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 		var err = img.load(selected_path, false, false)
 		if err == OK:
 			if img.get_height() != 1:
-				print("Palette " + selected_path.get_file() + " is not 1 pixel high.")
+				print("[ERROR] FileTree: _on_FileDialog_file_selected: palette PNG " + selected_path.get_file() + " is not 1 pixel high, skipping")
 				return ""
 		else:
-			print("Error loading image.")
+			print("[ERROR] FileTree: _on_FileDialog_file_selected: failed to load PNG at: ", selected_path, " error: ", err)
 			return ""
 
 	var copy_success = false
@@ -345,15 +363,15 @@ func _on_FileDialog_file_selected(selected_path, skip_rescan = false) -> String:
 				f_out.close()
 				copy_success = true
 			else:
-				print("Error writing to destination file: ", dest_path)
+				print("[ERROR] FileTree: _on_FileDialog_file_selected: error writing to destination file: ", dest_path)
 		else:
-			print("Error reading source file: ", selected_path)
+			print("[ERROR] FileTree: _on_FileDialog_file_selected: error reading source file: ", selected_path)
 	else:
 		var err = dir.copy(selected_path, dest_path)
 		if err == OK:
 			copy_success = true
 		else:
-			print("Error copying file: ", err)
+			print("[ERROR] FileTree: _on_FileDialog_file_selected: error copying file: ", err)
 
 	if copy_success:
 		if not skip_rescan:
@@ -388,7 +406,7 @@ func web_file_dialog(accept_extensions):
 func _on_web_file_upload_popup_confirmed():
 	var file_blob = JavaScript.eval("window.fileUploadData.blob")
 	if (file_blob == null):
-		print("File is empty.")
+		print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: File is empty.")
 		return
 		
 	var file_name = JavaScript.eval("window.fileUploadData.name")
@@ -415,23 +433,42 @@ func _on_web_file_upload_popup_confirmed():
 	if not dir.dir_exists(dest_dir):
 		var err = dir.make_dir_recursive(dest_dir)
 		if err != OK:
-			print("Error creating directory: ", err)
+			print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: error creating directory: ", err)
 			return
 
 	if current_import_type == ImportType.PALETTE:
-		var img = Image.new()
-		var png_err = img.load_png_from_buffer(file_blob)
-		if png_err == OK:
-			if img.get_height() != 1:
-				print("Warning: Palette " + file_name + " is not 1 pixel high.")
-		else:
-			print("Error loading PNG from buffer")
+		if file_extension == "bmp":
+			var temp_path = dest_dir.plus_file("temp_upload_" + str(OS.get_unix_time()) + ".bmp")
+			var temp_file = File.new()
+			if temp_file.open(temp_path, File.WRITE) == OK:
+				temp_file.store_buffer(file_blob)
+				temp_file.close()
+				
+				var target_filename = file_name.get_basename() + ".png"
+				var success = convert_bmp_to_palette_png(temp_path, dest_dir, target_filename)
+				
+				dir.remove(temp_path)
+				
+				if success:
+					var final_path = dest_dir.plus_file(target_filename)
+					rescan_with_extension(final_path.get_extension(), final_path)
+			else:
+				print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: could not write temp bmp file")
 			return
+		else:
+			var img = Image.new()
+			var png_err = img.load_png_from_buffer(file_blob)
+			if png_err == OK:
+				if img.get_height() != 1:
+					print("[WARNING] FileTree: _on_web_file_upload_popup_confirmed: palette " + file_name + " is not 1 pixel high, skipping")
+			else:
+				print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: error loading PNG from buffer")
+				return
 
 	var file = File.new()
 	var err = file.open(dest_path, File.WRITE)
 	if err != OK:
-		print("Error creating file: ", err)
+		print("[ERROR] FileTree: _on_web_file_upload_popup_confirmed: error creating file: ", err)
 		return
 	file.store_buffer(file_blob)
 	file.close()
@@ -450,9 +487,15 @@ func rescan_with_extension(file_extension: String, dest_path: String):
 func _on_Tree_item_activated():
 	var selected = get_selected() as TreeItem
 	if not selected: return
-	var filepath = str(selected.get_metadata(0)) 
 	
-	if filepath == null or filepath == "Null" or filepath.ends_with("/"):
+	var meta = selected.get_metadata(0)
+	
+	if not is_valid_filepath(meta):
+		return
+	
+	var filepath = str(meta)
+	
+	if filepath.ends_with("/"):
 		return
 		
 	var parent = selected.get_parent() as TreeItem
@@ -536,8 +579,14 @@ func rescan_palettes():
 	scan_local_palettes()
 	
 func scan_local_storage(selected_filepath):
-	var safe_filepath = "" if selected_filepath == null else str(selected_filepath)
+	print("[STATUS] FileTree: scan_local_storage: running")
+	
+	var safe_filepath = ""
+	if is_valid_filepath(selected_filepath):
+		safe_filepath = str(selected_filepath)
+		
 	_scan_dir_recursive(user_file_location, local_storage, safe_filepath, true)
+	print("[STATUS] FileTree: scan_local_storage: complete")
 
 func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath: String, is_root: bool = false, depth: int = 0):
 	if depth > MAX_RECURSION_DEPTH:
@@ -604,9 +653,11 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 			new_item.select(0)
 
 func scan_local_textures():
+	print("[STATUS] FileTree: scan_local_textures: running")
 	var dir = Directory.new()
 	var textures_dir = user_file_location + "/textures"
 	if dir.open(textures_dir) != OK:
+		print("[WARNING] FileTree: scan_local_textures: directory not found, will create on texture import")
 		return
 	dir.list_dir_begin()
 	var filename = dir.get_next()
@@ -676,8 +727,10 @@ func scan_local_textures():
 
 		filename = dir.get_next()
 	dir.list_dir_end()
+	print("[STATUS] FileTree: scan_local_textures: complete")
 
 func scan_res_textures():
+	print("[STATUS] FileTree: scan_res_textures: running")
 	var processed = []
 	var textures_dir = "res://resources/textures"
 	
@@ -688,7 +741,7 @@ func scan_res_textures():
 		f.close()
 		if result.error == OK:
 			var manifest = result.result
-			print("FileTree scanning atlas manifest...")
+			print("[STATUS] FileTree: scan_res_textures: loading texture atlas")
 
 			var sorted_keys = manifest.keys()
 			sorted_keys.sort()
@@ -754,10 +807,13 @@ func scan_res_textures():
 
 			filename = dir.get_next()
 		dir.list_dir_end()
+	print("[STATUS] FileTree: scan_res_textures: complete")
 
 func scan_local_palettes():
+	print("[STATUS] FileTree: scan_local_palettes: running")
 	var dir2 = Directory.new()
 	if not dir2.dir_exists(user_file_location + "/palettes"):
+		print("[WARNING] FileTree: scan_local_palettes: directory not found")
 		return
 
 	dir2.open(user_file_location + "/palettes")
@@ -840,13 +896,19 @@ func scan_local_palettes():
 
 		filename = dir2.get_next()
 	dir2.list_dir_end()
+	print("[STATUS] FileTree: scan_local_palettes: complete")
 
-func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
+func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_dest_filename: String = "") -> bool:
 	var f = File.new()
 	if f.open(source_path, File.READ) != OK:
-		print("Error: Could not read BMP file.")
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: could not read BMP file")
 		return false
 	
+	if f.get_len() < 54:
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: file too small to be a valid BMP")
+		f.close()
+		return false
+		
 	f.seek(10)
 	var pixel_offset = f.get_32()
 	
@@ -857,7 +919,7 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	var bpp = f.get_16()
 	
 	if bpp != 8:
-		print("Error: This BMP is " + str(bpp) + "-bit. Only 8-bit BMPs have palettes.")
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: BMP is " + str(bpp) + "-bit, only 8-bit BMPs allowed")
 		f.close()
 		return false
 	
@@ -889,15 +951,17 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String) -> bool:
 	img.unlock()
 	f.close()
 	
-	var dest_filename = source_path.get_file().get_basename() + ".png"
+	var dest_filename = custom_dest_filename
+	if dest_filename == "":
+		dest_filename = source_path.get_file().get_basename() + ".png"
 	var dest_path = dest_dir.plus_file(dest_filename)
 	
 	var err = img.save_png(dest_path)
 	if err == OK:
-		print("Converted BMP palette to: " + dest_path)
+		print("[STATUS] FileTree: convert_bmp_to_palette_png: Converted BMP palette to: " + dest_path)
 		return true
 	else:
-		print("Error saving PNG palette.")
+		print("[ERROR] FileTree: convert_bmp_to_palette_png: error saving palette ramp as PNG")
 		return false
 
 func get_all_selected() -> Array:
@@ -924,8 +988,8 @@ func _on_Tree_item_rmb_selected(position):
 		if not item: return
 		
 		var p = item.get_parent()
-		var meta = str(item.get_metadata(0))
-		var is_dir = meta != "Null" and meta.ends_with("/")
+		var meta = item.get_metadata(0)
+		var is_dir = is_valid_filepath(meta) and str(meta).ends_with("/")
 		
 		var is_local_content = false
 		var is_local_file = false
@@ -957,15 +1021,20 @@ func _on_ItemPopupMenu_id_pressed(id):
 		
 		var dir = Directory.new()
 		for item in items:
-			var filepath = str(item.get_metadata(0))
+			var item_meta = item.get_metadata(0)
 			
-			if filepath == null or filepath == "Null":
+			if not is_valid_filepath(item_meta):
 				continue
+				
+			var filepath = str(item_meta)
 			
 			if filepath.ends_with("/"):
 				_delete_dir_recursive(filepath.trim_suffix("/"))
 			elif dir.file_exists(filepath):
-				dir.remove(filepath)
+				# FIX: Log error code on file deletion failure.
+				var err = dir.remove(filepath)
+				if err != OK:
+					print("[ERROR] FileTree: _on_ItemPopupMenu_id_pressed: Failed to delete ", filepath, " Error: ", err)
 
 		rescan(null)
 		rescan_textures()
@@ -974,10 +1043,12 @@ func _on_ItemPopupMenu_id_pressed(id):
 	elif id == 1: # rename file
 		var item = get_selected()
 		if not item: return
-		var filepath = str(item.get_metadata(0))
-		if filepath == null or filepath == "Null":
+		
+		var meta = item.get_metadata(0)
+		if not is_valid_filepath(meta):
 			return
 		
+		var filepath = str(meta)
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
 		
@@ -987,21 +1058,25 @@ func _on_ItemPopupMenu_id_pressed(id):
 	elif id == 3: # copy file name
 		var item = get_selected()
 		if not item: return
-		var filepath = str(item.get_metadata(0))
-		if filepath != "Null":
-			var filename = filepath.get_file()
+		var meta = item.get_metadata(0)
+		if is_valid_filepath(meta):
+			var filename = str(meta).get_file()
 			OS.set_clipboard(filename)
 			
 	elif id == 4: # export file
 		var item = get_selected()
 		if not item: return
-		var item_filepath = str(item.get_metadata(0))
-		if item_filepath == null or item_filepath == "Null" or item_filepath.ends_with("/"): return
+		
+		var item_meta = item.get_metadata(0)
+		if not is_valid_filepath(item_meta): return
+		
+		var item_filepath = str(item_meta)
+		if item_filepath.ends_with("/"): return
 		
 		var filename = item.get_text(0)
 		var file = File.new()
 		if file.open(item_filepath, File.READ) != OK:
-			print("Error: Could not open file for reading: " + item_filepath)
+			print("[ERROR] FileTree: _on_ItemPopupMenu_id_pressed: could not open file for reading: " + item_filepath)
 			return
 		var content_bytes = file.get_buffer(file.get_len())
 		file.close()
@@ -1019,7 +1094,7 @@ func _on_ItemPopupMenu_id_pressed(id):
 
 func _delete_dir_recursive(path: String, depth: int = 0):
 	if depth > MAX_RECURSION_DEPTH:
-		print("Warning: Max deletion depth reached at: ", path)
+		print("[WARNING] FileTree: _delete_dir_recursive: max deletion depth reached at: ", path)
 		return
 		
 	var dir = Directory.new()
@@ -1031,25 +1106,30 @@ func _delete_dir_recursive(path: String, depth: int = 0):
 			if dir.current_is_dir():
 				_delete_dir_recursive(full_path, depth + 1)
 			else:
-				dir.remove(full_path)
+				var err = dir.remove(full_path)
+				if err != OK:
+					print("[ERROR] FileTree: _delete_dir_recursive: Failed to delete file ", full_path, " Error: ", err)
 			file_name = dir.get_next()
 		dir.list_dir_end()
-		dir.remove(path)
+		
+		var dir_err = dir.remove(path)
+		if dir_err != OK:
+			print("[ERROR] FileTree: _delete_dir_recursive: Failed to delete directory ", path, " Error: ", dir_err)
 
 func _on_SaveDialog_file_selected(path, content_bytes):
 	var file = File.new()
 	if file.open(path, File.WRITE) == OK:
 		file.store_buffer(content_bytes)
 		file.close()
-		print("File saved successfully to: " + path)
+		print("[STATUS] FileTree: _on_SaveDialog_file_selected: file saved successfully to: " + path)
 	else:
-		print("Error saving file to: " + path)
+		print("[ERROR] FileTree: _on_SaveDialog_file_selected: error saving file to: " + path)
 
-	if is_instance_valid(self):
-		for child in get_children():
-			if child is FileDialog and child.window_title == "Save File As":
-				child.queue_free()
-				return
+	# if is_instance_valid(self):
+	# 	for child in get_children():
+	# 		if child is FileDialog and child.window_title == "Save File As":
+	# 			child.queue_free()
+	# 			return
 
 func _save_file_as(filename: String, content_bytes: PoolByteArray):	
 	if OS.has_feature("HTML5"):		
@@ -1077,6 +1157,7 @@ func _save_file_as(filename: String, content_bytes: PoolByteArray):
 		var save_dialog = FileDialog.new()
 		
 		save_dialog.connect("file_selected", self, "_on_SaveDialog_file_selected", [content_bytes])
+		save_dialog.connect("popup_hide", save_dialog, "queue_free")
 		
 		save_dialog.add_filter("*.lnz, *.bmp, *.png, *.* ; All Files")
 		save_dialog.mode = FileDialog.MODE_SAVE_FILE
@@ -1097,7 +1178,7 @@ func _on_RenameDialog_confirmed():
 	var item = items[0]
 	var filepath = item.get_metadata(0)
 	
-	if filepath == null or str(filepath) == "Null": 
+	if not is_valid_filepath(filepath):
 		return
 	
 	var filepath_str = str(filepath)
@@ -1112,6 +1193,10 @@ func _on_RenameDialog_confirmed():
 	
 	if filepath_str.ends_with("/"):
 		new_filepath += "/"
+
+	if dir.file_exists(new_filepath) or dir.dir_exists(new_filepath):
+		print("[ERROR] FileTree: _on_RenameDialog_confirmed: Name already exists: ", new_filepath)
+		return
 
 	if dir.rename(filepath_str, new_filepath) == OK:
 		rescan(null)
@@ -1132,15 +1217,15 @@ func _on_ItemPopupMenu_about_to_show():
 
 	var clicked_filepath = clicked_item.get_metadata(0)
 	
-	if clicked_filepath != null:
+	if is_valid_filepath(clicked_filepath):
 		if lnz_text_edit:
-			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == clicked_filepath))
+			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == str(clicked_filepath)))
 
 func _on_LnzTextEdit_file_backed_up():
 	var item = get_selected()
-	var path = str(item.get_metadata(0)) if item else null
-	if path == null or path == "Null": 
-		path = null
+	var path = null
+	if item and is_valid_filepath(item.get_metadata(0)):
+		path = str(item.get_metadata(0))
 	rescan(path)
 
 func get_expanded_states() -> Dictionary:
@@ -1217,9 +1302,12 @@ func _on_NewFolderDialog_confirmed():
 		dir.make_dir(new_dir_path)
 		
 	for item in items:
-		var item_meta = str(item.get_metadata(0))
-		if item_meta == null or item_meta == "Null":
+		var raw_meta = item.get_metadata(0)
+		
+		if not is_valid_filepath(raw_meta):
 			continue
+			
+		var item_meta = str(raw_meta)
 		
 		if item_meta == base_dir:
 			continue 
@@ -1243,15 +1331,21 @@ func _on_MoveFileDialog_confirmed():
 	var last_lnz_path = ""
 	
 	for item in items:
-		var current_path = str(item.get_metadata(0))
-		if current_path == null or current_path == "Null":
+		var raw_meta = item.get_metadata(0)
+		
+		if not is_valid_filepath(raw_meta):
 			continue
+			
+		var current_path = str(raw_meta)
 		
 		var clean_path = current_path.trim_suffix("/")
 		var file_name = clean_path.get_file()
 		
-		if current_path.ends_with("/") and target_dir.begins_with(current_path):
-			print("Cannot move a folder into itself!")
+		var norm_current = current_path if current_path.ends_with("/") else current_path + "/"
+		var norm_target = target_dir if target_dir.ends_with("/") else target_dir + "/"
+		
+		if norm_current.ends_with("/") and norm_target.begins_with(norm_current):
+			print("[WARNING] FileTree: _on_MoveFileDialog_confirmed: cannot move a folder into itself: ", current_path, " -> ", target_dir)
 			continue
 		
 		var new_path = target_dir.plus_file(file_name)

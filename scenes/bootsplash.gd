@@ -3,6 +3,11 @@ extends Control
 const SETTINGS_PATH = "user://settings.cfg"
 
 func _ready():
+	print("Booting up LnzLive... debug mode is enabled, and messages will appear here, usually in the following format:")
+	print("- [STATUS]: nothing wrong! just informational messages")
+	print("- [WARNING]: non-critical issue, should still work but may cause other issues")
+	print("- [ERROR]: critical failure, might cause crash")
+	print("Please copy and share these messages if you run into any issues running LnzLive!")
 	load_settings()
 
 func load_settings():
