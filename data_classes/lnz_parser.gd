@@ -268,27 +268,27 @@ func get_species():
 		var path_line = reader.get_line().strip_edges()
 		var lower_path = path_line.to_lower()
 		if "dog" in lower_path:
-			print("[Default Linez File] path contained 'dog'. Setting species to Dogz (Species = 2).")
+			print("[STATUS] lnz_parser: get_species: detected [Default Linez File] path contained 'dog'. Setting species to Dogz (Species = 2)")
 			species = 2
 		elif "cat" in lower_path:
-			print("[Default Linez File] path contained 'cat'. Setting species to Catz (Species = 1).")
+			print("[STATUS] lnz_parser: get_species: detected [Default Linez File] path contained 'cat'. Setting species to Catz (Species = 1)")
 			species = 1
 		elif "baby" in lower_path:
-			print("[Default Linez File] path contained 'baby'. Setting species to Babyz (Species = 3).")
+			print("[STATUS] lnz_parser: get_species: detected [Default Linez File] path contained 'baby'. Setting species to Babyz (Species = 3)")
 			species = 3
 		else:
-			print("Could not determine species from file.")
+			print("[STATUS] lnz_parser: get_species: could not determine species from file")
 			species = 0
 	else:
 		species = parsed_lines[0].species
 		if species == 1:
-			print("[Species] detected: Catz (Species = " + str(species) + ")")
+			print("[STATUS] lnz_parser: get_species: detected [Species]: Catz (Species = " + str(species) + ")")
 		elif species == 2:
-			print("[Species] detected: Dogz (Species = " + str(species) + ")")
+			print("[STATUS] lnz_parser: get_species: detected [Species]: Dogz (Species = " + str(species) + ")")
 		elif species == 3:
-			print("[Species] detected: Babyz (Species = " + str(species) + ")")
+			print("[STATUS] lnz_parser: get_species: detected [Species]: Babyz (Species = " + str(species) + ")")
 		else:
-			print("[Species] detected: ??? (Species = " + str(species) + ")")	
+			print("[STATUS] lnz_parser: get_species: no detected [Species]: ??? (Species = " + str(species) + ")")	
 
 func get_texture_list(reader):
 	var parsed_lines = get_parsed_line_strings(reader, ["filepath", "transparent_color", "width", "height"])
@@ -458,12 +458,12 @@ func get_eyelash_info(reader):
 		var color_vals = LnzLiveUtils.parse_flexible_integers(raw_lines[3])
 		eyelash_color = color_vals[0] if color_vals.size() > 0 else 244
 		
-	print("Parsed Eyelash Info: ", eyelash_lengths, " Angle: ", eyelash_angle)
+	print("[STATUS] lnz_parser: get_eyelash_info: parsed eyelash info: ", eyelash_lengths, " with angle: ", eyelash_angle)
 
 func get_balls(reader):
 	var parsed_lines = get_parsed_lines(reader, ["color", "outline_color", "speckle", "fuzz", "outline", "size", "group", "texture"])
 	if parsed_lines.size() == 0:
-		print("Error: No Ballz Info found (in section reader).")
+		print("[ERROR] lnz_parser: get_balls: no [Ballz Info] found")
 	var i = 0
 	for line in parsed_lines:
 		var bd = BallData.new(
@@ -479,7 +479,7 @@ func get_balls(reader):
 			line.group, 
 			line.texture)
 		self.balls[i] = bd
-		#print("Added ball " + str(i) + " with size " + str(line.size))
+		#print("[STATUS] lnz_parser: get_balls: added ball " + str(i) + " with size " + str(line.size))
 		i += 1
 
 func get_addballs(reader):
@@ -611,7 +611,7 @@ func get_ball_size_override(reader):
 		elif addballs.has(line.ball):
 			addballs[line.ball].size = line.size
 		else:
-			print("Warning: [Ball Size Override] override attempted for non-existent ball ", line.ball)
+			print("[WARNING] lnz_parser: get_ball_size_override: size override attempted for non-existent ball ", line.ball)
 
 func get_color_info_override(reader):
 	var parsed_lines = get_parsed_lines(reader, ["ball", "color", "group", "texture"])
@@ -633,7 +633,7 @@ func get_color_info_override(reader):
 			if "texture_id" in ball_data and line.has("texture"):
 				ball_data.texture_id = line.texture
 		else:
-			print("Warning: [Color Info Override] override attempted for non-existent ball ", line.ball)
+			print("[WARNING] lnz_parser: get_color_info_override: color override attempted for non-existent ball ", line.ball)
 
 func get_outline_color_override(reader):
 	var parsed_lines = get_parsed_lines(reader, ["ball", "outline_color"])
@@ -647,7 +647,7 @@ func get_outline_color_override(reader):
 			if "outline_color" in ball_data:
 				ball_data.outline_color = line.outline_color
 		else:
-			print("Warning: [Outline Color Override] override for non-existent ball ", line.ball)
+			print("[WARNING] lnz_parser: get_outline_color_override: outline color override attempted for non-existent ball ", line.ball)
 
 func get_fuzz_override(reader):
 	var parsed_lines = get_parsed_lines(reader, ["ball", "fuzz"])
@@ -661,7 +661,7 @@ func get_fuzz_override(reader):
 			if "fuzz" in ball_data:
 				ball_data.fuzz = line.fuzz
 		else:
-			print("Warning: [Fuzz Override] override for non-existent ball ", line.ball)
+			print("[WARNING] lnz_parser: get_fuzz_override: fuzz override attempted for non-existent ball ", line.ball)
 
 func get_add_ball_override(reader):
 	var parsed_lines = get_parsed_lines(reader, ["ball", "x", "y", "z"])
@@ -669,7 +669,7 @@ func get_add_ball_override(reader):
 		if addballs.has(line.ball):
 			addballs[line.ball].position = Vector3(line.x, line.y, line.z)
 		else:
-			print("Warning: [Add Ball Override] override attempted for non-existent ball ", line.ball)
+			print("[WARNING] lnz_parser: get_add_ball_override: add ball override attempted for non-existent ball ", line.ball)
 
 func get_z_shade_slope(reader):
 	if reader.get_len() > 0:

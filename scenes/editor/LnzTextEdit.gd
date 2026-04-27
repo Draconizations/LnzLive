@@ -265,7 +265,7 @@ func save_backup():
 	emit_signal("file_backed_up")
 	
 	var msg = "Created Backup: " + backup_path1.get_file()
-	print(msg)
+	print("[STATUS] LnzTextEdit: save_backup: " + msg)
 	if console_log:
 		console_log.log_message(msg)
 
@@ -276,7 +276,7 @@ func save_file(skip_history: bool = false):
 			var last_snapshot = history_stack[last_snap_idx]
 			if last_snapshot.full_text == self.text:
 				var msg = "No changes detected! Skipping LNZ save..."
-				print(msg)
+				print("[STATUS] LnzTextEdit: save_file: " + msg)
 				if console_log:
 					console_log.log_message(msg)
 				return
@@ -333,7 +333,7 @@ func save_file(skip_history: bool = false):
 	_set_text_preserve(get_text()) 
 	
 	var msg = "Saved LNZ and Applied Changes!"
-	print(msg)
+	print("[STATUS] LnzTextEdit: save_file: " + msg)
 	if console_log:
 		console_log.log_message(msg)
 
@@ -1921,8 +1921,8 @@ func _update_paintballz_section(header: String, ball_no: int):
 func update_lnz_section_one_value(section_name, val1):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		var msg = "[LNZ EDIT] Section not found: " + section_name
-		print(msg)
+		var msg = "LNZ section not found: " + section_name
+		print("[STATUS] LnzTextEdit: update_lnz_section_one_value: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -1933,8 +1933,8 @@ func update_lnz_section_one_value(section_name, val1):
 func update_lnz_section_two_values(section_name, val1, val2):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
-		var msg = "[LNZ EDIT] Section not found: " + section_name
-		print(msg)
+		var msg = "LNZ section not found: " + section_name
+		print("[STATUS] LnzTextEdit: update_lnz_section_two_values: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -2048,8 +2048,8 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 
 	var bounds = _get_section_bounds(section_tag)
 	if bounds.empty():
-		var msg = "[LNZ EDIT] No %s section found" % section_tag
-		print(msg)
+		var msg = "No %s section found" % section_tag
+		print("[WARNING] LnzTextEdit: apply_preset_to_ball: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -2806,8 +2806,8 @@ func _on_Node_line_created(start_ball, end_ball):
 	var end_line = bounds["end"]
 
 	if start_line == -1:
-		var msg = "[LNZ EDIT] No [Linez] section found. Cannot create line between %d and %d." % [start_ball, end_ball]
-		print(msg)
+		var msg = "No [Linez] section found. Cannot create line between %d and %d." % [start_ball, end_ball]
+		print("[WARNING] LnzTextEdit: _on_Node_line_created: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -2923,15 +2923,15 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 		section_tag = "[Add Ball]"
 		size_field_index = 10  # 11th field is size for addballs
 	
-	var msg = "[LNZ EDIT] Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif]
-	print(msg)
+	var msg = "Resizing ball %d from section %s with size_dif = %d" % [ball_no, section_tag, size_dif]
+	print("[STATUS] LnzTextEdit: _on_Node_ball_resized: " + msg)
 	if console_log:
 		console_log.log_message(msg)
 
 	var bounds = _get_section_bounds(section_tag)
 	if bounds.empty():
-		msg = "[LNZ EDIT] No %s section found. Cannot resize ball %d" % [section_tag, ball_no]
-		print(msg)
+		msg = "No %s section found. Cannot resize ball %d" % [section_tag, ball_no]
+		print("[WARNING] LnzTextEdit: _on_Node_ball_resized: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -3113,8 +3113,8 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	save_backup()
 
 	if reference_ball == null:
-		var msg = "[LNZ EDIT] No reference ball given. Cannot add new ball."
-		print(msg)
+		var msg = "No reference ball given. Cannot add new ball."
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -3210,15 +3210,15 @@ func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	if KeyBallsData.bodyarea_map.has(real_base_ball):
 		bodyarea = KeyBallsData.bodyarea_map[real_base_ball]
 	else:
-		var msg = "[LNZ EDIT] Missing bodyarea for ball %d. Defaulting to 1." % real_base_ball
-		print(msg)
+		var msg = "Missing bodyarea for ball %d. Defaulting to 1." % real_base_ball
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 	
 	var section_find = search("[Add Ball]", 0, 0, 0)
 	if section_find.empty():
-		var msg = "[LNZ EDIT] No [Add Ball] section found. Cannot add new ball."
-		print(msg)
+		var msg = "No [Add Ball] section found. Cannot add new ball."
+		print("[WARNING] LnzTextEdit: _on_ToolsMenu_add_ball: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return

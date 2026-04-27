@@ -134,6 +134,12 @@ func _ready():
 	rescan_res_textures()
 	rescan_palettes()
 
+func is_valid_filepath(meta) -> bool:
+	if typeof(meta) == TYPE_NIL:
+		return false
+	var meta_str = str(meta)
+	return meta_str != "Null" and meta_str != ""
+
 func _on_FileDialog_popup_hide():
 	if pet_view_container:
 		pet_view_container.input_is_paused = false
@@ -223,7 +229,7 @@ func _on_sort_mode_changed(index: int):
 	var selected = get_selected()
 	if selected:
 		var meta = selected.get_metadata(0)
-		if typeof(meta) != TYPE_NIL and str(meta) != "Null" and str(meta) != "":
+		if is_valid_filepath(meta):
 			selected_path = str(meta)
 		
 	rescan(selected_path)
@@ -457,12 +463,12 @@ func _on_Tree_item_activated():
 	
 	var meta = selected.get_metadata(0)
 	
-	if typeof(meta) == TYPE_NIL or str(meta) == "Null" or str(meta) == "":
+	if not is_valid_filepath(meta):
 		return
 	
-	var filepath = str(selected.get_metadata(0)) 
+	var filepath = str(meta)
 	
-	if filepath == null or filepath == "Null" or filepath.ends_with("/"):
+	if filepath.ends_with("/"):
 		return
 		
 	var parent = selected.get_parent() as TreeItem
@@ -549,7 +555,7 @@ func scan_local_storage(selected_filepath):
 	print("[STATUS] FileTree: scan_local_storage: running")
 	
 	var safe_filepath = ""
-	if typeof(selected_filepath) != TYPE_NIL and str(selected_filepath) != "null":
+	if is_valid_filepath(selected_filepath):
 		safe_filepath = str(selected_filepath)
 		
 	_scan_dir_recursive(user_file_location, local_storage, safe_filepath, true)
@@ -953,8 +959,8 @@ func _on_Tree_item_rmb_selected(position):
 		if not item: return
 		
 		var p = item.get_parent()
-		var meta = str(item.get_metadata(0))
-		var is_dir = meta != "Null" and meta.ends_with("/")
+		var meta = item.get_metadata(0)
+		var is_dir = is_valid_filepath(meta) and str(meta).ends_with("/")
 		
 		var is_local_content = false
 		var is_local_file = false
@@ -988,7 +994,7 @@ func _on_ItemPopupMenu_id_pressed(id):
 		for item in items:
 			var item_meta = item.get_metadata(0)
 			
-			if typeof(item_meta) == TYPE_NIL or str(item_meta) == "Null" or str(item_meta) == "":
+			if not is_valid_filepath(item_meta):
 				continue
 				
 			var filepath = str(item_meta)
@@ -1008,10 +1014,12 @@ func _on_ItemPopupMenu_id_pressed(id):
 	elif id == 1: # rename file
 		var item = get_selected()
 		if not item: return
-		var filepath = str(item.get_metadata(0))
-		if filepath == null or filepath == "Null":
+		
+		var meta = item.get_metadata(0)
+		if not is_valid_filepath(meta):
 			return
 		
+		var filepath = str(meta)
 		rename_dialog.popup()
 		rename_dialog.get_node("LineEdit").text = filepath.get_file()
 		
@@ -1021,17 +1029,17 @@ func _on_ItemPopupMenu_id_pressed(id):
 	elif id == 3: # copy file name
 		var item = get_selected()
 		if not item: return
-		var filepath = str(item.get_metadata(0))
-		if filepath != "Null":
-			var filename = filepath.get_file()
+		var meta = item.get_metadata(0)
+		if is_valid_filepath(meta):
+			var filename = str(meta).get_file()
 			OS.set_clipboard(filename)
 			
 	elif id == 4: # export file
 		var item = get_selected()
 		if not item: return
-		var item_meta = item.get_metadata(0)
 		
-		if typeof(item_meta) == TYPE_NIL or str(item_meta) == "Null" or str(item_meta) == "": return
+		var item_meta = item.get_metadata(0)
+		if not is_valid_filepath(item_meta): return
 		
 		var item_filepath = str(item_meta)
 		if item_filepath.ends_with("/"): return
@@ -1141,7 +1149,7 @@ func _on_RenameDialog_confirmed():
 	var item = items[0]
 	var filepath = item.get_metadata(0)
 	
-	if typeof(filepath) == TYPE_NIL or str(filepath) == "Null" or str(filepath) == "": 
+	if not is_valid_filepath(filepath):
 		return
 	
 	var filepath_str = str(filepath)
@@ -1180,15 +1188,15 @@ func _on_ItemPopupMenu_about_to_show():
 
 	var clicked_filepath = clicked_item.get_metadata(0)
 	
-	if typeof(clicked_filepath) != TYPE_NIL and str(clicked_filepath) != "Null" and str(clicked_filepath) != "":
+	if is_valid_filepath(clicked_filepath):
 		if lnz_text_edit:
 			$ItemPopupMenu.set_item_disabled(2, !(lnz_text_edit.filepath == str(clicked_filepath)))
 
 func _on_LnzTextEdit_file_backed_up():
 	var item = get_selected()
-	var path = str(item.get_metadata(0)) if item else null
-	if path == null or path == "Null": 
-		path = null
+	var path = null
+	if item and is_valid_filepath(item.get_metadata(0)):
+		path = str(item.get_metadata(0))
 	rescan(path)
 
 func get_expanded_states() -> Dictionary:
@@ -1267,7 +1275,7 @@ func _on_NewFolderDialog_confirmed():
 	for item in items:
 		var raw_meta = item.get_metadata(0)
 		
-		if typeof(raw_meta) == TYPE_NIL or str(raw_meta) == "Null" or str(raw_meta) == "":
+		if not is_valid_filepath(raw_meta):
 			continue
 			
 		var item_meta = str(raw_meta)
@@ -1296,7 +1304,7 @@ func _on_MoveFileDialog_confirmed():
 	for item in items:
 		var raw_meta = item.get_metadata(0)
 		
-		if typeof(raw_meta) == TYPE_NIL or str(raw_meta) == "Null" or str(raw_meta) == "":
+		if not is_valid_filepath(raw_meta):
 			continue
 			
 		var current_path = str(raw_meta)
