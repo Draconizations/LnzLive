@@ -18,17 +18,11 @@ Before you can change the code, you need your own "copy" of the project on GitHu
 
 #### 3. **Clone the Codebase to your Computer**
 
-Now, you need to get those files onto your computer so that you can open them in the Godot editor. On your new fork page, click the green `<>` Code button and copy the URL.
-
-Go to your `Documents/GitHub` (or wherever you'd like to store the code) in your terminal and type:
-
-`git clone https://github.com/YourUsername/LnzLive.git`
-
-Or, you can use [GitHub Desktop](https://desktop.github.com/download/) to manage.
+Now, you need to get those files onto your computer so that you can open them in the Godot editor. On your new fork page, click the green `<>` Code button and follow methods to clone the repository using git or download [GitHub Desktop](https://desktop.github.com/download/) to manage repositories.
 
 #### 4. **Create a Feature Branch**
 
-You don't want to work directly on the "main" branch. Creating a new branch keeps your additions separate from the main code.
+Creating a new branch keeps your additions separate from the main code until you are ready to review and merge.
 
 Before starting a new task, open your terminal in the project folder and type:
 
@@ -74,50 +68,127 @@ Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/inde
    - Inside the GUT panel, scroll down until you see a section called "Test Directories".
    - Enter `res://test` into "Directory 0"
    - Scroll to "XML Output" and enter `res://test/test.xml` (this will save a success/fail test record)
-   - Click the Run All button. GUT will automatically find your script and execute all functions starting with `test_`.
+   - Click the "Run All" button. GUT will automatically find your script and execute all functions starting with `test_`.
 
 #### 9. **Submit a Pull Request**
 
 Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into this LnzLive repository.
 
-Go to GitHub and navigate to your fork. You will usually see a yellow bar saying "Compare & pull request." Click it.
+Go to GitHub and navigate to your fork, click "Contribute" and then "Open pull request". Or, open GitHub Desktop and you will usually see a "Compare & pull request" button to click.
 
-Ensure the "base repository" is the original LnzLive (`tabbzi/LnzLive`) "main" branch and that the "head repository" is your fork.
+Ensure the "base repository" is the LnzLive (`tabbzi/LnzLive:main`) "main" branch that you had forked originally and that the "head repository" is your fork. It might automatically suggest the original LnzLive (`mnemoliLnzLive:master`) but this is *not* the branch that you want to merge.
 
-Give the pull request a clear title and summary (e.g., "Add Move Mode functionality"). Cite the specific Issue # or Task this PR addresses. Explain what you changed and how to test it.
+Give the pull request a clear title and summary (e.g., "Add Move Mode functionality"). Cite the specific Issue # or Task this pull request addresses. Explain what you changed and how to test it.
 
 Once submitted, maintainer(s) will look over your code and might suggest small changes. If they do, just make the edits on your computer, commit, and push again. The pull request will update automatically!
 
 ### Pipeline
 
-LnzLive renders models from P.F. Magic games using LNZ data and game resources. It converts raw text LNZ files into interactive 3D visualizations, allows users to edit them in real-time, and serializes those changes safely back to text. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds.
+LnzLive renders models from P.F. Magic games using LNZ data and game resources. It converts text from LNZ files into interactive 3D visual models, and serializes any changes made by tools / modes / visual interactions safely back to LNZ text or vice versa, text changes back into visual. The raw text LNZ file is *always* the source of truth. Fidelity to how P.F. Magic games parse the LNZ in consideration of the BHD (model) and BDT files (animations) is ideal, but is still a work in progress that could be improved. At minimum, we do not want any valid LNZ to go unparsed and unrendered, even if it isn't yet 1:1 on par with in-game visuals. Interactive visual editing in the 3D viewport should ultimately trigger text updates, which then trigger 3D rebuilds.
 
 The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-\> Model Generator \-\> Interactive Viewport**
 
 1. **Text Input (`scenes/editor/LnzTextEdit.gd`)**: The user loads an LNZ file. This script manages the raw string representation, regex searching, and maintains the undo/redo history states.  
 2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in specialized, typed memory structures that map to their respective `.lnz` sections. The raw text array is scanned, delimited into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), and compiled into a structured memory map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse the model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
-3. **Model Generator (`scenes/dog_generator.gd`)**: This central controller takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
+3. **Model Generator (`scenes/dog_generator.gd`)**: Process takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
 4. **Interative Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
 
 ### Logic
 
 To achieve a "Live Update" without performance stutter, LnzLive uses a specific handshake loop:
 
-1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into Petz engine integer units.  
-2. **Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly for permanence.
-3. **Text Editor modifies strings:** LnzTextEdit scans its internal string array to find the exact line within the currently active variation block (`_get_active_config`). If an override exists, it updates it. If not, it creates a new `[... Override] `header and injects the line, bypassing comments and preserving whitespace.  
-4. **Text Editor triggers Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator`.gd that the file content has changed.  
-5. **Generator reconstructs 3D:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
+1. **User interacts via Interactive Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into LNZ integer units.  
+2. **Interactive Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly.
+3. **Text Editor triggers Model Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator`.gd that the file content has changed, which triggers a reload of the visual model.
+4. **Model Generator reconstructs visual model:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
+
+## Resources
+
+### Model (BHD) files
+
+### Animation (BDT) files
+
+### LNZ files
+
+### Textures
+
+#### Texture BMP files
+
+#### Atlas PNG files
+
+### Palettes
+
+## Graphics
+
+### Shaders
+
+Graphics in P.F. Magic games operate as 2D billboards in a 3D space. The vertex shaders forcefully align these shapes to always face the camera, a technique known as billboarding. These are projected into 3D space, like a collection of cardboard cutouts moving in a 3D world. Because the shapes are perfectly flat, traditional 3D lighting wouldn't work. Instead, the engine uses z-shading which calculates how far each object is from the viewer compared to the absolute center point. If a ball or line is pushed into the background, the shader shifts its color to a darker palette index. If it is pulled to the foreground, it shifts to a lighter index. This creates the illusion of volume and depth in a palette limited to 256 indexed colors.
+
+#### Fragment Shader
+
+The fragment shader operates per pixel:
+
+* **Step: Culling / Discarding**
+    * Discards the fragment entirely based on view normals or backface logic before doing heavy math.
+    * Throws away pixels early if they belong to a shape that is facing backwards or hidden from the camera.
+
+* **Step: Fuzz / Jitter Calculation**
+    * Generates a pseudo-random value based on the fragment's screen coordinates and offsets the UV or distance coordinates to create a dithering effect.
+    * Slightly scrambles the pixels along the edge to make the shape look fuzzy or hairy instead of perfectly smooth.
+
+* **Step: Shape & Outline Math**
+    * Computes distance fields (vector lengths from center) to determine if the current fragment falls within the main body, the outline, or outside the geometry.
+    * Uses math to draw a perfect shape inside the invisible canvas, and figures out which pixels belong to the inside body and which belong to the border.
+
+* **Step: Texture Tiling & Rotation**
+    * Maps screen-space or object-space coordinates to UVs, handling atlas rect boundaries, centering, and tiling parameters.
+    * Figures out which part of an image (like a fur pattern) should be painted onto this specific pixel.
+
+* **Step: Texture & Palette Quantization**
+    * Samples the texture/palette, resolves transparency indices, and optionally snaps colors to the nearest target palette using Euclidean distance in RGB space.
+    * Looks up the exact color for this pixel from a limited set of colors (a 256-color palette), snapping it to the closest match if necessary.
+
+* **Step: Color Sampling & Z-Shifting**
+    * Applies the final albedo by conditionally shifting the base palette index based on Z-depths, or applying distinct edge/outline/highlight colors.
+    * Paints the pixel! If it's further away, it picks a darker shade of the color; if it's an edge, it paints it the edge color.
+
+* **Step: Eyelids & Eyelashes**
+    * Applies rotational matrices and trigonometric projections to mask out specific sub-regions for secondary features (eyelids/lashes).
+    * Draws extra details like eyelids or eyelashes on top of the base shape by calculating angles.
+
+* **Step: Transparency & Alpha Clipping**
+    * Evaluates distance fields, highlight states, and transparency flags to output a final alpha value (0.0 or 1.0), discarding out-of-bounds fragments.
+    * Makes sure the pixels outside the actual shape or marked as transparent become completely invisible.
+
+#### Vertex Shader
+
+The vertex shader operates per billboard:
+
+* **Step: Billboard Transformation**
+    * Transforms 3D vertices into clip/view space. Aligns the geometry to face the camera (billboarding) or projects specific 3D coordinates to screen space.
+    * Figures out where the shape should be on the screen and makes sure it faces the camera perfectly flat, like a cardboard cutout.
+
+* **Step: Depth Calculation for Z-Shading**
+    * Computes the Z-depth of the object's center in view space and compares it to the pet's root depth for dynamic palette shifting.
+    * Measures how far away the shape is compared to the center of the pet so it can be darkened if it's in the background or lightened if it's in the foreground.
+
+* **Step: Screen-Space Center Calculation**
+    * Projects the 3D center of the object into Normalized Device Coordinates (NDC) and computes the exact pixel coordinate on the viewport.
+    * Finds the exact pixel on the screen that marks the dead center of the shape, which helps draw perfect circles or lines later.
+    
+* **Step: Vertex Extrusion / Padding**
+    * Offsets the clip-space vertices outward by a calculated radius or normal to ensure the fragment shader's bounding box encompasses the entire generated shape (including fuzz).
+    * Makes the invisible canvas for the shape slightly bigger than necessary so there is room to draw fuzzy edges or thick borders without cutting them off.
 
 ## Codebase
 
-Below is a detailed breakdown of the scripts and shaders organized by directory.
+Below is a breakdown of the scripts and shaders organized by directory.
 
 ### `data_classes/`
 
 This directory holds the parsers, utils, and memory structures that bridge raw text and the 3D generator.
 
-* `lnz_parser.gd`: The core text parser. Scans the file to build a sections_map of VariationBlocks. Uses a VirtualFileLineReader to seamlessly compile active variation blocks into strings for extraction, allowing non-destructive variation toggling. Populates arrays of ballz, addballz, linez, etc.
+* `lnz_parser.gd`: The core text parser for extracting information from LNZ sections.
 * `bhd_parser.gd`: Parses binary .bhd animation headers to extract metadata (number of ballz, default sizes) and the specific memory offset ranges mapping to .bdt frames. Uses heuristic fallback scanning for custom/non-standard files.
 * `bdt_parser.gd`: Parses binary .bdt animation frames to extract precise Vector3 position and rotation data for every ball at a given frame. Relies heavily on exact byte-level struct unpacking.
 * `key_balls_data.gd`: A Singleton/Autoload acting as the central anatomy metadata repository. Maps hardcoded integer IDs to semantic names (e.g., 48: belly), symmetry pairs, and body groups. Critical for Mirror and Group operations.
@@ -201,65 +272,3 @@ All the static assets, examples, and original game data required to render the m
 * **`palettes/`**: The original 256-color lookup tables used by the custom shaders to accurately map LNZ color indices to RGB values.
 * **`styles/`**: Godot UI theme resources (`.tres` StyleBoxes) for panels, buttons, and text fields across the editor.
 * **`textures/` & `texture_atlas/`**: The massive collection of base `.bmp` and `.png` textures. The `texture_atlas/` folder contains pre-baked sprite sheets generated by the utility scripts to allow the shaders to sample textures efficiently without loading hundreds of individual images into memory.
-
-## Graphics
-
-### Shaders
-
-Graphics in P.F. Magic games operate as 2D billboards in a 3D space. The vertex shaders forcefully align these shapes to always face the camera, a technique known as billboarding. These are projected into 3D space, like a collection of cardboard cutouts moving in a 3D world. Because the shapes are perfectly flat, traditional 3D lighting wouldn't work. Instead, the engine uses z-shading which calculates how far each object is from the viewer compared to the absolute center point. If a ball or line is pushed into the background, the shader shifts its color to a darker palette index. If it is pulled to the foreground, it shifts to a lighter index. This creates the illusion of volume and depth in a palette limited to 256 indexed colors.
-
-#### Fragment Shader
-
-The fragment shader operates per pixel:
-
-* **Step: Culling / Discarding**
-    * Discards the fragment entirely based on view normals or backface logic before doing heavy math.
-    * Throws away pixels early if they belong to a shape that is facing backwards or hidden from the camera.
-
-* **Step: Fuzz / Jitter Calculation**
-    * Generates a pseudo-random value based on the fragment's screen coordinates and offsets the UV or distance coordinates to create a dithering effect.
-    * Slightly scrambles the pixels along the edge to make the shape look fuzzy or hairy instead of perfectly smooth.
-
-* **Step: Shape & Outline Math**
-    * Computes distance fields (vector lengths from center) to determine if the current fragment falls within the main body, the outline, or outside the geometry.
-    * Uses math to draw a perfect shape inside the invisible canvas, and figures out which pixels belong to the inside body and which belong to the border.
-
-* **Step: Texture Tiling & Rotation**
-    * Maps screen-space or object-space coordinates to UVs, handling atlas rect boundaries, centering, and tiling parameters.
-    * Figures out which part of an image (like a fur pattern) should be painted onto this specific pixel.
-
-* **Step: Texture & Palette Quantization**
-    * Samples the texture/palette, resolves transparency indices, and optionally snaps colors to the nearest target palette using Euclidean distance in RGB space.
-    * Looks up the exact color for this pixel from a limited set of colors (a 256-color palette), snapping it to the closest match if necessary.
-
-* **Step: Color Sampling & Z-Shifting**
-    * Applies the final albedo by conditionally shifting the base palette index based on Z-depths, or applying distinct edge/outline/highlight colors.
-    * Paints the pixel! If it's further away, it picks a darker shade of the color; if it's an edge, it paints it the edge color.
-
-* **Step: Eyelids & Eyelashes**
-    * Applies rotational matrices and trigonometric projections to mask out specific sub-regions for secondary features (eyelids/lashes).
-    * Draws extra details like eyelids or eyelashes on top of the base shape by calculating angles.
-
-* **Step: Transparency & Alpha Clipping**
-    * Evaluates distance fields, highlight states, and transparency flags to output a final alpha value (0.0 or 1.0), discarding out-of-bounds fragments.
-    * Makes sure the pixels outside the actual shape or marked as transparent become completely invisible.
-
-#### Vertex Shader
-
-The vertex shader operates per billboard:
-
-* **Step: Billboard Transformation**
-    * Transforms 3D vertices into clip/view space. Aligns the geometry to face the camera (billboarding) or projects specific 3D coordinates to screen space.
-    * Figures out where the shape should be on the screen and makes sure it faces the camera perfectly flat, like a cardboard cutout.
-
-* **Step: Depth Calculation for Z-Shading**
-    * Computes the Z-depth of the object's center in view space and compares it to the pet's root depth for dynamic palette shifting.
-    * Measures how far away the shape is compared to the center of the pet so it can be darkened if it's in the background or lightened if it's in the foreground.
-
-* **Step: Screen-Space Center Calculation**
-    * Projects the 3D center of the object into Normalized Device Coordinates (NDC) and computes the exact pixel coordinate on the viewport.
-    * Finds the exact pixel on the screen that marks the dead center of the shape, which helps draw perfect circles or lines later.
-    
-* **Step: Vertex Extrusion / Padding**
-    * Offsets the clip-space vertices outward by a calculated radius or normal to ensure the fragment shader's bounding box encompasses the entire generated shape (including fuzz).
-    * Makes the invisible canvas for the shape slightly bigger than necessary so there is room to draw fuzzy edges or thick borders without cutting them off.
