@@ -1449,9 +1449,9 @@ func _gui_input(event):
 				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 				original_scale = drag_ball.ball_size
 				drag_start_pos = event.position
-				print("[INFO] PetViewContainer: started scale drag on ball:", drag_ball.name)
+				print("[STATUS] PetViewContainer: started scale drag on ball:", drag_ball.name)
 			else:
-				print("[INFO] PetViewContainer: started drag on ball:", drag_ball.name)
+				print("[STATUS] PetViewContainer: started drag on ball:", drag_ball.name)
 				# is_dragging = true
 				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
@@ -1527,9 +1527,9 @@ func _gui_input(event):
 			var final_size = get_absolute_lnz_size(raw_target_visual, drag_ball, pet_node)
 			pet_node.emit_ball_resize(drag_ball.ball_no, final_size)
 		else:
-			print("[INFO] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+			print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
-			print("[INFO] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
 			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 		is_dragging = false
@@ -1653,9 +1653,9 @@ func _gui_input(event):
 			or (not drag_started_via_code and not event.pressed)
 		)
 		if commit_now:
-			print("[INFO] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+			print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
-			print("[INFO] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
 			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 			is_dragging = false
@@ -2212,7 +2212,7 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 
 	print(
 		(
-			"[INFO] PetViewContainer: get_lnz_position_from_visual: ball %d world positions: current=%s, original=%s"
+			"[STATUS] PetViewContainer: get_lnz_position_from_visual: ball %d world positions: current=%s, original=%s"
 			% [drag_ball.ball_no, current_world, original_world]
 		)
 	)
@@ -2221,7 +2221,7 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 	var lnz_offset = LnzLiveUtils.world_to_lnz_delta(
 		delta_meters, pixel_world_size, pet_node.lnz.scales.x
 	)
-	print("[INFO] PetViewContainer: get_lnz_position_from_visual: rounded LNZ‐space offset (int): %s" % lnz_offset)
+	print("[STATUS] PetViewContainer: get_lnz_position_from_visual: rounded LNZ‐space offset (int): %s" % lnz_offset)
 
 	return lnz_offset
 
@@ -3181,7 +3181,7 @@ func _on_randomize_body_proportions(settings: Dictionary):
 	# A short delay to allow the text edit to process, then save.
 	yield(get_tree().create_timer(0.1), "timeout")
 	lnz_text_edit.save_file()
-	print("[INFO] PetViewContainer: _on_randomize_body_proportions: randomized body proportions and applied to LNZ")
+	print("[STATUS] PetViewContainer: _on_randomize_body_proportions: randomized body proportions and applied to LNZ")
 
 
 func _on_randomize_moves(settings: Dictionary):
@@ -3298,7 +3298,7 @@ func _on_randomize_moves(settings: Dictionary):
 
 	if not moves_to_apply.empty():
 		lnz_text_edit.set_batch_moves(moves_to_apply)
-		print("[INFO] PetViewContainer: _on_randomize_moves: randomized moves applied to %d ballz" % moves_to_apply.size())
+		print("[STATUS] PetViewContainer: _on_randomize_moves: randomized moves applied to %d ballz" % moves_to_apply.size())
 
 
 ### LINE MODE ###
