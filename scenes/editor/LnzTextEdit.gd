@@ -1896,6 +1896,7 @@ func _update_project_ball_section(header: String, ball_no: int):
 
 func _update_paintballz_section(header: String, ball_no: int):
 	# Specific for [Paint Ballz] where 1st token is base ball number
+	print("[STATUS] LnzTextEdit: _update_paintballz_section: Decrementing references for deleted ball_no %d" % ball_no)
 	var bounds = _get_section_bounds(header)
 	if bounds.empty(): return
 	
@@ -2167,6 +2168,7 @@ func apply_batch_presets(changes: Dictionary):
 		commit_full_snapshot("Batch Applied Properties to %d Ballz" % changes.size())
 
 func _transform_paintballz_section(transforms: Dictionary):
+	print("[STATUS] LnzTextEdit: _transform_paintballz_section: Transforming %d paintballs" % transforms.size())
 	var bounds = _get_section_bounds("[Paint Ballz]")
 	if bounds.empty(): return
 	
@@ -2199,12 +2201,14 @@ func _on_apply_paintballz():
 	save_backup()
 
 	var pending_paintballs = pet_node._pending_paintballs_data
+	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
 		var bounds = _get_section_bounds("[Paint Ballz]")
 		
 		if bounds.empty():
+			print("[WARNING] LnzTextEdit: _on_apply_paintballz: [Paint Ballz] section missing, generating new section.")
 			var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section, "[Paint Ballz]")
@@ -3322,6 +3326,7 @@ func _on_ToolsMenu_unomit_ball(ball_no: int):
 
 func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 	save_backup()
+	print("[STATUS] LnzTextEdit: _on_ToolsMenu_clear_ball_paintballz: Commenting out paintballz for ball_no %d" % ball_no)
 	var bounds = _get_section_bounds("[Paint Ballz]")
 	if bounds.empty(): return
 

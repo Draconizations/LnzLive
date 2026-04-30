@@ -120,12 +120,15 @@ func _ready():
 #		update_preview()
 
 func _on_ApplyButton_pressed():
+	print("[STATUS] PaintballSettings: apply_paintballz signal emitted")
 	emit_signal("apply_paintballz")
 
 func _on_ClearButton_pressed():
+	print("[STATUS] PaintballSettings: clear_paintballz signal emitted")
 	emit_signal("clear_paintballz")
 
 func _on_DeleteModeCheckBox_toggled(is_on):
+	print("[STATUS] PaintballSettings: delete_mode_toggled signal emitted, is_on: %s" % is_on)
 	emit_signal("delete_mode_toggled", is_on)
 
 func is_design_mode_active():
@@ -160,6 +163,7 @@ func get_properties():
 	return properties
 
 func export_paintball_json():
+	print("[STATUS] PaintballSettings: started exporting paintball JSON (HTML5 feature: %s)" % OS.has_feature("HTML5"))
 	if OS.has_feature("HTML5"):
 		var settings_dict = get_properties()
 		var json_string = JSON.print(settings_dict, "  ")
@@ -175,6 +179,7 @@ func export_paintball_json():
 		document.body.removeChild(element);
 		"""
 		JavaScript.eval(js_code)
+		print("[STATUS] PaintballSettings: triggered web download for %s" % filename)
 	else:
 		var file_dialog = FileDialog.new()
 		file_dialog.window_title = "Export Paintball Preset"
@@ -195,9 +200,12 @@ func _save_settings_file(path):
 	if file.open(path, File.WRITE) == OK:
 		file.store_string(json_string)
 		file.close()
-		print("Exported settings to: ", path)
+		print("[STATUS] PaintballSettings: exported settings to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for writing settings export: %s" % path)
 
 func _on_ImportPresetButton_pressed():
+	print("[STATUS] PaintballSettings: import preset button pressed")
 	if OS.has_feature("HTML5"):
 		var js_code = """
 		var input = document.createElement('input');
@@ -233,18 +241,28 @@ func _on_web_import_completed(args):
 	var content = args[0]
 	var json_res = JSON.parse(content)
 	if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+		print("[STATUS] PaintballSettings: web import parsed successfully, applying dictionary")
 		_apply_settings_dict(json_res.result)
+	else:
+		print("[ERROR] PaintballSettings: web import failed to parse JSON (Error code: %d)" % json_res.error)
 
 func _load_preset_file(path):
+	print("[STATUS] PaintballSettings: attempting to load preset from %s" % path)
 	var file = File.new()
 	if file.open(path, File.READ) == OK:
 		var text = file.get_as_text()
 		var json_res = JSON.parse(text)
 		if json_res.error == OK and typeof(json_res.result) == TYPE_DICTIONARY:
+			print("[STATUS] PaintballSettings: successfully loaded and parsed preset file")
 			_apply_settings_dict(json_res.result)
+		else:
+			print("[ERROR] PaintballSettings: failed to parse JSON preset from %s (Error code: %d)" % [path, json_res.error])
 		file.close()
+	else:
+		print("[ERROR] PaintballSettings: failed to open preset file for reading: %s" % path)
 
 func _apply_settings_dict(data: Dictionary):
+	print("[STATUS] PaintballSettings: applying settings dictionary")
 	_is_loading_settings = true
 	if data.has("diameter_min"): find_node("DiameterMin").value = data["diameter_min"]
 	if data.has("diameter_max"): find_node("DiameterMax").value = data["diameter_max"]
@@ -303,6 +321,7 @@ func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float)
 	return cleared
 
 func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
+	print("[STATUS] PaintballSettings: paste_paintball_design started on ball_no: %d" % ball_no)
 	var design_canvas = find_node("DesignCanvas")
 	var paintballs = design_canvas.design_paintballs
 	
@@ -343,7 +362,9 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var ball_lnz_diam_safe = max(1.0, ball_lnz_diameter)
 
 	for pb in paintballs:
-		if pb.color_slot - 1 >= design_color_slots.size(): continue
+		if pb.color_slot - 1 >= design_color_slots.size():
+			print("[WARNING] PaintballSettings: paste_paintball_design skipped pb due to invalid color_slot reference: %d" % pb.color_slot)
+			continue
 		var slot_data = design_color_slots[pb.color_slot - 1]
 
 		var dx = pb.x * (footprint_lnz / 2.0)
@@ -379,6 +400,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		out_group.append(int(slot_data.get("group", 0)))
 		out_anchored.append(1 if slot_data.get("anchored", true) else 0)
 
+	print("[STATUS] PaintballSettings: paste_paintball_design finished processing %d paintballs" % out_pos.size())
 	return {
 		"positions": out_pos, 
 		"diameters": out_diams, 
@@ -465,6 +487,7 @@ func _on_info_close_pressed():
 
 func _on_import_pattern_pressed():
 	if OS.has_feature("HTML5"):
+		print("[WARNING] PaintballSettings: importing patterns is not yet supported in web version")
 		JavaScript.eval("window.alert('Importing patterns is not yet supported in web version.');")
 		return
 
@@ -478,6 +501,7 @@ func _on_import_pattern_pressed():
 	file_dialog.popup_centered_ratio(0.6)
 
 func _load_pattern_file(path):
+	print("[STATUS] PaintballSettings: attempting to load pattern from %s" % path)
 	var file = File.new()
 	if file.open(path, File.READ) == OK:
 		var text = file.get_as_text()
@@ -506,9 +530,15 @@ func _load_pattern_file(path):
 				_refresh_slot_buttons()
 				find_node("DesignCanvas").update()
 				find_node("DesignCanvas").emit_signal("design_changed")
+				print("[STATUS] PaintballSettings: loaded and applied pattern from %s" % path)
+		else:
+			print("[ERROR] PaintballSettings: failed to parse JSON pattern from %s" % path)
 		file.close()
+	else:
+		print("[ERROR] PaintballSettings: failed to open pattern file for reading: %s" % path)
 
 func _on_clear_design_pressed():
+	print("[STATUS] PaintballSettings: design canvas cleared")
 	find_node("DesignCanvas").clear()
 	
 	design_color_slots = [
@@ -572,6 +602,7 @@ func _on_export_pattern_pressed():
 		filename += author.replace(" ", "_") + "_"
 	filename += str(OS.get_unix_time()) + ".json"
 
+	print("[STATUS] PaintballSettings: generating export for pattern, filename: %s" % filename)
 	if OS.has_feature("HTML5"):
 		var data = _get_pattern_data_dict()
 		var json_string = JSON.print(data, "\t")
@@ -586,6 +617,7 @@ func _on_export_pattern_pressed():
 		document.body.removeChild(element);
 		"""
 		JavaScript.eval(js_code)
+		print("[STATUS] PaintballSettings: pattern download triggered via web bridge")
 	else:
 		var file_dialog = FileDialog.new()
 		file_dialog.window_title = "Export Stamp Pattern"
@@ -628,6 +660,9 @@ func _save_pattern_file(path):
 	if file.open(path, File.WRITE) == OK:
 		file.store_string(JSON.print(data, "\t"))
 		file.close()
+		print("[STATUS] PaintballSettings: saved pattern file to %s" % path)
+	else:
+		print("[ERROR] PaintballSettings: failed to open file for saving pattern to %s" % path)
 
 func _on_brush_size_changed(value):
 	find_node("DesignCanvas").brush_size = value
@@ -785,6 +820,7 @@ func _on_slot_display_color_changed(color, idx, item):
 		save_settings()
 
 func _on_AddSlotButton_pressed():
+	print("[STATUS] PaintballSettings: adding new color slot")
 	var new_slot = {
 		"color": "255",
 		"outline_color": "244",
@@ -807,8 +843,10 @@ func _on_RemoveSlotButton_pressed():
 
 	var idx = item.get_metadata(0)
 	if design_color_slots.size() <= 1:
+		print("[WARNING] PaintballSettings: cannot remove slot, minimum of 1 slot required")
 		return
 
+	print("[STATUS] PaintballSettings: removing color slot index %d" % idx)
 	design_color_slots.remove(idx)
 
 	var canvas = find_node("DesignCanvas")
@@ -838,7 +876,7 @@ func save_settings():
 	var config = ConfigFile.new()
 	var err = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
-		print("Error loading settings for save: ", err)
+		print("[WARNING] PaintballSettings: error loading existing settings config for save: ", err)
 		return
 
 	config.set_value("PaintballProperties", "diameter_min", find_node("DiameterMin").value)
@@ -876,14 +914,18 @@ func save_settings():
 
 	var save_err = config.save(SETTINGS_PATH)
 	if save_err != OK:
-		print("Error saving PaintballSettings: ", save_err)
+		print("[ERROR] PaintballSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
+	else:
+		pass # Optionally enable for super noisy debug: print("[STATUS] PaintballSettings: configuration auto-saved")
 
 func load_settings():
 	var config = ConfigFile.new()
 	var err = config.load(SETTINGS_PATH)
 	if err != OK:
+		print("[WARNING] PaintballSettings: could not load config from %s, using defaults (Error: %d)" % [SETTINGS_PATH, err])
 		return
 
+	print("[STATUS] PaintballSettings: loading settings configuration")
 	_is_loading_settings = true
 
 	find_node("DiameterMin").value = config.get_value("PaintballProperties", "diameter_min", 10.0)
@@ -944,6 +986,7 @@ func load_settings():
 	_is_loading_settings = false
 
 func _on_reset_defaults_pressed():
+	print("[STATUS] PaintballSettings: resetting to default settings")
 	_is_loading_settings = true
 
 	find_node("DiameterMin").value = 10.0

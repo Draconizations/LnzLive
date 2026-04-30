@@ -1837,37 +1837,45 @@ func set_visibility_for_group(group_name: String, is_visible: bool):
 
 
 func _on_AddballCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_AddballCheckBox_toggled: setting addballs visibility to %s" % button_pressed)
 	set_visibility_for_group("addballs", button_pressed)
 	draw_addballs = button_pressed
 
 
 func _on_BallCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_BallCheckBox_toggled: setting balls visibility to %s" % button_pressed)
 	set_visibility_for_group("balls", button_pressed)
 	draw_balls = button_pressed
 
 
 func _on_PaintballCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_PaintballCheckBox_toggled: setting paintballs visibility to %s" % button_pressed)
 	set_visibility_for_group("paintballs", button_pressed)
 	draw_paintballs = button_pressed
 
 
 func _on_LineCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_LineCheckBox_toggled: setting lines visibility to %s" % button_pressed)
 	set_visibility_for_group("lines", button_pressed)
 	draw_lines = button_pressed
 
 
 func _on_PolygonCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_PolygonCheckBox_toggled: setting polygons visibility to %s" % button_pressed)
 	set_visibility_for_group("polygons", button_pressed)
 	draw_polygons = button_pressed
 
 
 func _on_OmittedBallCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: setting omitted balls visibility to %s" % button_pressed)
 	draw_omitted_balls = button_pressed
+	var count = 0
 
 	for ball_no in ball_map:
 		var node = ball_map[ball_no]
 
 		if node.get("omitted") == true:
+			count += 1
 			if draw_omitted_balls:
 				node.visible_override = true
 
@@ -1890,6 +1898,7 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 					for pb in paintball_map[ball_no]:
 						pb.visible_override = false
 						pb.visible = false
+	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: updated %d omitted balls" % count)
 
 
 func signal_ball_mouse_enter(ball_info):
@@ -1909,6 +1918,7 @@ func signal_paintball_mouse_exit():
 
 
 func signal_ball_selected(ball_no, section):
+	print("[STATUS] Node: signal_ball_selected: ball_no %d, section %s" % [ball_no, section])
 	var ball = ball_map[ball_no]
 	var is_addball = false
 	if ball.base_ball_no != -1 and !("override_ball_no" in ball):
@@ -1917,17 +1927,22 @@ func signal_ball_selected(ball_no, section):
 
 
 func signal_ball_deleted(ball_no):
+	print("[STATUS] Node: signal_ball_deleted: ball_no %d" % ball_no)
 	var ball = ball_map[ball_no]
 	if ball.base_ball_no != -1:
 		emit_signal("addball_deleted", ball_no)
 
 
 func _on_LnzTextEdit_find_ball(ball_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_ball: flashing ball %d" % ball_no)
 	if ball_map.has(ball_no):
 		ball_map[ball_no].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_ball: ball %d not found in ball_map" % ball_no)
 
 
 func _on_LnzTextEdit_find_line(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_line: flashing line %d" % line_no)
 	if lines_map.has(line_no):
 		var line = lines_map[line_no]
 		line.flash()
@@ -1936,9 +1951,12 @@ func _on_LnzTextEdit_find_line(line_no):
 			ball_map[line_data.start].flash()
 		if ball_map.has(line_data.end):
 			ball_map[line_data.end].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_line: line %d not found in lines_map" % line_no)
 
 
 func _on_LnzTextEdit_find_paintball(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_paintball: flashing paintball line %d" % line_no)
 	var all_paintballs = []
 	for ball_no in lnz.paintballs:
 		for paintball in lnz.paintballs[ball_no]:
@@ -1952,9 +1970,14 @@ func _on_LnzTextEdit_find_paintball(line_no):
 			# For now, let's just flash the base ball
 			if ball_map.has(base_ball_no):
 				ball_map[base_ball_no].flash()
+		else:
+			print("[WARNING] Node: _on_LnzTextEdit_find_paintball: base ball %d has no visual paintballs" % base_ball_no)
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_paintball: line_no %d out of bounds" % line_no)
 
 
 func _on_LnzTextEdit_find_polygon(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_polygon: flashing polygon %d" % line_no)
 	if polygons_map.has(line_no):
 		var polygon = polygons_map[line_no]
 		polygon.flash()
@@ -1967,25 +1990,36 @@ func _on_LnzTextEdit_find_polygon(line_no):
 			ball_map[polygon_data.ball3].flash()
 		if ball_map.has(polygon_data.ball4):
 			ball_map[polygon_data.ball4].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_polygon: polygon %d not found in polygons_map" % line_no)
 
 
 func _on_LnzTextEdit_find_move(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_move: flashing move %d" % line_no)
 	if line_no < lnz.moves.size():
 		var move_data = lnz.moves[line_no]
 		if ball_map.has(move_data.ball_no):
 			ball_map[move_data.ball_no].flash()
+		else:
+			print("[WARNING] Node: _on_LnzTextEdit_find_move: ball %d from move not found" % move_data.ball_no)
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_move: move index %d out of bounds" % line_no)
 
 
 func _on_LnzTextEdit_find_project_ball(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_project_ball: flashing project ball %d" % line_no)
 	if line_no < lnz.project_ball.size():
 		var project_data = lnz.project_ball[line_no]
 		if ball_map.has(project_data.fixed_ball):
 			ball_map[project_data.fixed_ball].flash()
 		if ball_map.has(project_data.project_ball):
 			ball_map[project_data.project_ball].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_project_ball: index %d out of bounds" % line_no)
 
 
 func _on_ToolsMenu_print_ball_colors():
+	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: compiling and copying ball colors to clipboard")
 	var ball_map_string = ""
 	for b in ball_map:
 		var ball = ball_map[b]
@@ -2009,10 +2043,13 @@ func _on_ToolsMenu_print_ball_colors():
 			ball_map_string += this_ball_string
 			#print("[INFO] dog_generator: _on_ToolsMenu_print_ball_colors: " + this_ball_string)
 	OS.set_clipboard(ball_map_string)
+	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: successfully populated clipboard")
 
 
 func generate_whiskers(new_create: bool):
+	print("[STATUS] Node: generate_whiskers: starting (new_create=%s)" % new_create)
 	if lnz.species != KeyBallsData.Species.CAT:
+		print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
 		return
 
 	var root = get_root()
@@ -2125,22 +2162,30 @@ func emit_ball_resize(ball_no: int, size_dif: int):
 
 
 func remove_last_pending_paintball():
+	print("[STATUS] Node: remove_last_pending_paintball: request received")
 	if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
 		var last_visual_node = _pending_paintball_nodes.pop_back()
 
 		if is_instance_valid(last_visual_node):
 			last_visual_node.queue_free()
+			print("[STATUS] Node: remove_last_pending_paintball: visual node freed")
 
 		_pending_paintballs_data.pop_back()
+	else:
+		print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
 
 
 func remove_specific_pending_paintball(paintball_node):
+	print("[STATUS] Node: remove_specific_pending_paintball: called for node %s" % paintball_node)
 	var index = _pending_paintball_nodes.find(paintball_node)
 	if index != -1:
 		_pending_paintball_nodes.remove(index)
 		_pending_paintballs_data.remove(index)
 		if is_instance_valid(paintball_node):
 			paintball_node.queue_free()
+			print("[STATUS] Node: remove_specific_pending_paintball: node freed")
+	else:
+		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
 
 
 func get_pending_paintball_nodes():
@@ -2148,6 +2193,7 @@ func get_pending_paintball_nodes():
 
 
 func clear_pending_paintballs():
+	print("[STATUS] Node: clear_pending_paintballs: clearing %d paintballs" % _pending_paintball_nodes.size())
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
@@ -2156,9 +2202,11 @@ func clear_pending_paintballs():
 
 
 func add_pending_paintball(paintball_info):
+	print("[STATUS] Node: add_pending_paintball: adding paintball to base ball %d" % paintball_info.base_ball_no)
 	_pending_paintballs_data.append(paintball_info)
 	var base_ball_no = paintball_info.base_ball_no
 	if !ball_map.has(base_ball_no):
+		print("[ERROR] Node: add_pending_paintball: base_ball_no %d not found in ball_map" % base_ball_no)
 		return
 
 	var base_ball_node = ball_map[base_ball_no]
@@ -2199,6 +2247,8 @@ func add_pending_paintball(paintball_info):
 			pb_visual_ball.texture = tex_pb
 			if paintball_info.texture < lnz.texture_list.size():
 				pb_visual_ball.transparent_color = lnz.texture_list[paintball_info.texture].transparent_color
+		else:
+			print("[WARNING] Node: add_pending_paintball: failed to load texture %d" % paintball_info.texture)
 
 	pb_visual_ball.palette = base_ball_node.palette
 
@@ -2208,19 +2258,23 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.z_add = float(existing_paintballs_count + _pending_paintballs_data.size())
 
 	_pending_paintball_nodes.append(pb_visual_ball)
+	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball")
 
 
 func _on_clear_paintballz():
+	print("[STATUS] Node: _on_clear_paintballz: passing command to clear_pending_paintballs")
 	clear_pending_paintballs()
 
 
 func _on_randomize_auto_paintballz(paintballz):
+	print("[STATUS] Node: _on_randomize_auto_paintballz: clearing and generating %d auto-paintballs" % paintballz.size())
 	_on_clear_auto_paintballz()
 	_auto_paintballs_data = paintballz
 
 	for paintball_data in _auto_paintballs_data:
 		var base_ball_no = paintball_data.base
 		if !ball_map.has(base_ball_no):
+			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found" % base_ball_no)
 			continue
 
 		var base_ball_node = ball_map[base_ball_no]
@@ -2256,6 +2310,8 @@ func _on_randomize_auto_paintballz(paintballz):
 				pb_visual_ball.texture = tex_pb
 				if paintball_data.texture_id < lnz.texture_list.size():
 					pb_visual_ball.transparent_color = lnz.texture_list[paintball_data.texture_id].transparent_color
+			else:
+				print("[WARNING] Node: _on_randomize_auto_paintballz: failed to load texture %d" % paintball_data.texture_id)
 
 		pb_visual_ball.palette = base_ball_node.palette
 
@@ -2268,6 +2324,7 @@ func _on_randomize_auto_paintballz(paintballz):
 
 
 func _on_clear_auto_paintballz():
+	print("[STATUS] Node: _on_clear_auto_paintballz: clearing %d auto paintball nodes" % _auto_paintball_nodes.size())
 	for node in _auto_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
@@ -2276,12 +2333,14 @@ func _on_clear_auto_paintballz():
 
 
 func _on_apply_auto_paintballz():
+	print("[STATUS] Node: _on_apply_auto_paintballz: attempting to apply auto paintballs")
 	var processed_paintballs = {}
 	var processed_count = 0
 	var cap = 1000
 
 	for pb_data in _auto_paintballs_data:
 		if processed_count >= cap:
+			print("[WARNING] Node: _on_apply_auto_paintballz: hit cap of %d auto paintballs" % cap)
 			break
 
 		var base_ball_node = ball_map.get(pb_data.base)
@@ -2321,17 +2380,23 @@ func _on_apply_auto_paintballz():
 		_pending_paintballs_data.append(paintball_info)
 
 		processed_count += 1
+		
+	print("[STATUS] Node: _on_apply_auto_paintballz: appended %d paintballs to pending queue" % processed_count)
 
 	var lnz_text_edit = get_tree().root.get_node(
 		"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
 	)
 	if lnz_text_edit:
+		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
 		lnz_text_edit._on_apply_paintballz()
+	else:
+		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
 
 	_on_clear_auto_paintballz()
 
 
 func hide_ball(ball_no):
+	print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
 	if not _hidden_balls.has(ball_no):
 		_hidden_balls.append(ball_no)
 
@@ -2367,7 +2432,9 @@ func _apply_hidden_state_to_visuals(ball_no):
 			if not _hidden_polygons.has(poly_idx):
 				_hidden_polygons.append(poly_idx)
 
+
 func unhide_all_balls():
+	print("[STATUS] Node: unhide_all_balls: restoring %d balls" % _hidden_balls.size())
 	for ball_no in _hidden_balls:
 		if ball_map.has(ball_no):
 			var node = ball_map[ball_no]
