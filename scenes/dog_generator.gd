@@ -1509,7 +1509,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			pb_visual_ball.outline_color_index = paintball.outline_color_index
 			pb_visual_ball.outline = paintball.outline
 			pb_visual_ball.fuzz_amount = clamp(paintball.fuzz / 2, 0, 5)
-			pb_visual_ball.z_add = float(count)
+			var base_z = ball_map[key].z_add if "z_add" in ball_map[key] else 0.0
+			pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(count)
 			pb_visual_ball.base_ball_no = paintball.base
 
 			if omissions.has(key):
@@ -2252,10 +2253,12 @@ func add_pending_paintball(paintball_info):
 
 	pb_visual_ball.palette = base_ball_node.palette
 
+	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
 	var existing_paintballs_count = 0
 	if paintball_map.has(base_ball_no):
 		existing_paintballs_count = paintball_map[base_ball_no].size()
-	pb_visual_ball.z_add = float(existing_paintballs_count + _pending_paintballs_data.size())
+		
+	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_paintballs_count + _pending_paintballs_data.size())
 
 	_pending_paintball_nodes.append(pb_visual_ball)
 	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball")
@@ -2315,10 +2318,12 @@ func _on_randomize_auto_paintballz(paintballz):
 
 		pb_visual_ball.palette = base_ball_node.palette
 
+		var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
 		var existing_paintballs_count = 0
 		if paintball_map.has(base_ball_no):
 			existing_paintballs_count = paintball_map[base_ball_no].size()
-		pb_visual_ball.z_add = float(existing_paintballs_count + _auto_paintball_nodes.size())
+			
+		pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_paintballs_count + _auto_paintball_nodes.size())
 
 		_auto_paintball_nodes.append(pb_visual_ball)
 
