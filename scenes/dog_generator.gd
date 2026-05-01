@@ -1439,16 +1439,19 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				add_visual_ball.visible = false
 
 	# Generate paintballz
+
+	# Merge base ball + addball data so we can locate the base size
+	var merged_dict = {}
+	
+	for v in ball_data:
+		merged_dict[v] = ball_data[v]
+
+	for v in addball_data:
+		merged_dict[v] = addball_data[v]
+
 	for key in paintball_data:
 		if !ball_map.has(key):
 			continue
-
-		# Merge base ball + addball data so we can locate the base size
-		var merged_dict = {}
-		for v in ball_data:
-			merged_dict[v] = ball_data[v]
-		for v in addball_data:
-			merged_dict[v] = addball_data[v]
 
 		var base_ball = merged_dict[key]
 		var paint_list: Array = paintball_data[key]
