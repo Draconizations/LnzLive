@@ -469,6 +469,7 @@ func recompose_model():
 	lnz.polygons.clear()
 	lnz.moves.clear()
 	lnz.texture_list.clear()
+	lnz.custom_eyes.clear()
 	lnz.whisker_connections.clear()
 
 	# Parse Sections
@@ -486,6 +487,7 @@ func recompose_model():
 		"Z Shade Slope",
 		"256 Eyelid Color",
 		"Eyelash Info",
+		"Eyes",
 		"Whiskers",
 		"Ballz Info",
 		"Add Ball",
@@ -517,6 +519,7 @@ func recompose_model():
 		"Add Ball": "get_addballs",
 		"256 Eyelid Color": "get_eyelid_color",
 		"Eyelash Info": "get_eyelash_info",
+		"Eyes": "get_eyes",
 		"Whiskers": "get_whiskers",
 		"Z Shade Slope": "get_z_shade_slope",
 		"Ball Size Override": "get_ball_size_override",
@@ -1219,10 +1222,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				visual_ball.connect("ball_mouse_enter", self, "signal_ball_mouse_enter")
 				visual_ball.connect("ball_mouse_exit", self, "signal_ball_mouse_exit")
 				visual_ball.connect("ball_selected", self, "signal_ball_selected")
-				#visual_ball.species = species
 				visual_ball.set_species(species, is_babyz_mode)
 
-				paintballs_parent.add_child(visual_ball)
+				if base_node:
+					base_node.add_child(visual_ball)
+				else:
+					paintballs_parent.add_child(visual_ball)
+				
 				visual_ball.set_owner(root)
 			else:
 				visual_ball = ball_map[key]
@@ -1230,14 +1236,20 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			# Parent ball so we know its center
 			var base_ball = ball_data[eyes[key]]
 			visual_ball.base_ball_size = base_ball.size
+			
 			var base_pos = base_ball.position
-			base_pos.y *= -1
+			base_pos.y *= -1.0
 			base_pos *= pixel_world_size
 			visual_ball.base_ball_position = base_pos
 
-			var pos = ball.position
-			pos.y *= -1.0
-			visual_ball.transform.origin = pos * pixel_world_size
+			if base_node:
+				var radius = (base_ball.size / 2.0) * pixel_world_size
+				
+				visual_ball.transform.origin = Vector3(0, 0, -radius)
+			else:
+				var pos = ball.position
+				pos.y *= -1.0
+				visual_ball.transform.origin = pos * pixel_world_size
 
 			if new_create:
 				if ball.texture_id >= 0 and ball.texture_id < texture_list.size():
@@ -1343,7 +1355,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			ball_map[ball.ball_no] = visual_ball
 
 		# Handle omissions
-		if omissions.has(key):
+		var is_omitted = omissions.has(key)
+		if key in eyes and omissions.has(eyes[key]):
+			is_omitted = true
+
+		if is_omitted:
 			ball_map[ball.ball_no].omitted = true
 
 			if draw_omitted_balls:

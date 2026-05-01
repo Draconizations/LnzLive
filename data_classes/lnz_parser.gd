@@ -73,6 +73,8 @@ var sections_map = {}
 
 var whisker_connections = []
 
+var custom_eyes = {}
+
 var eyelash_lengths = []
 var eyelash_angle   = 0
 var eyelash_spacing = 0
@@ -389,6 +391,23 @@ func get_project_balls(reader):
 			"max_projection": amount + 50,
 			"comment": ""
 		})
+
+func get_eyes(reader):
+	# Row 1: Left Eye Base, Right Eye Base
+	# Row 2: Left Iris, Right Iris
+	var parsed_lines = get_parsed_lines(reader, ["left", "right"])
+	
+	if parsed_lines.size() >= 2:
+		custom_eyes.clear()
+		var eyeL = parsed_lines[0].left
+		var eyeR = parsed_lines[0].right
+		var irisL = parsed_lines[1].left
+		var irisR = parsed_lines[1].right
+		
+		custom_eyes[irisL] = eyeL
+		custom_eyes[irisR] = eyeR
+		
+		print("[STATUS] lnz_parser: get_eyes: parsed custom eyes mapping: ", custom_eyes)
 
 func get_whiskers(reader):
 	if reader.get_len() == 0:
