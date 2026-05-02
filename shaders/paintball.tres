@@ -384,9 +384,12 @@ void vertex() {
     //}
     //vert_in_clip_space.z = center_clip_space.z;
     //vert_in_clip_space.z += z_add * 0.001;
-
+    // Flatten paintball to parent ball's Z-depth plane
     vert_in_clip_space.z = base_center_clip_space.z;
-    vert_in_clip_space.z += 0.00001 + (z_add * 0.00005);
+    // vert_in_clip_space.z += 0.00001 + (z_add * 0.00005);
+
+    // Apply layering offsets
+    vert_in_clip_space.z += 0.00001 + (z_add * 0.001);
 
     float b = (float(ball_size) / 2.0 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
     vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
