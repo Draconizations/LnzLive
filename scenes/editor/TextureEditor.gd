@@ -2,6 +2,8 @@ extends DraggablePanel
 ## TextureEditor.gd
 ## Edit texture BMP files in editor
 
+const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+
 enum Tool {
 	PENCIL,
 	ERASER,
@@ -85,7 +87,9 @@ func _ready():
 	
 	var dir = Directory.new()
 	if not dir.dir_exists("user://resources/textures"):
-		dir.make_dir_recursive("user://resources/textures")
+		var err = dir.make_dir_recursive("user://resources/textures")
+		if err != OK and err != ERR_ALREADY_EXISTS:
+			print("Failed to create textures directory.")
 
 	size_option_btn.add_item("32 x 32", 32)
 	size_option_btn.add_item("64 x 64", 64)
@@ -145,6 +149,12 @@ func _ready():
 	quadrant_overlay.connect("draw", self, "_on_QuadrantOverlay_draw")
 
 	$VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll.connect("resized", self, "_on_palette_scroll_resized")
+
+func _input(event):
+	if event is InputEventMouseButton and not event.pressed and event.button_index == BUTTON_LEFT:
+		if is_drawing:
+			is_drawing = false
+			_on_pen_up()
 
 func _process(_delta):
 	# GPU Optimization: Only upload image to GPU once per frame when dirty
@@ -290,7 +300,7 @@ func _get_closest_palette_index(c: Color, preferred_base: int = -1) -> int:
 			if d < 0.001:
 				return i
 				
-	var key = c.to_html(false)
+	var key = c.to_rgba32()
 	if _color_hash_cache.has(key):
 		return _color_hash_cache[key]
 		
@@ -513,10 +523,7 @@ func _handle_canvas_input(pos: Vector2):
 		_canvas_dirty = true
 
 func _draw_brush(cx: int, cy: int, size: int, color: Color):
-	if size == 1:
-		_draw_pixel(cx, cy, color)
-		return
-
+	
 	var half_size = size / 2.0
 	var center = Vector2(cx, cy)
 	if size % 2 == 0:
@@ -528,6 +535,9 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color):
 		start_x += 1
 		start_y += 1
 
+	var dither_val = dither_amount_spin.value
+	var use_secondary = use_secondary_check.pressed and secondary_color_index != -1
+
 	for by in range(size):
 		for bx in range(size):
 			var px = start_x + bx
@@ -535,7 +545,6 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color):
 
 			if px >= 0 and px < canvas_size.x and py >= 0 and py < canvas_size.y:
 				var use_pixel = true
-				var dither_val = dither_amount_spin.value
 				if current_brush_pattern == BrushPattern.CHECKER:
 					use_pixel = (px + py) % 2 == 0
 				elif current_brush_pattern == BrushPattern.V_STRIPES:
@@ -543,13 +552,12 @@ func _draw_brush(cx: int, cy: int, size: int, color: Color):
 				elif current_brush_pattern == BrushPattern.H_STRIPES:
 					use_pixel = (py % 2) == 0
 				elif current_brush_pattern == BrushPattern.BAYER:
-					var bayer4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
-					use_pixel = (bayer4[py % 4][px % 4] / 16.0) < dither_val
+					use_pixel = (BAYER4[py % 4][px % 4] / 16.0) < dither_val
 				elif current_brush_pattern == BrushPattern.NOISE:
 					use_pixel = randf() < dither_val
 
 				if not use_pixel:
-					if use_secondary_check.pressed and secondary_color_index != -1:
+					if use_secondary:
 						if current_brush_shape == BrushShape.CIRCLE:
 							var p_center = Vector2(px, py)
 							if size % 2 == 0:
@@ -670,11 +678,12 @@ func _flood_fill(x: int, y: int, target_color: Color):
 					match_found = true
 					
 			if match_found:
-				active_image.set_pixel(px, py, fill_color)
-				stack.append(Vector2(px + 1, py))
-				stack.append(Vector2(px - 1, py))
-				stack.append(Vector2(px, py + 1))
-				stack.append(Vector2(px, py - 1))
+				if c != fill_color:
+					active_image.set_pixel(px, py, fill_color)
+					stack.append(Vector2(px + 1, py))
+					stack.append(Vector2(px - 1, py))
+					stack.append(Vector2(px, py + 1))
+					stack.append(Vector2(px, py - 1))
 	else:
 		for py in range(int(canvas_size.y)):
 			for px in range(int(canvas_size.x)):
@@ -751,9 +760,9 @@ func save_indexed_bmp(path: String):
 	for i in range(256):
 		if i < palette_colors.size():
 			var c = palette_colors[i]
-			f.store_8(int(c.b * 255.0))
-			f.store_8(int(c.g * 255.0))
-			f.store_8(int(c.r * 255.0))
+			f.store_8(int(round(c.b * 255.0)))
+			f.store_8(int(round(c.g * 255.0)))
+			f.store_8(int(round(c.r * 255.0)))
 			f.store_8(0)
 		else:
 			f.store_32(0)
@@ -777,11 +786,17 @@ func save_indexed_bmp(path: String):
 func _get_background_color() -> Color:
 	if palette_colors.size() > 253:
 		return palette_colors[253]
+	elif palette_colors.size() > 0:
+		return palette_colors[palette_colors.size() - 1]
 	return Color(1, 0, 1, 1)
 
 func _load_raw_8bit_bmp(path: String) -> Dictionary:
 	var f = File.new()
 	if f.open(path, File.READ) != OK:
+		return {}
+		
+	if f.get_len() < 54:
+		f.close()
 		return {}
 	
 	f.seek(10)
