@@ -80,6 +80,8 @@ func _ready():
 		settings_dialog.connect("stretch_mode_changed", self, "_on_stretch_mode_changed")
 		settings_dialog.connect("stretch_aspect_changed", self, "_on_stretch_aspect_changed")
 
+	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
+
 func _on_user_settings_pressed():
 	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect)
 	settings_dialog.popup_centered()
@@ -104,6 +106,11 @@ func _on_stretch_aspect_changed(new_aspect):
 	_apply_screen_shrink(shrink_spinner.value)
 	save_settings()
 
+func _on_window_size_changed():
+		if not OS.window_fullscreen and not OS.window_maximized:
+			_cached_window_size = OS.window_size
+			_cached_window_pos = OS.window_position
+
 func get_preferred_delimiter() -> String:
 	var delims = {
 		"comma_space": ", ",
@@ -114,10 +121,10 @@ func get_preferred_delimiter() -> String:
 	}
 	return delims.get(preferred_delimiter, "auto")
 
-func _process(_delta):
-	if not OS.window_fullscreen and not OS.window_maximized:
-		_cached_window_size = OS.window_size
-		_cached_window_pos = OS.window_position
+# func _process(_delta):
+# 	if not OS.window_fullscreen and not OS.window_maximized:
+# 		_cached_window_size = OS.window_size
+# 		_cached_window_pos = OS.window_position
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
