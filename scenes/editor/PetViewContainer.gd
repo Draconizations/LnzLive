@@ -1258,6 +1258,10 @@ func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 	if not paintball_mode:
 		return false
+		
+	if not is_instance_valid(paintball_settings_instance):
+		print("[ERROR] PetViewContainer: paintball_settings_instance is invalid in _handle_paint_mode_gui_input")
+		return false
 
 	if (
 		event is InputEventMouseButton
@@ -1266,6 +1270,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 	):
 		#var diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 		#var diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
+		print("[STATUS] PetViewContainer: adjusting brush size constraints via scroll")
 		if event.button_index == BUTTON_WHEEL_UP:
 			diameter_min_spinbox.value += 1
 			diameter_max_spinbox.value += 1
@@ -1277,6 +1282,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 	if paintball_settings_instance.is_design_mode_active():
 		if event is InputEventMouseButton and event.pressed:
 			if event.button_index == BUTTON_WHEEL_UP:
+				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (UP)")
 				if event.control:
 					design_scale_multiplier += 0.1
 				else:
@@ -1284,6 +1290,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				get_tree().set_input_as_handled()
 				return true
 			elif event.button_index == BUTTON_WHEEL_DOWN:
+				print("[STATUS] PetViewContainer: adjusted design stamp scale/rotation (DOWN)")
 				if event.control:
 					design_scale_multiplier = max(0.1, design_scale_multiplier - 0.1)
 				else:
@@ -1305,6 +1312,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		)
 		if freeline_mode:
 			if event.pressed:
+				print("[STATUS] PetViewContainer: started freeline path")
 				if props.ordered and props.repeat:
 					_ordered_color_index = 0
 					_ordered_outline_color_index = 0
@@ -1313,6 +1321,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				freeline_path.clear()
 				last_freeline_point = event.position
 			else:
+				print("[STATUS] PetViewContainer: finished freeline path")
 				freeline_active = false
 				_finalize_freeline()
 			return true
@@ -1330,8 +1339,10 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		var delete_mode = eraser_check_box.pressed or Input.is_key_pressed(KEY_CONTROL)
 
 		if delete_mode:
+			print("[STATUS] PetViewContainer: attempted eraser click")
 			var pending_paintballs = pet_node.get_pending_paintball_nodes()
 			if pending_paintballs.empty():
+				print("[WARNING] PetViewContainer: no pending paintballs to erase")
 				return true
 
 			var closest_paintball = null
@@ -1361,6 +1372,9 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 			if closest_paintball and min_dist_sq < 25 * 25:  # 25px threshold
 				pet_node.remove_specific_pending_paintball(closest_paintball)
+				print("[STATUS] PetViewContainer: erased closest paintball node: %s" % closest_paintball.name)
+			else:
+				print("[WARNING] PetViewContainer: no paintball close enough to erase (threshold distance: 25px)")
 			return true
 
 		var target_ball
@@ -1478,9 +1492,9 @@ func _gui_input(event):
 				Input.set_custom_mouse_cursor(hand_pinch, 0, Vector2(30, 31))
 				original_scale = drag_ball.ball_size
 				drag_start_pos = event.position
-				print("[INFO] PetViewContainer: started scale drag on ball:", drag_ball.name)
+				print("[STATUS] PetViewContainer: started scale drag on ball:", drag_ball.name)
 			else:
-				print("[INFO] PetViewContainer: started drag on ball:", drag_ball.name)
+				print("[STATUS] PetViewContainer: started drag on ball:", drag_ball.name)
 				# is_dragging = true
 				Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 				pet_node._orig_world_pos[drag_ball.ball_no] = drag_ball.global_transform.origin
@@ -1556,9 +1570,9 @@ func _gui_input(event):
 			var final_size = get_absolute_lnz_size(raw_target_visual, drag_ball, pet_node)
 			pet_node.emit_ball_resize(drag_ball.ball_no, final_size)
 		else:
-			print("[INFO] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+			print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
-			print("[INFO] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
 			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 		is_dragging = false
@@ -1682,9 +1696,9 @@ func _gui_input(event):
 			or (not drag_started_via_code and not event.pressed)
 		)
 		if commit_now:
-			print("[INFO] PetViewContainer: final world position:", drag_ball.global_transform.origin)
+			print("[STATUS] PetViewContainer: final world position:", drag_ball.global_transform.origin)
 			var lnz_pos = get_lnz_position_from_visual(drag_ball, pet_node)
-			print("[INFO] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
+			print("[STATUS] PetViewContainer: dragged ball %d to %s (LNZ-space)" % [drag_ball.ball_no, lnz_pos])
 			pet_node.emit_ball_move(drag_ball.ball_no, lnz_pos)
 
 			is_dragging = false
@@ -2320,7 +2334,7 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 
 	print(
 		(
-			"[INFO] PetViewContainer: get_lnz_position_from_visual: ball %d world positions: current=%s, original=%s"
+			"[STATUS] PetViewContainer: get_lnz_position_from_visual: ball %d world positions: current=%s, original=%s"
 			% [drag_ball.ball_no, current_world, original_world]
 		)
 	)
@@ -2329,7 +2343,7 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 	var lnz_offset = LnzLiveUtils.world_to_lnz_delta(
 		delta_meters, pixel_world_size, pet_node.lnz.scales.x
 	)
-	print("[INFO] PetViewContainer: get_lnz_position_from_visual: rounded LNZ‐space offset (int): %s" % lnz_offset)
+	print("[STATUS] PetViewContainer: get_lnz_position_from_visual: rounded LNZ‐space offset (int): %s" % lnz_offset)
 
 	return lnz_offset
 
@@ -2670,12 +2684,14 @@ func _redo_queued_move():
 func _record_paint_action(paintballs_added):
 	if paintballs_added.empty():
 		return
+	print("[STATUS] PetViewContainer: Recording paint action with %d paintballs" % paintballs_added.size())
 	paint_history.append(paintballs_added)
 	paint_redo_stack.clear()
 	_cap_history_arrays()
 
 
 func _undo_queued_paintball():
+	print("[STATUS] PetViewContainer: Undoing queued paintball action")
 	if paint_history.empty():
 		var data = pet_node.remove_last_pending_paintball()
 		if data:
@@ -2690,6 +2706,7 @@ func _undo_queued_paintball():
 
 
 func _redo_queued_paintball():
+	print("[STATUS] PetViewContainer: Redoing queued paintball action")
 	if paint_redo_stack.empty():
 		return
 
@@ -2819,6 +2836,7 @@ func _on_recolor_mode_toggled(is_on):
 
 
 func _on_paintball_mode_toggled(is_on):
+	print("[STATUS] PetViewContainer: Paintball Mode toggled %s" % is_on)
 	if is_on:
 		_deactivate_other_modes("Paintball Mode")
 	paintball_mode = is_on
@@ -2964,6 +2982,7 @@ func _on_variation_visibility_changed():
 
 
 func _update_paintball_mode_ui():
+	print("[STATUS] PetViewContainer: updating paintball mode UI (visible: %s)" % paintball_mode)
 	if paintball_mode:
 		_ensure_panel_visible(paintball_settings_instance)
 
@@ -3004,6 +3023,7 @@ func _set_pending_paintballs_visible(is_visible: bool):
 
 
 func _on_paintball_mode_for_ball_toggled(ball):
+	print("[STATUS] PetViewContainer: paintball mode specifically focused on ball #%d" % ball.ball_no)
 	close_paintball_on_apply = true
 	paintball_target_ball = ball
 	set_active_selected_ball(ball)
@@ -3017,10 +3037,16 @@ func _on_paintball_mode_for_ball_toggled(ball):
 
 
 func close_paintball_mode():
+	print("[STATUS] PetViewContainer: closing paintball mode")
 	paintball_check_box.pressed = false
 
 
 func _finalize_freeline():
+	if freeline_path.empty():
+		print("[WARNING] PetViewContainer: freeline path is empty upon finalize")
+		return
+		
+	print("[STATUS] PetViewContainer: finalizing freeline with %d points" % freeline_path.size())
 	var props = paintball_settings_instance.get_properties()
 	var jitter = props.jitter
 	var stroke = []
@@ -3078,16 +3104,22 @@ func _finalize_freeline():
 		if result:
 			added_paintballs.append(result)
 
+	print("[STATUS] PetViewContainer: freeline generated %d valid paintballs" % added_paintballs.size())
 	_record_paint_action(added_paintballs)
 
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
+	if not is_instance_valid(target_ball):
+		print("[ERROR] PetViewContainer: target_ball is invalid in _create_paintball_at_position")
+		return null
+		
 	var from = camera.project_ray_origin(screen_pos)
 	var to = from + camera.project_ray_normal(screen_pos) * 10000
 	var space_state = camera.get_world().direct_space_state
 	var result = space_state.intersect_ray(from, to, [self], 1, true, true)
 
 	if result and result.collider and result.collider.get_parent() == target_ball:
+		print("[STATUS] PetViewContainer: paintball raycast hit target ball #%d" % target_ball.ball_no)
 		var intersection_point = result.position
 
 		if paintball_settings_instance.is_design_mode_active():
@@ -3119,6 +3151,7 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			var lnz_scale = pet_node.lnz.scales.x / 255.0
 
 			if px_scale == 0 or lnz_scale == 0:
+				print("[ERROR] PetViewContainer: px_scale or lnz_scale is 0, cannot project design paintballz")
 				return
 
 			var pos_arr = pattern_pbs.positions
@@ -3154,17 +3187,20 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 				}
 
 				pet_node.add_pending_paintball(pb_data)
+			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [pos_arr.size(), target_ball.ball_no])
 			return
 
 		var props = paintball_settings_instance.get_properties()
 
 		var color_list = LnzLiveUtils.parse_number_list(props.color)
 		if color_list.empty():
+			print("[ERROR] PetViewContainer: invalid color list format for paintball")
 			push_warning("Invalid color list format.")
 			return
 
 		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color, true)
 		if outline_color_list.empty():
+			print("[ERROR] PetViewContainer: invalid outline color list format for paintball")
 			push_warning("Invalid outline color list format.")
 			return
 
@@ -3229,6 +3265,7 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		}
 
 		pet_node.add_pending_paintball(paintball_info)
+		print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
 		return paintball_info
 	return null
 
@@ -3292,7 +3329,7 @@ func _on_randomize_body_proportions(settings: Dictionary):
 	# A short delay to allow the text edit to process, then save.
 	yield(get_tree().create_timer(0.1), "timeout")
 	lnz_text_edit.save_file()
-	print("[INFO] PetViewContainer: _on_randomize_body_proportions: randomized body proportions and applied to LNZ")
+	print("[STATUS] PetViewContainer: _on_randomize_body_proportions: randomized body proportions and applied to LNZ")
 
 
 func _on_randomize_moves(settings: Dictionary):
@@ -3409,7 +3446,7 @@ func _on_randomize_moves(settings: Dictionary):
 
 	if not moves_to_apply.empty():
 		lnz_text_edit.set_batch_moves(moves_to_apply)
-		print("[INFO] PetViewContainer: _on_randomize_moves: randomized moves applied to %d ballz" % moves_to_apply.size())
+		print("[STATUS] PetViewContainer: _on_randomize_moves: randomized moves applied to %d ballz" % moves_to_apply.size())
 
 
 ### LINE MODE ###
