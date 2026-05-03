@@ -57,6 +57,9 @@ onready var variation_tree = get_tree().root.get_node(
 onready var select_check_box = find_node("SelectCheckBox")
 
 onready var recolor_mode_check_box = find_node("RecolorModeCheckBox")
+onready var texture_editor_mode_check_box = find_node("TextureEditorModeCheckBox")
+var texture_editor_mode = false
+
 onready var paintball_check_box = find_node("PaintballModeCheckBox")
 onready var move_mode_check_box = find_node("MoveModeCheckBox")
 onready var line_mode_check_box = find_node("LineModeCheckBox")
@@ -148,6 +151,9 @@ var line_mode_settings_instance: Control
 var project_settings_instance: Control
 var preset_settings_instance: Control
 var auto_paintballer_settings_instance: Control
+var texture_editor_settings_instance: Control
+
+var shader_settings_instance: Control
 
 var diameter_min_spinbox: SpinBox
 var diameter_max_spinbox: SpinBox
@@ -229,6 +235,8 @@ func _ready():
 	move_mode_settings_instance = load("res://scenes/editor/MoveModeSettings.tscn").instance()
 	line_mode_settings_instance = load("res://scenes/editor/LineModeSettings.tscn").instance()
 	recolor_settings_instance = load("res://scenes/editor/RecolorSettings.tscn").instance()
+	texture_editor_settings_instance = load("res://scenes/editor/TextureEditor.tscn").instance()
+	shader_settings_instance = load("res://scenes/editor/ShaderSettings.tscn").instance()
 
 	var sidebar_node = get_tree().root.find_node("VBoxContainer", true, false)
 	var sidebars = get_tree().get_nodes_in_group("SidebarController")
@@ -240,6 +248,7 @@ func _ready():
 	if sidebar_controller:
 		sidebar_controller.call_deferred("add_tool_tab", palette_viewer_instance, "Palette")
 		sidebar_controller.call_deferred("add_tool_tab", recolor_settings_instance, "Recolor")
+		sidebar_controller.call_deferred("add_tool_tab", texture_editor_settings_instance, "Texture")
 		sidebar_controller.call_deferred("add_tool_tab", paintball_settings_instance, "Paint")
 		sidebar_controller.call_deferred("add_tool_tab", move_mode_settings_instance, "Move")
 		sidebar_controller.call_deferred("add_tool_tab", line_mode_settings_instance, "Line")
@@ -251,12 +260,15 @@ func _ready():
 		print("[WARNING] PetViewContainer: SidebarController not found, adding settings to SceneRoot as fallback")
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", palette_viewer_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", recolor_settings_instance)
+		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", texture_editor_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", paintball_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", move_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", line_mode_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", preset_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", auto_paintballer_settings_instance)
 		get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", project_settings_instance)
+
+	get_tree().root.get_node("Root/SceneRoot").call_deferred("add_child", shader_settings_instance)
 	
 	paintball_check_box.connect("toggled", self, "_on_paintball_mode_toggled")
 	preset_mode_check_box.connect("toggled", self, "_on_preset_mode_toggled")
@@ -273,6 +285,7 @@ func _ready():
 	line_mode_check_box.connect("toggled", self, "_on_line_mode_toggled")
 	move_mode_check_box.connect("toggled", self, "_on_move_mode_toggled")
 	recolor_mode_check_box.connect("toggled", self, "_on_recolor_mode_toggled")
+	texture_editor_mode_check_box.connect("toggled", self, "_on_texture_editor_mode_toggled")
 
 	tools_menu.connect(
 		"paintball_mode_for_ball_toggled", self, "_on_paintball_mode_for_ball_toggled"
@@ -322,6 +335,22 @@ func _ready():
 	if is_instance_valid(lnz_text_edit):
 		recolor_settings_instance.connect("recolor", lnz_text_edit, "_on_ToolsMenu_recolor")
 		recolor_settings_instance.connect("apply_batch_bucket", lnz_text_edit, "apply_batch_presets")
+
+	var shader_settings_btn = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/ShaderSettingsButton")
+	if is_instance_valid(shader_settings_btn):
+		shader_settings_btn.connect("pressed", self, "_on_ShaderSettingsButton_pressed")
+
+	if is_instance_valid(shader_settings_instance):
+		shader_settings_instance.connect("texture_rotation_mode_changed", self, "_on_texture_rotation_mode_changed")
+		shader_settings_instance.connect("texture_rotation_input_changed", self, "_on_texture_rotation_input_changed")
+		shader_settings_instance.connect("texture_affected_by_size_changed", self, "_on_texture_affected_by_size_changed")
+		shader_settings_instance.connect("texture_affected_by_rotation_changed", self, "_on_texture_affected_by_rotation_changed")
+		shader_settings_instance.connect("texture_flat_colors_changed", self, "_on_texture_flat_colors_changed")
+		# shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
+		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+		shader_settings_instance.connect("texture_affected_by_rotation_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 
 	diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 	diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
@@ -1888,6 +1917,7 @@ func _unhandled_key_input(event):
 		move_mode_check_box.pressed = false
 		preset_mode_check_box.pressed = false
 		recolor_mode_check_box.pressed = false
+		texture_editor_mode_check_box.pressed = false
 		project_mode_check_box.pressed = false
 		auto_paintballer_check_box.pressed = false
 		view_palette_check_box.pressed = false
@@ -1966,11 +1996,89 @@ func _set_camera_view(view_name: String):
 		"isolefttop":
 			camera_holder.rotation_degrees = Vector3(35, -45, 0)
 
+func _on_ShaderSettingsButton_pressed():
+	if is_instance_valid(shader_settings_instance):
+		shader_settings_instance.popup_centered()
+
+func _on_texture_rotation_mode_changed(mode):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
+			b.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_mode", mode)
+		for child in b.get_children():
+			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+				if child.get_node("MeshInstance").material_override:
+					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_mode", mode)
+
+func _on_texture_rotation_input_changed(input_vec):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
+			b.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_input", input_vec)
+		for child in b.get_children():
+			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+				if child.get_node("MeshInstance").material_override:
+					child.get_node("MeshInstance").material_override.set_shader_param("texture_rotation_input", input_vec)
+
+func _on_texture_affected_by_size_changed(is_affected):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
+			b.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_size", is_affected)
+		for child in b.get_children():
+			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+				if child.get_node("MeshInstance").material_override:
+					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_size", is_affected)
+
+func _on_texture_affected_by_rotation_changed(is_affected):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if b.has_node("MeshInstance") and b.get_node("MeshInstance").material_override:
+			b.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_rotation", is_affected)
+		for child in b.get_children():
+			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+				if child.get_node("MeshInstance").material_override:
+					child.get_node("MeshInstance").material_override.set_shader_param("texture_affected_by_rotation", is_affected)
+
+# func _on_texture_use_quadrants_changed(is_using: bool):
+# 	var all_balls = _get_all_visual_balls()
+# 	for b in all_balls:
+# 		# Update the main ball
+# 		if b.has_method("set_use_quadrants"):
+# 			b.set_use_quadrants(is_using)
+			
+# 		# Update any attached paintballs
+# 		for child in b.get_children():
+# 			if child.is_in_group("paintballs") and child.has_node("MeshInstance"):
+# 				var mat = child.get_node("MeshInstance").material_override
+# 				if mat:
+# 					mat.set_shader_param("use_quadrants", is_using)
+
+func _on_texture_flat_colors_changed(is_flat: bool):
+	var all_balls = _get_all_visual_balls()
+	for b in all_balls:
+		if is_instance_valid(b) and b.has_method("set_render_flat_colors"):
+			b.set_render_flat_colors(is_flat)
+			
+			for child in b.get_children():
+				if child.is_in_group("paintballs") and child.has_method("set_render_flat_colors"):
+					child.set_render_flat_colors(is_flat)
+
+	for l in get_tree().get_nodes_in_group("lines"):
+		if is_instance_valid(l) and l.has_method("set_render_flat_colors"):
+			l.set_render_flat_colors(is_flat)
+
+	for p in get_tree().get_nodes_in_group("polygons"):
+		if is_instance_valid(p) and p.has_method("set_render_flat_colors"):
+			p.set_render_flat_colors(is_flat)
+
+	if is_instance_valid(pet_node):
+		pet_node.render_flat_colors_global = is_flat
 
 # MODES
+
 func _on_ModePopup_about_to_show():
 	select_check_box.pressed = selecting_on
-
 
 func _on_SelectCheckBox_pressed():
 	selecting_on = select_check_box.pressed
@@ -2681,6 +2789,9 @@ func _deactivate_other_modes(active_mode_name: String):
 		auto_paintballer_check_box.pressed = false
 	if active_mode_name != "Recolor Mode":
 		recolor_mode_check_box.pressed = false
+	if active_mode_name != "Texture Editor":
+		texture_editor_mode_check_box.pressed = false
+		texture_editor_mode_check_box.pressed = false
 
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool):
@@ -4089,3 +4200,11 @@ func _on_pivot_changed():
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
+
+
+func _on_texture_editor_mode_toggled(is_on):
+	if is_on:
+		_deactivate_other_modes("Texture Editor")
+	texture_editor_mode = is_on
+	_update_mode_panel_visibility(texture_editor_settings_instance, is_on)
+	mark_ui_dirty()

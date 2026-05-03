@@ -14,6 +14,8 @@ uniform int palette_size = 256;
 const vec4 TRANSPARENT_COLOR_MAGENTA = vec4(1.0, 0.0, 1.0, 1.0);
 const int TRANSPARENT_COLOR_INDEX = 253;
 
+uniform bool render_flat_colors = false;
+
 uniform vec3 base_world_position;
 uniform int fuzz_amount = 0;
 uniform int base_ball_size = 1;
@@ -299,7 +301,7 @@ void fragment() {
     vec3 texture_color;
     bool is_transparent = false;
 
-    if (has_texture && color_index >= 10 && color_index < texture_limit) {
+    if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
         vec2 tex_coords = calculate_uvs(offset, SCREEN_UV, VIEWPORT_SIZE);
 
@@ -405,6 +407,7 @@ shader_param/debug_mode = true
 shader_param/is_babyz_mode = false
 shader_param/should_quantize = false
 shader_param/palette_size = 256
+shader_param/render_flat_colors = false
 shader_param/base_world_position = Vector3( 0, 0, 0 )
 shader_param/fuzz_amount = 0
 shader_param/base_ball_size = 10

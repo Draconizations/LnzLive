@@ -471,7 +471,7 @@ __meta__ = {
 
 [node name="FileOptionContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel"]
 margin_right = 114.0
-margin_bottom = 166.0
+margin_bottom = 200.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -539,6 +539,18 @@ custom_styles/disabled = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "User Settings"
+
+[node name="ShaderSettingsButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
+margin_right = 133.0
+margin_bottom = 30.0
+rect_min_size = Vector2( 0, 30 )
+custom_styles/hover = ExtResource( 20 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Shader Settings"
 
 [node name="FilePetfileButton" type="Button" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer"]
 visible = false
@@ -731,7 +743,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel"]
 margin_right = 119.0
-margin_bottom = 157.0
+margin_bottom = 180.0
 
 [node name="SelectCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
 margin_right = 185.0
@@ -847,6 +859,23 @@ custom_styles/hover_pressed = ExtResource( 19 )
 custom_styles/normal = ExtResource( 19 )
 custom_fonts/font = ExtResource( 28 )
 text = "Recolor Mode"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureEditorModeCheckBox" type="CheckBox" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ModeOptionButton/PopupPanel/VBoxContainer"]
+margin_top = 161.0
+margin_right = 185.0
+margin_bottom = 180.0
+hint_tooltip = "Activate Texture Editor"
+custom_styles/hover = ExtResource( 19 )
+custom_styles/pressed = ExtResource( 19 )
+custom_styles/focus = ExtResource( 19 )
+custom_styles/disabled = ExtResource( 19 )
+custom_styles/hover_pressed = ExtResource( 19 )
+custom_styles/normal = ExtResource( 19 )
+custom_fonts/font = ExtResource( 28 )
+text = "Texture Editor"
 __meta__ = {
 "_edit_use_anchors_": false
 }

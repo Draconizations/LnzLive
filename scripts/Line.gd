@@ -20,6 +20,8 @@ export var transparency_on        = true               setget set_transparency
 export var full_outline           = 0                  setget set_full_outline
 export var draw_order             = 0                  setget set_draw_order
 
+export var render_flat_colors     = false              setget set_render_flat_colors
+
 export var species                = 0                  setget set_species
 
 export var palette                = LnzLiveUtils.DEFAULT_PALETTE setget set_palette
@@ -37,6 +39,7 @@ func _ready():
 
 	# Set initial shader parameters
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
+	$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 
 	# Pass the original texture to the shader
 	set_texture(texture)
@@ -90,6 +93,11 @@ func set_draw_order(new_value):
 	draw_order = new_value
 	if has_node("MeshInstance") and $MeshInstance.material_override != null:
 		$MeshInstance.material_override.set_shader_param("draw_order", new_value)
+
+func set_render_flat_colors(new_value):
+	render_flat_colors = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("render_flat_colors", new_value)
 
 func set_texture_size(new_value):
 	texture_size = new_value

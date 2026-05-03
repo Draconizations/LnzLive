@@ -29,6 +29,8 @@ export var texture_size_raw       = Vector2(256, 256)
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
 
+export var render_flat_colors     = false              setget set_render_flat_colors
+
 export var species                = 0                  setget set_species
 
 export var palette                = LnzLiveUtils.DEFAULT_PALETTE setget set_palette
@@ -77,6 +79,7 @@ func _ready():
 	# Set initial shader parameters
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+	$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 
 	# Pass the original texture to the shader
 	set_texture(texture)
@@ -109,6 +112,11 @@ func set_tile_texture(enabled):
 	tile_texture = enabled
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
 	$MeshInstance.material_override.set_shader_param("tile_texture", tile_texture)
+
+func set_render_flat_colors(new_value):
+	render_flat_colors = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("render_flat_colors", new_value)
 
 func set_texture_size(new_value):
 	texture_size = new_value

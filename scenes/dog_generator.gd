@@ -54,6 +54,8 @@ var _pending_paintball_nodes = []
 var _auto_paintballs_data = []
 var _auto_paintball_nodes = []
 
+var render_flat_colors_global = false
+
 var _texture_cache = {}
 var _atlas_manifest = {}
 var _atlas_textures = {}
@@ -471,6 +473,8 @@ func recompose_model():
 	lnz.texture_list.clear()
 	lnz.custom_eyes.clear()
 	lnz.whisker_connections.clear()
+	lnz.no_texture_rotate.clear()
+	lnz.quadrant_balls.clear()
 
 	# Parse Sections
 	var ordered_sections = [
@@ -1134,6 +1138,11 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 	return texture
 
+
+func clear_texture_cache_for(filename: String):
+	if _texture_cache.has(filename):
+		_texture_cache.erase(filename)
+
 func clear_texture_cache():
 	_texture_cache.clear()
 	print("[STATUS] dog_generator: clear_texture_cache: texture cache cleared for model refresh")
@@ -1223,7 +1232,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			
 			balls_parent.add_child(node)
 			node.set_owner(root)
-			node.set_tile_texture(!no_texture_rotate.has(int(key)))
+			if no_texture_rotate.has(int(key)):
+				node.set_tile_texture(false)
+				if lnz.quadrant_balls.has(int(key)):
+					node.use_quadrants = true
+			else:
+				node.set_tile_texture(true)
+
 			node.set_species(species, is_babyz_mode)
 
 		node.ball_no = data.ball_no
@@ -1279,7 +1294,13 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.connect("ball_selected", self, "signal_ball_selected")
 			node.connect("ball_deleted", self, "signal_ball_deleted")
 
-			node.set_tile_texture(!no_texture_rotate.has(int(key)))
+			if no_texture_rotate.has(int(key)):
+				node.set_tile_texture(false)
+				if lnz.quadrant_balls.has(int(key)):
+					node.use_quadrants = true
+			else:
+				node.set_tile_texture(true)
+
 			node.set_species(species, is_babyz_mode)
 
 			if is_special_baby_ball(species, data.ball_no):
@@ -1356,6 +1377,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			if no_texture_rotate.has(int(key)):
 				node.set_tile_texture(false)
+				if lnz.quadrant_balls.has(int(key)):
+					node.use_quadrants = true
 				# node.set_tile_texture(!no_texture_rotate.has(int(key)))
 
 			var eye_dir = -1.0 if base_data.position.x < 0 else 1.0
@@ -1567,6 +1590,7 @@ func generate_polygons(
 				visual_polygon.texture = point1.texture
 			#visual_polygon.species = species
 			visual_polygon.set_species(species, is_babyz_mode)
+			visual_polygon.set_render_flat_colors(render_flat_colors_global)
 			visual_polygon.transparent_color = point1.transparent_color
 			#print("[INFO] dog_generator: generate_polygons: polygon color and texture set")
 
@@ -1676,6 +1700,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.texture = start.texture
 			#visual_line.species = species
 			visual_line.set_species(species, is_babyz_mode)
+			visual_line.set_render_flat_colors(render_flat_colors_global)
 			visual_line.transparent_color = start.transparent_color
 			visual_line.palette = start.palette
 
@@ -2182,6 +2207,7 @@ func add_pending_paintball(paintball_info):
 
 	#pb_visual_ball.species = lnz.species
 	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
+	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
 	pb_visual_ball.base_ball_no = base_ball_no
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
@@ -2243,6 +2269,7 @@ func _on_randomize_auto_paintballz(paintballz):
 
 		#pb_visual_ball.species = lnz.species
 		pb_visual_ball.set_species(lnz.species, is_babyz_mode)
+		pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
 		pb_visual_ball.base_ball_no = base_ball_no
 		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 		pb_visual_ball.base_ball_size = base_ball_node.ball_size

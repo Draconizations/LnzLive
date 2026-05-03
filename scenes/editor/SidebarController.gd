@@ -6,12 +6,13 @@ onready var spacer = get_node("SidebarSpacer")
 onready var collapse_btn = get_node("CollapseButton")
 
 var floating_layer: CanvasLayer = null
-const UTILITY_TABS = ["FileTree", "Palette", "Variations"]
+const UTILITY_TABS = ["FileTree", "Palette", "Variations", "Texture"]
 
 const TAB_ICONS = {
 	"FileTree": "res://resources/icons/ico_tab_file.png",
 	"Palette": "res://resources/icons/ico_tab_palette.png",
 	"Variations": "res://resources/icons/ico_tab_variation.png",
+	"Texture": "res://resources/icons/ico_tab_texture.png",
 	"Paint": "res://resources/icons/ico_tab_paint.png",
 	"Recolor": "res://resources/icons/ico_tab_recolor.png",
 	"AutoPaint": "res://resources/icons/ico_tab_autopaint.png",
@@ -137,6 +138,7 @@ func _on_tab_changed(tab_index: int):
 	match control.name:
 		"Palette": pet_view.view_palette_check_box.pressed = true
 		"Variations": pet_view.view_variations_check_box.pressed = true
+		"Texture": pet_view.texture_editor_mode_check_box.pressed = true
 		"Recolor": pet_view.recolor_mode_check_box.pressed = true
 		"Paint": pet_view.paintball_check_box.pressed = true
 		"Move": pet_view.move_mode_check_box.pressed = true

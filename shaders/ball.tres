@@ -48,6 +48,13 @@ uniform vec3 rotation = vec3(0.0);                // rotation in Euler angles
 uniform float tiling_unit = 128.0;                // global tiling scale (Reflet: tiles every 128 units in UV space)
 
 uniform bool tile_texture = true;                 // boolean flag for tiling texture vs no rotate texture
+uniform int texture_rotation_mode = 1;            // 0: static, 1: rotate, 2: input
+uniform vec2 texture_rotation_input = vec2(0.0, 0.0); // manual UV offset for rotate mode 2
+uniform bool texture_affected_by_size = true;
+uniform bool texture_affected_by_rotation = false;
+
+uniform bool use_quadrants = false;
+uniform bool render_flat_colors = false;
 
 uniform int highlight_color_index = -1;           // -1 for none
 
@@ -99,32 +106,99 @@ vec3 get_shifted_color(int palette_index) {
 
 vec2 calculate_uvs(vec2 offset) {
     vec2 tex_coords;
-    if (tile_texture) {
-        vec2 uv = offset / float(ball_size) + vec2(0.5);
-        uv *= float(ball_size) / texture_size_raw;
+    
+    if (use_quadrants) {
+        vec2 adj_offset = offset;
+        
+        // Base UV relative to the single quadrant space
+        vec2 local_uv = (floor(adj_offset) + 0.5) / (texture_size * 0.5) + vec2(0.5);
+        
+        // Bypass tiling to prevent bleeding into adjacent quadrants
+        local_uv = fract(local_uv);
+        
+        // Standard Petz inversion
+        local_uv.x = 1.0 - local_uv.x;
+        local_uv.y = 1.0 - local_uv.y;
+        
+        // Determine view angle relative to ball's local +Z axis
+        float angle = atan(view_forward.x, view_forward.z);
+        vec2 shift = vec2(0.0);
+        
+        float pi4 = 0.785398;
+        float pi34 = 2.356194;
+        
+        // DIRECTION
+        if (angle >= -pi4 && angle < pi4) {
+            shift = vec2(0.5, 0.0);       // Back (Top-Right, Quadrant B)
+        } else if (angle >= pi4 && angle < pi34) {
+            shift = vec2(0.5, 0.5);       // Left (Bottom-Right, Quadrant L)
+        } else if (angle >= -pi34 && angle < -pi4) {
+            shift = vec2(0.0, 0.5);       // Right (Bottom-Left, Quadrant R)
+        } else {
+            shift = vec2(0.0, 0.0);       // Front (Top-Left, Quadrant F)
+        }
+        
+        // Scale local UV (0..1) to quadrant size (0..0.5) and shift to correct corner
+        vec2 final_uv = local_uv * 0.5 + shift;
+        
+        if (is_atlas) {
+            vec2 atlas_pos = atlas_rect.xy;
+            vec2 atlas_dim = atlas_rect.zw;
+            tex_coords = (atlas_pos + final_uv * atlas_dim) / atlas_size;
+        } else {
+            tex_coords = final_uv;
+        }
+        
+    } else if (tile_texture) {
+        float effective_ball_size = texture_affected_by_size ? float(ball_size) : 100.0;
+        vec2 uv = offset / effective_ball_size + vec2(0.5);
+        
+        // This keeps the tiling scale consistent regardless of actual BMP dimensions.
+        uv *= effective_ball_size / texture_size;
 
         // attempt #1 to center texture better
-        //uv += vec2(0.5) - (float(ball_size) / texture_size_raw * 0.5);
+        //uv += vec2(0.5) - (effective_ball_size / texture_size_raw * 0.5);
 
-        // Grab true view rotation captured in the vertex shader
-        float m6 = view_forward.x;
-        float m7 = -view_forward.y; 
-        float m8 = view_forward.z;
+        if (texture_rotation_mode == 1) {
+            // Grab true view rotation captured in the vertex shader
+            float m6 = view_forward.x;
+            float m7 = -view_forward.y;
+            float m8 = view_forward.z;
 
-        // Calculate the turn angles in radians
-        float angle_u = atan(m6, m8);
-        float angle_v = atan(m7, m8);
+            // Calculate the turn angles in radians
+            float angle_u = atan(m6, m8);
+            float angle_v = atan(m7, m8);
 
-        // Slide texture a distance equal to angle * radius
-        float radius = float(ball_size) / 2.0;
-        
-        // Divide by texture_size_raw to convert that pixel distance into UV space
-        float shift_u = (angle_u * radius) / texture_size_raw.x;
-        float shift_v = (angle_v * radius) / texture_size_raw.y;
+            // Slide texture a distance equal to angle * radius
+            float radius = effective_ball_size / 2.0;
 
-        // Apply shifts
-        uv.x -= shift_u;
-        uv.y += shift_v;
+            // Divide by texture_size_raw to convert that pixel distance into UV space
+            float shift_u = (angle_u * radius) / texture_size_raw.x;
+            float shift_v = (angle_v * radius) / texture_size_raw.y;
+
+            // Apply shifts
+            uv.x -= shift_u;
+            uv.y += shift_v;
+        } else if (texture_rotation_mode == 2) {
+            uv.x -= texture_rotation_input.x;
+            uv.y += texture_rotation_input.y;
+
+            if (texture_affected_by_rotation) {
+                float m6 = view_forward.x;
+                float m7 = -view_forward.y;
+                float m8 = view_forward.z;
+
+                float angle_u = atan(m6, m8);
+                float angle_v = atan(m7, m8);
+
+                float radius = effective_ball_size / 2.0;
+                float shift_u = (angle_u * radius) / texture_size_raw.x;
+                float shift_v = (angle_v * radius) / texture_size_raw.y;
+
+                uv.x -= shift_u;
+                uv.y += shift_v;
+            }
+        }
 
         if (is_atlas) {
             vec2 tiled_uv = fract(uv);
@@ -305,7 +379,7 @@ void fragment() {
     vec3 texture_color;
     bool is_transparent = false;
 
-    if (has_texture && color_index >= 10 && color_index < texture_limit) {
+    if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
         vec2 tex_coords = calculate_uvs(offset);
 
@@ -544,6 +618,12 @@ shader_param/z_center_pet_world = Vector3( 0, 0, 0 )
 shader_param/rotation = Vector3( 0, 0, 0 )
 shader_param/tiling_unit = 128.0
 shader_param/tile_texture = true
+shader_param/texture_rotation_mode = 1
+shader_param/texture_rotation_input = Vector2( 0, 0 )
+shader_param/texture_affected_by_size = true
+shader_param/texture_affected_by_rotation = false
+shader_param/use_quadrants = false
+shader_param/render_flat_colors = false
 shader_param/highlight_color_index = -1
 shader_param/hide_fill = false
 shader_param/hide_outline = false

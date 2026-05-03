@@ -19,6 +19,8 @@ export var texture_size           = Vector2(256, 256)  setget set_texture_size
 export var texture_size_raw       = Vector2.ZERO
 export var transparent_color      = 0                  setget set_transparent_color
 
+export var render_flat_colors     = false              setget set_render_flat_colors
+
 export var species                = 0                  setget set_species
 
 export var palette                = LnzLiveUtils.DEFAULT_PALETTE setget set_palette
@@ -33,6 +35,7 @@ var is_highlighted = false
 func _ready():
 	# Duplicate material so each ball can have unique shader params
 	$MeshInstance.material_override = $MeshInstance.material_override.duplicate()
+	$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 
 	# Pass the original texture to the shader
 	set_texture(texture)
@@ -79,6 +82,11 @@ func set_ball_world_pos4(new_value):
 func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)
+
+func set_render_flat_colors(new_value):
+	render_flat_colors = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("render_flat_colors", new_value)
 
 func set_texture_size(new_value):
 	texture_size = new_value
