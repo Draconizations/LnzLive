@@ -1999,7 +1999,6 @@ func _on_ToolsMenu_print_ball_colors():
 
 
 func generate_whiskers(new_create: bool):
-	print("[STATUS] Node: generate_whiskers: starting (new_create=%s)" % new_create)
 	if lnz.species != KeyBallsData.Species.CAT:
 		print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
 		return
