@@ -545,6 +545,43 @@ margin_right = -5.0
 margin_bottom = -2.0
 custom_constants/separation = 5
 
+
+[node name="DesignTopOptions" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
+margin_right = 458.0
+margin_bottom = 24.0
+
+[node name="DesignTotalDiameterLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_top = 1.0
+margin_right = 97.0
+margin_bottom = 22.0
+custom_fonts/font = SubResource( 2 )
+text = "Total Diameter"
+
+[node name="DesignTotalDiameter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_left = 101.0
+margin_right = 175.0
+margin_bottom = 24.0
+hint_tooltip = "Minimum random size"
+min_value = 1.0
+max_value = 200.0
+value = 20.0
+
+[node name="DesignTotalDiameterMax" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_left = 179.0
+margin_right = 253.0
+margin_bottom = 24.0
+hint_tooltip = "Maximum random size"
+min_value = 1.0
+max_value = 200.0
+value = 30.0
+
+[node name="DesignPixelMode" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignTopOptions"]
+margin_left = 257.0
+margin_right = 343.0
+margin_bottom = 24.0
+custom_fonts/font = SubResource( 2 )
+text = "Pixel Size"
+
 [node name="GridContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_right = 458.0
 margin_bottom = 200.0
@@ -572,7 +609,7 @@ margin_bottom = 115.0
 margin_right = 116.0
 margin_bottom = 21.0
 custom_fonts/font = SubResource( 2 )
-text = "Brush Size"
+text = "Brush Size (30%)"
 
 [node name="BrushSizeSlider" type="HSlider" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions"]
 margin_top = 25.0
@@ -587,7 +624,7 @@ margin_top = 45.0
 margin_right = 116.0
 margin_bottom = 66.0
 custom_fonts/font = SubResource( 2 )
-text = "Brush Spacing"
+text = "Brush Spacing (10%)"
 
 [node name="BrushSpaceSlider" type="HSlider" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignOptions/DesignSliderOptions"]
 margin_top = 70.0
@@ -717,24 +754,6 @@ size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 max_value = 50.0
 
-[node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 148.0
-margin_top = 1.0
-margin_right = 205.0
-margin_bottom = 22.0
-size_flags_horizontal = 3
-custom_fonts/font = SubResource( 2 )
-text = "Rotate"
-
-[node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
-margin_left = 209.0
-margin_right = 299.0
-margin_bottom = 24.0
-hint_tooltip = "Randomize rotation of the entire design"
-size_flags_horizontal = 3
-custom_icons/updown = ExtResource( 4 )
-max_value = 180.0
-
 [node name="Label3" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_left = 303.0
 margin_top = 1.0
@@ -752,6 +771,32 @@ hint_tooltip = "Randomly offset the center of the stamp"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 max_value = 50.0
+
+[node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
+margin_left = 148.0
+margin_top = 1.0
+margin_right = 205.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+custom_fonts/font = SubResource( 2 )
+text = "Rotate"
+
+[node name="RotateJitter" type="SpinBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
+margin_left = 188.0
+margin_right = 262.0
+margin_bottom = 24.0
+hint_tooltip = "Randomize rotation of the entire design"
+size_flags_horizontal = 3
+custom_icons/updown = ExtResource( 4 )
+max_value = 180.0
+
+[node name="RotateFixed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
+margin_left = 266.0
+margin_right = 328.0
+margin_bottom = 24.0
+hint_tooltip = "Use exact rotation instead of random +/- variance"
+custom_fonts/font = SubResource( 2 )
+text = "Fixed"
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design"]
 margin_top = 354.0

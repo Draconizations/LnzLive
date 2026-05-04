@@ -335,20 +335,28 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 	var out_tex = PoolIntArray()
 	var out_anchored = PoolIntArray()
 
-	var pixel_mode = find_node("PixelMode").pressed 
+	var pixel_mode = find_node("DesignPixelMode").pressed
 	
-	var sampled_scale = override_footprint
-	if sampled_scale <= 0:
-		sampled_scale = rand_range(find_node("DiameterMin").value, find_node("DiameterMax").value)
+	var sampled_scale = rand_range(find_node("DesignTotalDiameter").value, find_node("DesignTotalDiameterMax").value)
+	if override_footprint > 0:
+		sampled_scale *= override_footprint
 	
-	var footprint_lnz = sampled_scale if pixel_mode else ball_lnz_diameter * (sampled_scale / 100.0)
+	var footprint_lnz = 0.0
+	if pixel_mode:
+		footprint_lnz = sampled_scale
+	else:
+		footprint_lnz = ball_lnz_diameter * (sampled_scale / 100.0)
 	
 	var d_jitter = find_node("DesignJitter").value if jitter_enabled else 0.0
 	var r_jitter = find_node("RotateJitter").value if jitter_enabled else 0.0
 	var s_jitter = find_node("SpreadJitter").value if jitter_enabled else 0.0
+	var r_fixed = find_node("RotateFixed").pressed if jitter_enabled else false
 
 	if jitter_enabled and r_jitter > 0:
-		design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
+		if r_fixed:
+			design_rotation_angle += deg2rad(r_jitter)
+		else:
+			design_rotation_angle += deg2rad(rand_range(-r_jitter, r_jitter))
 
 	var rotated_basis = basis.rotated(center_dir, design_rotation_angle)
 	var tangent_x = rotated_basis.x
@@ -378,7 +386,7 @@ func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, bal
 		out_pos.append(pos_on_plane.normalized())
 
 		var slot_scale = float(slot_data.get("scale", 100)) / 100.0
-		var pb_size_units = footprint_lnz * (float(pb.diameter) / DESIGN_CANVAS_SIZE) * slot_scale
+		var pb_size_units = footprint_lnz * (float(pb.diameter) / 100.0) * slot_scale
 		
 		if d_jitter > 0:
 			pb_size_units *= (1.0 + rand_range(-d_jitter/100.0, d_jitter/100.0))
@@ -449,6 +457,10 @@ func _connect_design_signals():
 	find_node("DesignCanvas").connect("design_changed", self, "_on_setting_changed")
 	find_node("ClearGridButton").connect("pressed", find_node("DesignCanvas"), "clear")
 	find_node("BrushSizeSlider").connect("value_changed", self, "_on_brush_size_changed")
+	find_node("DesignTotalDiameter").connect("value_changed", self, "_on_setting_changed")
+	find_node("DesignTotalDiameterMax").connect("value_changed", self, "_on_setting_changed")
+	find_node("RotateFixed").connect("toggled", self, "_on_setting_changed")
+	find_node("DesignPixelMode").connect("toggled", self, "_on_setting_changed")
 
 	find_node("AddSlotButton").connect("pressed", self, "_on_AddSlotButton_pressed")
 	find_node("RemoveSlotButton").connect("pressed", self, "_on_RemoveSlotButton_pressed")
@@ -666,9 +678,11 @@ func _save_pattern_file(path):
 
 func _on_brush_size_changed(value):
 	find_node("DesignCanvas").brush_size = value
+	find_node("BrushSizeLabel").text = "Brush Size (" + str(value) + "%)"
 
 func _on_brush_space_changed(value):
 	find_node("DesignCanvas").brush_spacing = value
+	find_node("BrushSpaceLabel").text = "Brush Spacing (" + str(value) + "%)"
 
 func _refresh_slot_buttons():
 	_populate_slots_tree()
@@ -710,8 +724,16 @@ func _populate_slots_tree():
 		# Col 0: Display Color
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CUSTOM)
 		# TreeItem doesn't support easy bg color per cell
-		var icon = _create_color_icon(slot.display_color)
-		item.set_icon(0, icon)
+		var icon = _create_color_icon(slot.color)
+		if icon:
+			var img_data = icon.get_data()
+			img_data.lock()
+			slot.display_color = img_data.get_pixel(0, 0)
+			img_data.unlock()
+			item.set_icon(0, icon)
+		else:
+			var default_icon = _create_color_icon(slot.display_color)
+			item.set_icon(0, default_icon)
 		item.set_editable(0, true)
 
 		# Col 1: LNZ Color (String)
@@ -757,14 +779,35 @@ func _populate_slots_tree():
 
 		item.set_metadata(0, i)
 
-func _create_color_icon(color: Color) -> Texture:
+func get_color_preview_icon(color_index: int) -> ImageTexture:
+	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if not pet_node: return null
+	if pet_node.has_method("generate_color_icon"):
+		return pet_node.generate_color_icon(color_index)
+	return null
+
+func _create_color_icon(color_str) -> Texture:
+	if typeof(color_str) == TYPE_COLOR:
+		var img = Image.new()
+		img.create(16, 16, false, Image.FORMAT_RGBA8)
+		img.fill(color_str)
+		var tex = ImageTexture.new()
+		tex.create_from_image(img)
+		return tex
+
+	var color_list = LnzLiveUtils.parse_number_list(str(color_str))
+	if color_list and color_list.size() > 0:
+		var icon = get_color_preview_icon(color_list[0])
+		if icon:
+			return icon
+
+	# Fallback
 	var img = Image.new()
 	img.create(16, 16, false, Image.FORMAT_RGBA8)
-	img.fill(color)
+	img.fill(Color.white)
 	var tex = ImageTexture.new()
 	tex.create_from_image(img)
 	return tex
-
 func _on_SlotsTree_item_edited():
 	if _is_loading_settings: return
 
@@ -785,6 +828,16 @@ func _on_SlotsTree_item_edited():
 	design_color_slots[idx].group = int(item.get_range(6))
 	design_color_slots[idx].anchored = item.is_checked(7)
 	design_color_slots[idx].scale = int(item.get_range(8))
+
+	if col == 1:
+		var new_icon = _create_color_icon(design_color_slots[idx].color)
+		item.set_icon(0, new_icon)
+		if new_icon:
+			var img_data = new_icon.get_data()
+			img_data.lock()
+			design_color_slots[idx].display_color = img_data.get_pixel(0, 0)
+			img_data.unlock()
+			item.set_icon(0, new_icon)
 
 	save_settings()
 #	update_preview()
@@ -903,6 +956,9 @@ func save_settings():
 
 	config.set_value("DesignMode", "design_paintballs", find_node("DesignCanvas").design_paintballs)
 	config.set_value("DesignMode", "brush_size", find_node("BrushSizeSlider").value)
+	config.set_value("DesignMode", "design_total_diameter", find_node("DesignTotalDiameter").value)
+	config.set_value("DesignMode", "design_total_diameter_max", find_node("DesignTotalDiameterMax").value)
+	config.set_value("DesignMode", "design_pixel_mode", find_node("DesignPixelMode").pressed)
 	config.set_value("DesignMode", "color_slots_v2", design_color_slots)
 
 	config.set_value("DesignMode", "mirror_x", find_node("MirrorX").pressed)
@@ -910,6 +966,7 @@ func save_settings():
 	config.set_value("DesignMode", "canvas_eraser", find_node("CanvasEraser").pressed)
 	config.set_value("DesignMode", "design_jitter", find_node("DesignJitter").value)
 	config.set_value("DesignMode", "rotate_jitter", find_node("RotateJitter").value)
+	config.set_value("DesignMode", "rotate_fixed", find_node("RotateFixed").pressed)
 	config.set_value("DesignMode", "spread_jitter", find_node("SpreadJitter").value)
 
 	var save_err = config.save(SETTINGS_PATH)
@@ -958,7 +1015,13 @@ func load_settings():
 		canvas.emit_signal("design_changed")
 
 	find_node("BrushSizeSlider").value = config.get_value("DesignMode", "brush_size", 30.0)
+	find_node("DesignTotalDiameter").value = config.get_value("DesignMode", "design_total_diameter", 20.0)
+	find_node("DesignTotalDiameterMax").value = config.get_value("DesignMode", "design_total_diameter_max", 30.0)
+	find_node("DesignPixelMode").pressed = config.get_value("DesignMode", "design_pixel_mode", false)
 	find_node("DesignCanvas").brush_size = find_node("BrushSizeSlider").value
+	find_node("BrushSizeLabel").text = "Brush Size (" + str(find_node("BrushSizeSlider").value) + "%)"
+	find_node("BrushSpaceLabel").text = "Brush Spacing (" + str(find_node("BrushSpaceSlider").value) + "%)"
+
 
 	var loaded_slots_v2 = config.get_value("DesignMode", "color_slots_v2", [])
 	if loaded_slots_v2.size() > 0:
@@ -978,6 +1041,7 @@ func load_settings():
 	find_node("CanvasEraser").pressed = config.get_value("DesignMode", "canvas_eraser", false)
 	find_node("DesignJitter").value = config.get_value("DesignMode", "design_jitter", 0.0)
 	find_node("RotateJitter").value = config.get_value("DesignMode", "rotate_jitter", 0.0)
+	find_node("RotateFixed").pressed = config.get_value("DesignMode", "rotate_fixed", false)
 	find_node("SpreadJitter").value = config.get_value("DesignMode", "spread_jitter", 0.0)
 
 	_on_design_tool_toggled(null)
@@ -1015,9 +1079,13 @@ func _on_reset_defaults_pressed():
 	find_node("MirrorY").pressed = false
 	find_node("CanvasEraser").pressed = false
 	find_node("DesignJitter").value = 0.0
+	find_node("RotateFixed").pressed = false
 
 	find_node("DesignCanvas").clear()
 	find_node("BrushSizeSlider").value = 30.0
+	find_node("DesignTotalDiameter").value = 20.0
+	find_node("DesignTotalDiameterMax").value = 30.0
+	find_node("DesignPixelMode").pressed = false
 
 	design_color_slots = [
 		{

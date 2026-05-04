@@ -3135,15 +3135,12 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 			var tangent_right = tangent_up.cross(normal).normalized()
 			var basis = Basis(tangent_right, normal, tangent_up)
 
-			var current_footprint = paintball_settings_instance.find_node("DiameterMax").value
-			var scaled_footprint = current_footprint * design_scale_multiplier
-
 			var pattern_pbs = paintball_settings_instance.paste_paintball_design(
 				normal,
 				basis,
 				target_ball.ball_no,
 				lnz_diam,
-				scaled_footprint,
+				design_scale_multiplier,
 				design_rotation_angle
 			)
 

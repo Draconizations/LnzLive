@@ -2178,7 +2178,7 @@ func clear_pending_paintballs():
 
 
 func add_pending_paintball(paintball_info):
-	print("[STATUS] Node: add_pending_paintball: adding paintball to base ball %d" % paintball_info.base_ball_no)
+	# print("[STATUS] Node: add_pending_paintball: adding paintball to base ball %d" % paintball_info.base_ball_no)
 	_pending_paintballs_data.append(paintball_info)
 	var base_ball_no = paintball_info.base_ball_no
 	if !ball_map.has(base_ball_no):
