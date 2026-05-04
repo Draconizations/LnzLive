@@ -860,12 +860,12 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 	}
 
 func _get_viewport_pos_from_screen_pos(screen_pos: Vector2) -> Vector2:
-	return (screen_pos - (rect_size / 2.0)) / tex.rect_scale + Vector2(500, 500)
-
+	var global_pos = self.rect_global_position + screen_pos
+	return tex.get_global_transform().affine_inverse().xform(global_pos)
 
 func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
-	return ((viewport_pos - Vector2(500, 500)) * tex.rect_scale) + (rect_size / 2.0)
-
+	var global_pos = tex.get_global_transform().xform(viewport_pos)
+	return global_pos - self.rect_global_position
 
 # TBD: refactor _gui_input with separate functions:
 func _handle_box_selection(event: InputEvent) -> bool:
@@ -1347,24 +1347,16 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 			var closest_paintball = null
 			var min_dist_sq = INF
-			var click_pos = event.global_position  # Use global mouse position
-
-			var viewport_global_offset = tex.get_global_transform().origin
+			var click_pos_local = event.position  # Use local mouse position
 
 			for pb_node in pending_paintballs:
 				if not is_instance_valid(pb_node) or not pb_node.is_inside_tree():
 					continue
 
-				# Project world pos to 2D screen pos (local to viewport)
 				var projected_pos_local = camera.unproject_position(pb_node.global_transform.origin)
-
-				# Apply ViewportContainer scale and global offset to get ball pos in raw global screen coords
-				var paintball_global_pos = (
-					viewport_global_offset
-					+ (projected_pos_local * tex.rect_scale)
-				)
-
-				var dist_sq = click_pos.distance_squared_to(paintball_global_pos)
+				var paintball_screen_pos = _get_screen_pos_from_viewport_pos(projected_pos_local)
+				
+				var dist_sq = click_pos_local.distance_squared_to(paintball_screen_pos)
 
 				if dist_sq < min_dist_sq:
 					min_dist_sq = dist_sq
@@ -1436,12 +1428,7 @@ func _gui_input(event):
 	# Open Tools Menu via right-click on hovered ball:
 	if event is InputEventMouseButton and event.button_index == BUTTON_RIGHT and event.pressed:
 		get_tree().set_input_as_handled()
-		var hover = get_intended_ball(
-			(
-				(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-				+ Vector2(500, 500)
-			)
-		)
+		var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if hover:
 			tools_menu.selected_visual_ball = hover
 		else:
@@ -1476,13 +1463,8 @@ func _gui_input(event):
 		if is_instance_valid(_last_selected_by_tab):
 			hover = _last_selected_by_tab
 		else:
-			hover = get_intended_ball(
-				(
-					(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-					+ Vector2(500, 500)
-				)
-			)
-
+			hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
+			
 		if hover:
 			drag_ball = hover
 			is_dragging = true
@@ -1524,10 +1506,7 @@ func _gui_input(event):
 			drag_ball.set_ball_size(snapped_visual)
 		else:
 			Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
-			var real_center = rect_position + rect_size / 2.0
-			var offset = event.position - real_center
-			offset /= tex.rect_scale
-			var screen_pos = Vector2(500, 500) + offset
+			var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
 			var ray_o = camera.project_ray_origin(screen_pos)
 			var ray_d = camera.project_ray_normal(screen_pos)
 			var plane_n = camera.global_transform.basis.z.normalized()
@@ -1605,12 +1584,7 @@ func _gui_input(event):
 		and selecting_on
 		and not move_mode
 	):
-		var hover = get_intended_ball(
-			(
-				(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-				+ Vector2(500, 500)
-			)
-		)
+		var hover = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if hover:
 			set_active_selected_ball(hover)
 		else:
@@ -1663,9 +1637,7 @@ func _gui_input(event):
 		and not paintball_mode
 		and not is_instance_valid(_last_selected_by_tab)
 	):
-		var real_center = rect_position + rect_size / 2.0
-		var offset = (event.position - real_center) / tex.rect_scale
-		var screen_pos = Vector2(500, 500) + offset
+		var screen_pos = _get_viewport_pos_from_screen_pos(event.position)
 
 		var from = camera.project_ray_origin(screen_pos)
 		var to = from + camera.project_ray_normal(screen_pos) * 950
@@ -1715,12 +1687,7 @@ func _gui_input(event):
 		and event.button_index == BUTTON_LEFT
 		and event.pressed
 	):
-		var target_ball = get_intended_ball(
-			(
-				(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-				+ Vector2(500, 500)
-			)
-		)
+		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 
 		if target_ball:
 			auto_paintballer_settings_instance.add_affected_ball(target_ball.ball_no)
@@ -1739,12 +1706,7 @@ func _gui_input(event):
 		and event.button_index == BUTTON_LEFT
 		and event.pressed
 	):
-		var target_ball = get_intended_ball(
-			(
-				(event.position - (rect_position + rect_size / 2.0)) / tex.rect_scale
-				+ Vector2(500, 500)
-			)
-		)
+		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			recolor_settings_instance.queue_bucket_change(target_ball)
 			get_tree().set_input_as_handled()
@@ -3069,10 +3031,7 @@ func _finalize_freeline():
 			point
 			+ Vector2(rand_range(-jitter, jitter), rand_range(-jitter, jitter))
 		)
-		var screen_pos = (
-			(jittered_point - (rect_position + rect_size / 2.0)) / tex.rect_scale
-			+ Vector2(500, 500)
-		)
+		var screen_pos = _get_viewport_pos_from_screen_pos(jittered_point)
 
 		var point_target_ball = stroke_target_ball
 		if not point_target_ball:  # If no stroke-wide target, use hover mode
