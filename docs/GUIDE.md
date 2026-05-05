@@ -45,6 +45,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Tools** | `A` | Open/Close Auto Paintballer |
 | **Tools** | `T` | Open/Close Palette Viewer |
 | **Tools** | `V` | Open/Close Variation Viewer |
+| **Tools** | none yet | Open/Close Texture Editor |
 | **Tools** | `H` | Capture `[Head Shot]` |
 | **Text Editing** | `CTRL` + `S` | Apply and Save Changes |
 | **Text Editing** | `CTRL` + `Q` | Flash Ballz / Linez |
@@ -238,6 +239,12 @@ This dropdown determines the algorithm used to place paintballs.
 
 Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
 
+#### Variation Viewer
+
+![Variation Viewer icon](resources/icons/ico_tab_variation_2x.png)
+
+Toggle and view variations across LNZ sections, if present.
+
 #### Color Swap
 
 The "Color Swap" option opens the Recolor Mode where you can find Color Swap, functions that can be used to quickly recolor and retexture ballz, paintballz, and linez. Enter the color and texture mappings you want to apply (e.g., 35 -> 15). Use the checkboxes to select to which LNZ elements to apply the swap. If you select "Ramp", then all corresponding color members of a given ramp (even non-texturable ramps like 150s) will be converted. The "Autofill" button will populate the most frequent color and texture pairs present across `[Ballz Info]`, `[Add Ball]`, and `[Paintball]` sections. The "Randomize" button will populate swap colors and textures randomly, and, if "Ramp" is checked, then will restrict to texturable ramps (10s, 20s, ..., 140s).
@@ -391,6 +398,16 @@ In `Shape Mode`, you can quickly prototype body shapes. This mode allows you to 
 
 Coming soon!
 
+#### Texture Editor
+
+![Texture Editor icon](resources/icons/ico_tab_texture_2x.png)
+
+TBD
+
+##### Tutorial: Texture Editor
+
+Coming soon!
+
 ### Render
 
 Here, you will find toggles for what elements should be drawn in the pet view. Transparency on color index `253` (typically, magenta in default game palette) can be toggled on or off. Special ballz refers to transient ballz like tears in Babyz that do not usually render but aren't explicitly omitted in `[Omissions]`.
@@ -417,6 +434,10 @@ This XYZ axis indicates model's left (L) and right (R) and negative/positive dir
 ### Background Color Selector
 
 Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
+
+### Reference Images
+
+Clicking on the picture icon will toggle the reference image, which you can control using "Reference Image" settings popup under File. You can set these images to show in the background and/or as a popup, and whether they zoom with your current zoom level.
 
 ### Eyelid Toggle
 
