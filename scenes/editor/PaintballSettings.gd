@@ -26,6 +26,8 @@ onready var paintballz_tree = find_node("PaintballzTree")
 
 #var ball_scene = preload("res://Ball.tscn")
 #var paintball_scene = preload("res://Paintball.tscn")
+
+var dog_generator = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
 
@@ -91,6 +93,14 @@ func _ready():
 	
 	panel.restore_position(default_pos)
 
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_palette_changed")
+
 	_connect_settings_signals()
 	_connect_design_signals()
 
@@ -130,6 +140,33 @@ func _on_ClearButton_pressed():
 func _on_DeleteModeCheckBox_toggled(is_on):
 	print("[STATUS] PaintballSettings: delete_mode_toggled signal emitted, is_on: %s" % is_on)
 	emit_signal("delete_mode_toggled", is_on)
+
+func _on_palette_changed(palette_name = ""):
+	if not dog_generator or not dog_generator.current_palette_texture:
+		return
+		
+	var img = dog_generator.current_palette_texture.get_data()
+	img.lock()
+	
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+	
+	for slot in design_color_slots:
+		# Parse the color string (e.g. "105" or "105, 95") and grab the first index
+		var color_list = LnzLiveUtils.parse_number_list(str(slot.color))
+		if color_list and color_list.size() > 0:
+			var index = int(color_list[0])
+			
+			var x = index % img_width
+			var y = index / img_width
+			
+			if x < img_width and y < img_height:
+				slot.display_color = img.get_pixel(x, y)
+	
+	img.unlock()
+	
+	_refresh_slot_buttons()
+	find_node("DesignCanvas").update()
 
 func is_design_mode_active():
 	return find_node("TabContainer").current_tab == 1
@@ -548,6 +585,8 @@ func _load_pattern_file(path):
 		file.close()
 	else:
 		print("[ERROR] PaintballSettings: failed to open pattern file for reading: %s" % path)
+	
+	_on_palette_changed()
 
 func _on_clear_design_pressed():
 	print("[STATUS] PaintballSettings: design canvas cleared")
@@ -606,6 +645,7 @@ func _on_clear_design_pressed():
 	
 	_refresh_slot_buttons()
 	find_node("DesignCanvas").emit_signal("design_changed")
+	_on_palette_changed()
 
 func _on_export_pattern_pressed():
 	var author = find_node("PatternInfoDialog").find_node("AuthorEdit").text.strip_edges()
@@ -808,6 +848,7 @@ func _create_color_icon(color_str) -> Texture:
 	var tex = ImageTexture.new()
 	tex.create_from_image(img)
 	return tex
+
 func _on_SlotsTree_item_edited():
 	if _is_loading_settings: return
 
@@ -840,6 +881,7 @@ func _on_SlotsTree_item_edited():
 			item.set_icon(0, new_icon)
 
 	save_settings()
+	_on_palette_changed()
 #	update_preview()
 
 func _on_SlotsTree_cell_selected():
@@ -1048,6 +1090,7 @@ func load_settings():
 
 	_refresh_slot_buttons()
 	_is_loading_settings = false
+	_on_palette_changed()
 
 func _on_reset_defaults_pressed():
 	print("[STATUS] PaintballSettings: resetting to default settings")
@@ -1134,3 +1177,4 @@ func _on_reset_defaults_pressed():
 
 	_is_loading_settings = false
 	save_settings()
+	_on_palette_changed()

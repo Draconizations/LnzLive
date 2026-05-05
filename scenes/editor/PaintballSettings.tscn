@@ -753,7 +753,7 @@ margin_bottom = 24.0
 hint_tooltip = "Randomize position/size of individual paintballs"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
-max_value = 50.0
+max_value = 100.0
 
 [node name="Label3" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_left = 212.0
@@ -771,7 +771,7 @@ margin_bottom = 24.0
 hint_tooltip = "Randomly offset the center of the stamp"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
-max_value = 50.0
+max_value = 100.0
 
 [node name="Label2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_top = 32.0
@@ -789,7 +789,7 @@ margin_bottom = 57.0
 hint_tooltip = "Randomize rotation of the entire design"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
-max_value = 180.0
+max_value = 360.0
 
 [node name="RotateFixed" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/TabContainer/Design/DesignJitterContainer"]
 margin_left = 212.0
