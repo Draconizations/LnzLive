@@ -168,7 +168,7 @@ The text editor displays the raw LNZ data. You can edit the data directly and se
 
 #### Auto Paintballer
 
-![Auto Paintballer icon](resources/icons/ico_tab_autopaint_2x.png)
+![Auto Paintballer icon](../resources/icons/ico_tab_autopaint_2x.png)
 
 The `Auto Paintballer` is tool for procedurally generating either simple spots, complex patterns, or intricate fractals using `[Paintballz]`, which get placed according to selected distribution modes.
 
@@ -235,13 +235,13 @@ This dropdown determines the algorithm used to place paintballs.
 
 #### View Palette
 
-![Palette Viewer icon](resources/icons/ico_tab_palette_2x.png)
+![Palette Viewer icon](../resources/icons/ico_tab_palette_2x.png)
 
 Pops open a numbered preview of the paletted color index matching whichever game species and color palette is loaded currently.
 
 #### Variation Viewer
 
-![Variation Viewer icon](resources/icons/ico_tab_variation_2x.png)
+![Variation Viewer icon](../resources/icons/ico_tab_variation_2x.png)
 
 Toggle and view variations across LNZ sections, if present.
 
@@ -274,7 +274,7 @@ Coming soon!
 
 #### Preset Mode
 
-![Preset Mode icon](resources/icons/ico_tab_preset_2x.png)
+![Preset Mode icon](../resources/icons/ico_tab_preset_2x.png)
 
 In `Preset Mode`, you can copy properties of existing ballz, including any applied paintballz, and apply these properties onto other ballz. It is here that you can also enter paintballz LNZ and have those paintballz get added to other ballz. You can also rotate those paintballz designs before applying.
 
@@ -300,7 +300,7 @@ Coming soon!
 
 #### Line Mode
 
-![Line Mode icon](resources/icons/ico_tab_line_2x.png)
+![Line Mode icon](../resources/icons/ico_tab_line_2x.png)
 
 In `Line Mode`, you can click a series of start and end ballz to connect linez with the properties specified.
 
@@ -316,7 +316,7 @@ Coming soon!
 
 #### Paintball Mode
 
-![Paintball Mode icon](resources/icons/ico_tab_paint_2x.png)
+![Paintball Mode icon](../resources/icons/ico_tab_paint_2x.png)
 
 In `Paintball Mode`, you can place prepared paintballs by point-and-click. This mode can be entered via the top menu, left panel tab, or by right-clicking a specific ball to lock editing to that ball. 
 
@@ -366,7 +366,7 @@ Coming soon!
 
 #### Move Mode
 
-![Move Mode icon](resources/icons/ico_tab_move_2x.png)
+![Move Mode icon](../resources/icons/ico_tab_move_2x.png)
 
 Move Mode provides advanced visual editing for multiple balls:
 
@@ -390,7 +390,7 @@ Coming soon!
 
 #### Shape Mode
 
-![Shape Mode icon](resources/icons/ico_tab_shape_2x.png)
+![Shape Mode icon](../resources/icons/ico_tab_shape_2x.png)
 
 In `Shape Mode`, you can quickly prototype body shapes. This mode allows you to set ranges and randomize entries from `[Project Ball]` and extension and scale sections (e.g., `[Leg Extension]` or `[Default Scales]`). For projections, the defaults given per species represent a normal distribution of fixed-projected ball pairs from official breed files, but the min and max projection values can be modified or you can add new fixed-projected pairs. You can also flag a pair with `Mirror` to also write out the same values to any ballz with left/right equivalents. If you check `Lock` on any entry in the table, then those values will not change when you randomize. When you are happy with the values, then hit `Apply Projections to LNZ` to write to LNZ. Order of `[Project Ball]` entries does matter for how ballz get placed and influence eachother, so you can also alter the order of planned entries in the properties panel.
 
@@ -400,7 +400,7 @@ Coming soon!
 
 #### Texture Editor
 
-![Texture Editor icon](resources/icons/ico_tab_texture_2x.png)
+![Texture Editor icon](../resources/icons/ico_tab_texture_2x.png)
 
 TBD
 
