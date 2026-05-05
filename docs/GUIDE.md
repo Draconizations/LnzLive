@@ -429,8 +429,6 @@ This option offers links to several handy resources, including [Carolyn Horn's h
 
 This XYZ axis indicates model's left (L) and right (R) and negative/positive directions for X, Y, and Z axes.
 
-> Note: *LnzLive camera view is actually mirrored over the X axis from the view in-game. This will get fixed, someday.*
-
 ### Background Color Selector
 
 Clicking on the square after the menu options brings up a color selector, which you can use to pick the background color of the pet view.
