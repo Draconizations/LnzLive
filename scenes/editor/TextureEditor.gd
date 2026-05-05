@@ -917,13 +917,23 @@ func _on_LoadButton_pressed():
 		_initialize_canvas()
 
 		active_image.lock()
+		
+		var is_index_map = false
+		if loaded_tex.resource_path.begins_with("res://") or img.get_format() == Image.FORMAT_R8 or img.get_format() == Image.FORMAT_L8:
+			is_index_map = true
+			
 		for y in range(canvas_size.y):
 			for x in range(canvas_size.x):
 				var c = img.get_pixel(x, y)
 				if c.a == 0:
 					active_image.set_pixel(x, y, _get_background_color())
 				else:
-					var idx = _get_closest_palette_index(c)
+					var idx = -1
+					if is_index_map:
+						idx = int(round(c.r * 255.0))
+					else:
+						idx = _get_closest_palette_index(c)
+						
 					if idx >= 0 and idx < palette_colors.size():
 						active_image.set_pixel(x, y, palette_colors[idx])
 					else:
