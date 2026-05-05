@@ -21,6 +21,67 @@ extends Control
 
 var ui_is_dirty := true
 
+var ref_image_config = {}
+
+func _on_reference_image_updated(config_data):
+	ref_image_config = config_data
+	_update_reference_image_bg()
+
+func _update_reference_image_bg():
+	var bg = reference_image_bg
+	if not bg: return
+
+	if ref_image_config.empty() or not ref_image_config.get("show_bg", false) or ref_image_config.get("path", "") == "":
+		bg.texture = null
+		bg.hide()
+		return
+
+	if bg.texture == null or bg.texture.resource_path != ref_image_config.path:
+		var image = Image.new()
+		var err = image.load(ref_image_config.path, false, false)
+		if err == OK:
+			var texture = ImageTexture.new()
+			texture.create_from_image(image)
+			texture.resource_path = ref_image_config.path
+			bg.texture = texture
+			bg.show()
+		else:
+			bg.texture = null
+			bg.hide()
+	else:
+		bg.show()
+
+	if is_instance_valid(tex):
+		var scene_root = tex.get_parent()
+		if bg.get_parent() != scene_root:
+			bg.get_parent().remove_child(bg)
+			scene_root.add_child(bg)
+			scene_root.move_child(bg, tex.get_index())
+
+		var current_zoom = abs(tex.rect_scale.y) if ref_image_config.get("scale", false) else 1.0
+
+		if ref_image_config.get("center", true):
+			bg.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			bg.rect_position = tex.rect_position
+			bg.rect_size = tex.rect_size
+			bg.rect_pivot_offset = tex.rect_size / 2.0
+			bg.rect_scale = Vector2(current_zoom, current_zoom)
+		else:
+			bg.stretch_mode = TextureRect.STRETCH_KEEP
+			var img_size = bg.texture.get_size() if bg.texture else Vector2.ZERO
+			
+			bg.rect_size = img_size
+			bg.rect_scale = Vector2(current_zoom, current_zoom)
+			bg.rect_pivot_offset = Vector2.ZERO
+			
+			var offset_x = ref_image_config.get("x", 0)
+			var offset_y = ref_image_config.get("y", 0)
+			var scaled_img_size = img_size * current_zoom
+			var center_start = tex.rect_position + (tex.rect_size / 2.0) - (scaled_img_size / 2.0)
+			
+			bg.rect_position = center_start + Vector2(offset_x, offset_y)
+
+
 onready var default_font = get_font("font")
 
 onready var file_tree = get_tree().root.get_node(
@@ -48,6 +109,8 @@ onready var tex = get_tree().root.get_node("Root/SceneRoot/ViewportContainer") a
 onready var auto_paintballer_check_box = find_node("AutoPaintballerModeCheckBox")
 
 onready var view_palette_check_box = find_node("ViewPaletteButton")
+
+onready var reference_image_bg = get_tree().root.find_node("ReferenceImageBg", true, false)
 
 onready var view_variations_check_box = find_node("ViewVariationsCheckBox")
 onready var variation_tree = get_tree().root.get_node(
@@ -437,6 +500,7 @@ func get_lnz_scale() -> float:
 
 
 func _process(_delta):
+	_update_reference_image_bg()
 	if is_instance_valid(_overlay_camera):
 		_sync_overlay()
 

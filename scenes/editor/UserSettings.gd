@@ -83,6 +83,11 @@ func _ready():
 
 	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
 
+func _on_toggle_ref_image_btn_pressed():
+	var ref_settings = get_tree().root.find_node("ReferenceImageSettings", true, false)
+	if ref_settings:
+		ref_settings.toggle_reference_image()
+
 func _on_user_settings_pressed():
 	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect)
 	settings_dialog.popup_centered()

@@ -606,7 +606,7 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 	
 	while filename != "":
 		if dir.current_is_dir():
-			if is_root and (filename == "textures" or filename == "palettes"):
+			if is_root and (filename == "textures" or filename == "palettes" or filename == "references"):
 				filename = dir.get_next()
 				continue
 			folders.append({"name": filename, "time": 0})
@@ -1273,7 +1273,7 @@ func _get_all_subdirs(path: String, out_array: Array, depth: int = 0):
 		var file_name = dir.get_next()
 		while file_name != "":
 			if dir.current_is_dir():
-				if path == user_file_location and (file_name == "textures" or file_name == "palettes"):
+				if path == user_file_location and (file_name == "textures" or file_name == "palettes" or file_name == "references"):
 					file_name = dir.get_next()
 					continue
 					
@@ -1289,6 +1289,11 @@ func _on_NewFolderDialog_confirmed():
 	
 	var folder_name = new_folder_input.text.strip_edges()
 	if folder_name == "": return
+	
+	var protected_names = ["textures", "palettes", "references"]
+	if folder_name.to_lower() in protected_names:
+		print("[WARNING] FileTree: Cannot create folder with protected name: ", folder_name)
+		return
 	
 	var first_item = items[0]
 	var first_meta = str(first_item.get_metadata(0))
