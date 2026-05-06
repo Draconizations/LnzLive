@@ -2188,16 +2188,16 @@ func get_visual_state_for_ball(b):
 				return b.OutlineState.ACTIVE_SELECTED
 			return b.OutlineState.NONE
 
-
 func last_selected_is_valid():
 	return last_selected != null and is_instance_valid(last_selected)
 
-
 func deal_with_last_selected():
+	var t_start = OS.get_ticks_msec()
 	if last_selected != null and is_instance_valid(last_selected):
 		last_selected._on_Area_mouse_exited()
 		mark_ui_dirty()
 
+	print("[TIME] PetViewContainer: deal_with_last_selected took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func _on_Node_ball_mouse_enter(ball_info):
 	if selecting_on:
@@ -2744,14 +2744,19 @@ func _redo_queued_paintball():
 
 
 func _record_move_start_state():
+	var t_start = OS.get_ticks_msec()
+
 	_pre_move_state = _capture_pending_state_snapshot()
 
+	print("[TIME] PetViewContainer: _record_move_start_state took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func _record_move_end_state(action_name):
+	var t_start = OS.get_ticks_msec()
 	var current_state = _capture_pending_state_snapshot()
 	_record_move_history_entry(_pre_move_state, current_state)
 	_cap_history_arrays()
 
+	print("[TIME] PetViewContainer: _record_move_end_state took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 # HELPERS
 func _flatten_symmetry_dict(dict: Dictionary) -> Array:
