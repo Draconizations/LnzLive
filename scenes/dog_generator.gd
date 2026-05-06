@@ -456,8 +456,8 @@ func generate_pet(file_path):
 
 	recompose_model()
 
-	print("[INFO] dog_generator: generate_pet: model generation from BHD+LNZ completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
-	print("[INFO] dog_generator: generate_pet: texture loading completed in " + str(_perf_texture_load_time) + "ms")
+	print("[TIME] dog_generator: generate_pet: model generation from BHD+LNZ completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
+	print("[TIME] dog_generator: generate_pet: texture loading completed in " + str(_perf_texture_load_time) + "ms")
 
 
 func recompose_model():
@@ -754,10 +754,14 @@ func _restore_hidden_states():
 
 
 func collate_base_ball_data():
+	var t_start = OS.get_ticks_msec()
+
 	var ball_data_map = {}
 	for ball in balls:
 		ball_data_map[ball.ball_no] = ball
 	return ball_data_map
+	
+	print("[TIME] dog_generator: collate_base_ball_data took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 
 func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
@@ -1158,6 +1162,8 @@ func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
 	return null
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
+	var t_start = OS.get_ticks_msec()
+
 	var ball_data = all_ball_data.balls
 	var addball_data = all_ball_data.addballs
 	var paintball_data = all_ball_data.paintballs
@@ -1515,14 +1521,15 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				for pb_node in paintball_map[key]:
 					if is_instance_valid(pb_node):
 						pb_node.base_ball_position = global_pos
+	print("[TIME] dog_generator: generate_balls took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func get_real_ball_size(ball_size):
 	return ball_size
 
 
-func generate_polygons(
-	polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array
-):
+func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
+	var t_start = OS.get_ticks_msec()
+
 	#print("[INFO] dog_generator: generate_polygons: generating polygons")
 	#print("[INFO] dog_generator: generate_polygons: polygon data size:", polygon_data.size())
 	var root = get_root()
@@ -1641,9 +1648,12 @@ func generate_polygons(
 			_ball_to_polygons_map[b_no].append(i)
 
 		i += 1
+	print("[TIME] dog_generator: generate_polygons took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 
 func generate_lines(line_data: Array, species: int, palette, new_create: bool):
+	var t_start = OS.get_ticks_msec()
+
 	var root = get_root()
 	var parent = root.get_node("petholder/lines")
 	if new_create:
@@ -1749,6 +1759,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.set_owner(root)
 
 		i += 1
+	print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 
 func _on_OptionButton_file_selected(file_name):
@@ -2025,7 +2036,7 @@ func _on_ToolsMenu_print_ball_colors():
 
 func generate_whiskers(new_create: bool):
 	if lnz.species != KeyBallsData.Species.CAT:
-		print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
+		# print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
 		return
 
 	var root = get_root()
