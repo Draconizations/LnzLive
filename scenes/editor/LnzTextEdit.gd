@@ -211,6 +211,8 @@ func _on_NotificationTimer_timeout():
 ### FILE SAVING & LOADING ###
 
 func _load_file(filepath: String, user_flag: bool):
+	var t_start = OS.get_ticks_msec()
+
 	if pet_node and pet_node.has_method("unhide_all_balls"):
 		pet_node.unhide_all_balls()
 
@@ -225,6 +227,8 @@ func _load_file(filepath: String, user_flag: bool):
 
 	_set_text_preserve(contents)
 	initialize_history()
+
+	print("[TIME] LnzTextEdit: _load_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
 func _on_example_file_selected(filepath):
 	_load_file(filepath, false)
@@ -270,6 +274,8 @@ func save_backup():
 		console_log.log_message(msg)
 
 func save_file(skip_history: bool = false):
+	var t_start = OS.get_ticks_msec()
+
 	if not skip_history and history_index >= 0:
 		var last_snap_idx = _find_nearest_snapshot(history_index)
 		if last_snap_idx != -1:
@@ -336,6 +342,8 @@ func save_file(skip_history: bool = false):
 	print("[STATUS] LnzTextEdit: save_file: " + msg)
 	if console_log:
 		console_log.log_message(msg)
+	
+	print("[TIME] LnzTextEdit: save_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
 func _on_Tree_backup_file():
 	save_backup()
