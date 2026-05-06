@@ -519,6 +519,7 @@ func _on_Tree_item_activated():
 	release_focus()
 
 func rescan(selected_filepath):
+	var t_start = OS.get_ticks_msec()
 	var was_collapsed = true
 	if local_storage != null:
 		was_collapsed = local_storage.collapsed
@@ -530,6 +531,8 @@ func rescan(selected_filepath):
 	local_storage.set_text(0, "Local Storage")
 	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
+
+	print("[TIME] FileTree: rescan took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func _save_subfolder_states(item: TreeItem):
 	if not item: return
@@ -580,6 +583,7 @@ func rescan_palettes():
 	
 func scan_local_storage(selected_filepath):
 	print("[STATUS] FileTree: scan_local_storage: running")
+	var t_start = OS.get_ticks_msec()
 	
 	var safe_filepath = ""
 	if is_valid_filepath(selected_filepath):
@@ -587,6 +591,7 @@ func scan_local_storage(selected_filepath):
 		
 	_scan_dir_recursive(user_file_location, local_storage, safe_filepath, true)
 	print("[STATUS] FileTree: scan_local_storage: complete")
+	print("[TIME] FileTree: scan_local_storage took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath: String, is_root: bool = false, depth: int = 0):
 	if depth > MAX_RECURSION_DEPTH:
@@ -654,6 +659,8 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 
 func scan_local_textures():
 	print("[STATUS] FileTree: scan_local_textures: running")
+	var t_start = OS.get_ticks_msec()
+
 	var dir = Directory.new()
 	var textures_dir = user_file_location + "/textures"
 	if dir.open(textures_dir) != OK:
@@ -728,9 +735,11 @@ func scan_local_textures():
 		filename = dir.get_next()
 	dir.list_dir_end()
 	print("[STATUS] FileTree: scan_local_textures: complete")
+	print("[TIME] FileTree: scan_local_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func scan_res_textures():
 	print("[STATUS] FileTree: scan_res_textures: running")
+	var t_start = OS.get_ticks_msec()
 	var processed = []
 	var textures_dir = "res://resources/textures"
 	
@@ -808,9 +817,11 @@ func scan_res_textures():
 			filename = dir.get_next()
 		dir.list_dir_end()
 	print("[STATUS] FileTree: scan_res_textures: complete")
+	print("[TIME] FileTree: scan_res_textures took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func scan_local_palettes():
 	print("[STATUS] FileTree: scan_local_palettes: running")
+	var t_start = OS.get_ticks_msec()
 	var dir2 = Directory.new()
 	if not dir2.dir_exists(user_file_location + "/palettes"):
 		print("[WARNING] FileTree: scan_local_palettes: directory not found")
@@ -897,8 +908,12 @@ func scan_local_palettes():
 		filename = dir2.get_next()
 	dir2.list_dir_end()
 	print("[STATUS] FileTree: scan_local_palettes: complete")
+	print("[TIME] FileTree: scan_local_palettes took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_dest_filename: String = "") -> bool:
+	print("[STATUS] FileTree: convert_bmp_to_palette_png: converting BMP palette to PNG: " + source_path)
+	var t_start = OS.get_ticks_msec()
+	
 	var f = File.new()
 	if f.open(source_path, File.READ) != OK:
 		print("[ERROR] FileTree: convert_bmp_to_palette_png: could not read BMP file")
@@ -959,6 +974,7 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_de
 	var err = img.save_png(dest_path)
 	if err == OK:
 		print("[STATUS] FileTree: convert_bmp_to_palette_png: Converted BMP palette to: " + dest_path)
+		print("[TIME] FileTree: convert_bmp_to_palette_png took " + str(OS.get_ticks_msec() - t_start) + "ms")
 		return true
 	else:
 		print("[ERROR] FileTree: convert_bmp_to_palette_png: error saving palette ramp as PNG")
