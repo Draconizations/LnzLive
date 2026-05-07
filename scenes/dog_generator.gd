@@ -1444,7 +1444,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 		var base_data = ball_data.get(key)
 		if not base_data: base_data = addball_data.get(key)
 		
-		if not base_node or not base_data: continue
+		if not base_node or not base_data: 
+			for pb in paintball_map[key]:
+				if is_instance_valid(pb):
+					pb.queue_free()
+			continue
 
 		var paint_list = paintball_data[key].duplicate()
 		paint_list.invert() 
