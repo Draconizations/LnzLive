@@ -291,7 +291,8 @@ func update_selected_balls_text(ball_ids: Array):
 	else:
 		ranges.append(str(start) + "-" + str(prev))
 		
-	find_node("AffectedBallz").text = PoolStringArray(ranges).join(",")
+	var range_array = PoolStringArray(ranges)
+	find_node("AffectedBallz").text = range_array.join(",")
 
 func _on_AffectedBallz_text_entered(new_text):
 	var ids = LnzLiveUtils.parse_number_list(new_text)
