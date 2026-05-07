@@ -452,6 +452,10 @@ func _ensure_panel_visible(panel):
 
 
 func _rebuild_spatial_hash():
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	_spatial_grid_2d.clear()
 	var all_balls = _get_all_visual_balls()
 	var viewport_offset = tex.get_global_transform().origin
@@ -467,7 +471,17 @@ func _rebuild_spatial_hash():
 		if not _spatial_grid_2d.has(cell):
 			_spatial_grid_2d[cell] = []
 		_spatial_grid_2d[cell].append(ball)
-
+	
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	
+	print("[PERF] _rebuild_spatial_hash took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
 
 func _reset_tab_state():
 	if is_instance_valid(_last_selected_by_tab):
@@ -2283,6 +2297,10 @@ func _sort_by_distance(a, b):
 
 
 func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	_rebuild_spatial_hash()
 	var nearby_balls = []
 	var center_cell = (raw_mouse_pos / GRID_CELL_SIZE).floor()
@@ -2305,6 +2323,17 @@ func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
 	var result_balls = []
 	for i in range(min(nearby_balls.size(), MAX_NEARBY_BALLS)): 
 		result_balls.append(nearby_balls[i].ball) 
+	
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	
+	print("[PERF] _get_sorted_nearby_balls took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
 	return result_balls
 
 
@@ -2602,6 +2631,10 @@ func _on_select_balls_by_ids(ids: Array):
 
 
 func _commit_box_selection():
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	var rect = Rect2(box_start_pos, box_end_pos - box_start_pos).abs()
 	var all_balls = _get_all_visual_balls()
 
@@ -2633,10 +2666,25 @@ func _commit_box_selection():
 					b.apply_outline_state(get_visual_state_for_ball(b))
 
 	_update_selected_ballz_in_settings()
+	
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	
+	print("[PERF] _commit_box_selection took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
 
 
 # HISTORY
 func _capture_pending_state_snapshot():
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	var snapshot = {}
 
 	for b_no in pending_moves.keys():
@@ -2650,6 +2698,17 @@ func _capture_pending_state_snapshot():
 				"new_basis": b.global_transform.basis
 			}
 
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+
+	print("[PERF] _capture_pending_state_snapshot took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
+	
 	return snapshot
 
 
@@ -3073,6 +3132,10 @@ func close_paintball_mode():
 
 
 func _finalize_freeline():
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	if freeline_path.empty():
 		print("[WARNING] PetViewContainer: freeline path is empty upon finalize")
 		return
@@ -3135,8 +3198,23 @@ func _finalize_freeline():
 	print("[STATUS] PetViewContainer: freeline generated %d valid paintballs" % added_paintballs.size())
 	_record_paint_action(added_paintballs)
 
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+
+	print("[PERF] _finalize_freeline took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
+
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	if not is_instance_valid(target_ball):
 		print("[ERROR] PetViewContainer: target_ball is invalid in _create_paintball_at_position")
 		return null
@@ -3177,7 +3255,7 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 			if px_scale == 0 or lnz_scale == 0:
 				print("[ERROR] PetViewContainer: px_scale or lnz_scale is 0, cannot project design paintballz")
-				return
+				return null
 
 			var pos_arr = pattern_pbs.positions
 			var diam_arr = pattern_pbs.diameters
@@ -3213,7 +3291,17 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 				pet_node.add_pending_paintball(pb_data)
 			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [pos_arr.size(), target_ball.ball_no])
-			return
+			
+			var _perf_dyn_end = OS.get_dynamic_memory_usage()
+			var _perf_stat_end = OS.get_static_memory_usage()
+			var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+			print("[PERF] _create_paintball_at_position (Design) took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+				OS.get_ticks_msec() - _perf_start_time,
+				String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+				String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+				_perf_orphans
+			])
+			return null
 
 		var props = paintball_settings_instance.get_properties()
 
@@ -3221,13 +3309,13 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 		if color_list.empty():
 			print("[ERROR] PetViewContainer: invalid color list format for paintball")
 			push_warning("Invalid color list format.")
-			return
+			return null
 
 		var outline_color_list = LnzLiveUtils.parse_number_list(props.outline_color, true)
 		if outline_color_list.empty():
 			print("[ERROR] PetViewContainer: invalid outline color list format for paintball")
 			push_warning("Invalid outline color list format.")
-			return
+			return null
 
 		var texture_list = LnzLiveUtils.parse_number_list(props.texture, true)
 		if texture_list.empty():
@@ -3291,12 +3379,31 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 		pet_node.add_pending_paintball(paintball_info)
 		print("[STATUS] PetViewContainer: successfully created paintball on ball #%d" % target_ball.ball_no)
+		
+		var _perf_dyn_end = OS.get_dynamic_memory_usage()
+		var _perf_stat_end = OS.get_static_memory_usage()
+		var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+		print("[PERF] _create_paintball_at_position took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+			OS.get_ticks_msec() - _perf_start_time,
+			String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+			String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+			_perf_orphans
+		])
 		return paintball_info
+
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	print("[PERF] _create_paintball_at_position (Failed Raycast) took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
 	return null
 
 
 ### SHAPE MODE ###
-
 
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()
@@ -3358,6 +3465,10 @@ func _on_randomize_body_proportions(settings: Dictionary):
 
 
 func _on_randomize_moves(settings: Dictionary):
+	var _perf_start_time = OS.get_ticks_msec()
+	var _perf_dyn_start = OS.get_dynamic_memory_usage()
+	var _perf_stat_start = OS.get_static_memory_usage()
+
 	var target_groups = settings.groups
 	var mirror_x = settings.mirror_x
 	var type = settings.type
@@ -3472,6 +3583,16 @@ func _on_randomize_moves(settings: Dictionary):
 	if not moves_to_apply.empty():
 		lnz_text_edit.set_batch_moves(moves_to_apply)
 		print("[STATUS] PetViewContainer: _on_randomize_moves: randomized moves applied to %d ballz" % moves_to_apply.size())
+		
+	var _perf_dyn_end = OS.get_dynamic_memory_usage()
+	var _perf_stat_end = OS.get_static_memory_usage()
+	var _perf_orphans = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
+	print("[PERF] _on_randomize_moves took %d ms | DynRAM: %s -> Peak: %s | StatRAM: %s -> Peak: %s | Orphans: %d" % [
+		OS.get_ticks_msec() - _perf_start_time,
+		String.humanize_size(_perf_dyn_start), String.humanize_size(_perf_dyn_end),
+		String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
+		_perf_orphans
+	])
 
 
 ### LINE MODE ###
