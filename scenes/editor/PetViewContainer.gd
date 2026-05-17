@@ -378,6 +378,8 @@ func _ready():
 		auto_paintballer_settings_instance.connect("randomize_auto_paintballz", pet_node, "_on_randomize_auto_paintballz")
 		auto_paintballer_settings_instance.connect("clear_auto_paintballz", pet_node, "_on_clear_auto_paintballz")
 		auto_paintballer_settings_instance.connect("apply_auto_paintballz", pet_node, "_on_apply_auto_paintballz")
+
+	auto_paintballer_settings_instance.connect("apply_auto_paintballz", self, "_restore_auto_paintballer_selection")
 	auto_paintballer_settings_instance.connect("affected_list_changed", self, "_on_affected_list_changed")
 	auto_paintballer_settings_instance.connect("unselect_all", self, "_on_unselect_all")
 
@@ -3402,6 +3404,10 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 	])
 	return null
 
+
+func _restore_auto_paintballer_selection():
+	yield(get_tree(), "idle_frame")
+	_on_affected_list_changed(_auto_paint_affected_cache)
 
 ### SHAPE MODE ###
 
