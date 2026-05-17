@@ -2227,6 +2227,11 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
 	pb_visual_ball.base_ball_size = base_ball_node.ball_size
 	pb_visual_ball.transform.origin = paintball_info.relative_pos_local
+
+	var pb_normal = paintball_info.relative_pos_local.normalized()
+	pb_normal.y *= -1.0
+	pb_visual_ball.set_surface_normal(pb_normal)
+
 	pb_visual_ball.color_index = paintball_info.color
 	pb_visual_ball.outline_color_index = paintball_info.outline_color
 	pb_visual_ball.outline = paintball_info.outline_type
@@ -2293,6 +2298,11 @@ func _on_randomize_auto_paintballz(paintballz):
 			* (base_ball_node.ball_size / 2.0)
 			* pixel_world_size
 		)
+
+		var pb_normal = paintball_data.position.normalized()
+		pb_normal.y *= -1.0
+		pb_visual_ball.set_surface_normal(pb_normal)
+		
 		pb_visual_ball.color_index = paintball_data.color_index
 		pb_visual_ball.outline_color_index = paintball_data.outline_color_index
 		pb_visual_ball.outline = paintball_data.outline
