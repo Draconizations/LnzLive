@@ -645,7 +645,11 @@ func _on_LnzTextEdit_gui_input(event):
 func _get_user_preferred_delimiter() -> String:
 	var settings = get_tree().root.get_node_or_null("Root/SceneRoot")
 	if settings and settings.has_method("get_preferred_delimiter"):
-		return settings.get_preferred_delimiter()
+		var delim = settings.get_preferred_delimiter()
+		
+		if delim != null and delim != "":
+			return delim
+			
 	return "auto"
 
 func _update_section_bookmarks():
@@ -1339,7 +1343,7 @@ func _for_each_line_in_section(tag: String, callback):
 	var bounds = _get_section_bounds(tag)
 	if bounds.empty():
 		return
-	for i in range(bounds["start"], bounds["end"]):
+	for i in range(bounds.start, bounds.end):
 		var line = get_line(i)
 		if line.strip_edges() == "" or line.begins_with(";"):
 			continue
@@ -1779,8 +1783,8 @@ func get_project_ball_section() -> Array:
 	if bounds.empty():
 		return projections
 
-	var start_line = bounds["start"]
-	var end_line = bounds["end"]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -1936,7 +1940,7 @@ func update_lnz_section_one_value(section_name, val1):
 			console_log.log_message(msg)
 		return
 
-	var start_line = bounds["start"]
+	var start_line = bounds.start
 	set_line(start_line, str(val1))
 
 func update_lnz_section_two_values(section_name, val1, val2):
@@ -1948,8 +1952,8 @@ func update_lnz_section_two_values(section_name, val1, val2):
 			console_log.log_message(msg)
 		return
 
-	var start_line = bounds["start"]
-	var end_line = bounds["end"]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var empty_cnt  = bounds.get("empty", 0)
 	var data_cnt   = (end_line - start_line) - empty_cnt
@@ -1977,8 +1981,8 @@ func write_project_ball_section(projections: Array):
 		_set_text_preserve(text)
 		bounds = _get_section_bounds("[Project Ball]")
 
-	var start_line = bounds["start"]
-	var end_line = bounds["end"]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	var existing_lines = []
 	if start_line < end_line:
@@ -2126,9 +2130,9 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				_set_text_preserve(text)
 				bounds = _get_section_bounds("[Paint Ballz]")
 
-			insert_line_num = bounds["start"]
+			insert_line_num = bounds.start
 			var j = 0
-			while insert_line_num + j < bounds["end"]:
+			while insert_line_num + j < bounds.end:
 				var line = get_line(insert_line_num + j).strip_edges()
 				if line.begins_with(";"):
 					j += 1
@@ -2136,7 +2140,7 @@ func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				break
 			insert_line_num += j
 
-			var delim = _detect_delimiter(bounds["start"], bounds["end"])
+			var delim = _detect_delimiter(bounds.start, bounds.end)
 			var new_paintball_lines = ""
 			for paintball_info in paintballz:
 				var pos = paintball_info.position
@@ -2225,13 +2229,13 @@ func _on_apply_paintballz():
 			_set_text_preserve(text)
 			bounds = _get_section_bounds("[Paint Ballz]")
 
-		var insert_at_line = bounds["start"]
+		var insert_at_line = bounds.start
 		var need_fillers = false
-		var delim = _detect_delimiter(bounds["start"], bounds["end"])
+		var delim = _detect_delimiter(bounds.start, bounds.end)
 
 		if is_babyz:
 			var valid_entries_count = 0
-			var scanner_line = bounds["start"]
+			var scanner_line = bounds.start
 			var found_target = false
 			var total_lines = get_line_count()
 			
@@ -2253,10 +2257,10 @@ func _on_apply_paintballz():
 			
 			if !found_target:
 				need_fillers = true
-				insert_at_line = bounds["start"]
+				insert_at_line = bounds.start
 
 		else:
-			var runner = bounds["start"]
+			var runner = bounds.start
 			var total_lines = get_line_count()
 			while runner < total_lines:
 				var line = get_line(runner).strip_edges()
@@ -2320,8 +2324,8 @@ func _on_palette_selected(filename_without_extension):
 		text = all_lines.join("\n")
 		_set_text_preserve(text)
 	else:
-		var start_line = bounds["start"]
-		var end_line = bounds["end"]
+		var start_line = bounds.start
+		var end_line = bounds.end
 		var found_palette_line = false
 		for i in range(start_line, end_line):
 			var line = get_line(i).strip_edges()
@@ -2382,12 +2386,12 @@ func _on_HeadShotButton_pressed():
 	var lines = get_text().split("\n")
 
 	var before_lines = []
-	for i in range(bounds["start"]):
+	for i in range(bounds.start):
 		before_lines.append(lines[i])
 
 	var tail_lines = []
 	var head_block_len = shot_lines.size()
-	for i in range(bounds["start"] + head_block_len, bounds["end"]):
+	for i in range(bounds.start + head_block_len, bounds.end):
 		tail_lines.append(lines[i])
 
 	for i in range(min(3, tail_lines.size())):
@@ -2416,7 +2420,7 @@ func _on_HeadShotButton_pressed():
 		tail_lines[i] = num + tail_labels[i]
 
 	var after_lines = []
-	for i in range(bounds["end"], lines.size()):
+	for i in range(bounds.end, lines.size()):
 		after_lines.append(lines[i])
 
 	var new_text = ""
@@ -2448,9 +2452,9 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			_set_text_preserve(text)
 			bounds = _get_section_bounds("[Paint Ballz]")
 
-		insert_line_num = bounds["start"]
+		insert_line_num = bounds.start
 		var j = 0
-		while insert_line_num + j < bounds["end"]:
+		while insert_line_num + j < bounds.end:
 			var line = get_line(insert_line_num + j).strip_edges()
 			if line.begins_with(";"):
 				j += 1
@@ -2458,7 +2462,7 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			break
 		insert_line_num += j
 
-		var delim = _detect_delimiter(bounds["start"], bounds["end"])
+		var delim = _detect_delimiter(bounds.start, bounds.end)
 		var new_paintball_lines = ""
 		for paintball_info in paintballz:
 			var pos = paintball_info.position
@@ -2814,8 +2818,8 @@ func set_batch_moves(moves_dict: Dictionary):
 func _on_Node_line_created(start_ball, end_ball):
 	save_backup()
 	var bounds = _get_section_bounds("[Linez]")
-	var start_line = bounds["start"]
-	var end_line = bounds["end"]
+	var start_line = bounds.start
+	var end_line = bounds.end
 
 	if start_line == -1:
 		var msg = "No [Linez] section found. Cannot create line between %d and %d." % [start_ball, end_ball]
