@@ -58,7 +58,9 @@ func _update_reference_image_bg():
 			scene_root.add_child(bg)
 			scene_root.move_child(bg, tex.get_index())
 
-		var current_zoom = abs(tex.rect_scale.y) if ref_image_config.get("scale", false) else 1.0
+		#var current_zoom = abs(tex.rect_scale.y) if ref_image_config.get("scale", false) else 1.0
+		var manual_scale = ref_image_config.get("scale_value", 1.0)
+		var current_zoom = (abs(tex.rect_scale.y) * manual_scale) if ref_image_config.get("scale", false) else manual_scale
 
 		if ref_image_config.get("center", true):
 			bg.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED

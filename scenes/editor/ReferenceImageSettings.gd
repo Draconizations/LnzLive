@@ -11,6 +11,7 @@ onready var show_bg_checkbox = $VBoxContainer/SettingsContainer/ShowBgCheckBox
 onready var show_popup_checkbox = $VBoxContainer/SettingsContainer/ShowPopupCheckBox
 onready var center_checkbox = $VBoxContainer/SettingsContainer/CenterCheckBox
 onready var scale_checkbox = $VBoxContainer/SettingsContainer/ScaleCheckBox
+onready var scale_value_spinbox = $VBoxContainer/SettingsContainer/HBoxContainer/ScaleValueSpinBox
 onready var x_spinbox = $VBoxContainer/SettingsContainer/HBoxContainer/XSpinBox
 onready var y_spinbox = $VBoxContainer/SettingsContainer/HBoxContainer/YSpinBox
 
@@ -37,6 +38,7 @@ func _ready():
 	show_popup_checkbox.connect("toggled", self, "_on_show_popup_toggled")
 	center_checkbox.connect("toggled", self, "_on_center_toggled")
 	scale_checkbox.connect("toggled", self, "_on_scale_toggled")
+	scale_value_spinbox.connect("value_changed", self, "_on_scale_value_changed")
 	x_spinbox.connect("value_changed", self, "_on_x_changed")
 	y_spinbox.connect("value_changed", self, "_on_y_changed")
 
@@ -161,6 +163,9 @@ func _on_scale_toggled(pressed):
 	_save_settings()
 	_emit_image_update()
 
+func _on_scale_value_changed(value):
+	_emit_image_update()
+
 func _on_x_changed(value):
 	_emit_image_update()
 
@@ -178,6 +183,7 @@ func _emit_image_update():
 		"show_popup": show_popup_checkbox.pressed and is_active,
 		"center": center_checkbox.pressed,
 		"scale": scale_checkbox.pressed,
+		"scale_value": scale_value_spinbox.value, # NEW PROPERTY
 		"x": x_spinbox.value,
 		"y": y_spinbox.value
 	}
@@ -201,6 +207,7 @@ func _save_settings():
 	config.set_value("ReferenceImage", "scale", scale_checkbox.pressed)
 	config.set_value("ReferenceImage", "x", x_spinbox.value)
 	config.set_value("ReferenceImage", "y", y_spinbox.value)
+	config.set_value("ReferenceImage", "scale_value", scale_value_spinbox.value)
 	config.save(CONFIG_PATH)
 
 func _load_settings():
@@ -219,6 +226,7 @@ func _load_settings():
 		scale_checkbox.pressed = config.get_value("ReferenceImage", "scale", false)
 		x_spinbox.value = config.get_value("ReferenceImage", "x", 0)
 		y_spinbox.value = config.get_value("ReferenceImage", "y", 0)
+		scale_value_spinbox.value = config.get_value("ReferenceImage", "scale_value", 1.0)
 
 		x_spinbox.set_editable(!center_checkbox.pressed)
 		y_spinbox.set_editable(!center_checkbox.pressed)
