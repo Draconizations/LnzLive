@@ -2268,10 +2268,12 @@ func _on_apply_paintballz():
 				if line.begins_with("["):
 					break
 
-				if line.empty() or line.begins_with(";"):
+				#if line.empty() or line.begins_with(";"):
+				if line.begins_with(";"):
 					runner += 1
 				else:
 					break
+					
 			insert_at_line = runner
 		var text_to_insert = ""
 		
