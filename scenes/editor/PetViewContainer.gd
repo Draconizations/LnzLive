@@ -22,34 +22,50 @@ extends Control
 var ui_is_dirty := true
 
 var ref_image_config = {}
+var _last_attempted_path := ""
 
 func _on_reference_image_updated(config_data):
 	ref_image_config = config_data
+	if not ref_image_config.empty() and ref_image_config.get("show_bg", false):
+		var current_path = ref_image_config.get("path", "")
+		if _last_attempted_path != current_path:
+			_last_attempted_path = "" 
 	_update_reference_image_bg()
 
 func _update_reference_image_bg():
 	var bg = reference_image_bg
 	if not bg: return
 
-	if ref_image_config.empty() or not ref_image_config.get("show_bg", false) or ref_image_config.get("path", "") == "":
+	var current_path = ref_image_config.get("path", "")
+
+	if ref_image_config.empty() or not ref_image_config.get("show_bg", false) or current_path == "":
 		bg.texture = null
 		bg.hide()
+		_last_attempted_path = ""
 		return
 
-	if bg.texture == null or bg.texture.resource_path != ref_image_config.path:
+	if _last_attempted_path != current_path:
+		_last_attempted_path = current_path
+		
 		var image = Image.new()
-		var err = image.load(ref_image_config.path, false, false)
+		var err = image.load(current_path, false, false)
 		if err == OK:
 			var texture = ImageTexture.new()
 			texture.create_from_image(image)
-			texture.resource_path = ref_image_config.path
+			texture.resource_path = current_path
 			bg.texture = texture
 			bg.show()
+			print("[STATUS] PetViewContainer: Successfully loaded reference background: ", current_path)
 		else:
 			bg.texture = null
 			bg.hide()
-	else:
+			print("[ERROR] PetViewContainer: Failed to load reference background: ", current_path, " (Error Code: ", err, "). Aborting subsequent read attempts.")
+	
+	elif bg.texture != null:
 		bg.show()
+	else:
+		bg.hide()
+		return 
 
 	if is_instance_valid(tex):
 		var scene_root = tex.get_parent()
@@ -58,7 +74,6 @@ func _update_reference_image_bg():
 			scene_root.add_child(bg)
 			scene_root.move_child(bg, tex.get_index())
 
-		#var current_zoom = abs(tex.rect_scale.y) if ref_image_config.get("scale", false) else 1.0
 		var manual_scale = ref_image_config.get("scale_value", 1.0)
 		var current_zoom = (abs(tex.rect_scale.y) * manual_scale) if ref_image_config.get("scale", false) else manual_scale
 
