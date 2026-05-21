@@ -146,6 +146,9 @@ func _on_palette_changed(palette_name = ""):
 		return
 		
 	var img = dog_generator.current_palette_texture.get_data()
+	if img == null:
+		return
+		
 	img.lock()
 	
 	var img_width = img.get_width()
@@ -767,10 +770,14 @@ func _populate_slots_tree():
 		var icon = _create_color_icon(slot.color)
 		if icon:
 			var img_data = icon.get_data()
-			img_data.lock()
-			slot.display_color = img_data.get_pixel(0, 0)
-			img_data.unlock()
-			item.set_icon(0, icon)
+			if img_data != null:
+				img_data.lock()
+				slot.display_color = img_data.get_pixel(0, 0)
+				img_data.unlock()
+				item.set_icon(0, icon)
+			else:
+				var default_icon = _create_color_icon(slot.display_color)
+				item.set_icon(0, default_icon)
 		else:
 			var default_icon = _create_color_icon(slot.display_color)
 			item.set_icon(0, default_icon)
@@ -875,10 +882,11 @@ func _on_SlotsTree_item_edited():
 		item.set_icon(0, new_icon)
 		if new_icon:
 			var img_data = new_icon.get_data()
-			img_data.lock()
-			design_color_slots[idx].display_color = img_data.get_pixel(0, 0)
-			img_data.unlock()
-			item.set_icon(0, new_icon)
+			if img_data != null:
+				img_data.lock()
+				design_color_slots[idx].display_color = img_data.get_pixel(0, 0)
+				img_data.unlock()
+				item.set_icon(0, new_icon)
 
 	save_settings()
 	_on_palette_changed()
