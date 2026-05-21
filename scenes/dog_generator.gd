@@ -2229,7 +2229,7 @@ func add_pending_paintball(paintball_info):
 	pb_visual_ball.transform.origin = paintball_info.relative_pos_local
 
 	var pb_normal = paintball_info.relative_pos_local.normalized()
-	pb_normal.y *= -1.0
+	#pb_normal.y *= -1.0
 	pb_visual_ball.set_surface_normal(pb_normal)
 
 	pb_visual_ball.color_index = paintball_info.color
@@ -2300,7 +2300,7 @@ func _on_randomize_auto_paintballz(paintballz):
 		)
 
 		var pb_normal = paintball_data.position.normalized()
-		pb_normal.y *= -1.0
+		#pb_normal.y *= -1.0
 		pb_visual_ball.set_surface_normal(pb_normal)
 		
 		pb_visual_ball.color_index = paintball_data.color_index
