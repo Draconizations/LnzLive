@@ -563,8 +563,12 @@ func get_default_scales(reader):
 	
 func get_leg_extensions(reader):
 	var parsed_lines = get_parsed_lines(reader, ["extension"])
-	if parsed_lines.size() > 0:
+	if parsed_lines.size() > 1:
 		leg_extensions = Vector2(parsed_lines[0].extension, parsed_lines[1].extension)
+	elif parsed_lines.size() == 1:
+		leg_extensions = Vector2(parsed_lines[0].extension, parsed_lines[0].extension)
+	else:
+		leg_extensions = Vector2(0,0)
 	
 func get_body_extension(reader):
 	var parsed_lines = get_parsed_lines(reader, ["extension"])
