@@ -712,17 +712,11 @@ func _on_SaveButton_pressed():
 
 	var root = get_tree().get_root()
 	var editor = root.get_node_or_null("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
+	
 	if editor and editor.has_method("rescan_textures"):
 		editor.rescan_textures(true)
 	elif editor and editor.has_method("rescan"):
 		editor.rescan()
-
-	if dog_generator and dog_generator.lnz:
-		var current_path = dog_generator.last_loaded_filepath if "last_loaded_filepath" in dog_generator else ""
-		if current_path:
-			if dog_generator.has_method("clear_texture_cache_for"):
-				dog_generator.clear_texture_cache_for(fname)
-			dog_generator.generate_pet(current_path)
 
 func save_indexed_bmp(path: String):
 	var f = File.new()
