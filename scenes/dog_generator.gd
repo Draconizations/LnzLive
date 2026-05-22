@@ -631,7 +631,7 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 				node.visible_override = false
 
 				if not node.is_in_group("balls"):
-					node.visible = false
+					node.call_deferred("set_visible", false)
 
 				if paintball_map.has(ball_no):
 					for pb in paintball_map[ball_no]:
@@ -1900,10 +1900,11 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if draw_omitted_balls: node.visible_override = true
 			else: 
 				node.visible_override = false
-				node.visible = false
+				node.call_deferred("set_visible", false)
 		else:
 			if !draw_addballs: node.visible_override = false
-			if node.is_in_group("special_balls"): node.visible = draw_special_balls
+			if node.is_in_group("special_balls"):
+				node.call_deferred("set_visible", draw_special_balls)
 
 	# --- EYES ---
 	for key in eyes:
@@ -2000,7 +2001,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.visible_override = draw_omitted_balls
 		else:
 			if !draw_balls: 
-				node.visible_override = false
+				node.call_deferred("set_visible", false)
 
 	# --- PAINTBALLS ---
 	for key in paintball_data:
@@ -2066,10 +2067,10 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			if is_omitted:
 				if draw_omitted_balls: node.visible_override = true
 				else:
-					node.visible_override = false
-					node.visible = false
+					node.call_deferred("set_visible", false)
+					node.call_deferred("set_visible", false)
 			elif !draw_paintballs:
-				node.visible_override = false
+				node.call_deferred("set_visible", false)
 				
 			count += 1
 
