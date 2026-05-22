@@ -2305,7 +2305,7 @@ func _on_apply_paintballz():
 			text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
-		pet_node.clear_pending_paintballs()
+		pet_node._on_clear_pending_paintballz()
 
 	save_file(true)
 	commit_full_snapshot("Commited Paintballz")
