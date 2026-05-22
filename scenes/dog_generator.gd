@@ -953,6 +953,41 @@ func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String
 	if t_pose_active:
 		symmetrize_skeleton()
 
+func _on_BhdSwitcher_item_selected(index):
+	var bhd_name = bhd_option_button.get_item_text(index)
+	init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+	if lnz:
+		init_visual_balls(lnz, true)
+
+
+func _on_BhdPrompt_confirmed():
+	var selected_idx = bhd_prompt_option.selected
+	if selected_idx != -1:
+		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
+		for i in range(bhd_option_button.get_item_count()):
+			if bhd_option_button.get_item_text(i) == bhd_name:
+				bhd_option_button.select(i)
+				break
+
+		init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+		init_visual_balls(lnz, true)
+		emit_signal("palette_changed", lnz.palette)
+
+
+func _on_GameSwitcher_item_selected(index):
+	if !lnz:
+		return
+	if lnz.species == 0:
+		var selected_idx = bhd_option_button.selected
+		if selected_idx != -1:
+			var bhd_name = bhd_option_button.get_item_text(selected_idx)
+			init_ball_data(0, false, "res://resources/animations/" + bhd_name)
+	else:
+		init_ball_data(lnz.species)
+
+	init_visual_balls(lnz, true)
+	emit_signal("palette_changed", lnz.palette)
+
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
 	_perf_texture_load_time = 0
@@ -1237,11 +1272,13 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 				anchored = a.anchored
 			}
 			i += 1
+
 	collated_data = {balls = collated_data, addballs = addballs, paintballs = paintballs}
 	collated_data = munge_balls(collated_data, lnz_info)
 	collated_data = apply_extensions(collated_data, lnz_info)
 	collated_data = apply_sizes(collated_data, lnz_info)
 	collated_data.omissions = lnz_info.omissions
+
 	generate_balls(
 		collated_data,
 		lnz_info.species,
@@ -1267,50 +1304,24 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		_restore_hidden_states()
 
 
-func _on_BhdSwitcher_item_selected(index):
-	var bhd_name = bhd_option_button.get_item_text(index)
-	init_ball_data(0, false, "res://resources/animations/" + bhd_name)
-	if lnz:
-		init_visual_balls(lnz, true)
-
-
-func _on_BhdPrompt_confirmed():
-	var selected_idx = bhd_prompt_option.selected
-	if selected_idx != -1:
-		var bhd_name = bhd_prompt_option.get_item_text(selected_idx)
-		for i in range(bhd_option_button.get_item_count()):
-			if bhd_option_button.get_item_text(i) == bhd_name:
-				bhd_option_button.select(i)
-				break
-
-		init_ball_data(0, false, "res://resources/animations/" + bhd_name)
-		init_visual_balls(lnz, true)
-		emit_signal("palette_changed", lnz.palette)
-
-
-func _on_GameSwitcher_item_selected(index):
-	if !lnz:
-		return
-	if lnz.species == 0:
-		var selected_idx = bhd_option_button.selected
-		if selected_idx != -1:
-			var bhd_name = bhd_option_button.get_item_text(selected_idx)
-			init_ball_data(0, false, "res://resources/animations/" + bhd_name)
-	else:
-		init_ball_data(lnz.species)
-
-	init_visual_balls(lnz, true)
-	emit_signal("palette_changed", lnz.palette)
-
-
 func _finish_dependent_geometry(new_create: bool):
 	apply_projections()
+	_update_paintball_transforms()
 	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
 	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
 	generate_whiskers(new_create)
 	_restore_hidden_states()
 
-
+func _update_paintball_transforms():
+	for key in paintball_map:
+		var base_node = ball_map.get(key)
+		if not is_instance_valid(base_node): continue
+		
+		var new_global_pos = base_node.global_transform.origin
+		
+		for pb_node in paintball_map[key]:
+			if is_instance_valid(pb_node):
+				pb_node.base_ball_position = new_global_pos
 
 func collate_base_ball_data():
 	var t_start = OS.get_ticks_msec()
@@ -2043,7 +2054,8 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 						if tex_info.has("texture_size") and tex_info.texture_size != null:
 							node.texture_size = tex_info.texture_size
 
-			node.base_ball_position = base_node.transform.origin
+			#node.base_ball_position = base_node.transform.origin
+			node.base_ball_position = base_node.global_transform.origin
 			
 			node.transform.origin = (pb_data.normalised_position * Vector3(1, -1, 1) * (base_data.size / 2.0) * pixel_world_size)
 			node.ball_size = final_size
@@ -2572,9 +2584,6 @@ func update_eyelids(tilt_deg: float):
 
 			var angle = eyelid_dir_map[base_no] * tilt
 			node.set_eyelid_rotation(angle)
-
-
-
 
 
 func emit_ball_move(ball_no: int, new_position: Vector3):
