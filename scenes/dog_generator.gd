@@ -698,7 +698,7 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 		print("[WARNING] Node: _setup_paintball_node: failed to load texture %d" % pb_data.texture)
 
 	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
-	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_count + list_size)
+	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_count)
 
 	return pb_visual_ball
 
