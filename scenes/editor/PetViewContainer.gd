@@ -217,8 +217,8 @@ var _dimmer_rect: ColorRect = null
 var design_rotation_angle: float = 0.0
 var design_scale_multiplier: float = 1.0
 
-### SETUP & INITIALIZATION ###
 
+### SETUP & INITIALIZATION ###
 
 func _safe_connect(target, sig, method):
 	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
@@ -301,7 +301,7 @@ func _ready():
 			"apply_paintballz", lnz_text_edit, "_on_apply_paintballz"
 		)
 	if is_instance_valid(pet_node):
-		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_paintballz")
+		paintball_settings_instance.connect("clear_paintballz", pet_node, "_on_clear_pending_paintballz")
 	paintball_settings_instance.connect("delete_mode_toggled", self, "_on_delete_mode_toggled")
 
 	if is_instance_valid(pet_node):
@@ -2225,12 +2225,9 @@ func last_selected_is_valid():
 	return last_selected != null and is_instance_valid(last_selected)
 
 func deal_with_last_selected():
-	var t_start = OS.get_ticks_msec()
 	if last_selected != null and is_instance_valid(last_selected):
 		last_selected._on_Area_mouse_exited()
 		mark_ui_dirty()
-
-	print("[TIME] PetViewContainer: deal_with_last_selected took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func _on_Node_ball_mouse_enter(ball_info):
 	if selecting_on:
@@ -3088,8 +3085,8 @@ func _on_variation_visibility_changed():
 
 ### RECOLOR MODE ###
 
-### PAINT MODE ###
 
+### PAINT MODE ###
 
 func _update_paintball_mode_ui():
 	print("[STATUS] PetViewContainer: updating paintball mode UI (visible: %s)" % paintball_mode)
@@ -3107,9 +3104,6 @@ func _update_paintball_mode_ui():
 		else:
 			paintball_settings_instance.find_node("Target").disabled = false
 	else:
-		# used to clear on exit
-		#if pet_node:
-		#	pet_node.clear_pending_paintballs()
 		_set_pending_paintballs_visible(false)
 
 		paintball_settings_instance.hide()
