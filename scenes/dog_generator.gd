@@ -1525,7 +1525,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 				for pb_node in paintball_map[key]:
 					if is_instance_valid(pb_node):
 						pb_node.base_ball_position = global_pos
-	print("[TIME] dog_generator: generate_balls took " + str(OS.get_ticks_msec() - t_start) + "ms")
+	# print("[TIME] dog_generator: generate_balls took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 func get_real_ball_size(ball_size):
 	return ball_size
@@ -1652,7 +1652,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 			_ball_to_polygons_map[b_no].append(i)
 
 		i += 1
-	print("[TIME] dog_generator: generate_polygons took " + str(OS.get_ticks_msec() - t_start) + "ms")
+	# print("[TIME] dog_generator: generate_polygons took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 
 func generate_lines(line_data: Array, species: int, palette, new_create: bool):
@@ -1763,7 +1763,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 			visual_line.set_owner(root)
 
 		i += 1
-	print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
+	# print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 
 func _on_OptionButton_file_selected(file_name):
