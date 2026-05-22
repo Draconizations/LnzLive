@@ -652,6 +652,13 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 # _on_clear_auto_paintballz
 # _on_apply_auto_paintballz
 
+func _create_paintball_instance(base_ball_node):
+	var pb = paintball_scene.instance()
+	base_ball_node.add_child(pb)
+	pb.set_owner(get_root())
+	pb.add_to_group("paintballs")
+	return pb
+
 
 func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size):
 	var target_layer = 1
@@ -687,6 +694,8 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 			pb_visual_ball.texture = tex_pb
 			if pb_data.texture < lnz.texture_list.size():
 				pb_visual_ball.transparent_color = lnz.texture_list[pb_data.texture].transparent_color
+	else:
+		print("[WARNING] Node: _setup_paintball_node: failed to load texture %d" % pb_data.texture)
 
 	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
 	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_count + list_size)
@@ -697,8 +706,7 @@ func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_d
 func add_pending_paintball(paintball_info):
 	_pending_paintballs_data.append(paintball_info)
 	var base_ball_node = ball_map[paintball_info.base_ball_no]
-	var pb_visual_ball = paintball_scene.instance()
-	base_ball_node.add_child(pb_visual_ball)
+	var pb_visual_ball = _create_paintball_instance(base_ball_node)
 	
 	var pb_data = {
 		"color": paintball_info.color, "outline_color": paintball_info.outline_color,
@@ -710,9 +718,7 @@ func add_pending_paintball(paintball_info):
 						paintball_info.relative_pos_local, paintball_info.diameter,
 						paintball_map.get(paintball_info.base_ball_no, []).size(),
 						_pending_paintballs_data.size())
-						
-	pb_visual_ball.set_owner(get_root())
-	pb_visual_ball.add_to_group("paintballs")
+	
 	_pending_paintball_nodes.append(pb_visual_ball)
 	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
 
@@ -767,62 +773,35 @@ func _on_randomize_auto_paintballz(paintballz):
 	_on_clear_auto_paintballz()
 	_auto_paintballs_data = paintballz
 
-	for paintball_data in _auto_paintballs_data:
-		var base_ball_no = paintball_data.base
-		if !ball_map.has(base_ball_no):
-			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found" % base_ball_no)
+	for pb_data in _auto_paintballs_data:
+		var base_ball_node = ball_map.get(pb_data.base)
+		
+		if not is_instance_valid(base_ball_node):
+			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found or invalid" % pb_data.base)
 			continue
 
-		var base_ball_node = ball_map[base_ball_no]
-		var pb_visual_ball = paintball_scene.instance()
-
-		base_ball_node.add_child(pb_visual_ball)
-		pb_visual_ball.set_owner(get_root())
-		pb_visual_ball.add_to_group("paintballs")
-
-		var final_size = base_ball_node.ball_size * (float(paintball_data.size) / 100.0)
-		final_size -= 1 - fmod(final_size, 2)
-		pb_visual_ball.ball_size = final_size
-
-		#pb_visual_ball.species = lnz.species
-		pb_visual_ball.set_species(lnz.species, is_babyz_mode)
-		pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
-		pb_visual_ball.base_ball_no = base_ball_no
-		pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
-		pb_visual_ball.base_ball_size = base_ball_node.ball_size
-		pb_visual_ball.transform.origin = (
-			paintball_data.position
-			* (base_ball_node.ball_size / 2.0)
-			* pixel_world_size
-		)
-
-		var pb_normal = paintball_data.position.normalized()
-		#pb_normal.y *= -1.0
-		pb_visual_ball.set_surface_normal(pb_normal)
+		var pb_visual_ball = _create_paintball_instance(base_ball_node)
 		
-		pb_visual_ball.color_index = paintball_data.color_index
-		pb_visual_ball.outline_color_index = paintball_data.outline_color_index
-		pb_visual_ball.outline = paintball_data.outline
-		pb_visual_ball.group = paintball_data.group
-		pb_visual_ball.fuzz_amount = clamp(paintball_data.fuzz / 2, 0, 5)
+		var pb_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
 
-		if paintball_data.texture_id > -1:
-			var tex_pb = load_texture_from_list(paintball_data.texture_id, lnz.texture_list)
-			if tex_pb:
-				pb_visual_ball.texture = tex_pb
-				if paintball_data.texture_id < lnz.texture_list.size():
-					pb_visual_ball.transparent_color = lnz.texture_list[paintball_data.texture_id].transparent_color
-			else:
-				print("[WARNING] Node: _on_randomize_auto_paintballz: failed to load texture %d" % paintball_data.texture_id)
+		var adapter = {
+			"color": pb_data.color_index,
+			"outline_color": pb_data.outline_color_index,
+			"outline": pb_data.outline,
+			"fuzz": pb_data.fuzz,
+			"texture": pb_data.texture_id,
+			"group": pb_data.group
+		}
 
-		pb_visual_ball.palette = base_ball_node.palette
-
-		var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
-		var existing_paintballs_count = 0
-		if paintball_map.has(base_ball_no):
-			existing_paintballs_count = paintball_map[base_ball_no].size()
-			
-		pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_paintballs_count + _auto_paintball_nodes.size())
+		_setup_paintball_node(
+			pb_visual_ball, 
+			adapter, 
+			base_ball_node, 
+			pb_pos, 
+			pb_data.size,
+			paintball_map.get(pb_data.base, []).size(),
+			_auto_paintball_nodes.size()
+		)
 
 		_auto_paintball_nodes.append(pb_visual_ball)
 
