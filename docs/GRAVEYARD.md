@@ -666,3 +666,15 @@ Function graveyard after major refactors...
 # 	if not already_omitted:
 # 		_insert_text_at_line(start, str(ball_no) + "\n")
 ```
+
+```
+func collate_base_ball_data():
+	var t_start = OS.get_ticks_msec()
+
+	var ball_data_map = {}
+	for ball in balls:
+		ball_data_map[ball.ball_no] = ball
+	return ball_data_map
+	
+	print("[TIME] dog_generator: collate_base_ball_data took " + str(OS.get_ticks_msec() - t_start) + "ms")
+```

@@ -1,13 +1,22 @@
 extends Node
-## dog_generator.gd
-## The central controller for generating and managing model from LNZ document data
-## This script is the core of LnzLive and coordinates entire process of loading,
-## parsing, building, rendering, animating, and updating models generated
-## from LNZ document data (ballz, paintballz, linez, polygonz)
-## NOTE: Could really use a rename and refactor, script is huge...
+
+# dog_generator.gd
+# The central controller for generating and managing model from LNZ document data
+# This script is the core of LnzLive and coordinates entire process of loading,
+# parsing, building, rendering, animating, and updating models generated
+# from LNZ document data (ballz, paintballz, linez, polygonz)
+# NOTE: Could really use a rename and refactor, script is huge...
 
 # SECTIONS:
 #	SETUP & INITIALIZATION
+#   SIGNALS
+#	MODEL GENERATION
+#	TEXTURES & PALETTES
+#	RENDERING & GEOMETRY
+#	TRANSFORMATIONS
+#	ANIMATIONS
+#	VISIBILITY
+# 	PAINTBALLZ
 
 export var pixel_world_size = 0.002
 
@@ -126,6 +135,9 @@ signal palette_changed(palette_name)
 
 
 ### SETUP & INITIALIZATION ###
+# _ready
+# get_root
+# populate_bhd_list
 
 func _ready():
 	var t_start = OS.get_ticks_msec()
@@ -163,13 +175,11 @@ func _ready():
 		game_option_button.add_item("Babyz")
 		game_option_button.connect("item_selected", self, "_on_GameSwitcher_item_selected")
 
-
 func get_root():
 	if Engine.is_editor_hint():
 		return get_tree().get_edited_scene_root().get_node("PetRoot")
 	else:
 		return get_tree().root.get_node("Root/PetRoot")
-
 
 func populate_bhd_list():
 	bhd_file_list.clear()
@@ -194,208 +204,12 @@ func populate_bhd_list():
 	bhd_prompt_option.select(-1)
 
 
-### MODEL GENERATION ###
-# generate_pet
-# recompose_model
-# init_ball_data
-# clear_lnz_data
-# _finish_dependent_geometry
-# init_visual_balls
-# set_skip_next_rebuild
-
-func set_skip_next_rebuild(val: bool):
-	_skip_next_rebuild = val
-
-### TEXTURES & PALETTES ###
-# load_texture
-# load_texture_from_list
-# generate_color_icon
-# load_palette_resource
-
-
-### RENDERING & GEOMETRY ###
-# generate_balls
-# generate_polygons
-# generate_lines
-# generate_whiskers
-# _update_whisker_position
-# update_eyelids
-# restore_ball_visual_states
-
-func restore_ball_visual_states(ball_nos: Array):
-	if lnz == null:
-		return
-
-	for b_no in ball_nos:
-		var visual_node = ball_map.get(b_no)
-		if not is_instance_valid(visual_node):
-			continue
-
-		var data = lnz.balls.get(b_no)
-		if data == null:
-			data = lnz.addballs.get(b_no)
-		if data == null:
-			continue
-
-		visual_node.color_index = data.color_index
-		visual_node.outline_color_index = data.outline_color_index
-		visual_node.outline = data.outline
-		visual_node.fuzz_amount = clamp(data.fuzz / 2, 0, 5)
-
-		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
-			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
-		else:
-			visual_node.texture = null
-
-		if visual_node.has_method("update_ball"):
-			visual_node.update_ball()
-
-### TRANSFORMATIONS ###
-# apply_extensions
-# munge_balls
-# apply_movement_with_rotation
-# apply_projections
-# apply_sizes
-# get_real_ball_size
-# collate_base_ball_data
-
-
-### ANIMATIONS ###
-# set_animation
-# set_frame
-# _on_TPoseCheckBox_toggled
-# _on_AnimPicker_text_entered
-# _on_PrevAnim_pressed
-# _on_NextAnim_pressed
-# symmetrize_skeleton
-
-
-func symmetrize_skeleton():
-	var symmetry_data = {}
-	if lnz.species == KeyBallsData.Species.DOG:
-		symmetry_data = KeyBallsData.dog_body_part_symmetry
-	elif lnz.species == KeyBallsData.Species.CAT:
-		symmetry_data = KeyBallsData.cat_body_part_symmetry
-	elif lnz.species == KeyBallsData.Species.BABY:
-		symmetry_data = KeyBallsData.baby_body_part_symmetry
-	else:
-		return
-
-	for section in symmetry_data.values():
-		for part in section.values():
-			if part.has("left") and part.has("right"):
-				var left_indices = part["left"]
-				var right_indices = part["right"]
-
-				var pair_count = min(left_indices.size(), right_indices.size())
-				for i in range(pair_count):
-					var l_idx = left_indices[i]
-					var r_idx = right_indices[i]
-
-					if l_idx < balls.size() and r_idx < balls.size():
-						var l_ball = balls[l_idx]
-						var r_ball = balls[r_idx]
-
-						r_ball.position.x = -l_ball.position.x
-						r_ball.position.y = l_ball.position.y
-						r_ball.position.z = l_ball.position.z
-
-						r_ball.rotation.x = l_ball.rotation.x
-						r_ball.rotation.y = -l_ball.rotation.y
-						r_ball.rotation.z = -l_ball.rotation.z
-
-
-func set_animation(anim_index: int):
-	if not bhd or bhd.animation_ranges.empty():
-		print("[ERROR] dog_generator: set_animation: No valid BHD loaded.")
-		return
-
-	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
-	bhd.get_frame_offsets_for(anim_index)
-
-	var anim_frames = bhd.get_frame_offsets_for(anim_index)
-	if anim_frames.empty():
-		print("[WARNING] dog_generator: set_animation: animation %d has no frames in BHD" % anim_index)
-		anim_frames = [0]
-
-	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
-	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
-
-	if new_bdt.frames.empty():
-		print("[ERROR] dog_generator: set_animation: failed to load BDT frames for: ", bdt_filename)
-		return
-
-	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
-	set_frame(0)
-	emit_signal("animation_loaded", anim_frames.size())
-	
-	var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
-	anim_picker.text = str(anim_index)
-
-
-func set_frame(frame: int):
-	if not current_bdt or current_bdt.frames.empty():
-		return
-
-	current_frame = clamp(frame, 0, current_bdt.frames.size() - 1)
-
-	if balls.empty():
-		for n in bhd.num_balls:
-			var x = current_bdt.frames[current_frame][n]
-			balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
-	else:
-		for n in bhd.num_balls:
-			var x = current_bdt.frames[current_frame][n]
-			var b = balls[n]
-			b.position = x.position
-			b.rotation = x.rotation
-
-	if t_pose_active:
-		symmetrize_skeleton()
-
-	init_visual_balls(lnz, false)
-
-
-func _on_TPoseCheckBox_toggled(button_pressed):
-	t_pose_active = button_pressed
-
-	if t_pose_active:
-		_saved_anim_index = current_animation
-		_saved_frame_index = current_frame
-		
-		var play_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button")
-		if play_button.pressed:
-			play_button.pressed = false
-		
-		set_animation(0) 
-		set_frame(0)
-
-	else:
-		set_animation(_saved_anim_index)
-		set_frame(_saved_frame_index)
-
-
-func _on_AnimPicker_text_entered(new_text):
-	var i = int(new_text)
-	if i < bhd.animation_ranges.size():
-		set_animation(int(new_text))
-
-
-func _on_PrevAnim_pressed():
-	if current_animation > 0:
-		set_animation(current_animation - 1)
-	else:
-		print("[WARNING] dog_generator: _on_PrevAnim_pressed: already at first animation, cannot go back further")
-
-
-func _on_NextAnim_pressed():
-	set_animation(current_animation + 1)
-
-
-### EDITOR ###
+### SIGNALS ###
+# _on_BhdSwitcher_item_selected
+# _on_BhdPrompt_confirmed
+# _on_GameSwitcher_item_selected
 # emit_ball_move
 # emit_ball_resize
-# generate_color_icon
 # signal_ball_mouse_enter
 # signal_ball_mouse_exit
 # signal_paintball_mouse_enter
@@ -410,593 +224,11 @@ func _on_NextAnim_pressed():
 # _on_LnzTextEdit_find_project_ball
 # _on_ToolsMenu_print_ball_colors
 
-func generate_color_icon(color_index: int) -> ImageTexture:
-	if not current_palette_texture:
-		return null
-
-	if color_index < 0 or color_index > 255:
-		return null
-
-	var img = current_palette_texture.get_data()
-	if not img:
-		return null
-
-	img.lock()
-	var color = img.get_pixel(color_index, 0)
-	img.unlock()
-
-	var icon_img = Image.new()
-	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
-	icon_img.fill(color)
-
-	var tex = ImageTexture.new()
-	tex.create_from_image(icon_img)
-	return tex
-
-
-### VISIBILITY ###
-# is_special_ball
-# is_hidden_ball
-
-# hide_ball
-# unhide_all_balls
-
-# _apply_hidden_state_to_visuals
-# _restore_hidden_states
-
-# _on_EyeLidButton_pressed
-# _on_ToggleSpecialBalls_toggled
-# _on_TransparencyCheckBox_toggled
-
-# set_visibility_for_group
-
-# _on_AddballCheckBox_toggled
-# _on_BallCheckBox_toggled
-# _on_PaintballCheckBox_toggled
-# _on_LineCheckBox_toggled
-# _on_PolygonCheckBox_toggled
-# _on_OmittedBallCheckBox_toggled
-
-
-func is_special_ball(species: int, ball_no: int) -> bool:
-	if lnz != null and lnz.addballs.has(ball_no):
-		if lnz.addballs[ball_no].add_group != 0:
-			return true
-	return false
-
-
-func is_hidden_ball(ball_no):
-	return _hidden_balls.has(ball_no)
-
-
-func hide_ball(ball_no):
-	print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
-	if not _hidden_balls.has(ball_no):
-		_hidden_balls.append(ball_no)
-
-	_apply_hidden_state_to_visuals(ball_no)
-
-
-func unhide_all_balls():
-	print("[STATUS] Node: unhide_all_balls: restoring %d balls" % _hidden_balls.size())
-	for ball_no in _hidden_balls:
-		if ball_map.has(ball_no):
-			var node = ball_map[ball_no]
-			if node.has_method("set_hidden"):
-				node.set_hidden(false)
-
-		if paintball_map.has(ball_no):
-			for pb in paintball_map[ball_no]:
-				if pb.has_method("set_hidden"):
-					pb.set_hidden(false)
-
-	for line in lines_map.values():
-		line.set_hidden(false)
-
-	for poly in polygons_map.values():
-		poly.set_hidden(false)
-
-	for pb in _hidden_paintballs:
-		if is_instance_valid(pb) and pb.has_method("set_hidden"):
-			pb.set_hidden(false)
-
-	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
-
-
-func _apply_hidden_state_to_visuals(ball_no):
-	if ball_map.has(ball_no):
-		var node = ball_map[ball_no]
-		if node.has_method("set_hidden"):
-			node.set_hidden(true)
-
-	if paintball_map.has(ball_no):
-		for pb in paintball_map[ball_no]:
-			if pb.has_method("set_hidden"):
-				pb.set_hidden(true)
-				if not _hidden_paintballs.has(pb):
-					_hidden_paintballs.append(pb)
-
-	if _ball_to_lines_map.has(ball_no):
-		for line_idx in _ball_to_lines_map[ball_no]:
-			var line = lines_map[line_idx]
-			if line.has_method("set_hidden"):
-				line.set_hidden(true)
-			if not _hidden_lines.has(line_idx):
-				_hidden_lines.append(line_idx)
-
-	if _ball_to_polygons_map.has(ball_no):
-		for poly_idx in _ball_to_polygons_map[ball_no]:
-			var poly = polygons_map[poly_idx]
-			if poly.has_method("set_hidden"):
-				poly.set_hidden(true)
-			if not _hidden_polygons.has(poly_idx):
-				_hidden_polygons.append(poly_idx)
-
-
-func _restore_hidden_states():
-	for ball_no in _hidden_balls:
-		_apply_hidden_state_to_visuals(ball_no)
-
-	for line_idx in _hidden_lines:
-		if lines_map.has(line_idx):
-			lines_map[line_idx].set_hidden(true)
-
-	for poly_idx in _hidden_polygons:
-		if polygons_map.has(poly_idx):
-			polygons_map[poly_idx].set_hidden(true)
-
-	for pb in _hidden_paintballs:
-		if is_instance_valid(pb) and pb.has_method("set_hidden"):
-			pb.set_hidden(true)
-
-
-func _on_EyeLidButton_pressed():
-	eyelid_mode = (eyelid_mode + 1) % EYELID_LABELS.size()
-	eyelid_button.icon = EYELID_ICONS[eyelid_mode]
-	update_eyelids(EYELID_TILTS[eyelid_mode])
-
-
-func _on_ToggleSpecialBalls_toggled(button_pressed):
-	draw_special_balls = button_pressed
-	set_visibility_for_group("special_balls", button_pressed)
-
-
-func _on_TransparencyCheckBox_toggled(button_pressed):
-	var balls = get_tree().get_nodes_in_group("balls")
-	for ball in balls:
-		if ball is Spatial:
-			ball.set_transparency(button_pressed)
-	var addballs = get_tree().get_nodes_in_group("addballs")
-	for addball in addballs:
-		if addball is Spatial:
-			addball.set_transparency(button_pressed)
-	var lines = get_tree().get_nodes_in_group("lines")
-	for line in lines:
-		if line is Spatial:
-			line.set_transparency(button_pressed)
-	var paintballs = get_tree().get_nodes_in_group("paintballs")
-	for paintball in paintballs:
-		if paintball is Spatial:
-			paintball.set_transparency(button_pressed)
-
-
-func set_visibility_for_group(group_name: String, is_visible: bool):
-	var nodes = get_tree().get_nodes_in_group(group_name)
-	for node in nodes:
-		if node is Spatial:
-			if is_visible and node.get("omitted") and not draw_omitted_balls:
-				node.set_visible(false)
-			elif is_visible and node.is_in_group("special_balls") and not draw_special_balls:
-				node.set_visible(false)
-			elif is_visible and node.is_in_group("addballs") and not draw_addballs:
-				node.set_visible(false)
-			elif is_visible and node.is_in_group("balls") and not draw_balls:
-				node.set_visible(false)
-			else:
-				node.set_visible(is_visible)
-
-
-func _on_AddballCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_AddballCheckBox_toggled: setting addballs visibility to %s" % button_pressed)
-	draw_addballs = button_pressed
-	set_visibility_for_group("addballs", button_pressed)
-
-
-func _on_BallCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_BallCheckBox_toggled: setting balls visibility to %s" % button_pressed)
-	draw_balls = button_pressed
-	set_visibility_for_group("balls", button_pressed)
-
-
-func _on_PaintballCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_PaintballCheckBox_toggled: setting paintballs visibility to %s" % button_pressed)
-	draw_paintballs = button_pressed
-	set_visibility_for_group("paintballs", button_pressed)
-
-
-func _on_LineCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_LineCheckBox_toggled: setting lines visibility to %s" % button_pressed)
-	draw_lines = button_pressed
-	set_visibility_for_group("lines", button_pressed)
-
-
-func _on_PolygonCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_PolygonCheckBox_toggled: setting polygons visibility to %s" % button_pressed)
-	draw_polygons = button_pressed
-	set_visibility_for_group("polygons", button_pressed)
-
-
-func _on_OmittedBallCheckBox_toggled(button_pressed):
-	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: setting omitted balls visibility to %s" % button_pressed)
-	draw_omitted_balls = button_pressed
-	var count = 0
-
-	for ball_no in ball_map:
-		var node = ball_map[ball_no]
-
-		if node.get("omitted") == true:
-			count += 1
-			if draw_omitted_balls:
-				node.visible_override = true
-
-				if node.is_in_group("balls"):
-					node.visible = draw_balls
-				elif node.is_in_group("addballs"):
-					node.visible = draw_addballs
-
-				if paintball_map.has(ball_no):
-					for pb in paintball_map[ball_no]:
-						pb.visible_override = true
-						pb.visible = draw_paintballs
-			else:
-				node.visible_override = false
-
-				if not node.is_in_group("balls"):
-					node.call_deferred("set_visible", false)
-
-				if paintball_map.has(ball_no):
-					for pb in paintball_map[ball_no]:
-						pb.visible_override = false
-						pb.visible = false
-	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: updated %d omitted balls" % count)
-
-
-
-### PAINTBALLZ ###
-# add_pending_paintball
-# remove_last_pending_paintball
-# remove_specific_pending_paintball
-# get_pending_paintballs_data
-# get_pending_paintball_nodes
-# clear_pending_paintballz
-# _on_clear_pending_paintballz
-# clear_auto_paintballz
-# _on_randomize_auto_paintballz
-# _on_clear_auto_paintballz
-# _on_apply_auto_paintballz
-
-func _create_paintball_instance(base_ball_node):
-	var pb = paintball_scene.instance()
-	base_ball_node.add_child(pb)
-	pb.set_owner(get_root())
-	pb.add_to_group("paintballs")
-	return pb
-
-
-func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size):
-	var target_layer = 1
-	var base_mesh = base_ball_node.get_node_or_null("MeshInstance")
-	if base_mesh and base_mesh is VisualInstance:
-		target_layer = base_mesh.layers
-	
-	var pb_mesh = pb_visual_ball.get_node_or_null("MeshInstance")
-	if pb_mesh and pb_mesh is VisualInstance:
-		pb_mesh.layers = target_layer
-
-	var final_size = base_ball_node.ball_size * (float(pb_diameter) / 100.0)
-	final_size -= 1 - fmod(final_size, 2)
-	pb_visual_ball.ball_size = final_size
-	pb_visual_ball.transform.origin = pb_pos
-	pb_visual_ball.set_surface_normal(pb_pos.normalized())
-
-	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
-	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
-	pb_visual_ball.base_ball_no = base_ball_node.name.to_int() # Ensure consistent naming
-	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
-	pb_visual_ball.base_ball_size = base_ball_node.ball_size
-	pb_visual_ball.color_index = pb_data.color
-	pb_visual_ball.outline_color_index = pb_data.outline_color
-	pb_visual_ball.outline = pb_data.outline
-	pb_visual_ball.group = pb_data.group
-	pb_visual_ball.fuzz_amount = clamp(pb_data.fuzz / 2, 0, 5)
-	pb_visual_ball.palette = base_ball_node.palette
-
-	if pb_data.texture > -1:
-		var tex_pb = load_texture_from_list(pb_data.texture, lnz.texture_list)
-		if tex_pb:
-			pb_visual_ball.texture = tex_pb
-			if pb_data.texture < lnz.texture_list.size():
-				pb_visual_ball.transparent_color = lnz.texture_list[pb_data.texture].transparent_color
-	else:
-		print("[WARNING] Node: _setup_paintball_node: failed to load texture %d" % pb_data.texture)
-
-	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
-	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_count)
-
-	return pb_visual_ball
-
-
-func add_pending_paintball(paintball_info):
-	_pending_paintballs_data.append(paintball_info)
-	var base_ball_node = ball_map[paintball_info.base_ball_no]
-	var pb_visual_ball = _create_paintball_instance(base_ball_node)
-	
-	var pb_data = {
-		"color": paintball_info.color, "outline_color": paintball_info.outline_color,
-		"outline": paintball_info.outline_type, "fuzz": paintball_info.fuzz,
-		"texture": paintball_info.texture, "group": paintball_info.group
-	}
-
-	_setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, 
-						paintball_info.relative_pos_local, paintball_info.diameter,
-						paintball_map.get(paintball_info.base_ball_no, []).size(),
-						_pending_paintballs_data.size())
-	
-	_pending_paintball_nodes.append(pb_visual_ball)
-	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
-
-
-func remove_last_pending_paintball():
-	print("[STATUS] Node: remove_last_pending_paintball: request received")
-	if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
-		var last_visual_node = _pending_paintball_nodes.pop_back()
-
-		if is_instance_valid(last_visual_node):
-			last_visual_node.queue_free()
-			print("[STATUS] Node: remove_last_pending_paintball: visual node freed")
-
-		_pending_paintballs_data.pop_back()
-	else:
-		print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
-
-
-func remove_specific_pending_paintball(paintball_node):
-	print("[STATUS] Node: remove_specific_pending_paintball: called for node %s" % paintball_node)
-	var index = _pending_paintball_nodes.find(paintball_node)
-	if index != -1:
-		_pending_paintball_nodes.remove(index)
-		_pending_paintballs_data.remove(index)
-		if is_instance_valid(paintball_node):
-			paintball_node.queue_free()
-			print("[STATUS] Node: remove_specific_pending_paintball: node freed")
-	else:
-		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
-
-
-func get_pending_paintballs_data():
-	return _pending_paintballs_data
-
-
-func get_pending_paintball_nodes():
-	return _pending_paintball_nodes
-
-
-func clear_pending_paintballz():
-	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
-	for node in _pending_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_pending_paintball_nodes.clear()
-	_pending_paintballs_data.clear()
-
-func _on_clear_pending_paintballz():
-	clear_pending_paintballz()
-
-
-func clear_auto_paintballz():
-	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
-	for node in _auto_paintball_nodes:
-		if is_instance_valid(node):
-			node.queue_free()
-	_auto_paintball_nodes.clear()
-	_auto_paintballs_data.clear()
-
-func _on_clear_auto_paintballz():
-	clear_auto_paintballz()
-
-	
-func _on_randomize_auto_paintballz(paintballz):
-	print("[STATUS] Node: _on_randomize_auto_paintballz: clearing and generating %d auto-paintballs" % paintballz.size())
-	_on_clear_auto_paintballz()
-	_auto_paintballs_data = paintballz
-
-	for pb_data in _auto_paintballs_data:
-		var base_ball_node = ball_map.get(pb_data.base)
-		
-		if not is_instance_valid(base_ball_node):
-			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found or invalid" % pb_data.base)
-			continue
-
-		var pb_visual_ball = _create_paintball_instance(base_ball_node)
-		
-		var pb_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
-
-		var adapter = {
-			"color": pb_data.color_index,
-			"outline_color": pb_data.outline_color_index,
-			"outline": pb_data.outline,
-			"fuzz": pb_data.fuzz,
-			"texture": pb_data.texture_id,
-			"group": pb_data.group
-		}
-
-		_setup_paintball_node(
-			pb_visual_ball, 
-			adapter, 
-			base_ball_node, 
-			pb_pos, 
-			pb_data.size,
-			paintball_map.get(pb_data.base, []).size(),
-			_auto_paintball_nodes.size()
-		)
-
-		_auto_paintball_nodes.append(pb_visual_ball)
-
-func _on_apply_auto_paintballz():
-	print("[STATUS] Node: _on_apply_auto_paintballz: attempting to apply auto paintballs")
-	var processed_paintballs = {}
-	var processed_count = 0
-	var cap = 1000
-
-	for pb_data in _auto_paintballs_data:
-		if processed_count >= cap:
-			print("[WARNING] Node: _on_apply_auto_paintballz: hit cap of %d auto paintballs" % cap)
-			break
-
-		var base_ball_node = ball_map.get(pb_data.base)
-		if not is_instance_valid(base_ball_node):
-			continue
-
-		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
-		var world_relative_pos = (
-			base_ball_node.to_global(local_pos)
-			- base_ball_node.global_transform.origin
-		)
-
-		var lnz_scale = lnz.scales.x / 255.0
-		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
-		relative_pos_lnz.y *= -1
-
-		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
-
-		if processed_paintballs.has(key):
-			continue
-
-		processed_paintballs[key] = true
-
-		var paintball_info = {
-			"base_ball_no": pb_data.base,
-			"relative_pos_local": local_pos,
-			"relative_pos_lnz": relative_pos_lnz,
-			"diameter": pb_data.size,
-			"color": pb_data.color_index,
-			"outline_color": pb_data.outline_color_index,
-			"outline_type": pb_data.outline,
-			"fuzz": pb_data.fuzz,
-			"texture": pb_data.texture_id,
-			"group": pb_data.group,
-			"anchored": pb_data.anchored == 1
-		}
-		_pending_paintballs_data.append(paintball_info)
-
-		processed_count += 1
-		
-	print("[STATUS] Node: _on_apply_auto_paintballz: appended %d paintballs to pending queue" % processed_count)
-
-	var lnz_text_edit = get_tree().root.get_node(
-		"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
-	)
-	if lnz_text_edit:
-		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
-		lnz_text_edit.apply_paintballz()
-	else:
-		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
-
-	_on_clear_auto_paintballz()
-
-
-#####
-
-
-func clear_lnz_data(keep_visuals: bool = false):
-	# for ball in balls:
-	# 	if ball != null:
-	# 		ball.queue_free()
-	balls.clear()
-
-	if not keep_visuals:
-		ball_map.clear()
-		paintball_map.clear()
-		polygons_map.clear()
-		lines_map.clear()
-
-func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String = ""):
-	if t_pose_checkbox:
-		t_pose_active = t_pose_checkbox.pressed
-
-	clear_lnz_data(keep_visuals)
-
-	var bhd_file = ""
-	var bdt_prefix = ""
-
-	if custom_bhd_path != "":
-		bhd_file = custom_bhd_path
-		bdt_prefix = custom_bhd_path.get_file().get_basename()
-	elif species == KeyBallsData.Species.DOG:
-		bhd_file = "res://resources/animations/DOG.bhd"
-		bdt_prefix = "DOG"
-	elif species == KeyBallsData.Species.CAT:
-		bhd_file = "res://resources/animations/CAT.bhd"
-		bdt_prefix = "CAT"
-	elif species == KeyBallsData.Species.BABY:
-		bhd_file = "res://resources/animations/BABY.bhd"
-		bdt_prefix = "BABY"
-	else:
-		bhd_file = "res://resources/animations/CAT.bhd"
-		bdt_prefix = "CAT"
-
-	current_bdt_prefix = bdt_prefix
-	bhd = BhdParser.new(bhd_file)
-
-	if current_animation >= bhd.animation_ranges.size():
-		current_animation = 0
-		var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
-		if anim_picker:
-			anim_picker.text = "0"
-
-	var anim_to_load = 0 if t_pose_active else current_animation
-
-	var filename = bhd_file.get_file()
-	for i in range(bhd_option_button.get_item_count()):
-		if bhd_option_button.get_item_text(i) == filename:
-			bhd_option_button.select(i)
-			break
-
-	emit_signal("bhd_loaded", bhd.animation_ranges.size())
-	if bhd.animation_ranges.empty():
-		print("[ERROR] dog_generator: init_ball_data: failed to load animations for BHD: ", bhd_file)
-		return
-
-	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
-
-	if current_frame >= first_anim_frames.size():
-		current_frame = 0
-
-	var frame_to_use = 0 if t_pose_active else current_frame
-
-	var bdt_filename = bdt_prefix + str(anim_to_load) + ".bdt"
-	current_bdt = BdtParser.new(bdt_filename, first_anim_frames, bhd.num_balls)
-
-	emit_signal("animation_loaded", first_anim_frames.size())
-
-	for n in bhd.num_balls:
-		var x = current_bdt.frames[frame_to_use][n]
-		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
-
-	KeyBallsData.max_base_ball_num = bhd.num_balls
-
-	if t_pose_active:
-		symmetrize_skeleton()
-
 func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
 	init_ball_data(0, false, "res://resources/animations/" + bhd_name)
 	if lnz:
 		init_visual_balls(lnz, true)
-
 
 func _on_BhdPrompt_confirmed():
 	var selected_idx = bhd_prompt_option.selected
@@ -1011,7 +243,6 @@ func _on_BhdPrompt_confirmed():
 		init_visual_balls(lnz, true)
 		emit_signal("palette_changed", lnz.palette)
 
-
 func _on_GameSwitcher_item_selected(index):
 	if !lnz:
 		return
@@ -1025,6 +256,156 @@ func _on_GameSwitcher_item_selected(index):
 
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
+
+func emit_ball_move(ball_no: int, new_position: Vector3):
+	_skip_next_rebuild = true
+	emit_signal("ball_moved", ball_no, new_position)
+
+func emit_ball_resize(ball_no: int, size_dif: int):
+	_skip_next_rebuild = true
+	emit_signal("ball_resized", ball_no, size_dif)
+
+func signal_ball_mouse_enter(ball_info):
+	emit_signal("ball_mouse_enter", ball_info)
+
+func signal_ball_mouse_exit(ball_no):
+	emit_signal("ball_mouse_exit", ball_no)
+
+func signal_paintball_mouse_enter(ball_info):
+	emit_signal("ball_mouse_enter", {ball_no = "Paintball on " + str(ball_info.base_ball_no)})
+
+func signal_paintball_mouse_exit():
+	emit_signal("ball_mouse_exit", 0)
+
+func signal_ball_selected(ball_no, section):
+	print("[STATUS] Node: signal_ball_selected: ball_no %d, section %s" % [ball_no, section])
+	var ball = ball_map[ball_no]
+	var is_addball = false
+	if ball.base_ball_no != -1 and !("override_ball_no" in ball):
+		is_addball = true
+	emit_signal("ball_selected", section, ball_no, is_addball, lnz.balls.keys().max() + 1)
+
+func signal_ball_deleted(ball_no):
+	print("[STATUS] Node: signal_ball_deleted: ball_no %d" % ball_no)
+	var ball = ball_map[ball_no]
+	if ball.base_ball_no != -1:
+		emit_signal("addball_deleted", ball_no)
+
+func _on_LnzTextEdit_find_ball(ball_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_ball: flashing ball %d" % ball_no)
+	if ball_map.has(ball_no):
+		ball_map[ball_no].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_ball: ball %d not found in ball_map" % ball_no)
+
+func _on_LnzTextEdit_find_line(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_line: flashing line %d" % line_no)
+	if lines_map.has(line_no):
+		var line = lines_map[line_no]
+		line.flash()
+		var line_data = lnz.lines[line_no]
+		if ball_map.has(line_data.start):
+			ball_map[line_data.start].flash()
+		if ball_map.has(line_data.end):
+			ball_map[line_data.end].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_line: line %d not found in lines_map" % line_no)
+
+func _on_LnzTextEdit_find_paintball(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_paintball: flashing paintball line %d" % line_no)
+	var all_paintballs = []
+	for ball_no in lnz.paintballs:
+		for paintball in lnz.paintballs[ball_no]:
+			all_paintballs.append(paintball)
+	if line_no < all_paintballs.size():
+		var paintball_data = all_paintballs[line_no]
+		var base_ball_no = paintball_data.base
+		if paintball_map.has(base_ball_no):
+			var paintball_visuals = paintball_map[base_ball_no]
+			# This is tricky because the visual paintballs might not be in the same order
+			# For now, let's just flash the base ball
+			if ball_map.has(base_ball_no):
+				ball_map[base_ball_no].flash()
+		else:
+			print("[WARNING] Node: _on_LnzTextEdit_find_paintball: base ball %d has no visual paintballs" % base_ball_no)
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_paintball: line_no %d out of bounds" % line_no)
+
+func _on_LnzTextEdit_find_polygon(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_polygon: flashing polygon %d" % line_no)
+	if polygons_map.has(line_no):
+		var polygon = polygons_map[line_no]
+		polygon.flash()
+		var polygon_data = lnz.polygons[line_no]
+		if ball_map.has(polygon_data.ball1):
+			ball_map[polygon_data.ball1].flash()
+		if ball_map.has(polygon_data.ball2):
+			ball_map[polygon_data.ball2].flash()
+		if ball_map.has(polygon_data.ball3):
+			ball_map[polygon_data.ball3].flash()
+		if ball_map.has(polygon_data.ball4):
+			ball_map[polygon_data.ball4].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_polygon: polygon %d not found in polygons_map" % line_no)
+
+func _on_LnzTextEdit_find_move(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_move: flashing move %d" % line_no)
+	if line_no < lnz.moves.size():
+		var move_data = lnz.moves[line_no]
+		if ball_map.has(move_data.ball_no):
+			ball_map[move_data.ball_no].flash()
+		else:
+			print("[WARNING] Node: _on_LnzTextEdit_find_move: ball %d from move not found" % move_data.ball_no)
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_move: move index %d out of bounds" % line_no)
+
+func _on_LnzTextEdit_find_project_ball(line_no):
+	print("[STATUS] Node: _on_LnzTextEdit_find_project_ball: flashing project ball %d" % line_no)
+	if line_no < lnz.project_ball.size():
+		var project_data = lnz.project_ball[line_no]
+		if ball_map.has(project_data.fixed_ball):
+			ball_map[project_data.fixed_ball].flash()
+		if ball_map.has(project_data.project_ball):
+			ball_map[project_data.project_ball].flash()
+	else:
+		print("[WARNING] Node: _on_LnzTextEdit_find_project_ball: index %d out of bounds" % line_no)
+
+func _on_ToolsMenu_print_ball_colors():
+	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: compiling and copying ball colors to clipboard")
+	var ball_map_string = ""
+	for b in ball_map:
+		var ball = ball_map[b]
+		var d
+		if b < 67:
+			d = lnz.balls[b]
+		else:
+			d = lnz.addballs[b]
+		if "ball_no" in ball:
+			var this_ball_string = (
+				str(ball.ball_no)
+				+ ",\t\t"
+				+ str(ball.color_index)
+				+ ",\t\t"
+				+ str(d.group)
+				+ ",\t\t"
+				+ str(d.texture_id).replace("0", "3")
+			)
+			if ball_map_string != "":
+				ball_map_string += "\n"
+			ball_map_string += this_ball_string
+			#print("[INFO] dog_generator: _on_ToolsMenu_print_ball_colors: " + this_ball_string)
+	OS.set_clipboard(ball_map_string)
+	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: successfully populated clipboard")
+
+
+### MODEL GENERATION ###
+# generate_pet
+# set_skip_next_rebuild
+# init_ball_data
+# clear_lnz_data
+# recompose_model
+# init_visual_balls
+# _finish_dependent_geometry
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
@@ -1114,6 +495,88 @@ func generate_pet(file_path):
 	print("[TIME] dog_generator: generate_pet: model generation from BHD+LNZ completed in " + str(OS.get_ticks_msec() - t_start) + "ms")
 	print("[TIME] dog_generator: generate_pet: texture loading completed in " + str(_perf_texture_load_time) + "ms")
 
+func set_skip_next_rebuild(val: bool):
+	_skip_next_rebuild = val
+
+func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String = ""):
+	if t_pose_checkbox:
+		t_pose_active = t_pose_checkbox.pressed
+
+	clear_lnz_data(keep_visuals)
+
+	var bhd_file = ""
+	var bdt_prefix = ""
+
+	if custom_bhd_path != "":
+		bhd_file = custom_bhd_path
+		bdt_prefix = custom_bhd_path.get_file().get_basename()
+	elif species == KeyBallsData.Species.DOG:
+		bhd_file = "res://resources/animations/DOG.bhd"
+		bdt_prefix = "DOG"
+	elif species == KeyBallsData.Species.CAT:
+		bhd_file = "res://resources/animations/CAT.bhd"
+		bdt_prefix = "CAT"
+	elif species == KeyBallsData.Species.BABY:
+		bhd_file = "res://resources/animations/BABY.bhd"
+		bdt_prefix = "BABY"
+	else:
+		bhd_file = "res://resources/animations/CAT.bhd"
+		bdt_prefix = "CAT"
+
+	current_bdt_prefix = bdt_prefix
+	bhd = BhdParser.new(bhd_file)
+
+	if current_animation >= bhd.animation_ranges.size():
+		current_animation = 0
+		var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
+		if anim_picker:
+			anim_picker.text = "0"
+
+	var anim_to_load = 0 if t_pose_active else current_animation
+
+	var filename = bhd_file.get_file()
+	for i in range(bhd_option_button.get_item_count()):
+		if bhd_option_button.get_item_text(i) == filename:
+			bhd_option_button.select(i)
+			break
+
+	emit_signal("bhd_loaded", bhd.animation_ranges.size())
+	if bhd.animation_ranges.empty():
+		print("[ERROR] dog_generator: init_ball_data: failed to load animations for BHD: ", bhd_file)
+		return
+
+	var first_anim_frames = bhd.get_frame_offsets_for(anim_to_load)
+
+	if current_frame >= first_anim_frames.size():
+		current_frame = 0
+
+	var frame_to_use = 0 if t_pose_active else current_frame
+
+	var bdt_filename = bdt_prefix + str(anim_to_load) + ".bdt"
+	current_bdt = BdtParser.new(bdt_filename, first_anim_frames, bhd.num_balls)
+
+	emit_signal("animation_loaded", first_anim_frames.size())
+
+	for n in bhd.num_balls:
+		var x = current_bdt.frames[frame_to_use][n]
+		balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+
+	KeyBallsData.max_base_ball_num = bhd.num_balls
+
+	if t_pose_active:
+		symmetrize_skeleton()
+
+func clear_lnz_data(keep_visuals: bool = false):
+	# for ball in balls:
+	# 	if ball != null:
+	# 		ball.queue_free()
+	balls.clear()
+
+	if not keep_visuals:
+		ball_map.clear()
+		paintball_map.clear()
+		polygons_map.clear()
+		lines_map.clear()
 
 func recompose_model():
 	# Clear LNZ data structures
@@ -1206,33 +669,6 @@ func recompose_model():
 	init_visual_balls(lnz, true)
 	emit_signal("palette_changed", lnz.palette)
 
-
-func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
-	var pal_texture: Texture = null
-	var default_palette = LnzLiveUtils.DEFAULT_PALETTE
-
-	if is_babyz_mode:
-		default_palette = LnzLiveUtils.BABYZ_PALETTE
-
-	if palette_name != null and palette_name != "":
-		var user_res_path = "user://resources/palettes".plus_file(palette_name)
-		var res_res_path = "res://resources/palettes".plus_file(palette_name)
-
-		if ResourceLoader.exists(user_res_path):
-			pal_texture = ResourceLoader.load(user_res_path)
-		elif ResourceLoader.exists(res_res_path):
-			pal_texture = ResourceLoader.load(res_res_path)
-		else:
-			var lookup_key = "palette_" + palette_name.to_lower()
-			if preloader.has_resource(lookup_key):
-				pal_texture = preloader.get_resource(lookup_key)
-
-	if pal_texture == null:
-		pal_texture = default_palette
-
-	return pal_texture
-
-
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 	is_babyz_mode = false
 
@@ -1254,8 +690,6 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		pal_texture = default_palette
 
 	current_palette_texture = pal_texture
-
-	# var collated_data = collate_base_ball_data()
 
 	var base_balls_temp = {}
 	for b in balls:
@@ -1342,316 +776,13 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 		_restore_hidden_states()
 
 
-func _finish_dependent_geometry(new_create: bool):
-	apply_projections()
-	_update_paintball_transforms()
-	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
-	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
-	generate_whiskers(new_create)
-	_restore_hidden_states()
-
-func _update_paintball_transforms():
-	for key in paintball_map:
-		var base_node = ball_map.get(key)
-		if not is_instance_valid(base_node): continue
-		
-		var new_global_pos = base_node.global_transform.origin
-		
-		for pb_node in paintball_map[key]:
-			if is_instance_valid(pb_node):
-				pb_node.base_ball_position = new_global_pos
-
-func collate_base_ball_data():
-	var t_start = OS.get_ticks_msec()
-
-	var ball_data_map = {}
-	for ball in balls:
-		ball_data_map[ball.ball_no] = ball
-	return ball_data_map
-	
-	print("[TIME] dog_generator: collate_base_ball_data took " + str(OS.get_ticks_msec() - t_start) + "ms")
-
-
-func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
-	var base_ball_dict = all_ball_dict.balls
-	var addball_dict = all_ball_dict.addballs
-	var addballs_by_base = {}
-	for ab in addball_dict.values():
-		var ar = addballs_by_base.get(ab.base, [])
-		ar.append(ab)
-		addballs_by_base[ab.base] = ar
-
-	var legs
-	var body_ext
-	var face_ext
-	var head_ext
-	var foot_ext
-	var ear_ext
-
-	if lnz.species == KeyBallsData.Species.DOG:
-		legs = KeyBallsData.legs_dog
-		body_ext = KeyBallsData.body_ext_dog
-		face_ext = KeyBallsData.face_ext_dog
-		head_ext = KeyBallsData.head_ext_dog
-		foot_ext = KeyBallsData.foot_ext_dog
-		ear_ext = KeyBallsData.ear_ext_dog
-	elif lnz.species == KeyBallsData.Species.CAT:
-		legs = KeyBallsData.legs_cat
-		body_ext = KeyBallsData.body_ext_cat
-		face_ext = KeyBallsData.face_ext_cat
-		head_ext = KeyBallsData.head_ext_cat.duplicate()
-		foot_ext = KeyBallsData.foot_ext_cat
-		ear_ext = KeyBallsData.ear_ext_cat
-
-		for b in KeyBallsData.eyes_cat:
-			head_ext.erase(b)
-	elif lnz.species == KeyBallsData.Species.BABY:
-		legs = KeyBallsData.legs_bab
-		body_ext = KeyBallsData.body_ext_bab
-		face_ext = KeyBallsData.face_ext_bab
-		head_ext = KeyBallsData.head_ext_bab
-		foot_ext = KeyBallsData.foot_ext_bab
-		ear_ext = KeyBallsData.ear_ext_bab
-	else:
-		# Unknown species, assume no extensions
-		return all_ball_dict
-
-	# legs
-	# for ball_no in legs[0]:
-	# 	var ball = base_ball_dict[ball_no]
-	# 	if ball_no in [legs[0][0], legs[0][1]]:
-	# 		ball.position.y += abs(ball.position.y * (lnz.leg_extensions.x / 100.0))
-	# 	else:
-	# 		ball.position.y += lnz.leg_extensions.x
-	# for ball_no in legs[1]:
-	# 	var ball = base_ball_dict[ball_no]
-	# 	if ball_no in [legs[1][0], legs[1][1]]:
-	# 		ball.position.y += abs(ball.position.y * abs(lnz.leg_extensions.y / 100.0))
-	# 	else:
-	# 		ball.position.y += lnz.leg_extensions.y
-
-	# legs
-	var front_legs = legs[0]
-	var back_legs = legs[1]
-
-	var front_legs_set = {}
-	for b in front_legs:
-		front_legs_set[b] = true
-
-	var back_legs_set = {}
-	for b in back_legs:
-		back_legs_set[b] = true
-
-	var ext_front = lnz.leg_extensions.x
-	var ext_back = lnz.leg_extensions.y
-
-	if lnz.species == KeyBallsData.Species.BABY:
-		pass
-	else:
-		# tilt/raise head+body
-		# var z_front = 0.0
-		# var z_back = 0.0
-
-		# if front_legs.size() > 0:
-		# 	z_front = base_ball_dict[front_legs[0]].position.z
-		# if back_legs.size() > 0:
-		# 	z_back = base_ball_dict[back_legs[0]].position.z
-
-		# for ball_no in base_ball_dict:
-		# 	var ball = base_ball_dict[ball_no]
-
-		# 	if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
-		# 		# plant legs
-		# 		pass
-		# 	else:
-		# 		# tilt body
-		# 		var t = 0.5
-		# 		if abs(z_back - z_front) > 0.001:
-		# 			t = (ball.position.z - z_front) / (z_back - z_front)
-		# 		# lift body
-		# 		var lift = lerp(ext_front, ext_back, t)
-		# 		ball.position.y -= lift
-
-		# tilt/raise body, raise head
-		var z_front = 0.0
-		var z_back = 0.0
-
-		if front_legs.size() > 0:
-			z_front = base_ball_dict[front_legs[0]].position.z
-		if back_legs.size() > 0:
-			z_back = base_ball_dict[back_legs[0]].position.z
-
-		var head_set = {}
-		for b in head_ext:
-			head_set[b] = true
-
-		for ball_no in base_ball_dict:
-			var ball = base_ball_dict[ball_no]
-
-			if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
-				# plant legs
-				pass
-			else:
-				var t = 0.5
-				if abs(z_back - z_front) > 0.001:
-					t = (ball.position.z - z_front) / (z_back - z_front)
-
-				if head_set.has(ball_no) or ball.position.z < z_front:
-					t = 0.0
-				else:
-					t = clamp(t, 0.0, 1.0)
-
-				var lift = lerp(ext_front, ext_back, t)
-				ball.position.y -= lift
-
-	# body
-	var special_ball = body_ext[0]
-	for ball_no in body_ext:
-		if ball_no == special_ball:
-			continue
-		var ball = base_ball_dict[ball_no]
-		ball.position.z += lnz.body_extension * 2
-	base_ball_dict[special_ball].position.z += lnz.body_extension
-
-	# face
-	var head_ball_key = head_ext[0]
-	var head_rot = base_ball_dict[head_ball_key].rotation
-	for ball_no in face_ext:
-		var ball = base_ball_dict[ball_no]
-		ball.position.z -= lnz.face_extension
-
-	# head enlargement
-	var head_pos = base_ball_dict[head_ball_key].position
-	for ball_no in head_ext:
-		var ball = base_ball_dict[ball_no]
-		var addballs = addballs_by_base.get(ball_no, [])
-		if ball_no != head_ball_key:
-			var mod_v = ball.position - head_pos
-			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
-			mod_v += head_pos
-			ball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
-		ball.size = floor(ball.size * (lnz.head_enlargement.x / 100.0))
-		ball.size += lnz.head_enlargement.y
-
-	# feet
-	for foot_group in foot_ext:
-		var foot_pos = base_ball_dict[foot_group[0]].position
-		for ball_no in foot_group:
-			var ball = base_ball_dict[ball_no]
-			if ball_no != foot_group[0]:
-				var mod_v = ball.position - foot_pos
-				mod_v = mod_v * (lnz.foot_enlargement.x / 100.0)
-				mod_v += foot_pos
-				ball.position = Vector3(
-					floor(ball.position.x), floor(ball.position.y), floor(ball.position.z)
-				)
-			ball.size = floor(ball.size * (lnz.foot_enlargement.x / 100.0))
-			ball.size += lnz.foot_enlargement.y
-
-	# ears
-	for base_ball_no in ear_ext:
-		var base_ball = base_ball_dict[base_ball_no]
-		for k in ear_ext[base_ball_no]:
-			var ear_ball = base_ball_dict[k]
-			var vector_from_base = ear_ball.position - base_ball.position
-			vector_from_base *= (lnz.ear_extension / 100.0)
-			ear_ball.position = base_ball.position + vector_from_base
-#		for addball in addballs_by_base.get(ball_no, []):
-#			addball.position *= (lnz.ear_extension / 100.0)
-
-	return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
-
-
-func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
-	var base_ball_dict = all_ball_dict.balls
-	var lnz_balls = lnz.balls
-	for k in base_ball_dict:
-		var v: BallData = lnz_balls.get(k)
-		var b: BallData = base_ball_dict.get(k)
-		if b == null or v == null:
-			continue
-
-		_orig_lnz_pos[k] = b.position  # record LNZ positions
-		#print("[INFO] dog_generator: munge_balls: saved raw LNZ position for ball %d: %s" % [k, _orig_lnz_pos[k]])
-
-		b.size += v.size
-		b.outline_color_index = v.outline_color_index
-		b.outline = v.outline
-		b.fuzz = v.fuzz
-
-		var q = Quat()
-		for m in lnz.moves:
-			if m.ball_no == k:
-				var move_base = b
-				var rot = move_base.rotation
-				if m.relative_to:
-					rot = base_ball_dict.get(m.relative_to).rotation
-				q.set_euler(Vector3(deg2rad(rot.x), deg2rad(rot.y), deg2rad(rot.z)))
-				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
-		b.texture_id = v.texture_id
-		b.color_index = v.color_index
-		base_ball_dict[k] = b
-
-	return {
-		balls = base_ball_dict,
-		addballs = all_ball_dict.addballs,
-		paintballs = all_ball_dict.paintballs
-	}
-
-
-func apply_movement_with_rotation(vec: Vector3, rot_euler: Vector3):
-	var q = Quat()
-	q.set_euler(Vector3(deg2rad(rot_euler.x), deg2rad(rot_euler.y), deg2rad(rot_euler.z)))
-	return q.xform(vec)
-
-
-func apply_projections():
-	# have to apply projections now
-	# can't do it earlier because it's hard to calculate
-	# the global_position yourself
-	# important to process these in order too
-	var outputs = {}
-
-	for project_ball_data in lnz.project_ball:
-		var visual_ball = ball_map[project_ball_data.project_ball] as Spatial
-		var static_ball = ball_map[project_ball_data.fixed_ball] as Spatial
-		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
-		var base_pos = static_ball.global_transform.origin
-		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
-		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
-
-
-func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
-	for k in all_ball_dict.balls:
-		var ball = all_ball_dict.balls[k]
-		ball.size = ball.size - 2
-		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
-		# ball.size -= 1 - fmod(ball.size, 2)
-		ball.size = max(1, ball.size)
-		ball.size -= 1 - fmod(ball.size, 2)
-		ball.size = max(1, ball.size)
-#		ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
-		ball.position = (ball.position * (lnz.scales[0] / 255.0))
-		all_ball_dict.balls[k] = ball
-
-	for k in all_ball_dict.addballs:
-		var ball = all_ball_dict.addballs[k]
-		ball.size = ball.size - 2
-		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
-		ball.size = max(1, ball.size)
-		ball.size -= 1 - fmod(ball.size, 2)
-		ball.size = max(1, ball.size)
-#		ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
-		ball.position = (ball.position * (lnz.scales[0] / 255.0))
-		all_ball_dict.addballs[k] = ball
-
-	return {
-		balls = all_ball_dict.balls,
-		addballs = all_ball_dict.addballs,
-		paintballs = all_ball_dict.paintballs
-	}
-
-
+### TEXTURES & PALETTES ###
+# load_texture
+# load_texture_from_list
+# clear_texture_cache_for
+# clear_texture_cache
+# generate_color_icon
+# load_palette_resource
 
 func load_texture(texture_filename: String, preloader: ResourcePreloader):
 	var t_start = OS.get_ticks_msec()
@@ -1762,6 +893,65 @@ func clear_texture_cache():
 	_texture_cache.clear()
 	print("[STATUS] dog_generator: clear_texture_cache: texture cache cleared for model refresh")
 
+func generate_color_icon(color_index: int) -> ImageTexture:
+	if not current_palette_texture:
+		return null
+
+	if color_index < 0 or color_index > 255:
+		return null
+
+	var img = current_palette_texture.get_data()
+	if not img:
+		return null
+
+	img.lock()
+	var color = img.get_pixel(color_index, 0)
+	img.unlock()
+
+	var icon_img = Image.new()
+	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
+	icon_img.fill(color)
+
+	var tex = ImageTexture.new()
+	tex.create_from_image(icon_img)
+	return tex
+
+func load_palette_resource(palette_name, is_babyz_mode: bool) -> Texture:
+	var pal_texture: Texture = null
+	var default_palette = LnzLiveUtils.DEFAULT_PALETTE
+
+	if is_babyz_mode:
+		default_palette = LnzLiveUtils.BABYZ_PALETTE
+
+	if palette_name != null and palette_name != "":
+		var user_res_path = "user://resources/palettes".plus_file(palette_name)
+		var res_res_path = "res://resources/palettes".plus_file(palette_name)
+
+		if ResourceLoader.exists(user_res_path):
+			pal_texture = ResourceLoader.load(user_res_path)
+		elif ResourceLoader.exists(res_res_path):
+			pal_texture = ResourceLoader.load(res_res_path)
+		else:
+			var lookup_key = "palette_" + palette_name.to_lower()
+			if preloader.has_resource(lookup_key):
+				pal_texture = preloader.get_resource(lookup_key)
+
+	if pal_texture == null:
+		pal_texture = default_palette
+
+	return pal_texture
+
+
+### RENDERING & GEOMETRY ###
+# generate_balls
+# generate_polygons
+# generate_lines
+# generate_whiskers
+# _finish_dependent_geometry
+# _update_paintball_transforms
+# _update_whisker_position
+# _update_eyelids
+# restore_ball_visual_states
 
 func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array, palette, new_create: bool, no_texture_rotate := []):
 	var t_start = OS.get_ticks_msec()
@@ -2131,10 +1321,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 						pb_node.base_ball_position = global_pos
 	# print("[TIME] dog_generator: generate_balls took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-func get_real_ball_size(ball_size):
-	return ball_size
-
-
 func generate_polygons(polygon_data: Array, species: int, palette, new_create: bool, texture_list: Array):
 	var t_start = OS.get_ticks_msec()
 
@@ -2258,7 +1444,6 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		i += 1
 	# print("[TIME] dog_generator: generate_polygons took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-
 func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 	var t_start = OS.get_ticks_msec()
 
@@ -2369,164 +1554,6 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		i += 1
 	# print("[TIME] dog_generator: generate_lines took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
-
-func _on_OptionButton_file_selected(file_name):
-	generate_pet(file_name)
-
-
-func _on_OptionButton_file_saved(file_name):
-	generate_pet(file_name)
-
-
-
-
-
-
-func signal_ball_mouse_enter(ball_info):
-	emit_signal("ball_mouse_enter", ball_info)
-
-
-func signal_ball_mouse_exit(ball_no):
-	emit_signal("ball_mouse_exit", ball_no)
-
-
-func signal_paintball_mouse_enter(ball_info):
-	emit_signal("ball_mouse_enter", {ball_no = "Paintball on " + str(ball_info.base_ball_no)})
-
-
-func signal_paintball_mouse_exit():
-	emit_signal("ball_mouse_exit", 0)
-
-
-func signal_ball_selected(ball_no, section):
-	print("[STATUS] Node: signal_ball_selected: ball_no %d, section %s" % [ball_no, section])
-	var ball = ball_map[ball_no]
-	var is_addball = false
-	if ball.base_ball_no != -1 and !("override_ball_no" in ball):
-		is_addball = true
-	emit_signal("ball_selected", section, ball_no, is_addball, lnz.balls.keys().max() + 1)
-
-
-func signal_ball_deleted(ball_no):
-	print("[STATUS] Node: signal_ball_deleted: ball_no %d" % ball_no)
-	var ball = ball_map[ball_no]
-	if ball.base_ball_no != -1:
-		emit_signal("addball_deleted", ball_no)
-
-
-func _on_LnzTextEdit_find_ball(ball_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_ball: flashing ball %d" % ball_no)
-	if ball_map.has(ball_no):
-		ball_map[ball_no].flash()
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_ball: ball %d not found in ball_map" % ball_no)
-
-
-func _on_LnzTextEdit_find_line(line_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_line: flashing line %d" % line_no)
-	if lines_map.has(line_no):
-		var line = lines_map[line_no]
-		line.flash()
-		var line_data = lnz.lines[line_no]
-		if ball_map.has(line_data.start):
-			ball_map[line_data.start].flash()
-		if ball_map.has(line_data.end):
-			ball_map[line_data.end].flash()
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_line: line %d not found in lines_map" % line_no)
-
-
-func _on_LnzTextEdit_find_paintball(line_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_paintball: flashing paintball line %d" % line_no)
-	var all_paintballs = []
-	for ball_no in lnz.paintballs:
-		for paintball in lnz.paintballs[ball_no]:
-			all_paintballs.append(paintball)
-	if line_no < all_paintballs.size():
-		var paintball_data = all_paintballs[line_no]
-		var base_ball_no = paintball_data.base
-		if paintball_map.has(base_ball_no):
-			var paintball_visuals = paintball_map[base_ball_no]
-			# This is tricky because the visual paintballs might not be in the same order
-			# For now, let's just flash the base ball
-			if ball_map.has(base_ball_no):
-				ball_map[base_ball_no].flash()
-		else:
-			print("[WARNING] Node: _on_LnzTextEdit_find_paintball: base ball %d has no visual paintballs" % base_ball_no)
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_paintball: line_no %d out of bounds" % line_no)
-
-
-func _on_LnzTextEdit_find_polygon(line_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_polygon: flashing polygon %d" % line_no)
-	if polygons_map.has(line_no):
-		var polygon = polygons_map[line_no]
-		polygon.flash()
-		var polygon_data = lnz.polygons[line_no]
-		if ball_map.has(polygon_data.ball1):
-			ball_map[polygon_data.ball1].flash()
-		if ball_map.has(polygon_data.ball2):
-			ball_map[polygon_data.ball2].flash()
-		if ball_map.has(polygon_data.ball3):
-			ball_map[polygon_data.ball3].flash()
-		if ball_map.has(polygon_data.ball4):
-			ball_map[polygon_data.ball4].flash()
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_polygon: polygon %d not found in polygons_map" % line_no)
-
-
-func _on_LnzTextEdit_find_move(line_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_move: flashing move %d" % line_no)
-	if line_no < lnz.moves.size():
-		var move_data = lnz.moves[line_no]
-		if ball_map.has(move_data.ball_no):
-			ball_map[move_data.ball_no].flash()
-		else:
-			print("[WARNING] Node: _on_LnzTextEdit_find_move: ball %d from move not found" % move_data.ball_no)
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_move: move index %d out of bounds" % line_no)
-
-
-func _on_LnzTextEdit_find_project_ball(line_no):
-	print("[STATUS] Node: _on_LnzTextEdit_find_project_ball: flashing project ball %d" % line_no)
-	if line_no < lnz.project_ball.size():
-		var project_data = lnz.project_ball[line_no]
-		if ball_map.has(project_data.fixed_ball):
-			ball_map[project_data.fixed_ball].flash()
-		if ball_map.has(project_data.project_ball):
-			ball_map[project_data.project_ball].flash()
-	else:
-		print("[WARNING] Node: _on_LnzTextEdit_find_project_ball: index %d out of bounds" % line_no)
-
-
-func _on_ToolsMenu_print_ball_colors():
-	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: compiling and copying ball colors to clipboard")
-	var ball_map_string = ""
-	for b in ball_map:
-		var ball = ball_map[b]
-		var d
-		if b < 67:
-			d = lnz.balls[b]
-		else:
-			d = lnz.addballs[b]
-		if "ball_no" in ball:
-			var this_ball_string = (
-				str(ball.ball_no)
-				+ ",\t\t"
-				+ str(ball.color_index)
-				+ ",\t\t"
-				+ str(d.group)
-				+ ",\t\t"
-				+ str(d.texture_id).replace("0", "3")
-			)
-			if ball_map_string != "":
-				ball_map_string += "\n"
-			ball_map_string += this_ball_string
-			#print("[INFO] dog_generator: _on_ToolsMenu_print_ball_colors: " + this_ball_string)
-	OS.set_clipboard(ball_map_string)
-	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: successfully populated clipboard")
-
-
 func generate_whiskers(new_create: bool):
 	if lnz.species != KeyBallsData.Species.CAT:
 		# print("[STATUS] Node: generate_whiskers: skipping, species is not CAT")
@@ -2584,6 +1611,24 @@ func generate_whiskers(new_create: bool):
 			_update_whisker_position(visual_line, start_node, end_node)
 		i += 1
 
+func _finish_dependent_geometry(new_create: bool):
+	apply_projections()
+	_update_paintball_transforms()
+	generate_polygons(lnz.polygons, lnz.species, lnz.palette, new_create, lnz.texture_list)
+	generate_lines(lnz.lines, lnz.species, lnz.palette, new_create)
+	generate_whiskers(new_create)
+	_restore_hidden_states()
+
+func _update_paintball_transforms():
+	for key in paintball_map:
+		var base_node = ball_map.get(key)
+		if not is_instance_valid(base_node): continue
+		
+		var new_global_pos = base_node.global_transform.origin
+		
+		for pb_node in paintball_map[key]:
+			if is_instance_valid(pb_node):
+				pb_node.base_ball_position = new_global_pos
 
 func _update_whisker_position(visual_line: Spatial, start_node: Spatial, end_node: Spatial):
 	var start_pos = start_node.global_transform.origin
@@ -2597,8 +1642,7 @@ func _update_whisker_position(visual_line: Spatial, start_node: Spatial, end_nod
 	visual_line.rotation_degrees.x += 90
 	visual_line.scale.y = (target_pos - start_pos).length()
 
-
-func update_eyelids(tilt_deg: float):
+func _update_eyelids(tilt_deg: float):
 	var tilt = deg2rad(tilt_deg)
 	for base_no in eyelid_dir_map.keys():
 		var node = ball_map.get(base_no)
@@ -2624,12 +1668,903 @@ func update_eyelids(tilt_deg: float):
 			var angle = eyelid_dir_map[base_no] * tilt
 			node.set_eyelid_rotation(angle)
 
+func restore_ball_visual_states(ball_nos: Array):
+	if lnz == null:
+		return
 
-func emit_ball_move(ball_no: int, new_position: Vector3):
-	_skip_next_rebuild = true
-	emit_signal("ball_moved", ball_no, new_position)
+	for b_no in ball_nos:
+		var visual_node = ball_map.get(b_no)
+		if not is_instance_valid(visual_node):
+			continue
+
+		var data = lnz.balls.get(b_no)
+		if data == null:
+			data = lnz.addballs.get(b_no)
+		if data == null:
+			continue
+
+		visual_node.color_index = data.color_index
+		visual_node.outline_color_index = data.outline_color_index
+		visual_node.outline = data.outline
+		visual_node.fuzz_amount = clamp(data.fuzz / 2, 0, 5)
+
+		if data.texture_id >= 0 and lnz.texture_list.size() > data.texture_id:
+			visual_node.texture = load_texture_from_list(data.texture_id, lnz.texture_list)
+		else:
+			visual_node.texture = null
+
+		if visual_node.has_method("update_ball"):
+			visual_node.update_ball()
+
+### TRANSFORMATIONS ###
+# apply_extensions
+# munge_balls
+# apply_movement_with_rotation
+# apply_projections
+# apply_sizes
+# get_real_ball_size
+
+func apply_extensions(all_ball_dict: Dictionary, lnz: LnzParser):
+	var base_ball_dict = all_ball_dict.balls
+	var addball_dict = all_ball_dict.addballs
+	var addballs_by_base = {}
+	for ab in addball_dict.values():
+		var ar = addballs_by_base.get(ab.base, [])
+		ar.append(ab)
+		addballs_by_base[ab.base] = ar
+
+	var legs
+	var body_ext
+	var face_ext
+	var head_ext
+	var foot_ext
+	var ear_ext
+
+	if lnz.species == KeyBallsData.Species.DOG:
+		legs = KeyBallsData.legs_dog
+		body_ext = KeyBallsData.body_ext_dog
+		face_ext = KeyBallsData.face_ext_dog
+		head_ext = KeyBallsData.head_ext_dog
+		foot_ext = KeyBallsData.foot_ext_dog
+		ear_ext = KeyBallsData.ear_ext_dog
+	elif lnz.species == KeyBallsData.Species.CAT:
+		legs = KeyBallsData.legs_cat
+		body_ext = KeyBallsData.body_ext_cat
+		face_ext = KeyBallsData.face_ext_cat
+		head_ext = KeyBallsData.head_ext_cat.duplicate()
+		foot_ext = KeyBallsData.foot_ext_cat
+		ear_ext = KeyBallsData.ear_ext_cat
+
+		for b in KeyBallsData.eyes_cat:
+			head_ext.erase(b)
+	elif lnz.species == KeyBallsData.Species.BABY:
+		legs = KeyBallsData.legs_bab
+		body_ext = KeyBallsData.body_ext_bab
+		face_ext = KeyBallsData.face_ext_bab
+		head_ext = KeyBallsData.head_ext_bab
+		foot_ext = KeyBallsData.foot_ext_bab
+		ear_ext = KeyBallsData.ear_ext_bab
+	else:
+		# Unknown species, assume no extensions
+		return all_ball_dict
+
+	# legs
+	# for ball_no in legs[0]:
+	# 	var ball = base_ball_dict[ball_no]
+	# 	if ball_no in [legs[0][0], legs[0][1]]:
+	# 		ball.position.y += abs(ball.position.y * (lnz.leg_extensions.x / 100.0))
+	# 	else:
+	# 		ball.position.y += lnz.leg_extensions.x
+	# for ball_no in legs[1]:
+	# 	var ball = base_ball_dict[ball_no]
+	# 	if ball_no in [legs[1][0], legs[1][1]]:
+	# 		ball.position.y += abs(ball.position.y * abs(lnz.leg_extensions.y / 100.0))
+	# 	else:
+	# 		ball.position.y += lnz.leg_extensions.y
+
+	# legs
+	var front_legs = legs[0]
+	var back_legs = legs[1]
+
+	var front_legs_set = {}
+	for b in front_legs:
+		front_legs_set[b] = true
+
+	var back_legs_set = {}
+	for b in back_legs:
+		back_legs_set[b] = true
+
+	var ext_front = lnz.leg_extensions.x
+	var ext_back = lnz.leg_extensions.y
+
+	if lnz.species == KeyBallsData.Species.BABY:
+		pass
+	else:
+		# tilt/raise head+body
+		# var z_front = 0.0
+		# var z_back = 0.0
+
+		# if front_legs.size() > 0:
+		# 	z_front = base_ball_dict[front_legs[0]].position.z
+		# if back_legs.size() > 0:
+		# 	z_back = base_ball_dict[back_legs[0]].position.z
+
+		# for ball_no in base_ball_dict:
+		# 	var ball = base_ball_dict[ball_no]
+
+		# 	if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
+		# 		# plant legs
+		# 		pass
+		# 	else:
+		# 		# tilt body
+		# 		var t = 0.5
+		# 		if abs(z_back - z_front) > 0.001:
+		# 			t = (ball.position.z - z_front) / (z_back - z_front)
+		# 		# lift body
+		# 		var lift = lerp(ext_front, ext_back, t)
+		# 		ball.position.y -= lift
+
+		# tilt/raise body, raise head
+		var z_front = 0.0
+		var z_back = 0.0
+
+		if front_legs.size() > 0:
+			z_front = base_ball_dict[front_legs[0]].position.z
+		if back_legs.size() > 0:
+			z_back = base_ball_dict[back_legs[0]].position.z
+
+		var head_set = {}
+		for b in head_ext:
+			head_set[b] = true
+
+		for ball_no in base_ball_dict:
+			var ball = base_ball_dict[ball_no]
+
+			if front_legs_set.has(ball_no) or back_legs_set.has(ball_no):
+				# plant legs
+				pass
+			else:
+				var t = 0.5
+				if abs(z_back - z_front) > 0.001:
+					t = (ball.position.z - z_front) / (z_back - z_front)
+
+				if head_set.has(ball_no) or ball.position.z < z_front:
+					t = 0.0
+				else:
+					t = clamp(t, 0.0, 1.0)
+
+				var lift = lerp(ext_front, ext_back, t)
+				ball.position.y -= lift
+
+	# body
+	var special_ball = body_ext[0]
+	for ball_no in body_ext:
+		if ball_no == special_ball:
+			continue
+		var ball = base_ball_dict[ball_no]
+		ball.position.z += lnz.body_extension * 2
+	base_ball_dict[special_ball].position.z += lnz.body_extension
+
+	# face
+	var head_ball_key = head_ext[0]
+	var head_rot = base_ball_dict[head_ball_key].rotation
+	for ball_no in face_ext:
+		var ball = base_ball_dict[ball_no]
+		ball.position.z -= lnz.face_extension
+
+	# head enlargement
+	var head_pos = base_ball_dict[head_ball_key].position
+	for ball_no in head_ext:
+		var ball = base_ball_dict[ball_no]
+		var addballs = addballs_by_base.get(ball_no, [])
+		if ball_no != head_ball_key:
+			var mod_v = ball.position - head_pos
+			mod_v = mod_v * (lnz.head_enlargement.x / 100.0)
+			mod_v += head_pos
+			ball.position = Vector3(floor(mod_v.x), floor(mod_v.y), floor(mod_v.z))
+		ball.size = floor(ball.size * (lnz.head_enlargement.x / 100.0))
+		ball.size += lnz.head_enlargement.y
+
+	# feet
+	for foot_group in foot_ext:
+		var foot_pos = base_ball_dict[foot_group[0]].position
+		for ball_no in foot_group:
+			var ball = base_ball_dict[ball_no]
+			if ball_no != foot_group[0]:
+				var mod_v = ball.position - foot_pos
+				mod_v = mod_v * (lnz.foot_enlargement.x / 100.0)
+				mod_v += foot_pos
+				ball.position = Vector3(
+					floor(ball.position.x), floor(ball.position.y), floor(ball.position.z)
+				)
+			ball.size = floor(ball.size * (lnz.foot_enlargement.x / 100.0))
+			ball.size += lnz.foot_enlargement.y
+
+	# ears
+	for base_ball_no in ear_ext:
+		var base_ball = base_ball_dict[base_ball_no]
+		for k in ear_ext[base_ball_no]:
+			var ear_ball = base_ball_dict[k]
+			var vector_from_base = ear_ball.position - base_ball.position
+			vector_from_base *= (lnz.ear_extension / 100.0)
+			ear_ball.position = base_ball.position + vector_from_base
+		#for addball in addballs_by_base.get(ball_no, []):
+		#	addball.position *= (lnz.ear_extension / 100.0)
+
+	return {balls = base_ball_dict, addballs = addball_dict, paintballs = all_ball_dict.paintballs}
+
+func munge_balls(all_ball_dict: Dictionary, lnz: LnzParser):
+	var base_ball_dict = all_ball_dict.balls
+	var lnz_balls = lnz.balls
+	for k in base_ball_dict:
+		var v: BallData = lnz_balls.get(k)
+		var b: BallData = base_ball_dict.get(k)
+		if b == null or v == null:
+			continue
+
+		_orig_lnz_pos[k] = b.position  # record LNZ positions
+		#print("[INFO] dog_generator: munge_balls: saved raw LNZ position for ball %d: %s" % [k, _orig_lnz_pos[k]])
+
+		b.size += v.size
+		b.outline_color_index = v.outline_color_index
+		b.outline = v.outline
+		b.fuzz = v.fuzz
+
+		var q = Quat()
+		for m in lnz.moves:
+			if m.ball_no == k:
+				var move_base = b
+				var rot = move_base.rotation
+				if m.relative_to:
+					rot = base_ball_dict.get(m.relative_to).rotation
+				q.set_euler(Vector3(deg2rad(rot.x), deg2rad(rot.y), deg2rad(rot.z)))
+				b.position = move_base.position + apply_movement_with_rotation(m.position, rot)
+		b.texture_id = v.texture_id
+		b.color_index = v.color_index
+		base_ball_dict[k] = b
+
+	return {
+		balls = base_ball_dict,
+		addballs = all_ball_dict.addballs,
+		paintballs = all_ball_dict.paintballs
+	}
+
+func apply_movement_with_rotation(vec: Vector3, rot_euler: Vector3):
+	var q = Quat()
+	q.set_euler(Vector3(deg2rad(rot_euler.x), deg2rad(rot_euler.y), deg2rad(rot_euler.z)))
+	return q.xform(vec)
+
+func apply_projections():
+	# have to apply projections now
+	# can't do it earlier because it's hard to calculate
+	# the global_position yourself
+	# important to process these in order too
+	var outputs = {}
+
+	for project_ball_data in lnz.project_ball:
+		var visual_ball = ball_map[project_ball_data.project_ball] as Spatial
+		var static_ball = ball_map[project_ball_data.fixed_ball] as Spatial
+		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
+		var base_pos = static_ball.global_transform.origin
+		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
+		visual_ball.global_transform.origin = base_pos + (vec * amount / 100.0)
+
+func apply_sizes(all_ball_dict: Dictionary, lnz: LnzParser):
+	for k in all_ball_dict.balls:
+		var ball = all_ball_dict.balls[k]
+		ball.size = ball.size - 2
+		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
+		#ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size)
+		ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size)
+		#ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
+		ball.position = (ball.position * (lnz.scales[0] / 255.0))
+		all_ball_dict.balls[k] = ball
+
+	for k in all_ball_dict.addballs:
+		var ball = all_ball_dict.addballs[k]
+		ball.size = ball.size - 2
+		ball.size = round(ball.size * (lnz.scales[1] / 255.0))
+		ball.size = max(1, ball.size)
+		ball.size -= 1 - fmod(ball.size, 2)
+		ball.size = max(1, ball.size)
+		#ball.fuzz = floor(ball.fuzz * (lnz.scales[1] / 255.0))
+		ball.position = (ball.position * (lnz.scales[0] / 255.0))
+		all_ball_dict.addballs[k] = ball
+
+	return {
+		balls = all_ball_dict.balls,
+		addballs = all_ball_dict.addballs,
+		paintballs = all_ball_dict.paintballs
+	}
+
+func get_real_ball_size(ball_size):
+	return ball_size
+
+### ANIMATIONS ###
+# set_animation
+# set_frame
+# _on_AnimPicker_text_entered
+# _on_PrevAnim_pressed
+# _on_NextAnim_pressed
+# _on_TPoseCheckBox_toggled
+# symmetrize_skeleton
+
+func set_animation(anim_index: int):
+	if not bhd or bhd.animation_ranges.empty():
+		print("[ERROR] dog_generator: set_animation: No valid BHD loaded.")
+		return
+
+	current_animation = clamp(anim_index, 0, bhd.animation_ranges.size() - 1)
+	bhd.get_frame_offsets_for(anim_index)
+
+	var anim_frames = bhd.get_frame_offsets_for(anim_index)
+	if anim_frames.empty():
+		print("[WARNING] dog_generator: set_animation: animation %d has no frames in BHD" % anim_index)
+		anim_frames = [0]
+
+	var bdt_filename = current_bdt_prefix + str(anim_index) + ".bdt"
+	var new_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
+
+	if new_bdt.frames.empty():
+		print("[ERROR] dog_generator: set_animation: failed to load BDT frames for: ", bdt_filename)
+		return
+
+	current_bdt = BdtParser.new(bdt_filename, anim_frames, bhd.num_balls)
+	set_frame(0)
+	emit_signal("animation_loaded", anim_frames.size())
+	
+	var anim_picker = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/AnimPicker")
+	anim_picker.text = str(anim_index)
+
+func set_frame(frame: int):
+	if not current_bdt or current_bdt.frames.empty():
+		return
+
+	current_frame = clamp(frame, 0, current_bdt.frames.size() - 1)
+
+	if balls.empty():
+		for n in bhd.num_balls:
+			var x = current_bdt.frames[current_frame][n]
+			balls.append(BallData.new(bhd.ball_sizes[n], x.position, n, x.rotation))
+	else:
+		for n in bhd.num_balls:
+			var x = current_bdt.frames[current_frame][n]
+			var b = balls[n]
+			b.position = x.position
+			b.rotation = x.rotation
+
+	if t_pose_active:
+		symmetrize_skeleton()
+
+	init_visual_balls(lnz, false)
+
+func symmetrize_skeleton():
+	var symmetry_data = {}
+	if lnz.species == KeyBallsData.Species.DOG:
+		symmetry_data = KeyBallsData.dog_body_part_symmetry
+	elif lnz.species == KeyBallsData.Species.CAT:
+		symmetry_data = KeyBallsData.cat_body_part_symmetry
+	elif lnz.species == KeyBallsData.Species.BABY:
+		symmetry_data = KeyBallsData.baby_body_part_symmetry
+	else:
+		return
+
+	for section in symmetry_data.values():
+		for part in section.values():
+			if part.has("left") and part.has("right"):
+				var left_indices = part["left"]
+				var right_indices = part["right"]
+
+				var pair_count = min(left_indices.size(), right_indices.size())
+				for i in range(pair_count):
+					var l_idx = left_indices[i]
+					var r_idx = right_indices[i]
+
+					if l_idx < balls.size() and r_idx < balls.size():
+						var l_ball = balls[l_idx]
+						var r_ball = balls[r_idx]
+
+						r_ball.position.x = -l_ball.position.x
+						r_ball.position.y = l_ball.position.y
+						r_ball.position.z = l_ball.position.z
+
+						r_ball.rotation.x = l_ball.rotation.x
+						r_ball.rotation.y = -l_ball.rotation.y
+						r_ball.rotation.z = -l_ball.rotation.z
+
+func _on_AnimPicker_text_entered(new_text):
+	var i = int(new_text)
+	if i < bhd.animation_ranges.size():
+		set_animation(int(new_text))
+
+func _on_PrevAnim_pressed():
+	if current_animation > 0:
+		set_animation(current_animation - 1)
+	else:
+		print("[WARNING] dog_generator: _on_PrevAnim_pressed: already at first animation, cannot go back further")
+
+func _on_NextAnim_pressed():
+	set_animation(current_animation + 1)
+
+func _on_TPoseCheckBox_toggled(button_pressed):
+	t_pose_active = button_pressed
+
+	if t_pose_active:
+		_saved_anim_index = current_animation
+		_saved_frame_index = current_frame
+		
+		var play_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/AnimationContainer/Button")
+		if play_button.pressed:
+			play_button.pressed = false
+		
+		set_animation(0) 
+		set_frame(0)
+
+	else:
+		set_animation(_saved_anim_index)
+		set_frame(_saved_frame_index)
 
 
-func emit_ball_resize(ball_no: int, size_dif: int):
-	_skip_next_rebuild = true
-	emit_signal("ball_resized", ball_no, size_dif)
+### VISIBILITY ###
+# is_special_ball
+# is_hidden_ball
+# hide_ball
+# unhide_all_balls
+# _apply_hidden_state_to_visuals
+# _restore_hidden_states
+# _on_EyeLidButton_pressed
+# _on_ToggleSpecialBalls_toggled
+# _on_TransparencyCheckBox_toggled
+# set_visibility_for_group
+# _on_AddballCheckBox_toggled
+# _on_BallCheckBox_toggled
+# _on_PaintballCheckBox_toggled
+# _on_LineCheckBox_toggled
+# _on_PolygonCheckBox_toggled
+# _on_OmittedBallCheckBox_toggled
+
+
+func is_special_ball(species: int, ball_no: int) -> bool:
+	if lnz != null and lnz.addballs.has(ball_no):
+		if lnz.addballs[ball_no].add_group != 0:
+			return true
+	return false
+
+func is_hidden_ball(ball_no):
+	return _hidden_balls.has(ball_no)
+
+func hide_ball(ball_no):
+	print("[STATUS] Node: hide_ball: ball_no %d" % ball_no)
+	if not _hidden_balls.has(ball_no):
+		_hidden_balls.append(ball_no)
+
+	_apply_hidden_state_to_visuals(ball_no)
+
+func unhide_all_balls():
+	print("[STATUS] Node: unhide_all_balls: restoring %d balls" % _hidden_balls.size())
+	for ball_no in _hidden_balls:
+		if ball_map.has(ball_no):
+			var node = ball_map[ball_no]
+			if node.has_method("set_hidden"):
+				node.set_hidden(false)
+
+		if paintball_map.has(ball_no):
+			for pb in paintball_map[ball_no]:
+				if pb.has_method("set_hidden"):
+					pb.set_hidden(false)
+
+	for line in lines_map.values():
+		line.set_hidden(false)
+
+	for poly in polygons_map.values():
+		poly.set_hidden(false)
+
+	for pb in _hidden_paintballs:
+		if is_instance_valid(pb) and pb.has_method("set_hidden"):
+			pb.set_hidden(false)
+
+	_hidden_balls.clear()
+	_hidden_lines.clear()
+	_hidden_polygons.clear()
+	_hidden_paintballs.clear()
+
+func _apply_hidden_state_to_visuals(ball_no):
+	if ball_map.has(ball_no):
+		var node = ball_map[ball_no]
+		if node.has_method("set_hidden"):
+			node.set_hidden(true)
+
+	if paintball_map.has(ball_no):
+		for pb in paintball_map[ball_no]:
+			if pb.has_method("set_hidden"):
+				pb.set_hidden(true)
+				if not _hidden_paintballs.has(pb):
+					_hidden_paintballs.append(pb)
+
+	if _ball_to_lines_map.has(ball_no):
+		for line_idx in _ball_to_lines_map[ball_no]:
+			var line = lines_map[line_idx]
+			if line.has_method("set_hidden"):
+				line.set_hidden(true)
+			if not _hidden_lines.has(line_idx):
+				_hidden_lines.append(line_idx)
+
+	if _ball_to_polygons_map.has(ball_no):
+		for poly_idx in _ball_to_polygons_map[ball_no]:
+			var poly = polygons_map[poly_idx]
+			if poly.has_method("set_hidden"):
+				poly.set_hidden(true)
+			if not _hidden_polygons.has(poly_idx):
+				_hidden_polygons.append(poly_idx)
+
+func _restore_hidden_states():
+	for ball_no in _hidden_balls:
+		_apply_hidden_state_to_visuals(ball_no)
+
+	for line_idx in _hidden_lines:
+		if lines_map.has(line_idx):
+			lines_map[line_idx].set_hidden(true)
+
+	for poly_idx in _hidden_polygons:
+		if polygons_map.has(poly_idx):
+			polygons_map[poly_idx].set_hidden(true)
+
+	for pb in _hidden_paintballs:
+		if is_instance_valid(pb) and pb.has_method("set_hidden"):
+			pb.set_hidden(true)
+
+func _on_EyeLidButton_pressed():
+	eyelid_mode = (eyelid_mode + 1) % EYELID_LABELS.size()
+	eyelid_button.icon = EYELID_ICONS[eyelid_mode]
+	_update_eyelids(EYELID_TILTS[eyelid_mode])
+
+func _on_ToggleSpecialBalls_toggled(button_pressed):
+	draw_special_balls = button_pressed
+	set_visibility_for_group("special_balls", button_pressed)
+
+func _on_TransparencyCheckBox_toggled(button_pressed):
+	var balls = get_tree().get_nodes_in_group("balls")
+	for ball in balls:
+		if ball is Spatial:
+			ball.set_transparency(button_pressed)
+	var addballs = get_tree().get_nodes_in_group("addballs")
+	for addball in addballs:
+		if addball is Spatial:
+			addball.set_transparency(button_pressed)
+	var lines = get_tree().get_nodes_in_group("lines")
+	for line in lines:
+		if line is Spatial:
+			line.set_transparency(button_pressed)
+	var paintballs = get_tree().get_nodes_in_group("paintballs")
+	for paintball in paintballs:
+		if paintball is Spatial:
+			paintball.set_transparency(button_pressed)
+
+func set_visibility_for_group(group_name: String, is_visible: bool):
+	var nodes = get_tree().get_nodes_in_group(group_name)
+	for node in nodes:
+		if node is Spatial:
+			if is_visible and node.get("omitted") and not draw_omitted_balls:
+				node.set_visible(false)
+			elif is_visible and node.is_in_group("special_balls") and not draw_special_balls:
+				node.set_visible(false)
+			elif is_visible and node.is_in_group("addballs") and not draw_addballs:
+				node.set_visible(false)
+			elif is_visible and node.is_in_group("balls") and not draw_balls:
+				node.set_visible(false)
+			else:
+				node.set_visible(is_visible)
+
+func _on_AddballCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_AddballCheckBox_toggled: setting addballs visibility to %s" % button_pressed)
+	draw_addballs = button_pressed
+	set_visibility_for_group("addballs", button_pressed)
+
+func _on_BallCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_BallCheckBox_toggled: setting balls visibility to %s" % button_pressed)
+	draw_balls = button_pressed
+	set_visibility_for_group("balls", button_pressed)
+
+func _on_PaintballCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_PaintballCheckBox_toggled: setting paintballs visibility to %s" % button_pressed)
+	draw_paintballs = button_pressed
+	set_visibility_for_group("paintballs", button_pressed)
+
+func _on_LineCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_LineCheckBox_toggled: setting lines visibility to %s" % button_pressed)
+	draw_lines = button_pressed
+	set_visibility_for_group("lines", button_pressed)
+
+func _on_PolygonCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_PolygonCheckBox_toggled: setting polygons visibility to %s" % button_pressed)
+	draw_polygons = button_pressed
+	set_visibility_for_group("polygons", button_pressed)
+
+func _on_OmittedBallCheckBox_toggled(button_pressed):
+	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: setting omitted balls visibility to %s" % button_pressed)
+	draw_omitted_balls = button_pressed
+	var count = 0
+
+	for ball_no in ball_map:
+		var node = ball_map[ball_no]
+
+		if node.get("omitted") == true:
+			count += 1
+			if draw_omitted_balls:
+				node.visible_override = true
+
+				if node.is_in_group("balls"):
+					node.visible = draw_balls
+				elif node.is_in_group("addballs"):
+					node.visible = draw_addballs
+
+				if paintball_map.has(ball_no):
+					for pb in paintball_map[ball_no]:
+						pb.visible_override = true
+						pb.visible = draw_paintballs
+			else:
+				node.visible_override = false
+
+				if not node.is_in_group("balls"):
+					node.call_deferred("set_visible", false)
+
+				if paintball_map.has(ball_no):
+					for pb in paintball_map[ball_no]:
+						pb.visible_override = false
+						pb.visible = false
+	print("[STATUS] Node: _on_OmittedBallCheckBox_toggled: updated %d omitted balls" % count)
+
+
+### PAINTBALLZ ###
+# _create_paintball_instance
+# _setup_paintball_node
+# add_pending_paintball
+# remove_last_pending_paintball
+# remove_specific_pending_paintball
+# get_pending_paintballs_data
+# get_pending_paintball_nodes
+# clear_pending_paintballz
+# _on_clear_pending_paintballz
+# clear_auto_paintballz
+# _on_clear_auto_paintballz
+# _on_randomize_auto_paintballz
+# _on_clear_auto_paintballz
+# _on_apply_auto_paintballz
+
+func _create_paintball_instance(base_ball_node):
+	var pb = paintball_scene.instance()
+	base_ball_node.add_child(pb)
+	pb.set_owner(get_root())
+	pb.add_to_group("paintballs")
+	return pb
+
+func _setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, pb_pos, pb_diameter, existing_count, list_size):
+	var target_layer = 1
+	var base_mesh = base_ball_node.get_node_or_null("MeshInstance")
+	if base_mesh and base_mesh is VisualInstance:
+		target_layer = base_mesh.layers
+	
+	var pb_mesh = pb_visual_ball.get_node_or_null("MeshInstance")
+	if pb_mesh and pb_mesh is VisualInstance:
+		pb_mesh.layers = target_layer
+
+	var final_size = base_ball_node.ball_size * (float(pb_diameter) / 100.0)
+	final_size -= 1 - fmod(final_size, 2)
+	pb_visual_ball.ball_size = final_size
+	pb_visual_ball.transform.origin = pb_pos
+	pb_visual_ball.set_surface_normal(pb_pos.normalized())
+
+	pb_visual_ball.set_species(lnz.species, is_babyz_mode)
+	pb_visual_ball.set_render_flat_colors(render_flat_colors_global)
+	pb_visual_ball.base_ball_no = base_ball_node.name.to_int() # Ensure consistent naming
+	pb_visual_ball.base_ball_position = base_ball_node.global_transform.origin
+	pb_visual_ball.base_ball_size = base_ball_node.ball_size
+	pb_visual_ball.color_index = pb_data.color
+	pb_visual_ball.outline_color_index = pb_data.outline_color
+	pb_visual_ball.outline = pb_data.outline
+	pb_visual_ball.group = pb_data.group
+	pb_visual_ball.fuzz_amount = clamp(pb_data.fuzz / 2, 0, 5)
+	pb_visual_ball.palette = base_ball_node.palette
+
+	if pb_data.texture > -1:
+		var tex_pb = load_texture_from_list(pb_data.texture, lnz.texture_list)
+		if tex_pb:
+			pb_visual_ball.texture = tex_pb
+			if pb_data.texture < lnz.texture_list.size():
+				pb_visual_ball.transparent_color = lnz.texture_list[pb_data.texture].transparent_color
+	else:
+		print("[WARNING] Node: _setup_paintball_node: failed to load texture %d" % pb_data.texture)
+
+	var base_z = base_ball_node.z_add if "z_add" in base_ball_node else 0.0
+	pb_visual_ball.z_add = (base_z * 20.0) + 10.0 + float(existing_count)
+
+	return pb_visual_ball
+
+func add_pending_paintball(paintball_info):
+	_pending_paintballs_data.append(paintball_info)
+	var base_ball_node = ball_map[paintball_info.base_ball_no]
+	var pb_visual_ball = _create_paintball_instance(base_ball_node)
+	
+	var pb_data = {
+		"color": paintball_info.color, "outline_color": paintball_info.outline_color,
+		"outline": paintball_info.outline_type, "fuzz": paintball_info.fuzz,
+		"texture": paintball_info.texture, "group": paintball_info.group
+	}
+
+	_setup_paintball_node(pb_visual_ball, pb_data, base_ball_node, 
+						paintball_info.relative_pos_local, paintball_info.diameter,
+						paintball_map.get(paintball_info.base_ball_no, []).size(),
+						_pending_paintballs_data.size())
+	
+	_pending_paintball_nodes.append(pb_visual_ball)
+	print("[STATUS] Node: add_pending_paintball: successfully added visual paintball to base ball %d" % paintball_info.base_ball_no)
+
+func remove_last_pending_paintball():
+	print("[STATUS] Node: remove_last_pending_paintball: request received")
+	if _pending_paintballs_data.size() > 0 and _pending_paintball_nodes.size() > 0:
+		var last_visual_node = _pending_paintball_nodes.pop_back()
+
+		if is_instance_valid(last_visual_node):
+			last_visual_node.queue_free()
+			print("[STATUS] Node: remove_last_pending_paintball: visual node freed")
+
+		_pending_paintballs_data.pop_back()
+	else:
+		print("[WARNING] Node: remove_last_pending_paintball: no pending paintballs to remove")
+
+func remove_specific_pending_paintball(paintball_node):
+	print("[STATUS] Node: remove_specific_pending_paintball: called for node %s" % paintball_node)
+	var index = _pending_paintball_nodes.find(paintball_node)
+	if index != -1:
+		_pending_paintball_nodes.remove(index)
+		_pending_paintballs_data.remove(index)
+		if is_instance_valid(paintball_node):
+			paintball_node.queue_free()
+			print("[STATUS] Node: remove_specific_pending_paintball: node freed")
+	else:
+		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
+
+func get_pending_paintballs_data():
+	return _pending_paintballs_data
+
+func get_pending_paintball_nodes():
+	return _pending_paintball_nodes
+
+func clear_pending_paintballz():
+	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
+	for node in _pending_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_pending_paintball_nodes.clear()
+	_pending_paintballs_data.clear()
+
+func _on_clear_pending_paintballz():
+	clear_pending_paintballz()
+
+func clear_auto_paintballz():
+	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
+	for node in _auto_paintball_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+	_auto_paintball_nodes.clear()
+	_auto_paintballs_data.clear()
+
+func _on_clear_auto_paintballz():
+	clear_auto_paintballz()
+
+func _on_randomize_auto_paintballz(paintballz):
+	print("[STATUS] Node: _on_randomize_auto_paintballz: clearing and generating %d auto-paintballs" % paintballz.size())
+	_on_clear_auto_paintballz()
+	_auto_paintballs_data = paintballz
+
+	for pb_data in _auto_paintballs_data:
+		var base_ball_node = ball_map.get(pb_data.base)
+		
+		if not is_instance_valid(base_ball_node):
+			print("[WARNING] Node: _on_randomize_auto_paintballz: base_ball_no %d not found or invalid" % pb_data.base)
+			continue
+
+		var pb_visual_ball = _create_paintball_instance(base_ball_node)
+		
+		var pb_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
+
+		var adapter = {
+			"color": pb_data.color_index,
+			"outline_color": pb_data.outline_color_index,
+			"outline": pb_data.outline,
+			"fuzz": pb_data.fuzz,
+			"texture": pb_data.texture_id,
+			"group": pb_data.group
+		}
+
+		_setup_paintball_node(
+			pb_visual_ball, 
+			adapter, 
+			base_ball_node, 
+			pb_pos, 
+			pb_data.size,
+			paintball_map.get(pb_data.base, []).size(),
+			_auto_paintball_nodes.size()
+		)
+
+		_auto_paintball_nodes.append(pb_visual_ball)
+
+func _on_apply_auto_paintballz():
+	print("[STATUS] Node: _on_apply_auto_paintballz: attempting to apply auto paintballs")
+	var processed_paintballs = {}
+	var processed_count = 0
+	var cap = 1000
+
+	for pb_data in _auto_paintballs_data:
+		if processed_count >= cap:
+			print("[WARNING] Node: _on_apply_auto_paintballz: hit cap of %d auto paintballs" % cap)
+			break
+
+		var base_ball_node = ball_map.get(pb_data.base)
+		if not is_instance_valid(base_ball_node):
+			continue
+
+		var local_pos = pb_data.position * (base_ball_node.ball_size / 2.0) * pixel_world_size
+		var world_relative_pos = (
+			base_ball_node.to_global(local_pos)
+			- base_ball_node.global_transform.origin
+		)
+
+		var lnz_scale = lnz.scales.x / 255.0
+		var relative_pos_lnz = world_relative_pos / (pixel_world_size * lnz_scale)
+		relative_pos_lnz.y *= -1
+
+		var key = hash([pb_data.base, relative_pos_lnz, pb_data.size])
+
+		if processed_paintballs.has(key):
+			continue
+
+		processed_paintballs[key] = true
+
+		var paintball_info = {
+			"base_ball_no": pb_data.base,
+			"relative_pos_local": local_pos,
+			"relative_pos_lnz": relative_pos_lnz,
+			"diameter": pb_data.size,
+			"color": pb_data.color_index,
+			"outline_color": pb_data.outline_color_index,
+			"outline_type": pb_data.outline,
+			"fuzz": pb_data.fuzz,
+			"texture": pb_data.texture_id,
+			"group": pb_data.group,
+			"anchored": pb_data.anchored == 1
+		}
+		_pending_paintballs_data.append(paintball_info)
+
+		processed_count += 1
+		
+	print("[STATUS] Node: _on_apply_auto_paintballz: appended %d paintballs to pending queue" % processed_count)
+
+	var lnz_text_edit = get_tree().root.get_node(
+		"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
+	)
+	if lnz_text_edit:
+		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
+		lnz_text_edit.apply_paintballz()
+	else:
+		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
+
+	_on_clear_auto_paintballz()
+
+
+#####
+
+
+func _on_OptionButton_file_selected(file_name):
+	generate_pet(file_name)
+
+func _on_OptionButton_file_saved(file_name):
+	generate_pet(file_name)
+
+
+
+
+
+
