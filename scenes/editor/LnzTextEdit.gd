@@ -209,12 +209,14 @@ func get_lnz_scale() -> float:
 		return 1.0
 	return pet_node.lnz.scales.x / 255.0
 
+
 ### SIGNAL CALLBACKS ###
 # _on_NotificationTimer_timeout
 
 func _on_NotificationTimer_timeout():
 	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
 	wrap_notification_label.hide()
+
 
 ### FILE SAVING & LOADING ###
 # _on_example_file_selected
@@ -365,6 +367,7 @@ func _on_Tree_backup_file():
 func _on_ApplyChangesButton_pressed():
 	save_backup()
 	save_file(false) # User Manual Save = History Snapshot
+
 
 ### UNDO / REDO HISTORY ###
 # commit_full_snapshot
@@ -580,6 +583,7 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 		if console_log:
 			console_log.log_message(msg)
 
+
 ### TEXT EDITOR ###
 # _unhandled_key_input
 # _on_LnzTextEdit_gui_input
@@ -617,7 +621,6 @@ func _unhandled_key_input(event):
 				search_input.grab_focus()
 
 		_setup_context_menu()
-
 
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed:
@@ -791,6 +794,7 @@ func _on_menu_id_pressed(id):
 		set_column_popup.popup_centered(Vector2(250, 150))
 		col_input.grab_focus()
 
+
 ### FIND & REPLACE ###
 # _find_text
 # _on_FindCloseButton_pressed
@@ -948,7 +952,6 @@ func _on_ReplaceButton_pressed():
 	# After attempting a replace, find the next occurrence.
 	_find_text(true)
 
-
 func _on_ReplaceAllButton_pressed():
 	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
 	var replace_line_edit = find_panel.get_node("VBoxContainer/ReplaceLineEdit")
@@ -1010,6 +1013,7 @@ func _on_ReplaceAllButton_pressed():
 			_set_text_preserve(new_text)
 
 	self.readonly = true
+
 
 ### LNZ TEXT FINDING ###
 # _pos_to_offset
@@ -1276,6 +1280,7 @@ func _count_section_entries(section_name: String) -> int:
 		current_line_num += 1
 		
 	return entry_count
+
 
 ### LNZ TEXT PARSING ###
 # get_section_bounds
@@ -1639,7 +1644,6 @@ func get_ball_name(ball_no: int) -> String:
 	
 	return ball_name
 
-
 func find_mirrored_ball(ball_no: int) -> int:
 	var max_base = KeyBallsData.max_base_ball_num
 	if max_base == null: 
@@ -1673,10 +1677,8 @@ func find_mirrored_ball(ball_no: int) -> int:
 		
 	return ball_no
 
-
 func get_corresponding_right_ball(left_ball_index: int) -> int:
 	return find_mirrored_ball(left_ball_index)
-
 
 func get_corresponding_left_ball(right_ball_index: int) -> int:
 	return find_mirrored_ball(right_ball_index)
@@ -2765,92 +2767,12 @@ func set_batch_moves(moves_dict: Dictionary):
 	save_file(true)
 	commit_full_snapshot("Randomized [Move] entries")
 
-# NOTE: NOT IMPLEMENTED
-# func _add_or_update_override(section_name, ball_no, values, value_indices):
-# 	var section_find = search(section_name, 0, 0, 0)
-# 	var start_line
-# 	var end_line
-
-# 	if section_find.empty():
-# 		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
-# 		var all_lines = get_text().split("\n")
-# 		all_lines.insert(first_section, section_name)
-# 		all_lines.insert(first_section + 1, "")
-# 		text = all_lines.join("\n")
-# 		_set_text_preserve(text)
-# 		section_find = search(section_name, 0, 0, 0)
-
-# 	start_line = section_find[SEARCH_RESULT_LINE] + 1
-# 	end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
-# 	if end_line == -1:
-# 		end_line = get_line_count()
-
-# 	var delim = _detect_delimiter(start_line, end_line)
-# 	var line_updated = false
-# 	for i in range(start_line, end_line):
-# 		var line = get_line(i).strip_edges()
-# 		if line.begins_with(str(ball_no) + delim):
-# 			var parts = split_line(line)
-# 			var max_index = value_indices.max()
-# 			while parts.size() <= max_index:
-# 				parts.append("0")
-
-# 			var value_idx = 0
-# 			for target_idx in value_indices:
-# 				parts[target_idx] = str(values[value_idx])
-# 				value_idx += 1
-
-# 			set_line(i, parts.join(delim))
-# 			line_updated = true
-# 			break
-
-# 	if not line_updated:
-# 		var max_index = 0
-# 		if value_indices.size() > 0:
-# 			max_index = value_indices.max()
-
-# 		var new_parts = []
-# 		new_parts.resize(max_index + 1)
-# 		for i in range(new_parts.size()):
-# 			new_parts[i] = "0"
-# 		new_parts[0] = str(ball_no)
-
-# 		var value_idx = 0
-# 		for target_idx in value_indices:
-# 			if value_idx < values.size():
-# 				new_parts[target_idx] = str(values[value_idx])
-# 				value_idx += 1
-
-# 		var new_line = new_parts.join(delim)
-# 		var insert_line = _find_insertion_line(start_line, end_line)
-# 		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
-
-# NOTE: CHECK IF USED ANYMORE
-# Inserts a base ball into [Omissions] if not present
-# func _mark_base_ball_omitted(ball_no: int):
-# 	var section = search("[Omissions]", 0, 0, 0)
-# 	var start = section[SEARCH_RESULT_LINE] + 1
-
-# 	# Scan section first to avoid modifying it while iterating
-# 	var already_omitted = false
-# 	var end = get_line_count()
-# 	for i in range(start, end):
-# 		var line = get_line(i).strip_edges()
-# 		if line.begins_with("[") or line == "":
-# 			break
-# 		if int(line) == ball_no:
-# 			already_omitted = true
-# 			break
-
-# 	if not already_omitted:
-# 		_insert_text_at_line(start, str(ball_no) + "\n")
 
 ### VISUAL NODE SIGNALS ###
 # _on_Node_line_created
 # _on_Node_ball_selected
 # _on_Node_ball_resized
 # _on_Node_ball_moved
-
 
 func _on_Node_line_created(start_ball, end_ball):
 	create_line(start_ball, end_ball)
@@ -3172,11 +3094,16 @@ func move_ball(ball_no: int, new_pos: Vector3):
 			save_file(true)
 			commit_full_snapshot("Created Move for Ballz #%d" % ball_no)
 
+
 ### TOOLS MENU SIGNALS ###
 # _on_ToolsMenu_create_addball
+# create_addball
 # _on_ToolsMenu_delete_ball
+# delete_ball
 # _on_ToolsMenu_omit_ball
+# omit_ball
 # _on_ToolsMenu_unomit_ball
+# unomit_ball
 # _on_ToolsMenu_clear_ball_paintballz
 # _on_ToolsMenu_color_entire_pet
 # _on_ToolsMenu_color_part_pet
@@ -3347,6 +3274,9 @@ func create_addball(reference_ball, also_connect_line := false):
 	commit_full_snapshot("Created Addballz #%d" % addball_no)
 
 func _on_ToolsMenu_delete_ball(ball_no: int):
+	delete_ball(ball_no)
+
+func delete_ball(ball_no: int):
 	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 	if is_addball:
@@ -3361,6 +3291,9 @@ func _on_ToolsMenu_delete_ball(ball_no: int):
 	commit_full_snapshot("Deleted Addballz #%d" % ball_no)
 
 func _on_ToolsMenu_omit_ball(ball_no: int):
+	omit_ball(ball_no)
+
+func omit_ball(ball_no: int):
 	save_backup()
 	var section = search("[Omissions]", 0, 0, 0)
 	if section.empty():
@@ -3375,6 +3308,9 @@ func _on_ToolsMenu_omit_ball(ball_no: int):
 	commit_full_snapshot("Omitted Ballz #%d" % ball_no)
 
 func _on_ToolsMenu_unomit_ball(ball_no: int):
+	unomit_ball(ball_no)
+
+func unomit_ball(ball_no: int):
 	save_backup()
 	var section = search("[Omissions]", 0, 0, 0)
 	if section.empty():
@@ -4180,59 +4116,6 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 	save_file(true)
 	commit_full_snapshot("Applied Global Fuzz: " + str(fuzz))
 
-# NOTE: DEFUNCT
-# func _on_ToolsMenu_move_head(x, y, z):
-# 	save_backup()
-# 	var head_balls: Array
-# 	if KeyBallsData.species == KeyBallsData.Species.CAT:
-# 		head_balls = KeyBallsData.head_ext_cat.duplicate()
-# 	else:
-# 		head_balls = KeyBallsData.head_ext_dog.duplicate()
-# 	var section_find = search('[Move]', 0, 0, 0)
-# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
-# 	var i = 0
-# 	while true:
-# 		var line = get_line(start_of_section + i).lstrip(" ")
-# 		if line.begins_with(";") or line.empty():
-# 			i += 1
-# 			continue
-# 		elif line.begins_with("["):
-# 			break
-			
-# 		var delimiters = [", ", ",", "\t", " "]
-# 		var parsed_line = []
-# 		for delim in delimiters:
-# 			if line.split(delim).size() > 2:
-# 				parsed_line = line.split(delim, false)
-# 				break
-
-# 		if !(parsed_line[0].to_int() in head_balls):
-# 			i += 1
-# 			continue
-# 		head_balls.erase(parsed_line[0].to_int())
-# 		var n = 0
-# 		var final_line = ""
-# 		for r_item in parsed_line:
-# 			var item = r_item
-# 			if n == 1:
-# 				final_line += str(item.to_int() + x) + " "
-# 			elif n == 2:
-# 				final_line += str(item.to_int() + y) + " "
-# 			elif n == 3:
-# 				final_line += str(item.to_int() + z) + " "
-# 			else:
-# 				final_line += item + " "
-# 			n += 1
-# 		set_line(start_of_section + i, final_line)
-# 		i += 1
-	
-# 	# now insert any we missed
-# 	for b in head_balls:
-# 		cursor_set_line(start_of_section + i)
-# 		cursor_set_column(0)
-# 		insert_text_at_cursor(str(b) + " " + str(x) + " " + str(y) + " " + str(z) + "\n")
-	
-# 	save_file()
 
 ### MIRRORING & SYMMETRY ###
 # _mirror_l_to_r_full
@@ -4248,7 +4131,6 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 # _mirror_linez_processor
 # _mirror_projection_processor
 # _mirror_paintball_processor
-
 
 func _mirror_l_to_r_full(reverse: bool = false):
 	save_backup()

@@ -526,3 +526,143 @@ Function graveyard after major refactors...
 # 	draw_line(origin_2d, neg_end, color, width, true)
 # 	_draw_axis_label(neg_end, neg_label, color)
 ```
+
+
+```
+# NOTE: DEFUNCT
+# func _on_ToolsMenu_move_head(x, y, z):
+# 	save_backup()
+# 	var head_balls: Array
+# 	if KeyBallsData.species == KeyBallsData.Species.CAT:
+# 		head_balls = KeyBallsData.head_ext_cat.duplicate()
+# 	else:
+# 		head_balls = KeyBallsData.head_ext_dog.duplicate()
+# 	var section_find = search('[Move]', 0, 0, 0)
+# 	var start_of_section = section_find[SEARCH_RESULT_LINE] + 1
+# 	var i = 0
+# 	while true:
+# 		var line = get_line(start_of_section + i).lstrip(" ")
+# 		if line.begins_with(";") or line.empty():
+# 			i += 1
+# 			continue
+# 		elif line.begins_with("["):
+# 			break
+			
+# 		var delimiters = [", ", ",", "\t", " "]
+# 		var parsed_line = []
+# 		for delim in delimiters:
+# 			if line.split(delim).size() > 2:
+# 				parsed_line = line.split(delim, false)
+# 				break
+
+# 		if !(parsed_line[0].to_int() in head_balls):
+# 			i += 1
+# 			continue
+# 		head_balls.erase(parsed_line[0].to_int())
+# 		var n = 0
+# 		var final_line = ""
+# 		for r_item in parsed_line:
+# 			var item = r_item
+# 			if n == 1:
+# 				final_line += str(item.to_int() + x) + " "
+# 			elif n == 2:
+# 				final_line += str(item.to_int() + y) + " "
+# 			elif n == 3:
+# 				final_line += str(item.to_int() + z) + " "
+# 			else:
+# 				final_line += item + " "
+# 			n += 1
+# 		set_line(start_of_section + i, final_line)
+# 		i += 1
+	
+# 	# now insert any we missed
+# 	for b in head_balls:
+# 		cursor_set_line(start_of_section + i)
+# 		cursor_set_column(0)
+# 		insert_text_at_cursor(str(b) + " " + str(x) + " " + str(y) + " " + str(z) + "\n")
+	
+# 	save_file()
+
+```
+
+```
+# NOTE: NOT IMPLEMENTED
+# func _add_or_update_override(section_name, ball_no, values, value_indices):
+# 	var section_find = search(section_name, 0, 0, 0)
+# 	var start_line
+# 	var end_line
+
+# 	if section_find.empty():
+# 		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
+# 		var all_lines = get_text().split("\n")
+# 		all_lines.insert(first_section, section_name)
+# 		all_lines.insert(first_section + 1, "")
+# 		text = all_lines.join("\n")
+# 		_set_text_preserve(text)
+# 		section_find = search(section_name, 0, 0, 0)
+
+# 	start_line = section_find[SEARCH_RESULT_LINE] + 1
+# 	end_line = search("[", 0, start_line, 0)[SEARCH_RESULT_LINE]
+# 	if end_line == -1:
+# 		end_line = get_line_count()
+
+# 	var delim = _detect_delimiter(start_line, end_line)
+# 	var line_updated = false
+# 	for i in range(start_line, end_line):
+# 		var line = get_line(i).strip_edges()
+# 		if line.begins_with(str(ball_no) + delim):
+# 			var parts = split_line(line)
+# 			var max_index = value_indices.max()
+# 			while parts.size() <= max_index:
+# 				parts.append("0")
+
+# 			var value_idx = 0
+# 			for target_idx in value_indices:
+# 				parts[target_idx] = str(values[value_idx])
+# 				value_idx += 1
+
+# 			set_line(i, parts.join(delim))
+# 			line_updated = true
+# 			break
+
+# 	if not line_updated:
+# 		var max_index = 0
+# 		if value_indices.size() > 0:
+# 			max_index = value_indices.max()
+
+# 		var new_parts = []
+# 		new_parts.resize(max_index + 1)
+# 		for i in range(new_parts.size()):
+# 			new_parts[i] = "0"
+# 		new_parts[0] = str(ball_no)
+
+# 		var value_idx = 0
+# 		for target_idx in value_indices:
+# 			if value_idx < values.size():
+# 				new_parts[target_idx] = str(values[value_idx])
+# 				value_idx += 1
+
+# 		var new_line = new_parts.join(delim)
+# 		var insert_line = _find_insertion_line(start_line, end_line)
+# 		_insert_text_at_cursor_at_line(insert_line, new_line + "\n")
+
+# NOTE: CHECK IF USED ANYMORE
+# Inserts a base ball into [Omissions] if not present
+# func _mark_base_ball_omitted(ball_no: int):
+# 	var section = search("[Omissions]", 0, 0, 0)
+# 	var start = section[SEARCH_RESULT_LINE] + 1
+
+# 	# Scan section first to avoid modifying it while iterating
+# 	var already_omitted = false
+# 	var end = get_line_count()
+# 	for i in range(start, end):
+# 		var line = get_line(i).strip_edges()
+# 		if line.begins_with("[") or line == "":
+# 			break
+# 		if int(line) == ball_no:
+# 			already_omitted = true
+# 			break
+
+# 	if not already_omitted:
+# 		_insert_text_at_line(start, str(ball_no) + "\n")
+```
