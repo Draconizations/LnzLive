@@ -13,7 +13,7 @@ func _update_ball_label(ball_no):
 	if current_section == "[Linez]" or current_section == "[Project Ball]":
 		var line_idx = lnz_edit.cursor_get_line()
 		var line_text = lnz_edit.get_line(line_idx).strip_edges()
-		var parts = lnz_edit._split_line(line_text)
+		var parts = lnz_edit.split_line(line_text)
 		
 		if parts.size() >= 2:
 			var b1 = int(parts[0])

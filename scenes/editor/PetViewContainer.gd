@@ -387,6 +387,9 @@ func _ready():
 
 
 func _on_reference_image_updated(config_data):
+	update_config_reference_image(config_data)
+
+func update_config_reference_image(config_data):
 	ref_image_config = config_data
 	if not ref_image_config.empty() and ref_image_config.get("show_bg", false):
 		var current_path = ref_image_config.get("path", "")
@@ -1023,7 +1026,7 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 				}
 				var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 				if partner_id != -1 and partner_id != b.ball_no:
-					var mb = _find_visual_ball_by_no(partner_id)
+					var mb = find_visual_ball_by_no(partner_id)
 					if mb:
 						_scale_group_initial_data[partner_id] = {
 							"pos": mb.global_transform.origin, "size": mb.ball_size
@@ -1169,7 +1172,7 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 
 			var engine_scale = pet_node.lnz.scales[1]
 			for b_no in _scale_group_initial_data:
-				var b = _find_visual_ball_by_no(b_no)
+				var b = find_visual_ball_by_no(b_no)
 				if not is_instance_valid(b):
 					continue
 
@@ -1919,7 +1922,7 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				get_tree().set_input_as_handled()
 				return true
 			KEY_H:
-				lnz_text_edit._on_HeadShotButton_pressed()
+				lnz_text_edit.capture_headshot()
 				get_tree().set_input_as_handled()
 				return true
 			KEY_V:
@@ -2237,7 +2240,7 @@ func _on_Node_ball_mouse_enter(ball_info):
 		mark_ui_dirty()
 
 
-func _find_visual_ball_by_no(no: int) -> Spatial:
+func find_visual_ball_by_no(no: int) -> Spatial:
 	if is_instance_valid(pet_node) and pet_node.ball_map:
 		if pet_node.ball_map.has(no):
 			var b = pet_node.ball_map[no]
@@ -2275,7 +2278,7 @@ func _on_affected_list_changed(ids: Array):
 
 	selected_balls.clear()
 	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
+		var ball = find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			selected_balls.append(ball)
 
@@ -2637,7 +2640,7 @@ func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()
 
 	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
+		var ball = find_visual_ball_by_no(id)
 		if ball and is_instance_valid(ball):
 			if "ball_no" in ball:
 				selected_balls.append(ball)
@@ -2870,7 +2873,7 @@ func _wait_for_addball_then_autodrag() -> void:
 	var tries := 10
 	while tries > 0 and pending_autodrag_addball_no != -1:
 		yield(get_tree(), "idle_frame")
-		var visual := _find_visual_ball_by_no(pending_autodrag_addball_no)
+		var visual := find_visual_ball_by_no(pending_autodrag_addball_no)
 		if visual:
 			begin_auto_move_for_ball(visual)
 			pending_autodrag_addball_no = -1
@@ -2935,10 +2938,10 @@ func _on_recolor_mode_toggled(is_on):
 		mouse_default_cursor_shape = CURSOR_ARROW
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 	else:
-		recolor_settings_instance._on_ClearBucket_pressed()
+		recolor_settings_instance.clear_buckets()
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
-		recolor_settings_instance._on_ClearBucket_pressed()
+		recolor_settings_instance.clear_buckets()
 	mark_ui_dirty()
 
 
@@ -3026,7 +3029,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
 
 	if not is_on:
-		pet_node.clear_auto_paintballs()
+		pet_node.clear_auto_paintballz()
 		_on_unselect_all()
 		_auto_paint_affected_cache.clear()
 		var all_balls = _get_all_visual_balls()
@@ -3731,7 +3734,7 @@ func _restore_preset_selection(ids: Array):
 	selected_balls.clear()
 
 	for id in ids:
-		var ball = _find_visual_ball_by_no(id)
+		var ball = find_visual_ball_by_no(id)
 		if is_instance_valid(ball):
 			selected_balls.append(ball)
 			if ball.has_method("apply_outline_state"):
@@ -3844,7 +3847,7 @@ func _on_move_mode_apply():
 
 	selected_balls.clear()
 	for id in selected_ids:
-		var new_b = _find_visual_ball_by_no(id)
+		var new_b = find_visual_ball_by_no(id)
 		if new_b and is_instance_valid(new_b):
 			selected_balls.append(new_b)
 
@@ -3874,7 +3877,7 @@ func _on_align_selection(axis, mode):
 			var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 
 			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual = _find_visual_ball_by_no(partner_id)
+				var partner_visual = find_visual_ball_by_no(partner_id)
 
 				if (
 					partner_visual
@@ -3980,7 +3983,7 @@ func _on_snap_selection(axis, direction):
 		for b in selected_balls:
 			var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 			if partner_id != -1 and partner_id != b.ball_no:
-				var partner_visual = _find_visual_ball_by_no(partner_id)
+				var partner_visual = find_visual_ball_by_no(partner_id)
 				if (
 					partner_visual
 					and not (partner_visual in selected_balls)
@@ -4067,7 +4070,7 @@ func _on_move_mode_select_group(group_name: String):
 	var balls_to_select = KeyBallsData.get_group_balls(group_name)
 
 	for b_no in balls_to_select:
-		var b = _find_visual_ball_by_no(b_no)
+		var b = find_visual_ball_by_no(b_no)
 
 		if b and is_instance_valid(b):
 			if not (b in selected_balls):
@@ -4092,7 +4095,7 @@ func _apply_eye_iris_binding(ball, delta):
 		var eye_id = eye_pairs_source[iris_id]
 		if eye_id == ball.ball_no:
 			# ball is an Eye, so move its Iris if not already selected
-			var iris_visual = _find_visual_ball_by_no(iris_id)
+			var iris_visual = find_visual_ball_by_no(iris_id)
 			if iris_visual and is_instance_valid(iris_visual):
 				if not (iris_visual in selected_balls):
 					# Iris not manually selected, so move it along with the eye
@@ -4118,7 +4121,7 @@ func _apply_mirror_move(balls_moved, delta):
 		if addballz_base_selected:
 			var partner_id_check = lnz_text_edit.find_mirrored_ball(b.ball_no)
 			if partner_id_check != -1 and partner_id_check != b.ball_no:
-				var partner_visual = _find_visual_ball_by_no(partner_id_check)
+				var partner_visual = find_visual_ball_by_no(partner_id_check)
 				if partner_visual:
 					_track_pending_move(partner_visual)
 			continue
@@ -4126,7 +4129,7 @@ func _apply_mirror_move(balls_moved, delta):
 		var partner_id = lnz_text_edit.find_mirrored_ball(b.ball_no)
 		if partner_id != -1 and partner_id != b.ball_no:
 			# Find visual ball for partner
-			var partner_visual = _find_visual_ball_by_no(partner_id)
+			var partner_visual = find_visual_ball_by_no(partner_id)
 			if partner_visual and not (partner_visual in selected_balls):
 				var mirrored_delta = delta * mirror_mult
 
@@ -4154,7 +4157,7 @@ func _apply_mirror_scale(
 		if partner_id == -1 or partner_id == b.ball_no or selected_nos.has(partner_id):
 			continue
 
-		var mb = _find_visual_ball_by_no(partner_id)
+		var mb = find_visual_ball_by_no(partner_id)
 		if not is_instance_valid(mb):
 			continue
 
@@ -4181,7 +4184,7 @@ func _get_rotation_pivot_origin(pivot_id):
 	var pivot_visual = null
 
 	if pivot_id != -1:
-		pivot_visual = _find_visual_ball_by_no(pivot_id)
+		pivot_visual = find_visual_ball_by_no(pivot_id)
 
 	if pivot_visual and is_instance_valid(pivot_visual):
 		pivot_origin = pivot_visual.global_transform.origin

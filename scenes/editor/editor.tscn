@@ -2288,7 +2288,7 @@ __meta__ = {
 [connection signal="gui_input" from="SceneRoot/HeadMovePopup/VBoxContainer/HeadMoveLineEditZ" to="SceneRoot/ToolsMenu" method="_on_HeadMoveLineEdit_gui_input"]
 [connection signal="gui_input" from="SceneRoot/FuzzPopup/VBoxContainer/GlobalFuzzAmount" to="SceneRoot/ToolsMenu" method="_on_ApplyGlobalFuzz_gui_input"]
 [connection signal="about_to_show" from="SceneRoot/ToolsMenu" to="SceneRoot/ToolsMenu" method="_on_ToolsMenu_about_to_show"]
-[connection signal="add_ball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_add_ball"]
+[connection signal="create_addball" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_create_addball"]
 [connection signal="apply_global_fuzz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_apply_global_fuzz"]
 [connection signal="clear_ball_paintballz" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_clear_ball_paintballz"]
 [connection signal="color_entire_pet" from="SceneRoot/ToolsMenu" to="SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit" method="_on_ToolsMenu_color_entire_pet"]

@@ -113,6 +113,9 @@ func queue_bucket_change(ball_node):
 		ball_node.update_ball()
 
 func _on_ClearBucket_pressed():
+	clear_buckets()
+
+func clear_buckets():
 	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 	if pet_node and pet_node.has_method("restore_ball_visual_states"):
 		pet_node.restore_ball_visual_states(queued_bucket_changes.keys())
@@ -216,14 +219,14 @@ func _on_AutofillSwap_pressed():
 			line_node.get_node("AfterTexture").text = ""
 
 func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty(): return
 
 	for i in range(bounds.start, bounds.end):
 		var line = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
 			var color = parts[color_idx]
 			var texture = parts[texture_idx]
@@ -265,7 +268,7 @@ func _on_RandomizeSwap_pressed():
 		after_texture_edit.text = str(random_texture)
 
 func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty(): return current_max
 
 	var new_max = current_max
@@ -273,7 +276,7 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 		var line = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > texture_idx:
 			var texture_str = parts[texture_idx]
 			if texture_str.is_valid_integer():

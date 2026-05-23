@@ -10,7 +10,7 @@ extends PopupMenu
 
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
-signal add_ball(selected_ball, connect_line)
+signal create_addball(selected_ball, connect_line)
 signal delete_ball(selected_ball)
 signal copy_l_to_r(ball_no)
 signal copy_r_to_l(ball_no)
@@ -222,11 +222,11 @@ func _on_ToolsMenu_index_pressed(index):
 	match id:
 		ToolsAction.CREATE_ADDBALLZ_LINEZ: # Create Addballz + Linez
 			if is_instance_valid(selected_visual_ball):
-				emit_signal("add_ball", selected_visual_ball, true)
+				emit_signal("create_addball", selected_visual_ball, true)
 
 		ToolsAction.CREATE_ADDBALLZ: # Create Addballz
 			if is_instance_valid(selected_visual_ball):
-				emit_signal("add_ball", selected_visual_ball, false)
+				emit_signal("create_addball", selected_visual_ball, false)
 
 		ToolsAction.DELETE_ADDBALLZ: # Delete Addballz
 			if is_instance_valid(selected_visual_ball):
@@ -280,65 +280,13 @@ func _on_ToolsMenu_index_pressed(index):
 			if is_ball_selected:
 				var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 				if is_instance_valid(lnz_text_edit):
-					lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
+					lnz_text_edit.select_ball(0, ball_no, is_addball, -1)
 			return
 
 		ToolsAction.CLEAR_PAINTBALLZ: # Clear Paintballz
 			if is_ball_selected:
 				emit_signal("clear_ball_paintballz", ball_no)
 
-	# if index == 1: # Create Addballz + Linez
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		emit_signal("add_ball", selected_visual_ball, true)
-	# elif index == 2: # Create Addballz
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		emit_signal("add_ball", selected_visual_ball, false)
-	# elif index == 3: # Delete Addballz
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		if is_omitted:
-	# 			emit_signal("unomit_ball", ball_no)
-	# 		elif is_addball:
-	# 			emit_signal("delete_ball", ball_no)
-	# 		else:
-	# 			emit_signal("omit_ball", ball_no)
-	# elif index == 4: # Omit/Unomit Ballz
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		if is_omitted:
-	# 			emit_signal("unomit_ball", ball_no)
-	# 		else:
-	# 			emit_signal("omit_ball", ball_no)
-	# elif index == 5: # Connect by Linez
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	# 		pet_view.line_mode_close = true
-	# 		pet_view.line_mode_check_box.pressed = true
-	# 		pet_view.linez_start_ball = selected_visual_ball
-	# 		selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	# elif index == 6: # Copy-Mirror (L-to-R)
-	# 	emit_signal("copy_l_to_r", ball_no)
-	# elif index == 7: # Copy-Mirror (R-to-L)
-	# 	emit_signal("copy_r_to_l", ball_no)
-	# elif index == 8: # Paintball Mode
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	# elif index == 9: # Export to Clothes CLZ
-	# 	get_parent().get_node("ExportClothes").open(ball_no)
-	# elif index == 10: # Hide Ballz
-	# 	if is_instance_valid(selected_visual_ball):
-	# 		emit_signal("hide_ball", ball_no)
-	# elif index == 11: # Apply Global Fuzz
-	# 	var options = get_parent().get_node("FuzzPopup")
-	# 	options.popup_centered()
-		# var options = get_parent().get_node("HeadMovePopup")
-		# options.popup_centered()
-	# elif index == 12: # Print Ballz Colors
-	# 	emit_signal("print_ball_colors")
-	# elif index == 13: # Jump to ball
-	# 	if is_ball_selected:
-	# 		var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-	# 		if is_instance_valid(lnz_text_edit):
-	# 			lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
-	# 	return
 
 func _on_ToolsMenu_about_to_show():
 	while get_item_count() > 15:
@@ -591,7 +539,7 @@ func _on_AutofillButton_pressed():
 			line_node.get_node("AfterTexture").text = ""
 
 func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return
 
@@ -600,7 +548,7 @@ func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, textu
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
 			var color = parts[color_idx]
 			var texture = parts[texture_idx]
@@ -645,7 +593,7 @@ func _on_RandomizeButton_pressed():
 		after_texture_edit.text = str(random_texture)
 
 func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return current_max
 
@@ -655,7 +603,7 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > texture_idx:
 			var texture_str = parts[texture_idx]
 			if texture_str.is_valid_integer():

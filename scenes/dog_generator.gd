@@ -671,7 +671,9 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 # remove_specific_pending_paintball
 # get_pending_paintballs_data
 # get_pending_paintball_nodes
+# clear_pending_paintballz
 # _on_clear_pending_paintballz
+# clear_auto_paintballz
 # _on_randomize_auto_paintballz
 # _on_clear_auto_paintballz
 # _on_apply_auto_paintballz
@@ -782,8 +784,8 @@ func get_pending_paintball_nodes():
 	return _pending_paintball_nodes
 
 
-func clear_pending_paintballs():
-	print("[STATUS] Node: clear_pending_paintballs: clearing %d paintballz" % _pending_paintball_nodes.size())
+func clear_pending_paintballz():
+	print("[STATUS] Node: clear_pending_paintballz: clearing %d paintballz" % _pending_paintball_nodes.size())
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
@@ -791,10 +793,10 @@ func clear_pending_paintballs():
 	_pending_paintballs_data.clear()
 
 func _on_clear_pending_paintballz():
-	clear_pending_paintballs()
+	clear_pending_paintballz()
 
 
-func clear_auto_paintballs():
+func clear_auto_paintballz():
 	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
 	for node in _auto_paintball_nodes:
 		if is_instance_valid(node):
@@ -803,7 +805,7 @@ func clear_auto_paintballs():
 	_auto_paintballs_data.clear()
 
 func _on_clear_auto_paintballz():
-	clear_auto_paintballs()
+	clear_auto_paintballz()
 
 	
 func _on_randomize_auto_paintballz(paintballz):
@@ -899,7 +901,7 @@ func _on_apply_auto_paintballz():
 	)
 	if lnz_text_edit:
 		print("[STATUS] Node: _on_apply_auto_paintballz: passing apply command to LnzTextEdit")
-		lnz_text_edit._on_apply_paintballz()
+		lnz_text_edit.apply_paintballz()
 	else:
 		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
 

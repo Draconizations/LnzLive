@@ -28,6 +28,9 @@ func _on_popup_hide():
 		settings.show_popup_checkbox.pressed = false
 
 func _on_reference_image_updated(config_data):
+	update_config_reference_image(config_data)
+
+func update_config_reference_image(config_data):
 	if not texture_rect:
 		texture_rect = $TextureRect
 

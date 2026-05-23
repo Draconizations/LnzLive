@@ -190,11 +190,11 @@ func _emit_image_update():
 
 	var container = get_tree().root.find_node("PetViewContainer", true, false)
 	if container and container.has_method("_on_reference_image_updated"):
-		container._on_reference_image_updated(config_data)
+		container.update_config_reference_image(config_data)
 
 	var popup = get_tree().root.find_node("ReferenceImagePopup", true, false)
 	if popup and popup.has_method("_on_reference_image_updated"):
-		popup._on_reference_image_updated(config_data)
+		popup.update_config_reference_image(config_data)
 
 func _save_settings():
 	var config = ConfigFile.new()

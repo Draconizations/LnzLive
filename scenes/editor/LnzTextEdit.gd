@@ -538,7 +538,7 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 		var check_line = get_line(cached_idx).strip_edges()
 		
 		if not check_line.empty() and not check_line.begins_with(";"):
-			var parts = _split_line(check_line)
+			var parts = split_line(check_line)
 			var matches_cache = false
 			
 			if section in ["[Ballz Info]", "[Move]"]:
@@ -1095,7 +1095,7 @@ func find_line_in_move_section(ball_no, start_from = -1):
 			i += 1
 			continue
 
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() > 0 and parts[0] == str(ball_no):
 			return current_line_idx
 		i += 1
@@ -1128,7 +1128,7 @@ func find_line_in_project_section(ball_no, start_from = -1):
 			i += 1
 			continue
 			
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() > 1 and (parts[1] == str(ball_no) or parts[0] == str(ball_no)):
 			return current_line_idx
 		i += 1
@@ -1156,7 +1156,7 @@ func find_line_in_linez_section(ball_no, start_from = -1):
 		var stripped = line.strip_edges()
 		if stripped.begins_with("["): break
 		
-		var parsed_line = _split_line(line)
+		var parsed_line = split_line(line)
 		if parsed_line.size() >= 2 and (parsed_line[0] == str(ball_no) or parsed_line[1] == str(ball_no)):
 			return current_line_idx
 		i += 1
@@ -1188,7 +1188,7 @@ func find_line_in_paintball_section(ball_no, start_from = -1):
 			i += 1
 			continue
 			
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() > 0 and parts[0] == str(ball_no):
 			return current_line_idx
 		i += 1
@@ -1224,7 +1224,7 @@ func find_line_in_ball_or_addball_section(ball_no, start_point):
 	return -1
 
 func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -> int:
-	var bounds = _get_section_bounds(section_tag)
+	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		return -1
 	
@@ -1278,15 +1278,15 @@ func _count_section_entries(section_name: String) -> int:
 	return entry_count
 
 ### LNZ TEXT PARSING ###
-# _get_section_bounds
+# get_section_bounds
 # get_current_section_name
 # _detect_delimiter
-# _split_line
+# split_line
 # _update_fields
 # _join_array
 # _for_each_line_in_section
 
-func _get_section_bounds(section_tag: String) -> Dictionary:
+func get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
 	if sec.empty():
 		return {}
@@ -1367,7 +1367,7 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 			
 	return most_frequent_delim
 
-func _split_line(line: String) -> PoolStringArray:
+func split_line(line: String) -> PoolStringArray:
 	var data_part = line
 	var comment_part = ""
 	var comment_idx = line.find(";")
@@ -1405,7 +1405,7 @@ func _join_array(parts: Array, delimiter: String) -> String:
 	return result
 
 func _for_each_line_in_section(tag: String, callback):
-	var bounds = _get_section_bounds(tag)
+	var bounds = get_section_bounds(tag)
 	if bounds.empty():
 		return
 	for i in range(bounds.start, bounds.end):
@@ -1485,7 +1485,7 @@ func _set_delimiter():
 		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
 			continue
 		
-		var parts = _split_line(line_text) 
+		var parts = split_line(line_text) 
 		if parts.size() == 0:
 			continue
 			
@@ -1506,7 +1506,7 @@ func _set_delimiter():
 	commit_full_snapshot("Set delimiter of LNZ selection")
 
 func _replace_section_content(section_name: String, new_lines: Array):
-	var bounds = _get_section_bounds(section_name)
+	var bounds = get_section_bounds(section_name)
 	if bounds.empty() and new_lines.empty():
 		return # Nothing to do
 
@@ -1517,7 +1517,7 @@ func _replace_section_content(section_name: String, new_lines: Array):
 		all_lines.insert(first_section_line, section_name)
 		all_lines.insert(first_section_line + 1, "")
 		_set_text_preserve(all_lines.join("\n"))
-		bounds = _get_section_bounds(section_name)
+		bounds = get_section_bounds(section_name)
 
 	var start_line = bounds.start
 	var end_line = bounds.end
@@ -1557,7 +1557,7 @@ func _on_set_column_confirmed():
 		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
 			continue
 			
-		var parts = _split_line(line_text)
+		var parts = split_line(line_text)
 		if parts.size() <= 1:
 			continue
 			
@@ -1617,7 +1617,7 @@ func get_ball_name(ball_no: int) -> String:
 					ball_name = parts[1].strip_edges()
 			
 			if ball_name == "":
-				var bounds = _get_section_bounds("[Add Ball]")
+				var bounds = get_section_bounds("[Add Ball]")
 				var header_idx = bounds.get("header", -1)
 				var search_idx = line_idx - 1
 				
@@ -1682,7 +1682,7 @@ func get_corresponding_left_ball(right_ball_index: int) -> int:
 	return find_mirrored_ball(right_ball_index)
 
 func check_linez_limits(b1: int, b2: int) -> bool:
-	var bounds = _get_section_bounds("[Linez]")
+	var bounds = get_section_bounds("[Linez]")
 	if bounds.empty():
 		return false
 	
@@ -1695,7 +1695,7 @@ func check_linez_limits(b1: int, b2: int) -> bool:
 		if line.empty() or line.begins_with(";"):
 			continue
 		
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() < 2:
 			continue
 		
@@ -1755,7 +1755,7 @@ func get_current_ball_index() -> int:
 	if line_text.empty() or line_text.begins_with(";"):
 		return -1
 		
-	var parts = _split_line(line_text)
+	var parts = split_line(line_text)
 	if parts.size() == 0:
 		return -1
 
@@ -1783,7 +1783,7 @@ func get_current_ball_index() -> int:
 
 func get_project_ball_section() -> Array:
 	var projections = []
-	var bounds = _get_section_bounds("[Project Ball]")
+	var bounds = get_section_bounds("[Project Ball]")
 	if bounds.empty():
 		return projections
 
@@ -1800,7 +1800,7 @@ func get_project_ball_section() -> Array:
 			comment = line.substr(line.find(";") + 1).strip_edges()
 			line = line.substr(0, line.find(";")).strip_edges()
 
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.empty():
 			continue
 
@@ -1855,7 +1855,7 @@ func _update_all_references(ball_no: int):
 
 func _update_pairwise_section(header: String, ball_no: int):
 	# Generic for [Linez] with start/end ball pair
-	var bounds = _get_section_bounds(header)
+	var bounds = get_section_bounds(header)
 	if bounds.empty(): return
 	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
@@ -1866,7 +1866,7 @@ func _update_pairwise_section(header: String, ball_no: int):
 		if line == "" or line.begins_with("[") or line.begins_with(";"):
 			continue
 			
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() < 2:
 			continue
 			
@@ -1919,7 +1919,7 @@ func _update_project_ball_section(header: String, ball_no: int):
 		var line = get_line(start + i).strip_edges()
 		if line == "" or line.begins_with("["):
 			break
-		var tokens = _split_line(line)
+		var tokens = split_line(line)
 		var move_ball = int(tokens[1])
 		if move_ball == ball_no:
 			select(start + i, 0, start + i + 1, 0)
@@ -1933,14 +1933,14 @@ func _update_project_ball_section(header: String, ball_no: int):
 func _update_paintballz_section(header: String, ball_no: int):
 	# Specific for [Paint Ballz] where 1st token is base ball number
 	print("[STATUS] LnzTextEdit: _update_paintballz_section: Decrementing references for deleted ball_no %d" % ball_no)
-	var bounds = _get_section_bounds(header)
+	var bounds = get_section_bounds(header)
 	if bounds.empty(): return
 	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
 	var i = bounds.start
 	while i < bounds.end:
 		var raw_line = get_line(i)
-		var parts = _split_line(raw_line)
+		var parts = split_line(raw_line)
 		if parts.size() < 1: 
 			i += 1
 			continue
@@ -1956,7 +1956,7 @@ func _update_paintballz_section(header: String, ball_no: int):
 		i += 1
 
 func _update_lnz_section_one_value(section_name, val1):
-	var bounds = _get_section_bounds(section_name)
+	var bounds = get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
 		print("[STATUS] LnzTextEdit: _update_lnz_section_one_value: " + msg)
@@ -1968,7 +1968,7 @@ func _update_lnz_section_one_value(section_name, val1):
 	set_line(start_line, str(val1))
 
 func _update_lnz_section_two_values(section_name, val1, val2):
-	var bounds = _get_section_bounds(section_name)
+	var bounds = get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
 		print("[STATUS] LnzTextEdit: _update_lnz_section_two_values: " + msg)
@@ -1995,7 +1995,7 @@ func _update_lnz_section_two_values(section_name, val1, val2):
 
 func _write_project_ball_section(projections: Array):
 	save_backup()
-	var bounds = _get_section_bounds("[Project Ball]")
+	var bounds = get_section_bounds("[Project Ball]")
 	if bounds.empty():
 		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
@@ -2003,7 +2003,7 @@ func _write_project_ball_section(projections: Array):
 		all_lines.insert(first_section + 1, "")
 		text = all_lines.join("\n")
 		_set_text_preserve(text)
-		bounds = _get_section_bounds("[Project Ball]")
+		bounds = get_section_bounds("[Project Ball]")
 
 	var start_line = bounds.start
 	var end_line = bounds.end
@@ -2027,7 +2027,7 @@ func _write_project_ball_section(projections: Array):
 
 			var line_parts = line_strip.split(";")
 			var data_part = line_parts[0].strip_edges()
-			var parts = _split_line(data_part)
+			var parts = split_line(data_part)
 
 			# var parts = []
 			# var delim = " " # Default to space
@@ -2083,7 +2083,7 @@ func _apply_preset_to_ball(ball_no, properties, do_save = true):
 	if is_addball:
 		section_tag = "[Add Ball]"
 
-	var bounds = _get_section_bounds(section_tag)
+	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		var msg = "No %s section found" % section_tag
 		print("[WARNING] LnzTextEdit: _apply_preset_to_ball: " + msg)
@@ -2103,7 +2103,7 @@ func _apply_preset_to_ball(ball_no, properties, do_save = true):
 	if line_index != -1:
 		var delim = _detect_delimiter(start_line, end_line)
 		var line = get_line(line_index)
-		var parts = _split_line(line)
+		var parts = split_line(line)
 
 		if is_addball:
 			if properties.has("color_index"): parts[4] = str(properties.color_index)
@@ -2142,7 +2142,7 @@ func _write_preset_to_ball(ball_no, properties, _write_target, should_override):
 		var paintballz = properties.paintballz
 		if paintballz.size() > 0:
 			applied_something = true
-			var bounds = _get_section_bounds("[Paint Ballz]")
+			var bounds = get_section_bounds("[Paint Ballz]")
 			var insert_line_num
 
 			if bounds.empty():
@@ -2152,7 +2152,7 @@ func _write_preset_to_ball(ball_no, properties, _write_target, should_override):
 				all_lines.insert(first_section + 1, "")
 				text = all_lines.join("\n")
 				_set_text_preserve(text)
-				bounds = _get_section_bounds("[Paint Ballz]")
+				bounds = get_section_bounds("[Paint Ballz]")
 
 			insert_line_num = bounds.start
 			var j = 0
@@ -2205,7 +2205,7 @@ func apply_batch_presets(changes: Dictionary):
 
 func _transform_paintballz_section(transforms: Dictionary):
 	print("[STATUS] LnzTextEdit: _transform_paintballz_section: Transforming %d paintballs" % transforms.size())
-	var bounds = _get_section_bounds("[Paint Ballz]")
+	var bounds = get_section_bounds("[Paint Ballz]")
 	if bounds.empty(): return
 	
 	var delim = _detect_delimiter(bounds.start, bounds.end)
@@ -2214,7 +2214,7 @@ func _transform_paintballz_section(transforms: Dictionary):
 		var line = get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 		
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() < 5: continue
 		
 		var ball_no = int(parts[0])
@@ -2234,6 +2234,9 @@ func _transform_paintballz_section(transforms: Dictionary):
 			set_line(i, _join_array(parts, delim))
 
 func _on_apply_paintballz():
+	apply_paintballz()
+
+func apply_paintballz():
 	save_backup()
 
 	var pending_paintballs = pet_node.get_pending_paintballs_data()
@@ -2241,7 +2244,7 @@ func _on_apply_paintballz():
 
 	if pending_paintballs.size() > 0:
 		var is_babyz = pet_node.lnz.species == KeyBallsData.Species.BABY
-		var bounds = _get_section_bounds("[Paint Ballz]")
+		var bounds = get_section_bounds("[Paint Ballz]")
 		
 		if bounds.empty():
 			print("[WARNING] LnzTextEdit: _on_apply_paintballz: [Paint Ballz] section missing, generating new section.")
@@ -2251,7 +2254,7 @@ func _on_apply_paintballz():
 			all_lines.insert(first_section + 1, "")
 			text = all_lines.join("\n")
 			_set_text_preserve(text)
-			bounds = _get_section_bounds("[Paint Ballz]")
+			bounds = get_section_bounds("[Paint Ballz]")
 
 		var insert_at_line = bounds.start
 		var need_fillers = false
@@ -2339,7 +2342,7 @@ func _on_apply_paintballz():
 
 func _on_palette_selected(filename_without_extension):
 	save_backup()
-	var bounds = _get_section_bounds("[Palette]")
+	var bounds = get_section_bounds("[Palette]")
 	var new_line = filename_without_extension
 
 	if bounds.empty():
@@ -2368,6 +2371,9 @@ func _on_palette_selected(filename_without_extension):
 	commit_full_snapshot("Applied Palette")
 
 func _on_HeadShotButton_pressed():
+	 capture_headshot()
+
+func capture_headshot():
 	save_backup()
 	var local_frame = int(frame_slider.value)
 	var cam_e = camera_holder.rotation_degrees   # x=pitch, y=yaw, z=roll
@@ -2398,7 +2404,7 @@ func _on_HeadShotButton_pressed():
 			s += " "
 		shot_lines[i] = s + shot_labels[i]
 
-	var bounds = _get_section_bounds("[Head Shot]")
+	var bounds = get_section_bounds("[Head Shot]")
 	if bounds.empty():
 		var first_section = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
@@ -2407,7 +2413,7 @@ func _on_HeadShotButton_pressed():
 		for line in all_lines:
 			temp += line + "\n"
 		_set_text_preserve(temp)
-		bounds = _get_section_bounds("[Head Shot]")
+		bounds = get_section_bounds("[Head Shot]")
 
 	var lines = get_text().split("\n")
 
@@ -2466,7 +2472,7 @@ func _on_HeadShotButton_pressed():
 func _apply_paintball_preset_no_save(ball_no, properties):
 	var paintballz = properties.paintballz
 	if paintballz.size() > 0:
-		var bounds = _get_section_bounds("[Paint Ballz]")
+		var bounds = get_section_bounds("[Paint Ballz]")
 		var insert_line_num
 
 		if bounds.empty():
@@ -2476,7 +2482,7 @@ func _apply_paintball_preset_no_save(ball_no, properties):
 			all_lines.insert(first_section + 1, "")
 			text = all_lines.join("\n")
 			_set_text_preserve(text)
-			bounds = _get_section_bounds("[Paint Ballz]")
+			bounds = get_section_bounds("[Paint Ballz]")
 
 		insert_line_num = bounds.start
 		var j = 0
@@ -2524,7 +2530,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var scale_delta = 1.0
 		if data.has("new_size") and data.has("orig_size") and data.orig_size > 0:
 			scale_delta = float(data.new_size) / float(data.orig_size)
-			var size_dif = pet_view.get_absolute_lnz_size(1.0, pet_view._find_visual_ball_by_no(ball_no), pet_node)
+			var size_dif = pet_view.get_absolute_lnz_size(1.0, pet_view.find_visual_ball_by_no(ball_no), pet_node)
 			size_changes[ball_no] = size_dif
 
 		var basis_delta = Basis.IDENTITY
@@ -2584,7 +2590,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 			for i in range(move_start, move_end):
 				var raw = get_line(i).strip_edges()
 				if raw == "" or raw.begins_with(";"): continue
-				var parts = _split_line(raw)
+				var parts = split_line(raw)
 				if parts.size() >= 4 and parts[0].to_int() == ball_no:
 					var nx = int(round(parts[1].to_float() + lnz_delta.x))
 					var ny = int(round(parts[2].to_float() + lnz_delta.y))
@@ -2630,7 +2636,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 					var raw = get_line(i).strip_edges()
 					if raw == "" or raw.begins_with(";"): continue
 					if count == idx:
-						var parts = _split_line(raw)
+						var parts = split_line(raw)
 						if parts.size() >= 4:
 							var moved_ball_node = pet_node.ball_map.get(ball_no)
 							if is_instance_valid(moved_ball_node) and "base_ball_no" in moved_ball_node:
@@ -2659,8 +2665,8 @@ func apply_batch_moves(pending_moves: Dictionary):
 	commit_full_snapshot("Batch Moved/Rotated/Scaled Ballz/Paintballz")
 
 func _apply_batch_sizes(size_changes: Dictionary):
-	var ballz_bounds = _get_section_bounds("[Ballz Info]")
-	var add_bounds = _get_section_bounds("[Add Ball]")
+	var ballz_bounds = get_section_bounds("[Ballz Info]")
+	var add_bounds = get_section_bounds("[Add Ball]")
 
 	var ballz_start = ballz_bounds.get("start", -1)
 	var ballz_end = ballz_bounds.get("end", -1)
@@ -2678,7 +2684,7 @@ func _apply_batch_sizes(size_changes: Dictionary):
 					var raw = get_line(i).strip_edges()
 					if raw == "" or raw.begins_with(";"): continue
 					if count == ball_no:
-						var parts = _split_line(raw)
+						var parts = split_line(raw)
 						if parts.size() > 5:
 							parts[5] = str(size_val)
 							set_line(i, _join_array(parts, " "))
@@ -2692,7 +2698,7 @@ func _apply_batch_sizes(size_changes: Dictionary):
 					var raw = get_line(i).strip_edges()
 					if raw == "" or raw.begins_with(";"): continue
 					if count == idx:
-						var parts = _split_line(raw)
+						var parts = split_line(raw)
 						if parts.size() > 10:
 							parts[10] = str(size_val)
 							set_line(i, _join_array(parts, " "))
@@ -2727,7 +2733,7 @@ func set_batch_moves(moves_dict: Dictionary):
 	for i in range(move_start, move_end):
 		var raw = get_line(i).strip_edges()
 		if raw == "" or raw.begins_with(";"): continue
-		var parts = _split_line(raw)
+		var parts = split_line(raw)
 		if parts.size() > 0:
 			existing_moves_lines[parts[0].to_int()] = i
 			
@@ -2742,7 +2748,7 @@ func set_batch_moves(moves_dict: Dictionary):
 		if existing_moves_lines.has(ball_no):
 			var line_idx = existing_moves_lines[ball_no]
 			var raw = get_line(line_idx).strip_edges()
-			var parts = _split_line(raw)
+			var parts = split_line(raw)
 			if parts.size() >= 4:
 				parts[1] = str(x)
 				parts[2] = str(y)
@@ -2784,7 +2790,7 @@ func set_batch_moves(moves_dict: Dictionary):
 # 	for i in range(start_line, end_line):
 # 		var line = get_line(i).strip_edges()
 # 		if line.begins_with(str(ball_no) + delim):
-# 			var parts = _split_line(line)
+# 			var parts = split_line(line)
 # 			var max_index = value_indices.max()
 # 			while parts.size() <= max_index:
 # 				parts.append("0")
@@ -2845,9 +2851,13 @@ func set_batch_moves(moves_dict: Dictionary):
 # _on_Node_ball_resized
 # _on_Node_ball_moved
 
+
 func _on_Node_line_created(start_ball, end_ball):
+	create_line(start_ball, end_ball)
+
+func create_line(start_ball, end_ball):
 	save_backup()
-	var bounds = _get_section_bounds("[Linez]")
+	var bounds = get_section_bounds("[Linez]")
 	var start_line = bounds.start
 	var end_line = bounds.end
 
@@ -2869,7 +2879,7 @@ func _on_Node_line_created(start_ball, end_ball):
 		if line.empty() or line == "" or line.begins_with(";"):
 			continue
 
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() < 2:
 			continue
 
@@ -2934,6 +2944,9 @@ func _on_Node_line_created(start_ball, end_ball):
 	save_file(true)
 
 func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
+	select_ball(section, ball_no, is_addball, max_addball_no)
+
+func select_ball(section, ball_no, is_addball, max_addball_no):
 	var actual_start_point
 	var current_line = cursor_get_line()
 
@@ -2960,6 +2973,9 @@ func _on_Node_ball_selected(section, ball_no, is_addball, max_addball_no):
 	center_viewport_to_cursor()
 
 func _on_Node_ball_resized(ball_no: int, size_dif: int):
+	resize_ball(ball_no, size_dif)
+
+func resize_ball(ball_no: int, size_dif: int):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
 	var is_addball = ball_no > max_base_ball_no
 
@@ -2974,7 +2990,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 	if console_log:
 		console_log.log_message(msg)
 
-	var bounds = _get_section_bounds(section_tag)
+	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		msg = "No %s section found. Cannot resize ball %d" % [section_tag, ball_no]
 		print("[WARNING] LnzTextEdit: _on_Node_ball_resized: " + msg)
@@ -2995,7 +3011,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 				continue
 			if count == addball_index:
 				var old_line = get_line(i) 
-				var parts = _split_line(raw)
+				var parts = split_line(raw)
 				if parts.size() > size_field_index:
 					var new_size = size_dif
 					parts[size_field_index] = str(new_size)
@@ -3021,7 +3037,7 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 				continue
 			if count == ball_no:
 				var old_line = get_line(i)
-				var parts = _split_line(raw)
+				var parts = split_line(raw)
 				if parts.size() > size_field_index:
 					var new_size = size_dif
 					parts[size_field_index] = str(new_size)
@@ -3042,13 +3058,16 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 			count += 1
 
 func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
+	move_ball(ball_no, new_pos)
+
+func move_ball(ball_no: int, new_pos: Vector3):
 	save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
 
 	var section_tag = "[Move]"
 	if is_addball:
 		section_tag = "[Add Ball]"
-	var bounds = _get_section_bounds(section_tag)
+	var bounds = get_section_bounds(section_tag)
 	if bounds.empty():
 		if section_tag == "[Move]":
 			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
@@ -3081,7 +3100,7 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 						continue
 					if count == idx:
 						var old_line = get_line(i)
-						var parts = _split_line(raw)
+						var parts = split_line(raw)
 						if parts.size() >= 4:
 							parts[1] = str(round(new_relative_pos.x))
 							parts[2] = str(round(new_relative_pos.y))
@@ -3106,7 +3125,7 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 			var raw = get_line(i).strip_edges()
 			if raw == "" or raw.begins_with(";"):
 				continue
-			var parts = _split_line(raw)
+			var parts = split_line(raw)
 			
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
 				var old_line = get_line(i)
@@ -3154,7 +3173,7 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 			commit_full_snapshot("Created Move for Ballz #%d" % ball_no)
 
 ### TOOLS MENU SIGNALS ###
-# _on_ToolsMenu_add_ball
+# _on_ToolsMenu_create_addball
 # _on_ToolsMenu_delete_ball
 # _on_ToolsMenu_omit_ball
 # _on_ToolsMenu_unomit_ball
@@ -3166,7 +3185,10 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 # _on_ToolsMenu_recolor
 # _on_ToolsMenu_apply_global_fuzz
 
-func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
+func _on_ToolsMenu_create_addball(reference_ball, also_connect_line := false):
+	create_addball(reference_ball, also_connect_line)
+
+func create_addball(reference_ball, also_connect_line := false):
 	save_backup()
 
 	if reference_ball == null:
@@ -3380,7 +3402,7 @@ func _on_ToolsMenu_unomit_ball(ball_no: int):
 func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 	save_backup()
 	print("[STATUS] LnzTextEdit: _on_ToolsMenu_clear_ball_paintballz: Commenting out paintballz for ball_no %d" % ball_no)
-	var bounds = _get_section_bounds("[Paint Ballz]")
+	var bounds = get_section_bounds("[Paint Ballz]")
 	if bounds.empty(): return
 
 	var lines_to_comment = []
@@ -3392,7 +3414,7 @@ func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 		if stripped.empty() or stripped.begins_with(";"): 
 			continue
 
-		var parts = _split_line(stripped) 
+		var parts = split_line(stripped) 
 		if parts.size() > 0 and parts[0].is_valid_integer() and int(parts[0]) == ball_no:
 			lines_to_comment.append(i)
 
@@ -3653,7 +3675,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line)
+				var parsed_line = split_line(line)
 				
 				if parsed_line.size() < 8:
 					i += 1
@@ -3725,7 +3747,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line)
+				var parsed_line = split_line(line)
 				
 				if parsed_line.size() < 14 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
@@ -3793,7 +3815,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 				
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line)
+				var parsed_line = split_line(line)
 				
 				if parsed_line.size() < 11 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
@@ -3863,7 +3885,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line)
+				var parsed_line = split_line(line)
 				
 				if parsed_line.size() < 6:
 					i += 1
@@ -3942,7 +3964,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					continue
 
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-				var parsed_line = _split_line(line)
+				var parsed_line = split_line(line)
 				
 				# FIX: Polygons must have at least 5 columns (4 balls + 1 color)
 				if parsed_line.size() < 5:
@@ -4040,7 +4062,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				continue
 
 			var delim = _detect_delimiter(current_line_num, current_line_num + 1)
-			var parsed_line = _split_line(line)
+			var parsed_line = split_line(line)
 			
 			if parsed_line.size() < 2:
 				i += 1
@@ -4105,7 +4127,7 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 		balls_to_exclude.append_array(KeyBallsData.eyes_bab.values())
 		balls_to_exclude.append_array(KeyBallsData.tongue_bab)
 
-	var ballz_bounds = _get_section_bounds("[Ballz Info]")
+	var ballz_bounds = get_section_bounds("[Ballz Info]")
 	if not ballz_bounds.empty():
 		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 		for i in range(ballz_bounds.start, ballz_bounds.end):
@@ -4115,12 +4137,12 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 			
 			var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
 			if ball_no != -1 and not (ball_no in balls_to_exclude):
-				var parts = _split_line(line)
+				var parts = split_line(line)
 				if parts.size() > 3:
 					parts[3] = str(fuzz)
 					set_line(i, _join_array(parts, delim))
 
-	var addball_bounds = _get_section_bounds("[Add Ball]")
+	var addball_bounds = get_section_bounds("[Add Ball]")
 	if not addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
 		var current_addball_idx = 0
@@ -4132,14 +4154,14 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 			
 			var addball_id = KeyBallsData.max_base_ball_num + current_addball_idx
 			
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			if parts.size() > 7 and not (addball_id in balls_to_exclude):
 				parts[7] = str(fuzz)
 				set_line(i, _join_array(parts, delim))
 				
 			current_addball_idx += 1
 
-	var linez_bounds = _get_section_bounds("[Linez]")
+	var linez_bounds = get_section_bounds("[Linez]")
 	if not linez_bounds.empty():
 		var delim = _detect_delimiter(linez_bounds.start, linez_bounds.end)
 		for i in range(linez_bounds.start, linez_bounds.end):
@@ -4147,7 +4169,7 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 			if line.empty() or line.begins_with(";"):
 				continue
 			
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			if parts.size() > 2:
 				var b1 = int(parts[0])
 				var b2 = int(parts[1])
@@ -4262,7 +4284,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 			middle_balls_list.append(n)
 
 	# [Ballz Info]
-	var bounds = _get_section_bounds("[Ballz Info]")
+	var bounds = get_section_bounds("[Ballz Info]")
 	if bounds.empty():
 		# print("[LNZ EDIT] No [Ballz Info] found!")
 		# if console_log:
@@ -4295,7 +4317,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 				base_mirror_map[ball_no] = target_base
 				
 				if !(target_base in omitted_balls):
-					var parts = _split_line(line)
+					var parts = split_line(line)
 					var mirrored_attrs = _mirror_ball_attributes(parts, false)
 					var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 					
@@ -4304,7 +4326,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 						set_line(target_line_idx, mirrored_line)
 
 	# [Add Ball]
-	bounds = _get_section_bounds("[Add Ball]")
+	bounds = get_section_bounds("[Add Ball]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
 	var current_scan_id = KeyBallsData.max_base_ball_num
@@ -4322,7 +4344,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in addball_lines_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip)
+			var parts = split_line(strip)
 			var sig = _join_array(parts, delim)
 			if !existing_signatures.has(sig):
 				existing_signatures[sig] = sig_scan_id
@@ -4336,7 +4358,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 			continue
 
 		var is_source = false
-		var parts = _split_line(strip_line)
+		var parts = split_line(strip_line)
 		
 		if current_scan_id in omitted_balls:
 			is_source = false
@@ -4409,14 +4431,14 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	# [Linez]
 	var final_linez_lines_to_append = []
 
-	bounds = _get_section_bounds("[Linez]")
+	bounds = get_section_bounds("[Linez]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
 	var existing_linez_signatures = {}
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
 		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			var sig = _join_array(parts, delim)
 			existing_linez_signatures[sig] = true
 
@@ -4427,7 +4449,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in linez_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip)
+			var parts = split_line(strip)
 			if parts.size() < 2: continue
 			
 			var s = parts[0].to_int()
@@ -4489,7 +4511,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	# [Move]
 	var final_move_lines = []
 
-	bounds = _get_section_bounds("[Move]")
+	bounds = get_section_bounds("[Move]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
 	var move_content = []
@@ -4499,7 +4521,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in move_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip)
+			var parts = split_line(strip)
 			if parts.size() < 1: continue
 			var move_ball = parts[0].to_int()
 
@@ -4534,7 +4556,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	# [Project Ball]
 	var final_proj_lines = []
 
-	bounds = _get_section_bounds("[Project Ball]")
+	bounds = get_section_bounds("[Project Ball]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
 	var proj_content = []
@@ -4544,7 +4566,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in proj_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip)
+			var parts = split_line(strip)
 			if parts.size() < 2: continue
 			
 			var b = parts[0].to_int()
@@ -4577,14 +4599,14 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	# [Paint Ballz]
 	var final_paint_lines_to_append = []
 
-	bounds = _get_section_bounds("[Paint Ballz]")
+	bounds = get_section_bounds("[Paint Ballz]")
 	delim = _detect_delimiter(bounds.start, bounds.end)
 	
 	var existing_paint_sigs = {}
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
 		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			existing_paint_sigs[_join_array(parts, delim)] = true
 	
 	var paint_content = []
@@ -4594,7 +4616,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	for line in paint_content:
 		var strip = line.strip_edges()
 		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = _split_line(strip)
+			var parts = split_line(strip)
 			if parts.size() < 3: continue
 			
 			var base = parts[0].to_int()
@@ -4621,12 +4643,12 @@ func _mirror_l_to_r_full(reverse: bool = false):
 					existing_paint_sigs[new_sig] = true
 
 	if !final_addball_lines_to_append.empty():
-		var bounds_ab = _get_section_bounds("[Add Ball]")
+		var bounds_ab = get_section_bounds("[Add Ball]")
 		var ins_line = _find_insertion_line(bounds_ab.start, bounds_ab.end)
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_addball_lines_to_append, "\n") + "\n")
 		
 	if !final_linez_lines_to_append.empty():
-		var bounds_l = _get_section_bounds("[Linez]")
+		var bounds_l = get_section_bounds("[Linez]")
 		var ins_line = _find_insertion_line(bounds_l.start, bounds_l.end)
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_linez_lines_to_append, "\n") + "\n")
 
@@ -4637,7 +4659,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 		_replace_section_content("[Project Ball]", final_proj_lines)
 
 	if !final_paint_lines_to_append.empty():
-		var bounds_p = _get_section_bounds("[Paint Ballz]")
+		var bounds_p = get_section_bounds("[Paint Ballz]")
 		var ins_line = _find_insertion_line(bounds_p.start, bounds_p.end)
 		_insert_text_at_cursor_at_line(ins_line, _join_array(final_paint_lines_to_append, "\n") + "\n")
 
@@ -4663,12 +4685,12 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	var omitted_balls = _get_omitted_balls()
 
 	# [Ballz Info]
-	var ballz_bounds = _get_section_bounds("[Ballz Info]")
+	var ballz_bounds = get_section_bounds("[Ballz Info]")
 	var line_index = find_line_in_ball_section(target_ball_no)
 	if line_index != -1:
 		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 		var line = get_line(line_index)
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		var mirrored_attrs = _mirror_ball_attributes(parts, false)
 		var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 		
@@ -4681,7 +4703,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	var new_addball_lines = []
 
 	# [Add Ball]
-	var addball_bounds = _get_section_bounds("[Add Ball]")
+	var addball_bounds = get_section_bounds("[Add Ball]")
 	if !addball_bounds.empty():
 		var delim = _detect_delimiter(addball_bounds.start, addball_bounds.end)
 		var max_ball_no = KeyBallsData.max_base_ball_num + _count_section_entries("[Add Ball]")
@@ -4698,7 +4720,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 				continue
 
 			var current_addball_no = KeyBallsData.max_base_ball_num + data_idx
-			var parts = _split_line(line)
+			var parts = split_line(line)
 
 			if parts.empty() or parts[0].to_int() != target_ball_no:
 				data_idx += 1
@@ -4736,7 +4758,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 
 	for section_name in sections_to_process:
 		var method_name = sections_to_process[section_name]
-		var bounds = _get_section_bounds(section_name)
+		var bounds = get_section_bounds(section_name)
 		if bounds.empty(): continue
 
 		var new_lines = []
@@ -4745,7 +4767,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
 			
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			var processed_line = call(method_name, parts, target_ball_no, mirrored_ball_no, associated_left_balls, temp_addball_map)
 			
 			if processed_line != null and processed_line.size() > 0:
@@ -4768,7 +4790,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 
 func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array, right_balls_list: Array) -> Dictionary:
 	var new_ball_map = {}
-	var ballz_bounds = _get_section_bounds("[Ballz Info]")
+	var ballz_bounds = get_section_bounds("[Ballz Info]")
 	var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 
 	for i in range(ballz_bounds.start, ballz_bounds.end):
@@ -4785,7 +4807,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 			var right_ball_no = get_corresponding_right_ball(ball_no)
 			entry.corresponding_ball = right_ball_no
 
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			var mirrored_attrs = _mirror_ball_attributes(parts, false)
 			var mirrored_line = _update_fields(parts, mirrored_attrs, delim)
 
@@ -4797,7 +4819,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 		new_ball_map[ball_no] = entry
 
 	# Process Addballz
-	var addball_bounds = _get_section_bounds("[Add Ball]")
+	var addball_bounds = get_section_bounds("[Add Ball]")
 	if !addball_bounds.empty():
 		var delim_addball = _detect_delimiter(addball_bounds.start, addball_bounds.end)
 		var current_addball_no = KeyBallsData.max_base_ball_num
@@ -4809,7 +4831,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 			if line.empty() or line.begins_with(";") or line.begins_with("["):
 				continue
 
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			var base_ball = parts[0].to_int()
 
 			if base_ball in right_balls_list:
@@ -4829,7 +4851,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 				new_ball_count += 1
 
 				var mirrored_attrs = _mirror_ball_attributes(parts, true)
-				var mirrored_line_parts = _split_line(line)
+				var mirrored_line_parts = split_line(line)
 
 				var right_base_ball = get_corresponding_right_ball(base_ball)
 				mirrored_line_parts[0] = str(right_base_ball)
@@ -4875,7 +4897,7 @@ func _get_mirrored_counterpart(ball: int, target: int, mirrored: int, temp_map: 
 
 func _process_section_for_mirror(section_name: String, line_processor, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary) -> Array:
 	var results = []
-	var bounds = _get_section_bounds(section_name)
+	var bounds = get_section_bounds(section_name)
 	if bounds.empty():
 		return results
 
@@ -4886,7 +4908,7 @@ func _process_section_for_mirror(section_name: String, line_processor, left_ball
 		if line.empty() or line.begins_with(";") or line.begins_with("["):
 			continue
 
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.empty():
 			continue
 
@@ -4896,7 +4918,7 @@ func _process_section_for_mirror(section_name: String, line_processor, left_ball
 	return results
 
 func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int):
-	var move_bounds = _get_section_bounds("[Move]")
+	var move_bounds = get_section_bounds("[Move]")
 	if move_bounds.empty(): return
 
 	var delim = _detect_delimiter(move_bounds.start, move_bounds.end)
@@ -4907,7 +4929,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 		var line = get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 		
-		var parts = _split_line(line)
+		var parts = split_line(line)
 		if parts.size() >= 4 and parts[0].to_int() == target_ball_no:
 			target_line_found = true
 			var mirrored_parts = Array(parts)
@@ -4923,7 +4945,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 		for i in range(move_bounds.start, move_bounds.end):
 			var line = get_line(i).strip_edges()
 			if line.empty() or line.begins_with(";"): continue
-			var parts = _split_line(line)
+			var parts = split_line(line)
 			if parts.size() > 0 and parts[0].to_int() == mirrored_ball_no:
 				lines_to_remove.append(i)
 		
@@ -4933,7 +4955,7 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 			cut()
 
 		if !new_mirrored_line.empty():
-			move_bounds = _get_section_bounds("[Move]")
+			move_bounds = get_section_bounds("[Move]")
 			
 			var insert_line = _find_insertion_line(move_bounds.start, move_bounds.end)
 			_insert_text_at_cursor_at_line(insert_line, new_mirrored_line + "\n")
