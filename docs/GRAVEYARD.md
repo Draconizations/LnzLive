@@ -436,3 +436,93 @@ Function graveyard after major refactors...
 # 			#print("[INFO] dog_generator: munge_balls: saved raw WORLD position for ball %d: %s" % [ball_no, _orig_world_pos[ball_no]])
 
 ```
+
+
+```
+# too many draw calls
+
+# func _draw_axis_gizmos(reference_ball: Spatial):
+# 	if not is_instance_valid(reference_ball):
+# 		return
+
+# 	var hotkey_x = Input.is_key_pressed(KEY_X)
+# 	var hotkey_y = Input.is_key_pressed(KEY_Y)
+# 	var hotkey_z = Input.is_key_pressed(KEY_Z)
+# 	var any_hotkey = hotkey_x or hotkey_y or hotkey_z
+
+# 	var ui_active_x = false
+# 	var ui_active_y = false
+# 	var ui_active_z = false
+
+# 	if move_mode and is_instance_valid(move_mode_settings_instance):
+# 		match move_mode_settings_instance.current_constraint_mode:
+# 			"LockX": ui_active_x = true
+# 			"LockY": ui_active_y = true
+# 			"LockZ": ui_active_z = true
+# 			"LockXY":
+# 				ui_active_x = true
+# 				ui_active_y = true
+# 			"LockXZ":
+# 				ui_active_x = true
+# 				ui_active_z = true
+# 			"LockYZ":
+# 				ui_active_y = true
+# 				ui_active_z = true
+# 			"Free":
+# 				ui_active_x = false
+# 				ui_active_y = false
+# 				ui_active_z = false
+
+# 	var show_x = hotkey_x if any_hotkey else ui_active_x
+# 	var show_y = hotkey_y if any_hotkey else ui_active_y
+# 	var show_z = hotkey_z if any_hotkey else ui_active_z
+
+# 	if not is_dragging and not any_hotkey:
+# 		return
+
+# 	var origin_3d = reference_ball.global_transform.origin
+# 	if camera.is_position_behind(origin_3d):
+# 		return
+
+# 	var origin_2d_raw = camera.unproject_position(origin_3d)
+# 	var origin_2d = (origin_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+
+# 	var length = 150.0
+# 	var width = 2.0
+
+# 	if show_x:
+# 		_draw_gizmo_line(origin_3d, Vector3(1, 0, 0), Color.red, origin_2d, length, width, "X", false)
+# 	if show_y:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 1, 0), Color.green, origin_2d, length, width, "Y", true)
+# 	if show_z:
+# 		_draw_gizmo_line(origin_3d, Vector3(0, 0, 1), Color.blue, origin_2d, length, width, "Z", false)
+
+# func _get_projected_end_point(origin_3d: Vector3, dir_3d: Vector3, origin_2d: Vector2, length: float) -> Vector2:
+# 	var target_3d = origin_3d + (dir_3d * 0.1)
+# 	var target_2d_raw = camera.unproject_position(target_3d)
+# 	var target_2d = (target_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
+
+# 	var dir_2d = (target_2d - origin_2d).normalized()
+# 	return origin_2d + (dir_2d * length)
+
+# func _draw_axis_label(pos: Vector2, text: String, color: Color):
+# 	var font = get_font("font")
+# 	var text_size = font.get_string_size(text)
+# 	var text_pos = pos - (text_size / 2.0) + Vector2(0, -10)
+
+# 	draw_string(font, text_pos + Vector2(1, 1), text, Color.black)
+# 	draw_string(font, text_pos, text, color)
+
+# func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origin_2d: Vector2, length: float, width: float, label: String, invert_labels: bool):
+# 	var pos_end = _get_projected_end_point(origin_3d, axis_dir, origin_2d, length)
+# 	var neg_end = _get_projected_end_point(origin_3d, -axis_dir, origin_2d, length)
+
+# 	var pos_label = "-" + label if invert_labels else label
+# 	var neg_label = label if invert_labels else "-" + label
+
+# 	draw_line(origin_2d, pos_end, color, width, true)
+# 	_draw_axis_label(pos_end, pos_label, color)
+
+# 	draw_line(origin_2d, neg_end, color, width, true)
+# 	_draw_axis_label(neg_end, neg_label, color)
+```

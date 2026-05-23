@@ -219,11 +219,25 @@ var design_scale_multiplier: float = 1.0
 
 
 ### SETUP & INITIALIZATION ###
+# _safe_connect
+# _ready
+# update_config_reference_image
+# _update_reference_image_bg
+# _ensure_panel_visible
+# _rebuild_spatial_hash
+# _reset_tab_state
+# mark_ui_dirty
+# get_px_scale
+# get_lnz_scale
+# _process
+# _draw
+# _setup_3d_gizmos
+# _create_gizmo_line
+# _update_3d_gizmo_visibility
 
 func _safe_connect(target, sig, method):
 	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
 		target.connect(sig, self, method)
-
 
 func _ready():
 	hotkey_overlay_instance = hotkey_overlay_scene.instance()
@@ -385,7 +399,6 @@ func _ready():
 	tex.rect_scale.x = -1.0
 	tex.rect_pivot_offset = tex.rect_size / 2.0
 
-
 func _on_reference_image_updated(config_data):
 	update_config_reference_image(config_data)
 
@@ -463,7 +476,6 @@ func _update_reference_image_bg():
 			
 			bg.rect_position = center_start + Vector2(offset_x, offset_y)
 
-
 func _ensure_panel_visible(panel):
 	if panel.is_docked:
 		if sidebar_controller and sidebar_controller.tab_container.current_tab != panel.get_index():
@@ -471,7 +483,6 @@ func _ensure_panel_visible(panel):
 	else:
 		panel.show()
 		panel.raise()
-
 
 func _rebuild_spatial_hash():
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -517,23 +528,19 @@ func _reset_tab_state():
 	_tab_activation_mouse_pos = Vector2.ZERO
 	mark_ui_dirty()
 
-
 func mark_ui_dirty():
 	# Use to trigger _process so it's not triggering every time the mouse moves...
 	ui_is_dirty = true
-
 
 func get_px_scale() -> float:
 	if not is_instance_valid(pet_node):
 		return 0.002
 	return pet_node.pixel_world_size
 
-
 func get_lnz_scale() -> float:
 	if not is_instance_valid(pet_node) or not pet_node.get("lnz") or not pet_node.lnz.has("scales"):
 		return 1.0
 	return pet_node.lnz.scales.x / 255.0
-
 
 func _process(_delta):
 	_update_reference_image_bg()
@@ -690,7 +697,6 @@ func _process(_delta):
 
 	ui_is_dirty = false
 
-
 func _draw():
 	# BOX SELECTION
 	if box_selecting:
@@ -715,95 +721,6 @@ func _draw():
 	# if reference_ball:
 	# 	_draw_axis_gizmos(reference_ball)
 
-
-# too many draw calls
-
-# func _draw_axis_gizmos(reference_ball: Spatial):
-# 	if not is_instance_valid(reference_ball):
-# 		return
-
-# 	var hotkey_x = Input.is_key_pressed(KEY_X)
-# 	var hotkey_y = Input.is_key_pressed(KEY_Y)
-# 	var hotkey_z = Input.is_key_pressed(KEY_Z)
-# 	var any_hotkey = hotkey_x or hotkey_y or hotkey_z
-
-# 	var ui_active_x = false
-# 	var ui_active_y = false
-# 	var ui_active_z = false
-
-# 	if move_mode and is_instance_valid(move_mode_settings_instance):
-# 		match move_mode_settings_instance.current_constraint_mode:
-# 			"LockX": ui_active_x = true
-# 			"LockY": ui_active_y = true
-# 			"LockZ": ui_active_z = true
-# 			"LockXY":
-# 				ui_active_x = true
-# 				ui_active_y = true
-# 			"LockXZ":
-# 				ui_active_x = true
-# 				ui_active_z = true
-# 			"LockYZ":
-# 				ui_active_y = true
-# 				ui_active_z = true
-# 			"Free":
-# 				ui_active_x = false
-# 				ui_active_y = false
-# 				ui_active_z = false
-
-# 	var show_x = hotkey_x if any_hotkey else ui_active_x
-# 	var show_y = hotkey_y if any_hotkey else ui_active_y
-# 	var show_z = hotkey_z if any_hotkey else ui_active_z
-
-# 	if not is_dragging and not any_hotkey:
-# 		return
-
-# 	var origin_3d = reference_ball.global_transform.origin
-# 	if camera.is_position_behind(origin_3d):
-# 		return
-
-# 	var origin_2d_raw = camera.unproject_position(origin_3d)
-# 	var origin_2d = (origin_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
-
-# 	var length = 150.0
-# 	var width = 2.0
-
-# 	if show_x:
-# 		_draw_gizmo_line(origin_3d, Vector3(1, 0, 0), Color.red, origin_2d, length, width, "X", false)
-# 	if show_y:
-# 		_draw_gizmo_line(origin_3d, Vector3(0, 1, 0), Color.green, origin_2d, length, width, "Y", true)
-# 	if show_z:
-# 		_draw_gizmo_line(origin_3d, Vector3(0, 0, 1), Color.blue, origin_2d, length, width, "Z", false)
-
-# func _get_projected_end_point(origin_3d: Vector3, dir_3d: Vector3, origin_2d: Vector2, length: float) -> Vector2:
-# 	var target_3d = origin_3d + (dir_3d * 0.1)
-# 	var target_2d_raw = camera.unproject_position(target_3d)
-# 	var target_2d = (target_2d_raw - Vector2(500, 500)) * tex.rect_scale + (rect_size / 2.0)
-
-# 	var dir_2d = (target_2d - origin_2d).normalized()
-# 	return origin_2d + (dir_2d * length)
-
-# func _draw_axis_label(pos: Vector2, text: String, color: Color):
-# 	var font = get_font("font")
-# 	var text_size = font.get_string_size(text)
-# 	var text_pos = pos - (text_size / 2.0) + Vector2(0, -10)
-
-# 	draw_string(font, text_pos + Vector2(1, 1), text, Color.black)
-# 	draw_string(font, text_pos, text, color)
-
-# func _draw_gizmo_line(origin_3d: Vector3, axis_dir: Vector3, color: Color, origin_2d: Vector2, length: float, width: float, label: String, invert_labels: bool):
-# 	var pos_end = _get_projected_end_point(origin_3d, axis_dir, origin_2d, length)
-# 	var neg_end = _get_projected_end_point(origin_3d, -axis_dir, origin_2d, length)
-
-# 	var pos_label = "-" + label if invert_labels else label
-# 	var neg_label = label if invert_labels else "-" + label
-
-# 	draw_line(origin_2d, pos_end, color, width, true)
-# 	_draw_axis_label(pos_end, pos_label, color)
-
-# 	draw_line(origin_2d, neg_end, color, width, true)
-# 	_draw_axis_label(neg_end, neg_label, color)
-
-
 func _setup_3d_gizmos():
 	gizmo_3d_root = Spatial.new()
 	pet_node.add_child(gizmo_3d_root)
@@ -816,7 +733,6 @@ func _setup_3d_gizmos():
 	gizmo_3d_root.add_child(gizmo_x)
 	gizmo_3d_root.add_child(gizmo_y)
 	gizmo_3d_root.add_child(gizmo_z)
-
 
 func _create_gizmo_line(color: Color, direction: Vector3) -> MeshInstance:
 	var mi = MeshInstance.new()
@@ -840,7 +756,6 @@ func _create_gizmo_line(color: Color, direction: Vector3) -> MeshInstance:
 		mi.rotation_degrees = Vector3(90, 0, 0)
 
 	return mi
-
 
 func _update_3d_gizmo_visibility():
 	var reference_ball = null
@@ -913,6 +828,25 @@ func _update_3d_gizmo_visibility():
 
 
 ### INPUT HANDLING ###
+# _get_ball_sizing_info
+# _get_viewport_pos_from_screen_pos
+# _get_screen_pos_from_viewport_pos
+# _handle_box_selection
+# _initialize_move_drag
+# _handle_move_mode_gui_input
+# _handle_preset_mode_gui_input
+# _gui_input
+# _handle_camera_view_key_input
+# _handle_mode_shortcut_key_input
+# _handle_move_nudge_key_input
+# _unhandled_key_input
+# _set_camera_view
+# _on_ShaderSettingsButton_pressed
+# _on_texture_rotation_mode_changed
+# _on_texture_rotation_input_changed
+# _on_texture_affected_by_size_changed
+# _on_texture_affected_by_rotation_changed
+# _on_texture_flat_colors_changed
 
 func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 	var is_addball = ball_no >= KeyBallsData.max_base_ball_num
@@ -967,7 +901,6 @@ func _get_screen_pos_from_viewport_pos(viewport_pos: Vector2) -> Vector2:
 	var global_pos = tex.get_global_transform().xform(viewport_pos)
 	return global_pos - self.rect_global_position
 
-# TBD: refactor _gui_input with separate functions:
 func _handle_box_selection(event: InputEvent) -> bool:
 	if (
 		not (move_mode or preset_mode or auto_paintballer_mode)
@@ -1005,7 +938,6 @@ func _handle_box_selection(event: InputEvent) -> bool:
 
 	return false
 
-
 func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizing: bool = false):
 	is_dragging = true
 	drag_ball = drag_target_ball
@@ -1041,7 +973,6 @@ func _initialize_move_drag(drag_target_ball: Spatial, start_pos: Vector2, resizi
 		Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 
 	mark_ui_dirty()
-
 
 func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 	if not move_mode:
@@ -1261,7 +1192,6 @@ func _handle_move_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	return false
-
 
 func _handle_preset_mode_gui_input(event: InputEvent) -> bool:
 	if not preset_mode:
@@ -1489,7 +1419,6 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		return true
 
 	return false
-
 
 func _gui_input(event):
 	if input_is_paused:
@@ -1812,7 +1741,6 @@ func _gui_input(event):
 			get_tree().set_input_as_handled()
 			return
 
-
 func _handle_camera_view_key_input(event: InputEventKey) -> bool:
 	if not event.pressed:
 		return false
@@ -1849,7 +1777,6 @@ func _handle_camera_view_key_input(event: InputEventKey) -> bool:
 			_set_camera_view("isolefttop")
 			return true
 	return false
-
 
 func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 	if not event.pressed:
@@ -1931,7 +1858,6 @@ func _handle_mode_shortcut_key_input(event: InputEventKey) -> bool:
 				return true
 	return false
 
-
 func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 	if move_mode and event.pressed:
 		var nudge_axis = ""
@@ -1957,7 +1883,6 @@ func _handle_move_nudge_key_input(event: InputEventKey) -> bool:
 				mark_ui_dirty()
 				return true
 	return false
-
 
 func _unhandled_key_input(event):
 	if input_is_paused:
@@ -2031,7 +1956,6 @@ func _unhandled_key_input(event):
 
 	if event.pressed and last_selected_is_valid():
 		last_selected._input(event)
-
 
 func _set_camera_view(view_name: String):
 	camera_holder.rotation = Vector3.ZERO
@@ -2137,7 +2061,14 @@ func _on_texture_flat_colors_changed(is_flat: bool):
 	if is_instance_valid(pet_node):
 		pet_node.render_flat_colors_global = is_flat
 
+
 # MODES
+# _on_ModePopup_about_to_show
+# _on_SelectCheckBox_pressed
+# _on_HelpButton_pressed
+# _on_LnzTextEdit_mouse_entered
+# _on_PetViewContainer_resized
+# _on_PetViewContainer_sort_children
 
 func _on_ModePopup_about_to_show():
 	select_check_box.pressed = selecting_on
@@ -2156,10 +2087,8 @@ func _on_SelectCheckBox_pressed():
 		tex.update()
 	mark_ui_dirty()
 
-
 func _on_HelpButton_pressed():
 	help_popup.popup_centered()
-
 
 func _on_LnzTextEdit_mouse_entered():
 	if last_selected_is_valid():
@@ -2167,17 +2096,37 @@ func _on_LnzTextEdit_mouse_entered():
 	last_selected = null
 	ball_label.hide()
 
-
 func _on_PetViewContainer_resized():
 	var size_diff = tex.rect_size / 2.0 - self.rect_size / 2.0
 	tex.rect_global_position = self.rect_global_position - size_diff
-
 
 func _on_PetViewContainer_sort_children():
 	_on_PetViewContainer_resized()
 
 
 # VISUALS
+# set_active_selected_ball
+# clear_active_selected_ball
+# get_visual_state_for_ball
+# last_selected_is_valid
+# deal_with_last_selected
+# _on_Node_ball_mouse_enter
+# find_visual_ball_by_no
+# _get_all_visual_balls
+# _on_affected_list_changed
+# get_ball_under_mouse
+# get_intended_ball
+# _sort_by_distance
+# _get_sorted_nearby_balls
+# _cycle_nearby_ballz
+# get_lnz_position_from_visual
+# get_absolute_lnz_size
+# _isolate_target_ball
+# _restore_all_balls
+# _create_overlay
+# _sync_overlay
+# _set_visual_layer_recursive
+
 func set_active_selected_ball(ball):
 	if (
 		active_selected_ball
@@ -2190,7 +2139,6 @@ func set_active_selected_ball(ball):
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
 
-
 func clear_active_selected_ball():
 	if (
 		active_selected_ball
@@ -2201,7 +2149,6 @@ func clear_active_selected_ball():
 	active_selected_ball = null
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
-
 
 func get_visual_state_for_ball(b):
 	if not "ball_no" in b:
@@ -2239,7 +2186,6 @@ func _on_Node_ball_mouse_enter(ball_info):
 		ball_label.show()
 		mark_ui_dirty()
 
-
 func find_visual_ball_by_no(no: int) -> Spatial:
 	if is_instance_valid(pet_node) and pet_node.ball_map:
 		if pet_node.ball_map.has(no):
@@ -2258,20 +2204,10 @@ func find_visual_ball_by_no(no: int) -> Spatial:
 				return b
 	return null
 
-
-# func _find_visual_addball_by_no(no: int) -> Spatial:
-# 	for b in get_tree().get_nodes_in_group("addballs"):
-# 		if b.has_method("get"): # safety if some nodes aren't the ball script
-# 			if b.ball_no == no:
-# 				return b
-# 	return null
-
-
 func _get_all_visual_balls() -> Array:
 	if is_instance_valid(pet_node) and pet_node.ball_map:
 		return pet_node.ball_map.values()
 	return get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
-
 
 func _on_affected_list_changed(ids: Array):
 	_auto_paint_affected_cache = ids
@@ -2286,7 +2222,6 @@ func _on_affected_list_changed(ids: Array):
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
-
 
 func get_ball_under_mouse(screen_pos: Vector2):
 	var from = camera.project_ray_origin(screen_pos)
@@ -2303,17 +2238,14 @@ func get_ball_under_mouse(screen_pos: Vector2):
 			return parent
 	return null
 
-
 func get_intended_ball(mouse_pos: Vector2) -> Spatial:
 	if is_instance_valid(_last_selected_by_tab):
 		return _last_selected_by_tab
 
 	return get_ball_under_mouse(mouse_pos)
 
-
 func _sort_by_distance(a, b):
 	return a.distance < b.distance
-
 
 func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -2355,7 +2287,6 @@ func _get_sorted_nearby_balls(raw_mouse_pos: Vector2) -> Array:
 	#])
 
 	return result_balls
-
 
 func _cycle_nearby_ballz():
 	var raw_mouse_pos = get_viewport().get_mouse_position()
@@ -2402,7 +2333,6 @@ func _cycle_nearby_ballz():
 
 	mark_ui_dirty()
 
-
 func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3:
 	var current_world = drag_ball.global_transform.origin
 	var original_world = pet_node._orig_world_pos.get(drag_ball.ball_no, Vector3.ZERO)
@@ -2421,7 +2351,6 @@ func get_lnz_position_from_visual(drag_ball: Spatial, pet_node: Node) -> Vector3
 	print("[STATUS] PetViewContainer: get_lnz_position_from_visual: rounded LNZ‐space offset (int): %s" % lnz_offset)
 
 	return lnz_offset
-
 
 func get_absolute_lnz_size(raw_target_visual: float, drag_ball: Spatial, pet_node: Node) -> int:
 	var sizing_info = _get_ball_sizing_info(pet_node, drag_ball.ball_no)
@@ -2454,7 +2383,6 @@ func _isolate_target_ball(target_ball):
 			area.set_collision_layer_bit(1, false)
 			_set_visual_layer_recursive(ball, 2)
 
-
 func _restore_all_balls():
 	var all_balls = _get_all_visual_balls()
 	for ball in all_balls:
@@ -2476,7 +2404,6 @@ func _restore_all_balls():
 		_overlay_viewport_container.queue_free()
 	if is_instance_valid(_dimmer_rect):
 		_dimmer_rect.queue_free()
-
 
 func _create_overlay():
 	var scene_root = tex.get_parent()
@@ -2512,7 +2439,6 @@ func _create_overlay():
 
 	_sync_overlay()
 
-
 func _sync_overlay():
 	if not is_instance_valid(_overlay_viewport_container):
 		return
@@ -2536,13 +2462,11 @@ func _sync_overlay():
 		_overlay_camera.far = camera.far
 		_overlay_camera.keep_aspect = camera.keep_aspect
 
-
 func _set_visual_layer_recursive(node: Node, layer_value: int):
 	if node is VisualInstance:
 		node.layers = layer_value
 	for child in node.get_children():
 		_set_visual_layer_recursive(child, layer_value)
-
 
 func _on_unselect_all():
 	var to_update = selected_balls.duplicate()
@@ -2557,7 +2481,6 @@ func _on_unselect_all():
 
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
-
 
 func _on_unselect_side(side: String):
 	if selected_balls.empty():
@@ -2614,7 +2537,6 @@ func _on_unselect_side(side: String):
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
 
-
 func _update_selected_ballz_in_settings():
 	var ids = []
 	var properties = preset_settings_instance.get_properties()
@@ -2635,7 +2557,6 @@ func _update_selected_ballz_in_settings():
 	if auto_paintballer_mode:
 		auto_paintballer_settings_instance.update_selected_balls_text(ids)
 
-
 func _on_select_balls_by_ids(ids: Array):
 	_on_unselect_all()
 
@@ -2648,7 +2569,6 @@ func _on_select_balls_by_ids(ids: Array):
 
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
-
 
 func _commit_box_selection():
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -2700,6 +2620,18 @@ func _commit_box_selection():
 
 
 # HISTORY
+# _capture_pending_state_snapshot
+# _record_move_history_entry
+# _restore_move_snapshot
+# _cap_history_arrays
+# _undo_queued_move
+# _redo_queued_move
+# _record_paint_action
+# _undo_queued_paintball
+# _redo_queued_paintball
+# _record_move_start_state
+# _record_move_end_state
+
 func _capture_pending_state_snapshot():
 	# var _perf_start_time = OS.get_ticks_msec()
 	# var _perf_dyn_start = OS.get_dynamic_memory_usage()
@@ -2731,14 +2663,12 @@ func _capture_pending_state_snapshot():
 	
 	return snapshot
 
-
 func _record_move_history_entry(old_snapshot, new_snapshot):
 	if old_snapshot.hash() == new_snapshot.hash():
 		return
 
 	move_history.append({"old": old_snapshot, "new": new_snapshot})
 	move_redo_stack.clear()
-
 
 func _restore_move_snapshot(snapshot):
 	pending_moves = snapshot.duplicate(true)
@@ -2762,13 +2692,11 @@ func _restore_move_snapshot(snapshot):
 
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
 
-
 func _cap_history_arrays():
 	if paint_history.size() > MAX_INTERACTION_HISTORY:
 		paint_history.pop_front()
 	if move_history.size() > MAX_INTERACTION_HISTORY:
 		move_history.pop_front()
-
 
 func _undo_queued_move():
 	if move_history.empty():
@@ -2777,14 +2705,12 @@ func _undo_queued_move():
 	move_redo_stack.append(entry)
 	_restore_move_snapshot(entry.old)
 
-
 func _redo_queued_move():
 	if move_redo_stack.empty():
 		return
 	var entry = move_redo_stack.pop_back()
 	move_history.append(entry)
 	_restore_move_snapshot(entry.new)
-
 
 func _record_paint_action(paintballs_added):
 	if paintballs_added.empty():
@@ -2793,7 +2719,6 @@ func _record_paint_action(paintballs_added):
 	paint_history.append(paintballs_added)
 	paint_redo_stack.clear()
 	_cap_history_arrays()
-
 
 func _undo_queued_paintball():
 	print("[STATUS] PetViewContainer: Undoing queued paintball action")
@@ -2809,7 +2734,6 @@ func _undo_queued_paintball():
 	for i in range(last_action.size()):
 		pet_node.remove_last_pending_paintball()
 
-
 func _redo_queued_paintball():
 	print("[STATUS] PetViewContainer: Redoing queued paintball action")
 	if paint_redo_stack.empty():
@@ -2820,7 +2744,6 @@ func _redo_queued_paintball():
 
 	for pb_data in action_to_redo:
 		pet_node.add_pending_paintball(pb_data)
-
 
 func _record_move_start_state():
 	var t_start = OS.get_ticks_msec()
@@ -2838,6 +2761,11 @@ func _record_move_end_state(action_name):
 	print("[TIME] PetViewContainer: _record_move_end_state took " + str(OS.get_ticks_msec() - t_start) + "ms")
 
 # HELPERS
+# _flatten_symmetry_dict
+# _begin_auto_move_for_ball
+# schedule_autodrag_for_addball
+# _wait_for_addball_then_autodrag
+
 func _flatten_symmetry_dict(dict: Dictionary) -> Array:
 	var flat_list = []
 	for main_part in dict:
@@ -2852,8 +2780,7 @@ func _flatten_symmetry_dict(dict: Dictionary) -> Array:
 				flat_list.append(part_info)
 	return flat_list
 
-
-func begin_auto_move_for_ball(ball: Spatial) -> void:
+func _begin_auto_move_for_ball(ball: Spatial) -> void:
 	if not ball:
 		return
 	drag_ball = ball
@@ -2863,11 +2790,9 @@ func begin_auto_move_for_ball(ball: Spatial) -> void:
 	Input.set_custom_mouse_cursor(hand_move, 0, Vector2(30, 31))
 	pet_node._orig_world_pos[ball.ball_no] = ball.global_transform.origin
 
-
 func schedule_autodrag_for_addball(ball_no: int) -> void:
 	pending_autodrag_addball_no = ball_no
 	_wait_for_addball_then_autodrag()
-
 
 func _wait_for_addball_then_autodrag() -> void:
 	var tries := 10
@@ -2875,14 +2800,23 @@ func _wait_for_addball_then_autodrag() -> void:
 		yield(get_tree(), "idle_frame")
 		var visual := find_visual_ball_by_no(pending_autodrag_addball_no)
 		if visual:
-			begin_auto_move_for_ball(visual)
+			_begin_auto_move_for_ball(visual)
 			pending_autodrag_addball_no = -1
 			return
 		tries -= 1
 
 
 ### MODE MANAGEMENT ###
-
+# _deactivate_other_modes
+# _update_mode_panel_visibility
+# _on_recolor_mode_toggled
+# _on_paintball_mode_toggled
+# _on_move_mode_toggled
+# _on_line_mode_toggled
+# _on_preset_mode_toggled
+# _on_auto_paintballer_mode_toggled
+# _on_project_mode_toggled
+# _on_texture_editor_mode_toggled
 
 func _deactivate_other_modes(active_mode_name: String):
 	if active_mode_name != "Paintball Mode":
@@ -2902,7 +2836,6 @@ func _deactivate_other_modes(active_mode_name: String):
 	if active_mode_name != "Texture Editor":
 		texture_editor_mode_check_box.pressed = false
 		texture_editor_mode_check_box.pressed = false
-
 
 func _update_mode_panel_visibility(panel: Control, is_active: bool):
 	if is_active:
@@ -2927,7 +2860,6 @@ func _update_mode_panel_visibility(panel: Control, is_active: bool):
 				if current_tab == null or current_tab == panel:
 					sidebar_controller.switch_to_tab(tree_tab)
 
-
 func _on_recolor_mode_toggled(is_on):
 	if is_on:
 		_deactivate_other_modes("Recolor Mode")
@@ -2943,7 +2875,6 @@ func _on_recolor_mode_toggled(is_on):
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 		recolor_settings_instance.clear_buckets()
 	mark_ui_dirty()
-
 
 func _on_paintball_mode_toggled(is_on):
 	print("[STATUS] PetViewContainer: Paintball Mode toggled %s" % is_on)
@@ -2966,7 +2897,6 @@ func _on_paintball_mode_toggled(is_on):
 	_update_paintball_mode_ui()
 	mark_ui_dirty()
 
-
 func _on_move_mode_toggled(is_on):
 	if is_on:
 		_deactivate_other_modes("Move Mode")
@@ -2983,7 +2913,6 @@ func _on_move_mode_toggled(is_on):
 		_on_move_mode_clear()
 	mark_ui_dirty()
 
-
 func _on_line_mode_toggled(is_on):
 	if is_on:
 		_deactivate_other_modes("Line Mode")
@@ -2999,7 +2928,6 @@ func _on_line_mode_toggled(is_on):
 		linez_start_ball = null
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 	mark_ui_dirty()
-
 
 func _on_preset_mode_toggled(is_on):
 	if is_on:
@@ -3021,7 +2949,6 @@ func _on_preset_mode_toggled(is_on):
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 	mark_ui_dirty()
 
-
 func _on_auto_paintballer_mode_toggled(is_on):
 	if is_on:
 		_deactivate_other_modes("Auto Paintballer")
@@ -3038,7 +2965,6 @@ func _on_auto_paintballer_mode_toggled(is_on):
 				b.apply_outline_state(b.OutlineState.NONE)
 	mark_ui_dirty()
 
-
 func _on_project_mode_toggled(is_on):
 	if is_on:
 		_deactivate_other_modes("Project Mode")
@@ -3046,9 +2972,18 @@ func _on_project_mode_toggled(is_on):
 	_update_mode_panel_visibility(project_settings_instance, is_on)
 	mark_ui_dirty()
 
+func _on_texture_editor_mode_toggled(is_on):
+	if is_on:
+		_deactivate_other_modes("Texture Editor")
+	texture_editor_mode = is_on
+	_update_mode_panel_visibility(texture_editor_settings_instance, is_on)
+	mark_ui_dirty()
+
 
 ### PALETTE VIEWER ###
-
+# _on_view_palette_check_box_toggled
+# _on_palette_popup_closed
+# _on_palette_visibility_changed
 
 func _on_view_palette_check_box_toggled(is_on):
 	if is_instance_valid(palette_viewer_instance):
@@ -3059,11 +2994,9 @@ func _on_view_palette_check_box_toggled(is_on):
 			palette_viewer_instance.popup()
 		palette_viewer_instance.populate_colors()
 
-
 func _on_palette_popup_closed():
 	if view_palette_check_box.pressed:
 		view_palette_check_box.pressed = false
-
 
 func _on_palette_visibility_changed():
 	if view_palette_check_box.pressed != palette_viewer_instance.visible:
@@ -3071,7 +3004,8 @@ func _on_palette_visibility_changed():
 
 
 ### VARIATION VIEWER ###
-
+# _on_view_variations_toggled
+# _on_variation_visibility_changed
 
 func _on_view_variations_toggled(is_on):
 	if is_instance_valid(variation_tree):
@@ -3079,7 +3013,6 @@ func _on_view_variations_toggled(is_on):
 
 	if is_on and sidebar_controller:
 		sidebar_controller.switch_to_tab(variation_tree)
-
 
 func _on_variation_visibility_changed():
 	if view_variations_check_box.pressed != variation_tree.visible:
@@ -3090,6 +3023,14 @@ func _on_variation_visibility_changed():
 
 
 ### PAINT MODE ###
+# _update_paintball_mode_ui
+# _on_delete_mode_toggled
+# _set_pending_paintballs_visible
+# _on_paintball_mode_for_ball_toggled
+# close_paintball_mode
+# _finalize_freeline
+# _create_paintball_at_position
+# _restore_auto_paintballer_selection
 
 func _update_paintball_mode_ui():
 	print("[STATUS] PetViewContainer: updating paintball mode UI (visible: %s)" % paintball_mode)
@@ -3113,13 +3054,11 @@ func _update_paintball_mode_ui():
 		Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 		mouse_default_cursor_shape = CURSOR_POINTING_HAND
 
-
 func _on_delete_mode_toggled(is_on):
 	if is_on:
 		Input.set_custom_mouse_cursor(eraser, 0, Vector2(30, 31))
 	else:
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-
 
 func _set_pending_paintballs_visible(is_visible: bool):
 	if is_instance_valid(pet_node):
@@ -3127,7 +3066,6 @@ func _set_pending_paintballs_visible(is_visible: bool):
 		for pb in pending:
 			if is_instance_valid(pb):
 				pb.visible = is_visible
-
 
 func _on_paintball_mode_for_ball_toggled(ball):
 	print("[STATUS] PetViewContainer: paintball mode specifically focused on ball #%d" % ball.ball_no)
@@ -3142,11 +3080,9 @@ func _on_paintball_mode_for_ball_toggled(ball):
 	_isolate_target_ball(ball)
 	mark_ui_dirty()
 
-
 func close_paintball_mode():
 	print("[STATUS] PetViewContainer: closing paintball mode")
 	paintball_check_box.pressed = false
-
 
 func _finalize_freeline():
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -3225,7 +3161,6 @@ func _finalize_freeline():
 	# 	String.humanize_size(_perf_stat_start), String.humanize_size(_perf_stat_end),
 	# 	_perf_orphans
 	# ])
-
 
 func _create_paintball_at_position(screen_pos, target_ball, diameter_override = -1):
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -3422,12 +3357,14 @@ func _create_paintball_at_position(screen_pos, target_ball, diameter_override = 
 
 	return null
 
-
 func _restore_auto_paintballer_selection():
 	yield(get_tree(), "idle_frame")
 	_on_affected_list_changed(_auto_paint_affected_cache)
 
+
 ### SHAPE MODE ###
+# _on_randomize_body_proportions
+# _on_randomize_moves
 
 func _on_randomize_body_proportions(settings: Dictionary):
 	randomize()
@@ -3486,7 +3423,6 @@ func _on_randomize_body_proportions(settings: Dictionary):
 	yield(get_tree().create_timer(0.1), "timeout")
 	lnz_text_edit.save_file()
 	print("[STATUS] PetViewContainer: _on_randomize_body_proportions: randomized body proportions and applied to LNZ")
-
 
 func _on_randomize_moves(settings: Dictionary):
 	# var _perf_start_time = OS.get_ticks_msec()
@@ -3620,7 +3556,7 @@ func _on_randomize_moves(settings: Dictionary):
 
 
 ### LINE MODE ###
-
+# _handle_line_mode_input
 
 func _handle_line_mode_input(event) -> bool:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
@@ -3644,14 +3580,15 @@ func _handle_line_mode_input(event) -> bool:
 
 
 ### PRESET MODE ###
-
+# _on_eyedropper_toggled
+# _on_preset_apply_selection
+# _restore_preset_selection
 
 func _on_eyedropper_toggled(is_on):
 	if is_on:
 		Input.set_custom_mouse_cursor(eyedropper, 0, Vector2(30, 31))
 	else:
 		Input.set_custom_mouse_cursor(smallbrush, 0, Vector2(30, 31))
-
 
 func _on_preset_apply_selection():
 	if selected_balls.empty():
@@ -3729,7 +3666,6 @@ func _on_preset_apply_selection():
 		lnz_text_edit.apply_batch_presets(batch_changes)
 		_restore_preset_selection(ids_to_restore)
 
-
 func _restore_preset_selection(ids: Array):
 	selected_balls.clear()
 
@@ -3744,7 +3680,25 @@ func _restore_preset_selection(ids: Array):
 
 
 ### MOVE MODE ###
-
+# _on_move_mode_clear
+# _update_pivot_limit
+# _track_pending_move
+# _on_move_mode_apply
+# _on_align_selection
+# _align_ball_list
+# _get_axis_val
+# _on_snap_selection
+# _snap_ball_list_to_target
+# _on_nudge_selection
+# _on_move_mode_select_group
+# _apply_eye_iris_binding
+# _apply_mirror_move
+# _apply_mirror_scale
+# _get_rotation_pivot_origin
+# _on_rotate_selection
+# _on_flip_selection
+# _on_apply_scale
+# _on_pivot_changed
 
 func _on_move_mode_clear():
 	var all_balls = _get_all_visual_balls()
@@ -3770,7 +3724,6 @@ func _on_move_mode_clear():
 
 	mark_ui_dirty()
 
-
 func _update_pivot_limit():
 	if is_instance_valid(pet_node) and is_instance_valid(move_mode_settings_instance):
 		var total_balls = 0
@@ -3783,7 +3736,6 @@ func _update_pivot_limit():
 			)
 
 		move_mode_settings_instance.update_pivot_max(total_balls)
-
 
 func _track_pending_move(ball):
 	var current_size = ball.ball_size
@@ -3809,7 +3761,6 @@ func _track_pending_move(ball):
 	move_mode_settings_instance.set_queued_count(pending_moves.size())
 
 	mark_ui_dirty()
-
 
 func _on_move_mode_apply():
 	if pending_moves.empty():
@@ -3861,7 +3812,6 @@ func _on_move_mode_apply():
 	_update_selected_ballz_in_settings()
 	mark_ui_dirty()
 
-
 func _on_align_selection(axis, mode):
 	if selected_balls.empty():
 		return
@@ -3897,7 +3847,6 @@ func _on_align_selection(axis, mode):
 			_align_ball_list(mirrored_group, axis, target_mode)
 
 	_record_move_end_state("Align " + axis)
-
 
 func _align_ball_list(ball_list, axis, mode):
 	var reference_val = 0.0
@@ -3937,7 +3886,6 @@ func _align_ball_list(ball_list, axis, mode):
 			b.global_transform.origin.z = reference_val
 		_track_pending_move(b)
 
-
 func _get_axis_val(ball, axis):
 	if axis == "x":
 		return ball.global_transform.origin.x
@@ -3946,7 +3894,6 @@ func _get_axis_val(ball, axis):
 	if axis == "z":
 		return ball.global_transform.origin.z
 	return 0.0
-
 
 func _on_snap_selection(axis, direction):
 	if selected_balls.empty():
@@ -3994,7 +3941,6 @@ func _on_snap_selection(axis, direction):
 		if not mirrored_group.empty():
 			_snap_ball_list_to_target(mirrored_group, axis, direction, target_val)
 
-
 func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
 	var selection_extreme = 0.0
 	var first = true
@@ -4029,7 +3975,6 @@ func _snap_ball_list_to_target(ball_list, axis, direction, target_val):
 			b.global_transform.origin.z += offset
 		_track_pending_move(b)
 
-
 func _on_nudge_selection(vector: Vector3):
 	if selected_balls.empty():
 		return
@@ -4062,7 +4007,6 @@ func _on_nudge_selection(vector: Vector3):
 
 	_record_move_end_state("Nudge")
 
-
 func _on_move_mode_select_group(group_name: String):
 	if not Input.is_key_pressed(KEY_CONTROL):
 		_on_unselect_all()
@@ -4079,7 +4023,6 @@ func _on_move_mode_select_group(group_name: String):
 					continue
 				b.apply_outline_state(b.OutlineState.ACTIVE_SELECTED)
 	_update_selected_ballz_in_settings()
-
 
 func _apply_eye_iris_binding(ball, delta):
 	# Check for eye -> iris binding
@@ -4101,7 +4044,6 @@ func _apply_eye_iris_binding(ball, delta):
 					# Iris not manually selected, so move it along with the eye
 					iris_visual.global_transform.origin += delta
 					_track_pending_move(iris_visual)
-
 
 func _apply_mirror_move(balls_moved, delta):
 	var mirror_mult = move_mode_settings_instance.get_mirror_vector()
@@ -4136,15 +4078,7 @@ func _apply_mirror_move(balls_moved, delta):
 				partner_visual.global_transform.origin += mirrored_delta
 				_track_pending_move(partner_visual)
 
-
-func _apply_mirror_scale(
-	targets: Array,
-	factor: float,
-	scale_dist: bool,
-	scale_size: bool,
-	pivot_origin: Vector3,
-	is_interactive: bool = false
-):
+func _apply_mirror_scale(targets: Array, factor: float, scale_dist: bool, scale_size: bool, pivot_origin: Vector3, is_interactive: bool = false):
 	var selected_nos = {}
 	for b in targets:
 		selected_nos[b.ball_no] = true
@@ -4178,7 +4112,6 @@ func _apply_mirror_scale(
 
 		_track_pending_move(mb)
 
-
 func _get_rotation_pivot_origin(pivot_id):
 	var pivot_origin = Vector3.ZERO
 	var pivot_visual = null
@@ -4198,7 +4131,6 @@ func _get_rotation_pivot_origin(pivot_id):
 		if count > 0:
 			pivot_origin = sum_pos / count
 	return pivot_origin
-
 
 func _on_rotate_selection(rotation_degrees, pivot_id):
 	if selected_balls.empty():
@@ -4246,7 +4178,6 @@ func _on_rotate_selection(rotation_degrees, pivot_id):
 			_track_pending_move(b)
 
 	_record_move_end_state("Rotate")
-
 
 func _on_flip_selection(axis_vector, pivot_id):
 	if selected_balls.empty():
@@ -4303,7 +4234,6 @@ func _on_flip_selection(axis_vector, pivot_id):
 			_track_pending_move(b)
 
 	_record_move_end_state("Flip")
-
 
 func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id: int):
 	if selected_balls.empty():
@@ -4364,17 +4294,8 @@ func _on_apply_scale(factor: float, scale_dist: bool, scale_size: bool, pivot_id
 
 	_record_move_end_state("Scale")
 
-
 func _on_pivot_changed():
 	var all_balls = _get_all_visual_balls()
 	for b in all_balls:
 		if is_instance_valid(b) and b.has_method("apply_outline_state"):
 			b.apply_outline_state(get_visual_state_for_ball(b))
-
-
-func _on_texture_editor_mode_toggled(is_on):
-	if is_on:
-		_deactivate_other_modes("Texture Editor")
-	texture_editor_mode = is_on
-	_update_mode_panel_visibility(texture_editor_settings_instance, is_on)
-	mark_ui_dirty()
