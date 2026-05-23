@@ -223,6 +223,8 @@ func populate_bhd_list():
 # _on_LnzTextEdit_find_move
 # _on_LnzTextEdit_find_project_ball
 # _on_ToolsMenu_print_ball_colors
+# _on_OptionButton_file_selected
+# _on_OptionButton_file_saved
 
 func _on_BhdSwitcher_item_selected(index):
 	var bhd_name = bhd_option_button.get_item_text(index)
@@ -397,6 +399,12 @@ func _on_ToolsMenu_print_ball_colors():
 	OS.set_clipboard(ball_map_string)
 	print("[STATUS] Node: _on_ToolsMenu_print_ball_colors: successfully populated clipboard")
 
+func _on_OptionButton_file_selected(file_name):
+	generate_pet(file_name)
+
+func _on_OptionButton_file_saved(file_name):
+	generate_pet(file_name)
+
 
 ### MODEL GENERATION ###
 # generate_pet
@@ -405,7 +413,6 @@ func _on_ToolsMenu_print_ball_colors():
 # clear_lnz_data
 # recompose_model
 # init_visual_balls
-# _finish_dependent_geometry
 
 func generate_pet(file_path):
 	var t_start = OS.get_ticks_msec()
@@ -1985,11 +1992,11 @@ func get_real_ball_size(ball_size):
 ### ANIMATIONS ###
 # set_animation
 # set_frame
+# symmetrize_skeleton
 # _on_AnimPicker_text_entered
 # _on_PrevAnim_pressed
 # _on_NextAnim_pressed
 # _on_TPoseCheckBox_toggled
-# symmetrize_skeleton
 
 func set_animation(anim_index: int):
 	if not bhd or bhd.animation_ranges.empty():
@@ -2552,19 +2559,3 @@ func _on_apply_auto_paintballz():
 		print("[ERROR] Node: _on_apply_auto_paintballz: could not locate LnzTextEdit node")
 
 	_on_clear_auto_paintballz()
-
-
-#####
-
-
-func _on_OptionButton_file_selected(file_name):
-	generate_pet(file_name)
-
-func _on_OptionButton_file_saved(file_name):
-	generate_pet(file_name)
-
-
-
-
-
-
