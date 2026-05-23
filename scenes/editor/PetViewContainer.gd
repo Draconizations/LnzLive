@@ -3026,7 +3026,7 @@ func _on_auto_paintballer_mode_toggled(is_on):
 	_update_mode_panel_visibility(auto_paintballer_settings_instance, is_on)
 
 	if not is_on:
-		pet_node._on_clear_auto_paintballz()
+		pet_node.clear_auto_paintballs()
 		_on_unselect_all()
 		_auto_paint_affected_cache.clear()
 		var all_balls = _get_all_visual_balls()

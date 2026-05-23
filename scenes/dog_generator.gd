@@ -392,9 +392,10 @@ func _on_NextAnim_pressed():
 	set_animation(current_animation + 1)
 
 
-### INTERACTIONS & SIGNALS ###
+### EDITOR ###
 # emit_ball_move
 # emit_ball_resize
+# generate_color_icon
 # signal_ball_mouse_enter
 # signal_ball_mouse_exit
 # signal_paintball_mouse_enter
@@ -408,6 +409,29 @@ func _on_NextAnim_pressed():
 # _on_LnzTextEdit_find_move
 # _on_LnzTextEdit_find_project_ball
 # _on_ToolsMenu_print_ball_colors
+
+func generate_color_icon(color_index: int) -> ImageTexture:
+	if not current_palette_texture:
+		return null
+
+	if color_index < 0 or color_index > 255:
+		return null
+
+	var img = current_palette_texture.get_data()
+	if not img:
+		return null
+
+	img.lock()
+	var color = img.get_pixel(color_index, 0)
+	img.unlock()
+
+	var icon_img = Image.new()
+	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
+	icon_img.fill(color)
+
+	var tex = ImageTexture.new()
+	tex.create_from_image(icon_img)
+	return tex
 
 
 ### VISIBILITY ###
@@ -645,6 +669,7 @@ func _on_OmittedBallCheckBox_toggled(button_pressed):
 # add_pending_paintball
 # remove_last_pending_paintball
 # remove_specific_pending_paintball
+# get_pending_paintballs_data
 # get_pending_paintball_nodes
 # _on_clear_pending_paintballz
 # _on_randomize_auto_paintballz
@@ -749,10 +774,15 @@ func remove_specific_pending_paintball(paintball_node):
 		print("[WARNING] Node: remove_specific_pending_paintball: node not found in pending list")
 
 
+func get_pending_paintballs_data():
+	return _pending_paintballs_data
+
+
 func get_pending_paintball_nodes():
 	return _pending_paintball_nodes
 
-func _on_clear_pending_paintballz():
+
+func clear_pending_paintballs():
 	print("[STATUS] Node: clear_pending_paintballs: clearing %d paintballz" % _pending_paintball_nodes.size())
 	for node in _pending_paintball_nodes:
 		if is_instance_valid(node):
@@ -760,14 +790,20 @@ func _on_clear_pending_paintballz():
 	_pending_paintball_nodes.clear()
 	_pending_paintballs_data.clear()
 
+func _on_clear_pending_paintballz():
+	clear_pending_paintballs()
 
-func _on_clear_auto_paintballz():
-	print("[STATUS] Node: _on_clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
+
+func clear_auto_paintballs():
+	print("[STATUS] Node: clear_auto_paintballz: clearing %d paintballz" % _auto_paintball_nodes.size())
 	for node in _auto_paintball_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
 	_auto_paintball_nodes.clear()
 	_auto_paintballs_data.clear()
+
+func _on_clear_auto_paintballz():
+	clear_auto_paintballs()
 
 	
 func _on_randomize_auto_paintballz(paintballz):
@@ -2595,33 +2631,3 @@ func emit_ball_move(ball_no: int, new_position: Vector3):
 func emit_ball_resize(ball_no: int, size_dif: int):
 	_skip_next_rebuild = true
 	emit_signal("ball_resized", ball_no, size_dif)
-
-
-
-
-
-
-
-
-func generate_color_icon(color_index: int) -> ImageTexture:
-	if not current_palette_texture:
-		return null
-
-	if color_index < 0 or color_index > 255:
-		return null
-
-	var img = current_palette_texture.get_data()
-	if not img:
-		return null
-
-	img.lock()
-	var color = img.get_pixel(color_index, 0)
-	img.unlock()
-
-	var icon_img = Image.new()
-	icon_img.create(16, 16, false, Image.FORMAT_RGBA8)
-	icon_img.fill(color)
-
-	var tex = ImageTexture.new()
-	tex.create_from_image(icon_img)
-	return tex

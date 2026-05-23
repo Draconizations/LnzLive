@@ -99,6 +99,13 @@ signal ball_number_changed(ball_no)
 var max_move_head = 60
 
 ### SETUP & INITIALIZATION ###
+# _safe_connect
+# _ready
+# _setup_context_menu
+# _setup_set_column_popup
+# initialize_history
+# get_px_scale
+# get_lnz_scale
 
 func _safe_connect(target, sig, method):
 	if target and target.has_signal(sig) and not target.is_connected(sig, self, method):
@@ -203,12 +210,19 @@ func get_lnz_scale() -> float:
 	return pet_node.lnz.scales.x / 255.0
 
 ### SIGNAL CALLBACKS ###
+# _on_NotificationTimer_timeout
 
 func _on_NotificationTimer_timeout():
 	var wrap_notification_label = find_panel.get_node("VBoxContainer/WrapNotificationLabel")
 	wrap_notification_label.hide()
 
 ### FILE SAVING & LOADING ###
+# _on_example_file_selected
+# _on_user_file_selected
+# save_backup
+# save_file
+# _on_Tree_backup_file
+# _on_ApplyChangesButton_pressed
 
 func _load_file(filepath: String, user_flag: bool):
 	var t_start = OS.get_ticks_msec()
@@ -353,6 +367,15 @@ func _on_ApplyChangesButton_pressed():
 	save_file(false) # User Manual Save = History Snapshot
 
 ### UNDO / REDO HISTORY ###
+# commit_full_snapshot
+# commit_logical_change
+# _trim_history_tail
+# _check_history_size
+# undo_visual_edit
+# redo_visual_edit
+# _find_nearest_snapshot
+# _restore_snapshot
+# _apply_logical_line
 
 func commit_full_snapshot(action_name: String):
 	if history_index >= 0:
@@ -558,6 +581,21 @@ func _apply_logical_line(section: String, id: int, line_content: String, cached_
 			console_log.log_message(msg)
 
 ### TEXT EDITOR ###
+# _unhandled_key_input
+# _on_LnzTextEdit_gui_input
+# _get_user_preferred_delimiter
+# _update_section_bookmarks
+# _on_cursor_changed
+# _on_global_font_updated
+# _on_AutowrapButton_pressed
+# _on_FindReplaceButton_pressed
+# _insert_text_at_cursor_at_line
+# _insert_text_at_line
+# _get_active_line_range
+# _escape_regex
+# _wrap_angle_deg
+# _set_text_preserve
+# _on_menu_id_pressed
 
 func _unhandled_key_input(event):
 	if Input.is_key_pressed(KEY_CONTROL) and event.pressed and event.scancode == KEY_S:
@@ -584,7 +622,7 @@ func _unhandled_key_input(event):
 func _on_LnzTextEdit_gui_input(event):
 	if event is InputEventKey and event.pressed:
 		if event.scancode == KEY_PAGEDOWN:
-			var next = get_next_section_line_idx(cursor_get_line() + 1)
+			var next = _get_next_section_line_idx(cursor_get_line() + 1)
 			if next != -1:
 				cursor_set_line(next)
 				cursor_set_column(0)
@@ -594,7 +632,7 @@ func _on_LnzTextEdit_gui_input(event):
 				get_tree().set_input_as_handled()
 
 		elif event.scancode == KEY_PAGEUP:
-			var prev = get_prev_section_line_idx(cursor_get_line() - 1)
+			var prev = _get_prev_section_line_idx(cursor_get_line() - 1)
 			if prev != -1:
 				cursor_set_line(prev)
 				cursor_set_column(0)
@@ -754,6 +792,12 @@ func _on_menu_id_pressed(id):
 		col_input.grab_focus()
 
 ### FIND & REPLACE ###
+# _find_text
+# _on_FindCloseButton_pressed
+# _on_FindNextButton_pressed
+# _on_FindPrevButton_pressed
+# _on_ReplaceButton_pressed
+# _on_ReplaceAllButton_pressed
 
 func _find_text(forward):
 	var find_line_edit = find_panel.get_node("VBoxContainer/LineEdit")
@@ -968,6 +1012,20 @@ func _on_ReplaceAllButton_pressed():
 	self.readonly = true
 
 ### LNZ TEXT FINDING ###
+# _pos_to_offset
+# _offset_to_pos
+# _get_next_section_line_idx
+# _get_prev_section_line_idx
+# find_line_in_ball_section
+# find_line_in_addball_section
+# find_line_in_move_section
+# find_line_in_project_section
+# find_line_in_linez_section
+# find_line_in_paintball_section
+# find_line_in_ball_or_addball_section
+# _get_line_no_from_line_index
+# _find_insertion_line
+# _count_section_entries
 
 func _pos_to_offset(line: int, col: int) -> int:
 	var offset = 0
@@ -990,13 +1048,13 @@ func _offset_to_pos(offset: int) -> Vector2:
 	var col_on_last_line = offset - current_offset
 	return Vector2(col_on_last_line, last_line)
 
-func get_next_section_line_idx(from_line: int) -> int:
+func _get_next_section_line_idx(from_line: int) -> int:
 	for line_index in bookmarks: 
 		if line_index >= from_line: 
 			return line_index 
 	return -1 
 
-func get_prev_section_line_idx(from_line: int) -> int:
+func _get_prev_section_line_idx(from_line: int) -> int:
 	for i in range(bookmarks.size() - 1, -1, -1): 
 		var line_index = bookmarks[i] 
 		if line_index <= from_line: 
@@ -1220,6 +1278,13 @@ func _count_section_entries(section_name: String) -> int:
 	return entry_count
 
 ### LNZ TEXT PARSING ###
+# _get_section_bounds
+# get_current_section_name
+# _detect_delimiter
+# _split_line
+# _update_fields
+# _join_array
+# _for_each_line_in_section
 
 func _get_section_bounds(section_tag: String) -> Dictionary:
 	var sec = search(section_tag, 0, 0, 0)
@@ -1349,35 +1414,14 @@ func _for_each_line_in_section(tag: String, callback):
 			continue
 		callback.call(i, line)
 
-func check_linez_limits(b1: int, b2: int) -> bool:
-	var bounds = _get_section_bounds("[Linez]")
-	if bounds.empty():
-		return false
-	
-	var total_valid = 0
-	var count_b1 = 0
-	var count_b2 = 0
-	
-	for i in range(bounds.start, bounds.end):
-		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"):
-			continue
-		
-		var parts = _split_line(line)
-		if parts.size() < 2:
-			continue
-		
-		total_valid += 1
-		var lb1 = int(parts[0])
-		var lb2 = int(parts[1])
-		
-		if lb1 == b1 or lb2 == b1: count_b1 += 1
-		if lb1 == b2 or lb2 == b2: count_b2 += 1
-	
-	# Limits: 256 total valid linez OR 32 linez for either ball
-	return total_valid >= 256 or count_b1 >= 32 or count_b2 >= 32
 
 ### LNZ TEXT EDITING ###
+# _apply_comments
+# _remove_comments
+# _toggle_comment
+# _set_delimiter
+# _replace_section_content
+# _on_set_column_confirmed
 
 func _apply_comments(lines_array: Array, comment_prefix: String = "; "):
 	for i in lines_array:
@@ -1534,7 +1578,16 @@ func _on_set_column_confirmed():
 	save_file(true)
 	commit_full_snapshot("Set column " + str(col_idx) + " to '" + new_value + "' in LNZ selection")
 
+
 ### LNZ DATA GETTERS ###
+# get_ball_name
+# find_mirrored_ball
+# get_corresponding_right_ball
+# get_corresponding_left_ball
+# check_linez_limits
+# _get_omitted_balls
+# get_current_ball_index
+# get_project_ball_section
 
 func get_ball_name(ball_no: int) -> String:
 	var species = KeyBallsData.species
@@ -1586,6 +1639,7 @@ func get_ball_name(ball_no: int) -> String:
 	
 	return ball_name
 
+
 func find_mirrored_ball(ball_no: int) -> int:
 	var max_base = KeyBallsData.max_base_ball_num
 	if max_base == null: 
@@ -1619,91 +1673,41 @@ func find_mirrored_ball(ball_no: int) -> int:
 		
 	return ball_no
 
+
 func get_corresponding_right_ball(left_ball_index: int) -> int:
 	return find_mirrored_ball(left_ball_index)
+
 
 func get_corresponding_left_ball(right_ball_index: int) -> int:
 	return find_mirrored_ball(right_ball_index)
 
-# NOTE: DEFUNCT
-# func find_mirrored_ball(ball_no: int) -> int:
-# 	var max_base = KeyBallsData.max_base_ball_num
-# 	if max_base == null:
-# 		return ball_no 
-
-# 	if ball_no >= max_base:
-# 		return ball_no
-
-# 	var species = pet_node.lnz.species 
-# 	var symmetry_dict = {}
-
-# 	if species == KeyBallsData.Species.CAT:
-# 		symmetry_dict = KeyBallsData.cat_body_part_symmetry
-# 	elif species == KeyBallsData.Species.DOG:
-# 		symmetry_dict = KeyBallsData.dog_body_part_symmetry
-# 	elif species == KeyBallsData.Species.BABY:
-# 		symmetry_dict = KeyBallsData.baby_body_part_symmetry
-# 	else:
-# 		return ball_no
-
-# 	for main_part in symmetry_dict:
-# 		for sub_part in symmetry_dict[main_part]:
-# 			var part_info = symmetry_dict[main_part][sub_part]
-# 			if part_info.has("left") and part_info.has("right"):
-# 				var index = part_info.left.find(ball_no)
-# 				if index != -1 and index < part_info.right.size():
-# 					return part_info.right[index]
-				
-# 				index = part_info.right.find(ball_no)
-# 				if index != -1 and index < part_info.left.size():
-# 					return part_info.left[index]
+func check_linez_limits(b1: int, b2: int) -> bool:
+	var bounds = _get_section_bounds("[Linez]")
+	if bounds.empty():
+		return false
 	
-# 	var left_balls = []
-# 	if species == KeyBallsData.Species.CAT:
-# 		left_balls = KeyBallsData.symmetry_mode_hide_balls_cat
-# 	elif species == KeyBallsData.Species.DOG:
-# 		left_balls = KeyBallsData.symmetry_mode_hide_balls_dog
-# 	elif species == KeyBallsData.Species.BABY:
-# 		left_balls = KeyBallsData.symmetry_mode_hide_balls_bab
+	var total_valid = 0
+	var count_b1 = 0
+	var count_b2 = 0
+	
+	for i in range(bounds.start, bounds.end):
+		var line = get_line(i).strip_edges()
+		if line.empty() or line.begins_with(";"):
+			continue
 		
-# 	if ball_no in left_balls:
-# 		return get_corresponding_right_ball(ball_no)
-
-# 	return ball_no
-
-# NOTE: DEFUNCT
-# func get_corresponding_right_ball(left_ball_index):
-# 	if left_ball_index < KeyBallsData.max_base_ball_num:
-# 		if KeyBallsData.species == KeyBallsData.Species.CAT:
-# 			if left_ball_index in [8, 9]:
-# 				return left_ball_index + 2
-# 			elif left_ball_index in [16, 17, 18] or left_ball_index in [49, 50, 51] or left_ball_index in [57, 58, 59]: 
-# 				return left_ball_index + 3
-# 			else:
-# 				return left_ball_index + 1
-# 		else:
-# 			return left_ball_index + 24
-# 	else:
-# 		if ball_map.has(left_ball_index) and ball_map[left_ball_index].has("corresponding_ball"):
-# 			return ball_map[ball_map[left_ball_index].corresponding_ball].new_ball_no
-# 		return left_ball_index
-
-# NOTE: DEFUNCT
-# func get_corresponding_left_ball(right_ball_index):
-# 	if right_ball_index < KeyBallsData.max_base_ball_num:
-# 		if KeyBallsData.species == KeyBallsData.Species.CAT:
-# 			if right_ball_index in [10, 11]:
-# 				return right_ball_index - 2
-# 			elif right_ball_index in [19, 20, 21] or right_ball_index in [52, 53, 54] or right_ball_index in [60, 61, 62]: 
-# 				return right_ball_index - 3
-# 			else:
-# 				return right_ball_index - 1
-# 		else:
-# 			return right_ball_index - 24
-# 	else:
-# 		if ball_map.has(right_ball_index) and ball_map[right_ball_index].has("corresponding_ball"):
-# 			return ball_map[ball_map[right_ball_index].corresponding_ball].new_ball_no
-# 		return right_ball_index
+		var parts = _split_line(line)
+		if parts.size() < 2:
+			continue
+		
+		total_valid += 1
+		var lb1 = int(parts[0])
+		var lb2 = int(parts[1])
+		
+		if lb1 == b1 or lb2 == b1: count_b1 += 1
+		if lb1 == b2 or lb2 == b2: count_b2 += 1
+	
+	# Limits: 256 total valid linez OR 32 linez for either ball
+	return total_valid >= 256 or count_b1 >= 32 or count_b2 >= 32
 
 func _get_omitted_balls() -> Array:
 	var omitted_balls = []
@@ -1820,7 +1824,27 @@ func get_project_ball_section() -> Array:
 				})
 	return projections
 
+
 ### LNZ DATA SETTERS ###
+# _update_all_references
+# _update_pairwise_section
+# _update_single_number_section
+# _update_project_ball_section
+# _update_paintballz_section
+# _update_lnz_section_one_value
+# _update_lnz_section_two_values
+# _write_project_ball_section
+# _apply_preset_to_ball
+# _write_preset_to_ball
+# apply_batch_presets
+# _transform_paintballz_section
+# _on_apply_paintballz
+# _on_palette_selected
+# _on_HeadShotButton_pressed
+# _apply_paintball_preset_no_save
+# apply_batch_moves
+# _apply_batch_sizes
+# set_batch_moves
 
 func _update_all_references(ball_no: int):
 	# Handles [Linez], [Omissions], [Project Ball], [Paint Ballz]
@@ -1931,11 +1955,11 @@ func _update_paintballz_section(header: String, ball_no: int):
 			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
 		i += 1
 
-func update_lnz_section_one_value(section_name, val1):
+func _update_lnz_section_one_value(section_name, val1):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
-		print("[STATUS] LnzTextEdit: update_lnz_section_one_value: " + msg)
+		print("[STATUS] LnzTextEdit: _update_lnz_section_one_value: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -1943,11 +1967,11 @@ func update_lnz_section_one_value(section_name, val1):
 	var start_line = bounds.start
 	set_line(start_line, str(val1))
 
-func update_lnz_section_two_values(section_name, val1, val2):
+func _update_lnz_section_two_values(section_name, val1, val2):
 	var bounds = _get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
-		print("[STATUS] LnzTextEdit: update_lnz_section_two_values: " + msg)
+		print("[STATUS] LnzTextEdit: _update_lnz_section_two_values: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -1969,7 +1993,7 @@ func update_lnz_section_two_values(section_name, val1, val2):
 		set_line(start_line, new_line)
 		return
 
-func write_project_ball_section(projections: Array):
+func _write_project_ball_section(projections: Array):
 	save_backup()
 	var bounds = _get_section_bounds("[Project Ball]")
 	if bounds.empty():
@@ -2050,7 +2074,7 @@ func write_project_ball_section(projections: Array):
 	_insert_text_at_cursor_at_line(start_line, final_text)
 	save_file()
 
-func apply_preset_to_ball(ball_no, properties, do_save = true):
+func _apply_preset_to_ball(ball_no, properties, do_save = true):
 	if do_save:
 		save_backup()
 	var is_addball = ball_no > KeyBallsData.max_base_ball_num
@@ -2062,7 +2086,7 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 	var bounds = _get_section_bounds(section_tag)
 	if bounds.empty():
 		var msg = "No %s section found" % section_tag
-		print("[WARNING] LnzTextEdit: apply_preset_to_ball: " + msg)
+		print("[WARNING] LnzTextEdit: _apply_preset_to_ball: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -2108,10 +2132,10 @@ func apply_preset_to_ball(ball_no, properties, do_save = true):
 		if do_save:
 			save_file()
 
-func write_preset_to_ball(ball_no, properties, _write_target, should_override):
+func _write_preset_to_ball(ball_no, properties, _write_target, should_override):
 	var applied_something = false
 	if properties.get("apply_ballz", true):
-		apply_preset_to_ball(ball_no, properties, false)
+		_apply_preset_to_ball(ball_no, properties, false)
 		applied_something = true
 
 	if properties.get("apply_paintballz", true) and properties.has("paintballz"):
@@ -2172,7 +2196,7 @@ func apply_batch_presets(changes: Dictionary):
 
 	for ball_no in changes:
 		var props = changes[ball_no]
-		apply_preset_to_ball(ball_no, props, false)
+		_apply_preset_to_ball(ball_no, props, false)
 		applied_something = true
 
 	if applied_something:
@@ -2212,7 +2236,7 @@ func _transform_paintballz_section(transforms: Dictionary):
 func _on_apply_paintballz():
 	save_backup()
 
-	var pending_paintballs = pet_node._pending_paintballs_data
+	var pending_paintballs = pet_node.get_pending_paintballs_data()
 	print("[STATUS] LnzTextEdit: _on_apply_paintballz: Applying %d pending paintballs to LNZ" % pending_paintballs.size())
 
 	if pending_paintballs.size() > 0:
@@ -2305,7 +2329,7 @@ func _on_apply_paintballz():
 			text_to_insert += line + "\n"
 
 		_insert_text_at_cursor_at_line(insert_at_line, text_to_insert)
-		pet_node._on_clear_pending_paintballz()
+		pet_node.clear_pending_paintballz()
 
 	save_file(true)
 	commit_full_snapshot("Commited Paintballz")
@@ -2816,6 +2840,10 @@ func set_batch_moves(moves_dict: Dictionary):
 # 		_insert_text_at_line(start, str(ball_no) + "\n")
 
 ### VISUAL NODE SIGNALS ###
+# _on_Node_line_created
+# _on_Node_ball_selected
+# _on_Node_ball_resized
+# _on_Node_ball_moved
 
 func _on_Node_line_created(start_ball, end_ball):
 	save_backup()
@@ -3126,6 +3154,17 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 			commit_full_snapshot("Created Move for Ballz #%d" % ball_no)
 
 ### TOOLS MENU SIGNALS ###
+# _on_ToolsMenu_add_ball
+# _on_ToolsMenu_delete_ball
+# _on_ToolsMenu_omit_ball
+# _on_ToolsMenu_unomit_ball
+# _on_ToolsMenu_clear_ball_paintballz
+# _on_ToolsMenu_color_entire_pet
+# _on_ToolsMenu_color_part_pet
+# _on_ToolsMenu_copy_l_to_r
+# _on_ToolsMenu_copy_r_to_l
+# _on_ToolsMenu_recolor
+# _on_ToolsMenu_apply_global_fuzz
 
 func _on_ToolsMenu_add_ball(reference_ball, also_connect_line := false):
 	save_backup()
@@ -4174,6 +4213,21 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 # 	save_file()
 
 ### MIRRORING & SYMMETRY ###
+# _mirror_l_to_r_full
+# _mirror_l_to_r_ball
+# _build_ball_map_for_mirror
+# _get_mirrored_counterpart
+# _process_section_for_mirror
+# _process_move_section_for_mirror
+# _process_linez_line_for_mirror
+# _process_paintball_line_for_mirror
+# _mirror_ball_attributes
+# _mirror_move_processor
+# _mirror_linez_processor
+# _mirror_projection_processor
+# _mirror_paintball_processor
+
+
 func _mirror_l_to_r_full(reverse: bool = false):
 	save_backup()
 	
