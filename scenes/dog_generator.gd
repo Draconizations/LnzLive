@@ -1,10 +1,8 @@
 extends Node
 
 # dog_generator.gd
-# The central controller for generating and managing model from LNZ document data
-# This script is the core of LnzLive and coordinates entire process of loading,
-# parsing, building, rendering, animating, and updating models generated
-# from LNZ document data (ballz, paintballz, linez, polygonz)
+# - Generates and manages 3D model based on LNZ data (ballz, paintballz, linez, polygonz)
+# - Controls animations, textures, palettes, and geometry
 # NOTE: Could really use a rename and refactor, script is huge...
 
 # SECTIONS:
@@ -1036,7 +1034,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			node.connect("ball_selected", self, "signal_ball_selected")
 			
 			balls_parent.add_child(node)
-			node.set_owner(root)
+			#node.set_owner(root)
 			if no_texture_rotate.has(int(key)):
 				node.set_tile_texture(false)
 				if lnz.quadrant_balls.has(int(key)):
@@ -1088,7 +1086,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 		if new_create:
 			base_node.add_child(node)
-			node.set_owner(root)
+			#node.set_owner(root)
 			node.add_to_group("addballs")
 			node.z_add = data.size / 10.0
 			node.ball_size = data.size
@@ -1174,7 +1172,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			base_node.add_child(node)
 			
 			node.set_surface_normal(Vector3(0, 0, -1))
-			node.set_owner(root)
+			#node.set_owner(root)
 			
 			var shader_mat = node.get_node("MeshInstance").material_override
 			if shader_mat:
@@ -1264,7 +1262,7 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 
 			if new_create:
 				base_node.add_child(node)
-				node.set_owner(root)
+				#node.set_owner(root)
 				node.add_to_group("paintballs")
 				
 				node.connect("paintball_mouse_enter", self, "signal_paintball_mouse_enter")
