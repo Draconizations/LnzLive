@@ -391,7 +391,8 @@ void vertex() {
     // vert_in_clip_space.z += 0.00001 + (z_add * 0.00005);
 
     // Apply layering offsets
-    vert_in_clip_space.z += 0.00001 + (z_add * 0.001);
+    //vert_in_clip_space.z += 0.00001 + (z_add * 0.001);
+    vert_in_clip_space.z += 0.0001 + (z_add * 0.00005);
 
     float b = (float(ball_size) / 2.0 + float(fuzz_amount + 3)) / (VIEWPORT_SIZE.x / 2.0);
     vert_in_clip_space.x = center_clip_space.x + b * sign(vert_in_clip_space.x);
