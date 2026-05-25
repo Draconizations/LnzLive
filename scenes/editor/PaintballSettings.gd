@@ -781,7 +781,7 @@ func _populate_slots_tree():
 		else:
 			var default_icon = _create_color_icon(slot.display_color)
 			item.set_icon(0, default_icon)
-		item.set_editable(0, true)
+		item.set_editable(0, false)
 
 		# Col 1: LNZ Color (String)
 		item.set_text(1, str(slot.color))
@@ -889,8 +889,9 @@ func _on_SlotsTree_item_edited():
 				item.set_icon(0, new_icon)
 
 	save_settings()
-	_on_palette_changed()
-#	update_preview()
+	#_on_palette_changed()
+	call_deferred("_on_palette_changed")
+	#update_preview()
 
 func _on_SlotsTree_cell_selected():
 	var tree = find_node("SlotsTree")
@@ -904,16 +905,16 @@ func _on_SlotsTree_cell_selected():
 	if canvas:
 		canvas.current_color_slot = idx + 1
 
-	if col == 0:
-		var picker_popup = PopupPanel.new()
-		picker_popup.rect_size = Vector2(300, 400)
-		var picker = ColorPicker.new()
-		picker.color = design_color_slots[idx].display_color
-		picker.connect("color_changed", self, "_on_slot_display_color_changed", [idx, item])
-		picker_popup.add_child(picker)
-		add_child(picker_popup)
-		picker_popup.popup_centered()
-		picker_popup.connect("popup_hide", picker_popup, "queue_free")
+	# if col == 0:
+	# 	var picker_popup = PopupPanel.new()
+	# 	picker_popup.rect_size = Vector2(300, 400)
+	# 	var picker = ColorPicker.new()
+	# 	picker.color = design_color_slots[idx].display_color
+	# 	picker.connect("color_changed", self, "_on_slot_display_color_changed", [idx, item])
+	# 	picker_popup.add_child(picker)
+	# 	add_child(picker_popup)
+	# 	picker_popup.popup_centered()
+	# 	picker_popup.connect("popup_hide", picker_popup, "queue_free")
 
 func _on_slot_display_color_changed(color, idx, item):
 	if idx >= 0 and idx < design_color_slots.size():
