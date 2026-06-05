@@ -1349,7 +1349,7 @@ func generate_polygons(polygon_data: Array, species: int, palette, new_create: b
 		var point4 = ball_map.get(polygon.ball4)
 
 		# Check if the points exist
-		if point1 == null or point2 == null or point3 == null or point4 == null:
+		if point1 == null or point2 == null or point3 == null or point4 == null or not is_instance_valid(point1) or not is_instance_valid(point2) or not is_instance_valid(point3) or not is_instance_valid(point4):
 			print(
 				(
 					"Could not make a polygon between "
@@ -1465,7 +1465,7 @@ func generate_lines(line_data: Array, species: int, palette, new_create: bool):
 		var start = ball_map.get(line.start)
 		var end = ball_map.get(line.end)
 
-		if start == null or end == null:
+		if start == null or end == null or not is_instance_valid(start) or not is_instance_valid(end):
 			print("[WARNING] dog_generator: generate_lines: could not make a line between " + str(line.start) + " and " + str(line.end))
 			continue
 
@@ -1947,8 +1947,13 @@ func apply_projections():
 	var outputs = {}
 
 	for project_ball_data in lnz.project_ball:
-		var visual_ball = ball_map[project_ball_data.project_ball] as Spatial
-		var static_ball = ball_map[project_ball_data.fixed_ball] as Spatial
+		var visual_ball = ball_map.get(project_ball_data.project_ball) as Spatial
+		var static_ball = ball_map.get(project_ball_data.fixed_ball) as Spatial
+		
+		if not is_instance_valid(visual_ball) or not is_instance_valid(static_ball):
+			print("[WARNING] Skipping projection: missing visual_ball or static_ball.")
+			continue 
+
 		var vec = visual_ball.global_transform.origin - static_ball.global_transform.origin
 		var base_pos = static_ball.global_transform.origin
 		var amount = (project_ball_data.min_projection + project_ball_data.max_projection) / 2
