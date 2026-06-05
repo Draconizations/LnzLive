@@ -1255,10 +1255,23 @@ func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -
 	return -1
 
 func _find_insertion_line(start_line: int, end_line: int) -> int:
-	for i in range(end_line - 1, start_line - 1, -1):
-		if get_line(i).strip_edges() == "":
-			return i
-	return end_line
+	var last_true_data_line = -1
+	
+	for i in range(start_line, end_line):
+		var line = get_line(i).strip_edges()
+		
+		if line.empty() or line.begins_with(";"):
+			continue
+			
+		if line.begins_with("["):
+			break
+			
+		last_true_data_line = i
+			
+	if last_true_data_line == -1:
+		return start_line
+		
+	return last_true_data_line + 1
 
 func _count_section_entries(section_name: String) -> int:
 	var section_find = search(section_name, 0, 0, 0)
@@ -1518,7 +1531,7 @@ func _replace_section_content(section_name: String, new_lines: Array):
 		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
 		all_lines.insert(first_section_line, section_name)
-		all_lines.insert(first_section_line + 1, "")
+		#all_lines.insert(first_section_line + 1, "")
 		_set_text_preserve(all_lines.join("\n"))
 		bounds = get_section_bounds(section_name)
 
@@ -1824,8 +1837,8 @@ func get_project_ball_section() -> Array:
 # _update_single_number_section
 # _update_project_ball_section
 # _update_paintballz_section
-# _update_lnz_section_one_value
-# _update_lnz_section_two_values
+# update_lnz_section_one_value
+# update_lnz_section_two_values
 # _write_project_ball_section
 # _apply_preset_to_ball
 # _write_preset_to_ball
@@ -1946,11 +1959,11 @@ func _update_paintballz_section(header: String, ball_no: int):
 			set_line(i, _update_fields(parts, {0: str(b - 1)}, delim))
 		i += 1
 
-func _update_lnz_section_one_value(section_name, val1):
+func update_lnz_section_one_value(section_name, val1):
 	var bounds = get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
-		print("[STATUS] LnzTextEdit: _update_lnz_section_one_value: " + msg)
+		print("[STATUS] LnzTextEdit: update_lnz_section_one_value: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -1958,11 +1971,11 @@ func _update_lnz_section_one_value(section_name, val1):
 	var start_line = bounds.start
 	set_line(start_line, str(val1))
 
-func _update_lnz_section_two_values(section_name, val1, val2):
+func update_lnz_section_two_values(section_name, val1, val2):
 	var bounds = get_section_bounds(section_name)
 	if bounds.empty():
 		var msg = "LNZ section not found: " + section_name
-		print("[STATUS] LnzTextEdit: _update_lnz_section_two_values: " + msg)
+		print("[STATUS] LnzTextEdit: update_lnz_section_two_values: " + msg)
 		if console_log:
 			console_log.log_message(msg)
 		return
@@ -2546,7 +2559,7 @@ func apply_batch_moves(pending_moves: Dictionary):
 		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
 		all_lines.insert(first_section_line, "[Move]")
-		all_lines.insert(first_section_line + 1, "")
+		#all_lines.insert(first_section_line + 1, "")
 		text = all_lines.join("\n")
 		_set_text_preserve(text)
 		move_sec = search(move_section_tag, 0, 0, 0)
@@ -2708,7 +2721,7 @@ func set_batch_moves(moves_dict: Dictionary):
 		var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 		var all_lines = get_text().split("\n")
 		all_lines.insert(first_section_line, "[Move]")
-		all_lines.insert(first_section_line + 1, "")
+		#all_lines.insert(first_section_line + 1, "")
 		text = all_lines.join("\n")
 		_set_text_preserve(text)
 		move_sec = search(move_section_tag, 0, 0, 0)
@@ -2885,7 +2898,8 @@ func _on_Node_ball_resized(ball_no: int, size_dif: int):
 
 func resize_ball(ball_no: int, size_dif: int):
 	var max_base_ball_no = KeyBallsData.max_base_ball_num
-	var is_addball = ball_no > max_base_ball_no
+	var moved_ball_node = pet_node.ball_map.get(ball_no) if is_instance_valid(pet_node) else null
+	var is_addball = ball_no > max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
 
 	var section_tag = "[Ballz Info]"
 	var size_field_index = 5  # 6th field is size
@@ -2968,7 +2982,9 @@ func _on_Node_ball_moved(ball_no: int, new_pos: Vector3):
 
 func move_ball(ball_no: int, new_pos: Vector3):
 	save_backup()
-	var is_addball = ball_no > KeyBallsData.max_base_ball_num
+	var max_base_ball_no = KeyBallsData.max_base_ball_num
+	var moved_ball_node = pet_node.ball_map.get(ball_no) if is_instance_valid(pet_node) else null
+	var is_addball = ball_no > max_base_ball_no or (is_instance_valid(moved_ball_node) and moved_ball_node.is_in_group("addballs"))
 
 	var section_tag = "[Move]"
 	if is_addball:
@@ -2979,7 +2995,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 			var first_section_line = search("[", 0, 0, 0)[SEARCH_RESULT_LINE]
 			var all_lines = get_text().split("\n")
 			all_lines.insert(first_section_line, "[Move]")
-			all_lines.insert(first_section_line + 1, "")
+			#all_lines.insert(first_section_line + 1, "")
 			_set_text_preserve(all_lines.join("\n"))
 		else:
 			return
@@ -2990,7 +3006,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 	var delim = _detect_delimiter(start_line, end_line)
 
 	if is_addball:
-		var moved_ball_node = pet_node.ball_map.get(ball_no)
+		moved_ball_node = pet_node.ball_map.get(ball_no)
 		if moved_ball_node:
 			var base_ball_no = moved_ball_node.base_ball_no
 			var base_ball_node = pet_node.ball_map.get(base_ball_no)
@@ -4289,215 +4305,219 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	var final_linez_lines_to_append = []
 
 	bounds = get_section_bounds("[Linez]")
-	delim = _detect_delimiter(bounds.start, bounds.end)
-	
-	var existing_linez_signatures = {}
-	for i in range(bounds.start, bounds.end):
-		var line = get_line(i).strip_edges()
-		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = split_line(line)
-			var sig = _join_array(parts, delim)
-			existing_linez_signatures[sig] = true
-
-	var linez_content = []
-	for i in range(bounds.start, bounds.end):
-		linez_content.append(get_line(i))
+	if not bounds.empty():
+		delim = _detect_delimiter(bounds.start, bounds.end)
 		
-	for line in linez_content:
-		var strip = line.strip_edges()
-		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = split_line(strip)
-			if parts.size() < 2: continue
-			
-			var s = parts[0].to_int()
-			var e = parts[1].to_int()
-			
-			var s_is_src = (s in source_list) or (s in source_addballs_found)
-			var e_is_src = (e in source_list) or (e in source_addballs_found)
-			
-			if (s in middle_balls_list) and e_is_src: s_is_src = true
-			if (e in middle_balls_list) and s_is_src: e_is_src = true
+		var existing_linez_signatures = {}
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
+				var parts = split_line(line)
+				var sig = _join_array(parts, delim)
+				existing_linez_signatures[sig] = true
 
-			if s_is_src or e_is_src:
-				var m_s = -1
-				var m_e = -1
+		var linez_content = []
+		for i in range(bounds.start, bounds.end):
+			linez_content.append(get_line(i))
+			
+		for line in linez_content:
+			var strip = line.strip_edges()
+			if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
+				var parts = split_line(strip)
+				if parts.size() < 2: continue
 				
-				if source_to_mirror_map.has(s): m_s = source_to_mirror_map[s]
-				elif base_mirror_map.has(s): m_s = base_mirror_map[s]
-				elif s in middle_balls_list: m_s = s
-				else: 
-					if reverse: m_s = get_corresponding_left_ball(s)
-					else: m_s = get_corresponding_right_ball(s)
-
-				if source_to_mirror_map.has(e): m_e = source_to_mirror_map[e]
-				elif base_mirror_map.has(e): m_e = base_mirror_map[e]
-				elif e in middle_balls_list: m_e = e
-				else: 
-					if reverse: m_e = get_corresponding_left_ball(e)
-					else: m_e = get_corresponding_right_ball(e)
+				var s = parts[0].to_int()
+				var e = parts[1].to_int()
 				
-				if m_s != -1 and m_e != -1:
-					var mirror_parts = Array(parts)
-					mirror_parts[0] = str(m_s)
-					mirror_parts[1] = str(m_e)
-					if mirror_parts.size() > 8:
-						if mirror_parts[8] == "0": mirror_parts[8] = "-2"
-						elif mirror_parts[8] == "-2": mirror_parts[8] = "0"
-					if mirror_parts.size() > 5:
-						var temp = mirror_parts[4]
-						mirror_parts[4] = mirror_parts[5]
-						mirror_parts[5] = temp
-					
-					var suffix = "RtoL" if reverse else "LtoR"
-					var inf_comment = " ; copyMirr%s_line(%d,%d)" % [suffix, m_s, m_e]
-					var new_line_sig = _join_array(mirror_parts, delim) + inf_comment
+				var s_is_src = (s in source_list) or (s in source_addballs_found)
+				var e_is_src = (e in source_list) or (e in source_addballs_found)
+				
+				if (s in middle_balls_list) and e_is_src: s_is_src = true
+				if (e in middle_balls_list) and s_is_src: e_is_src = true
 
-					var reverse_mirror_parts = mirror_parts.duplicate()
-					reverse_mirror_parts[0] = mirror_parts[1]
-					reverse_mirror_parts[1] = mirror_parts[0]
-					if reverse_mirror_parts.size() > 5:
-						var temp = reverse_mirror_parts[4]
-						reverse_mirror_parts[4] = reverse_mirror_parts[5]
-						reverse_mirror_parts[5] = temp
-					var reverse_sig = _join_array(reverse_mirror_parts, delim)
+				if s_is_src or e_is_src:
+					var m_s = -1
+					var m_e = -1
 					
-					if !existing_linez_signatures.has(new_line_sig) and !existing_linez_signatures.has(reverse_sig):
-						final_linez_lines_to_append.append(new_line_sig)
-						existing_linez_signatures[new_line_sig] = true
+					if source_to_mirror_map.has(s): m_s = source_to_mirror_map[s]
+					elif base_mirror_map.has(s): m_s = base_mirror_map[s]
+					elif s in middle_balls_list: m_s = s
+					else: 
+						if reverse: m_s = get_corresponding_left_ball(s)
+						else: m_s = get_corresponding_right_ball(s)
+
+					if source_to_mirror_map.has(e): m_e = source_to_mirror_map[e]
+					elif base_mirror_map.has(e): m_e = base_mirror_map[e]
+					elif e in middle_balls_list: m_e = e
+					else: 
+						if reverse: m_e = get_corresponding_left_ball(e)
+						else: m_e = get_corresponding_right_ball(e)
+					
+					if m_s != -1 and m_e != -1:
+						var mirror_parts = Array(parts)
+						mirror_parts[0] = str(m_s)
+						mirror_parts[1] = str(m_e)
+						if mirror_parts.size() > 8:
+							if mirror_parts[8] == "0": mirror_parts[8] = "-2"
+							elif mirror_parts[8] == "-2": mirror_parts[8] = "0"
+						if mirror_parts.size() > 5:
+							var temp = mirror_parts[4]
+							mirror_parts[4] = mirror_parts[5]
+							mirror_parts[5] = temp
+						
+						var suffix = "RtoL" if reverse else "LtoR"
+						var inf_comment = " ; copyMirr%s_line(%d,%d)" % [suffix, m_s, m_e]
+						var new_line_sig = _join_array(mirror_parts, delim) + inf_comment
+
+						var reverse_mirror_parts = mirror_parts.duplicate()
+						reverse_mirror_parts[0] = mirror_parts[1]
+						reverse_mirror_parts[1] = mirror_parts[0]
+						if reverse_mirror_parts.size() > 5:
+							var temp = reverse_mirror_parts[4]
+							reverse_mirror_parts[4] = reverse_mirror_parts[5]
+							reverse_mirror_parts[5] = temp
+						var reverse_sig = _join_array(reverse_mirror_parts, delim)
+						
+						if !existing_linez_signatures.has(new_line_sig) and !existing_linez_signatures.has(reverse_sig):
+							final_linez_lines_to_append.append(new_line_sig)
+							existing_linez_signatures[new_line_sig] = true
 
 	# [Move]
 	var final_move_lines = []
 
 	bounds = get_section_bounds("[Move]")
-	delim = _detect_delimiter(bounds.start, bounds.end)
-	
-	var move_content = []
-	for i in range(bounds.start, bounds.end):
-		move_content.append(get_line(i))
+	if not bounds.empty():
+		delim = _detect_delimiter(bounds.start, bounds.end)
+		
+		var move_content = []
+		for i in range(bounds.start, bounds.end):
+			move_content.append(get_line(i))
 
-	for line in move_content:
-		var strip = line.strip_edges()
-		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = split_line(strip)
-			if parts.size() < 1: continue
-			var move_ball = parts[0].to_int()
+		for line in move_content:
+			var strip = line.strip_edges()
+			if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
+				var parts = split_line(strip)
+				if parts.size() < 1: continue
+				var move_ball = parts[0].to_int()
 
-			if !(move_ball in target_list):
-				final_move_lines.append(strip)
+				if !(move_ball in target_list):
+					final_move_lines.append(strip)
 
-			var is_src = (move_ball in source_list) or (move_ball in source_addballs_found)
-			
-			if is_src:
-				var m_move_ball = -1
-				if source_to_mirror_map.has(move_ball): m_move_ball = source_to_mirror_map[move_ball]
-				elif base_mirror_map.has(move_ball): m_move_ball = base_mirror_map[move_ball]
+				var is_src = (move_ball in source_list) or (move_ball in source_addballs_found)
 				
-				if m_move_ball != -1:
-					var mirror_parts = Array(parts)
-					mirror_parts[0] = str(m_move_ball)
-					if mirror_parts.size() > 1:
-						mirror_parts[1] = str(mirror_parts[1].to_float() * -1.0)
+				if is_src:
+					var m_move_ball = -1
+					if source_to_mirror_map.has(move_ball): m_move_ball = source_to_mirror_map[move_ball]
+					elif base_mirror_map.has(move_ball): m_move_ball = base_mirror_map[move_ball]
 					
-					if mirror_parts.size() > 4:
-						var old_anchor = mirror_parts[4].to_int()
-						var new_anchor = -1
-						if source_to_mirror_map.has(old_anchor): new_anchor = source_to_mirror_map[old_anchor]
-						elif base_mirror_map.has(old_anchor): new_anchor = base_mirror_map[old_anchor]
-						elif old_anchor in middle_balls_list: new_anchor = old_anchor
+					if m_move_ball != -1:
+						var mirror_parts = Array(parts)
+						mirror_parts[0] = str(m_move_ball)
+						if mirror_parts.size() > 1:
+							mirror_parts[1] = str(mirror_parts[1].to_float() * -1.0)
 						
-						if new_anchor != -1:
-							mirror_parts[4] = str(new_anchor)
+						if mirror_parts.size() > 4:
+							var old_anchor = mirror_parts[4].to_int()
+							var new_anchor = -1
+							if source_to_mirror_map.has(old_anchor): new_anchor = source_to_mirror_map[old_anchor]
+							elif base_mirror_map.has(old_anchor): new_anchor = base_mirror_map[old_anchor]
+							elif old_anchor in middle_balls_list: new_anchor = old_anchor
+							
+							if new_anchor != -1:
+								mirror_parts[4] = str(new_anchor)
 
-					final_move_lines.append(_join_array(mirror_parts, delim))
+						final_move_lines.append(_join_array(mirror_parts, delim))
 
 	# [Project Ball]
 	var final_proj_lines = []
 
 	bounds = get_section_bounds("[Project Ball]")
-	delim = _detect_delimiter(bounds.start, bounds.end)
-	
-	var proj_content = []
-	for i in range(bounds.start, bounds.end):
-		proj_content.append(get_line(i))
+	if not bounds.empty():
+		delim = _detect_delimiter(bounds.start, bounds.end)
+		
+		var proj_content = []
+		for i in range(bounds.start, bounds.end):
+			proj_content.append(get_line(i))
 
-	for line in proj_content:
-		var strip = line.strip_edges()
-		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = split_line(strip)
-			if parts.size() < 2: continue
-			
-			var b = parts[0].to_int()
-			var m = parts[1].to_int()
+		for line in proj_content:
+			var strip = line.strip_edges()
+			if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
+				var parts = split_line(strip)
+				if parts.size() < 2: continue
+				
+				var b = parts[0].to_int()
+				var m = parts[1].to_int()
 
-			if !(b in target_list) and !(m in target_list):
-				final_proj_lines.append(strip)
+				if !(b in target_list) and !(m in target_list):
+					final_proj_lines.append(strip)
 
-			var b_is_src = (b in source_list) or (b in source_addballs_found)
-			var m_is_src = (m in source_list) or (m in source_addballs_found)
-			
-			if b_is_src or m_is_src:
-				var m_b = -1
-				var m_m = -1
+				var b_is_src = (b in source_list) or (b in source_addballs_found)
+				var m_is_src = (m in source_list) or (m in source_addballs_found)
 				
-				if source_to_mirror_map.has(b): m_b = source_to_mirror_map[b]
-				elif base_mirror_map.has(b): m_b = base_mirror_map[b]
-				elif b in middle_balls_list: m_b = b
-				
-				if source_to_mirror_map.has(m): m_m = source_to_mirror_map[m]
-				elif base_mirror_map.has(m): m_m = base_mirror_map[m]
-				elif m in middle_balls_list: m_m = m
-				
-				if m_b != -1 and m_m != -1:
-					var mirror_parts = Array(parts)
-					mirror_parts[0] = str(m_b)
-					mirror_parts[1] = str(m_m)
-					final_proj_lines.append(_join_array(mirror_parts, delim))
+				if b_is_src or m_is_src:
+					var m_b = -1
+					var m_m = -1
+					
+					if source_to_mirror_map.has(b): m_b = source_to_mirror_map[b]
+					elif base_mirror_map.has(b): m_b = base_mirror_map[b]
+					elif b in middle_balls_list: m_b = b
+					
+					if source_to_mirror_map.has(m): m_m = source_to_mirror_map[m]
+					elif base_mirror_map.has(m): m_m = base_mirror_map[m]
+					elif m in middle_balls_list: m_m = m
+					
+					if m_b != -1 and m_m != -1:
+						var mirror_parts = Array(parts)
+						mirror_parts[0] = str(m_b)
+						mirror_parts[1] = str(m_m)
+						final_proj_lines.append(_join_array(mirror_parts, delim))
 	
 	# [Paint Ballz]
 	var final_paint_lines_to_append = []
 
 	bounds = get_section_bounds("[Paint Ballz]")
-	delim = _detect_delimiter(bounds.start, bounds.end)
-	
-	var existing_paint_sigs = {}
-	for i in range(bounds.start, bounds.end):
-		var line = get_line(i).strip_edges()
-		if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
-			var parts = split_line(line)
-			existing_paint_sigs[_join_array(parts, delim)] = true
-	
-	var paint_content = []
-	for i in range(bounds.start, bounds.end):
-		paint_content.append(get_line(i))
+	if not bounds.empty():
+		delim = _detect_delimiter(bounds.start, bounds.end)
 		
-	for line in paint_content:
-		var strip = line.strip_edges()
-		if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
-			var parts = split_line(strip)
-			if parts.size() < 3: continue
+		var existing_paint_sigs = {}
+		for i in range(bounds.start, bounds.end):
+			var line = get_line(i).strip_edges()
+			if !line.begins_with("[") and !line.begins_with(";") and !line.empty():
+				var parts = split_line(line)
+				existing_paint_sigs[_join_array(parts, delim)] = true
+		
+		var paint_content = []
+		for i in range(bounds.start, bounds.end):
+			paint_content.append(get_line(i))
 			
-			var base = parts[0].to_int()
-			var x = parts[2].to_float()
-			
-			var is_src = false
-			if base in source_list: is_src = true
-			elif base in middle_balls_list:
-				if abs(x) > 0.001: is_src = true
+		for line in paint_content:
+			var strip = line.strip_edges()
+			if !strip.begins_with("[") and !strip.begins_with(";") and !strip.empty():
+				var parts = split_line(strip)
+				if parts.size() < 3: continue
 				
-			if is_src:
-				var m_base = -1
-				if base_mirror_map.has(base): m_base = base_mirror_map[base]
-				else: m_base = base
+				var base = parts[0].to_int()
+				var x = parts[2].to_float()
 				
-				var mirror_parts = Array(parts)
-				mirror_parts[0] = str(m_base)
-				mirror_parts[2] = str(x * -1.0)
-				
-				var new_sig = _join_array(mirror_parts, delim)
-				
-				if !existing_paint_sigs.has(new_sig):
-					final_paint_lines_to_append.append(new_sig)
-					existing_paint_sigs[new_sig] = true
+				var is_src = false
+				if base in source_list: is_src = true
+				elif base in middle_balls_list:
+					if abs(x) > 0.001: is_src = true
+					
+				if is_src:
+					var m_base = -1
+					if base_mirror_map.has(base): m_base = base_mirror_map[base]
+					else: m_base = base
+					
+					var mirror_parts = Array(parts)
+					mirror_parts[0] = str(m_base)
+					mirror_parts[2] = str(x * -1.0)
+					
+					var new_sig = _join_array(mirror_parts, delim)
+					
+					if !existing_paint_sigs.has(new_sig):
+						final_paint_lines_to_append.append(new_sig)
+						existing_paint_sigs[new_sig] = true
 
 	if !final_addball_lines_to_append.empty():
 		var bounds_ab = get_section_bounds("[Add Ball]")
@@ -4527,9 +4547,10 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 	save_backup()
 
 	if target_ball_no >= KeyBallsData.max_base_ball_num:
-		print("[LNZ EDIT] Copy-Mirror is only supported for base ballz (0-%d)" % (KeyBallsData.max_base_ball_num - 1))
+		var err_msg = "[LNZ EDIT] Copy-Mirror is only supported for base ballz (0-%d)" % (KeyBallsData.max_base_ball_num - 1)
+		print(err_msg)
 		if console_log:
-			console_log.log_message("[LNZ EDIT] Copy-Mirror is only supported for base ballz (0-%d)" % (KeyBallsData.max_base_ball_num - 1))
+			console_log.log_message(err_msg)
 		return
 
 	var mirrored_ball_no = find_mirrored_ball(target_ball_no)
