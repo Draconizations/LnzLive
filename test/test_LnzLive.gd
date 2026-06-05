@@ -249,26 +249,35 @@ func test_hide_ball_state_synchronization():
 	dog_gen.hide_ball(15)
 	
 	# Verify internal array tracking and visual method calling
-	assert_true(dog_gen.is_ball_hidden(15), "Generator should track ball 15 as hidden internally.")
+	assert_true(dog_gen.is_hidden_ball(15), "Generator should track ball 15 as hidden internally.")
 	assert_true(mock_visual_node.is_hidden, "Generator should successfully call set_hidden(true) on the visual node.")
 	
 	# Execute reverse
 	dog_gen.unhide_all_balls()
 	
 	# Verify cleanup
-	assert_false(dog_gen.is_ball_hidden(15), "Internal tracking array should be cleared.")
+	assert_false(dog_gen.is_hidden_ball(15), "Internal tracking array should be cleared.")
 	assert_false(mock_visual_node.is_hidden, "Visual node should be restored to visible.")
 
-func test_is_special_baby_ball_detection():
+func test_is_special_ball_detection():
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
-	# Assuming Species.BABY = 3 based on earlier scripts
-	assert_true(dog_gen.is_special_baby_ball(3, 120), "Ball 120 should be flagged as special baby ball.")
-	assert_true(dog_gen.is_special_baby_ball(3, 137), "Ball 137 should be flagged as special baby ball.")
+	# Mock the dictionary that LnzParser normally provides to dictate add_groups
+	var mock_lnz = autofree(LnzParser.new(null))
+	mock_lnz.addballs = {
+		120: {"add_group": 1},
+		137: {"add_group": 2},
+		119: {"add_group": 0}
+	}
+	dog_gen.lnz = mock_lnz
+	
+	# Should evaluate as true if it exists in addballs AND add_group != 0
+	assert_true(dog_gen.is_special_ball(3, 120), "Ball 120 has add_group 1, should be special.")
+	assert_true(dog_gen.is_special_ball(3, 137), "Ball 137 has add_group 2, should be special.")
 	
 	# Edge cases
-	assert_false(dog_gen.is_special_baby_ball(3, 119), "Ball 119 is out of range.")
-	assert_false(dog_gen.is_special_baby_ball(1, 125), "Should be false if species is Catz, even if in range.")
+	assert_false(dog_gen.is_special_ball(3, 119), "Ball 119 has add_group 0, should not be special.")
+	assert_false(dog_gen.is_special_ball(3, 50), "Ball 50 is not an addball, should be false.")
 
 func test_update_whisker_position_geometry():
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
@@ -310,7 +319,7 @@ func test_update_eyelids_mirrored_angles():
 	
 	# Create mock balls that can receive the angle data
 	var b_script = GDScript.new()
-	b_script.source_code = "extends Node\nvar angle = 0.0\nvar color = 0\nfunc set_eyelid_rotation(a):\n\tangle = a\nfunc set_eyelid_color(c):\n\tcolor = c"
+	b_script.source_code = "extends Node\nvar angle = 0.0\nvar color = 0\nfunc set_eyelid_rotation(a):\n\tangle = a\nfunc set_eyelid_color(c):\n\tcolor = c\nfunc set_eyelash_lengths(l):\n\tpass\nfunc set_eyelash_angle(a):\n\tpass\nfunc set_eyelash_spacing(s):\n\tpass\nfunc set_eyelash_color(c):\n\tpass"
 	b_script.reload()
 	
 	var left_eye = autofree(Node.new())
@@ -322,6 +331,7 @@ func test_update_eyelids_mirrored_angles():
 	# Mock the LnzParser data required for the function
 	var mock_lnz = autofree(LnzParser.new(null))
 	mock_lnz.eyelid_color = 100
+	mock_lnz.eyelash_lengths = []
 	dog_gen.lnz = mock_lnz
 	
 	# Inject the state tracking
@@ -331,7 +341,7 @@ func test_update_eyelids_mirrored_angles():
 	dog_gen.eyelid_mode = 0 # 0 = Normal mode (applies color and tilt)
 	
 	# Execute a 30 degree tilt
-	dog_gen.update_eyelids(30.0)
+	dog_gen._update_eyelids(30.0)
 	
 	# Verify math and logic
 	var expected_rads = deg2rad(30.0)
@@ -506,3 +516,33 @@ func test_get_rotation_pivot_origin_midpoint_math():
 	
 	# Verify it returns the mathematical average
 	assert_eq(center, Vector3(10.0/3.0, 20.0/3.0, 30.0/3.0), "Should return the exact midpoint of all selected ball origins.")
+
+
+# func test_dog_generator_munge_balls_applies_movements():
+#   Verify that `munge_balls` appropriately transforms base ball coordinates 
+#   by integrating `lnz.moves` and custom rotations correctly.
+#
+# func test_dog_generator_add_pending_paintball():
+#   Test that `add_pending_paintball` successfully instantiates a visual paintball,
+#   attaches it to the parent, and correctly appends the data to `_pending_paintballs_data`.
+#
+# func test_dog_generator_symmetrize_skeleton():
+#   Test that `symmetrize_skeleton` effectively mirrors the appropriate indices 
+#   over the X-axis for T-Pose calculations based on `KeyBallsData` symmetry structures.
+#
+# func test_dog_generator_apply_extensions():
+#   Provide mocked body/leg extensions in `lnz.leg_extensions` and `lnz.body_extension`
+#   and assert that `apply_extensions` correctly offsets the designated body part balls.
+#
+# func test_lnzlive_utils_parse_flexible_integers():
+#   Test `LnzLiveUtils.parse_flexible_integers` with poorly formatted LNZ strings
+#   like "  10   -5 20" to ensure it extracts exactly [10, -5, 20].
+#
+# func test_lnzlive_utils_get_ramp_color():
+#   Test `LnzLiveUtils.get_ramp_color` for logic that shifts colors dynamically
+#   up or down a 10-step palette ramp based on user painting operations.
+#
+# func test_lnz_parser_get_eyes():
+#   Test that custom iris and eyelid mappings correctly populate `lnz.custom_eyes` 
+#   when given a valid `[Eyes]` section.
+# ------------------------------------------------------------------------------
