@@ -1,4 +1,4 @@
-extends Panel
+extends WindowDialog
 
 const SETTINGS_PATH = "user://settings.cfg"
 
@@ -86,11 +86,8 @@ func _on_rotation_toggled(is_on):
 func _on_CloseButton_pressed():
 	hide()
 
-func popup_centered():
-	var viewport_size = get_viewport_rect().size
-	var panel_size = rect_size
-	rect_global_position = (viewport_size - panel_size) / 2
-	show()
+func popup_centered(size: Vector2 = Vector2.ZERO):
+	.popup_centered(size)
 	raise()
 
 func save_settings():

@@ -23,8 +23,7 @@ var selected_image_path = ""
 
 func _ready():
 	window_title = "Reference Image"
-	rect_min_size = Vector2(300, 250)
-
+	
 	var dir = Directory.new()
 	if not dir.dir_exists("user://resources/references/"):
 		dir.make_dir_recursive("user://resources/references/")
