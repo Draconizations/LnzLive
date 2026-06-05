@@ -193,6 +193,18 @@ func test_lnz_parse_moves():
 	assert_eq(parser.moves[0]["relative_to"], 15, "Should pick up relative_to column when present.")
 	assert_eq(parser.moves[1]["relative_to"], 8, "Should fallback relative_to equal to base ball when column is missing.")
 
+func test_lnz_parser_get_eyes():
+	# Parses the mapping matrix for irises to standard eyes correctly.
+	var content = "[Eyes]\n10 11\n12 13"
+	var path = _create_temp_lnz(content)
+	var parser = autofree(LnzParser.new(path))
+	var reader = parser.compile_section("Eyes", [])
+	
+	parser.get_eyes(reader)
+	assert_true(parser.custom_eyes.has(12), "Should map left iris (12) from eyes block.")
+	assert_eq(parser.custom_eyes[12], 10, "Should explicitly map left iris to left eye (10).")
+	assert_eq(parser.custom_eyes[13], 11, "Should explicitly map right iris to right eye (11).")
+
 # ------------------------------------------------------------------------------
 # dog_generator.gd
 # ------------------------------------------------------------------------------
@@ -386,130 +398,238 @@ func test_generate_color_icon_creates_valid_texture():
 	# Test out of bounds
 	assert_null(dog_gen.generate_color_icon(256), "Should return null if requested index is outside the 0-255 range.")
 
-# # ------------------------------------------------------------------------------
-# # LnzTextEdit.gd
-# # ------------------------------------------------------------------------------
 
-# func test_lnz_history_snapshot_stack_limit():
-# 	if not lnz_text: return
-# 	lnz_text.max_history_size = 5
-# 	lnz_text.initialize_history()
-	
-# 	for i in range(10):
-# 		lnz_text.text = "Change " + str(i)
-# 		lnz_text.commit_full_snapshot("Action " + str(i))
-	
-# 	assert_eq(lnz_text.history_stack.size(), 5, "History stack should not exceed max_history_size.")
-# 	assert_eq(lnz_text.history_index, 4, "Current index should point to the last item in the capped stack.")
-
-# func test_lnz_logical_history_merging():
-# 	lnz_text.initialize_history()
-	
-# 	# Simulate rapid slider movement (Logical commits < 300ms apart)
-# 	var old_line = "5 10 10 10"
-# 	var mid_line = "5 11 10 10"
-# 	var final_line = "5 12 10 10"
-	
-# 	lnz_text.commit_logical_change("Move", "[Move]", 5, old_line, mid_line, 10) 
-# 	# Force a small delay less than 300ms if possible, or assume sequential execution
-# 	lnz_text.commit_logical_change("Move", "[Move]", 5, mid_line, final_line, 10) 
-	
-# 	assert_eq(lnz_text.history_stack.size(), 2, "Rapid logical changes to the same ID should squash into one item.")
-# 	var item = lnz_text.history_stack[1]
-# 	assert_eq(item.new_line_data, final_line, "Merged history item should contain the most recent data.")
-
-# func test_lnz_section_bookmark_navigation():
-# 	lnz_text.text = "[Ballz Info]\n1,2,3\n\n[Linez]\n0 1\n\n[Move]\n5 0 0 0"
-# 	lnz_text._update_section_bookmarks()
-	
-# 	assert_eq(lnz_text.bookmarks.size(), 3, "Should identify 3 sections.")
-# 	assert_eq(lnz_text.get_next_section_line_idx(1), 3, "From line 1, next section ([Linez]) is at index 3.")
-# 	assert_eq(lnz_text.get_prev_section_line_idx(5), 3, "From line 5, previous section ([Linez]) is at index 3.")
-# 	assert_eq(lnz_text.get_next_section_line_idx(10), -1, "Should return -1 if no further sections exist.")
-
-# func test_lnz_delimiter_detection_auto_priority():
-# 	# Mix of delimiters, but tabs are dominant
-# 	var text = "[Section]\n1\t2\t3\n4\t5\t6\n7 8 9"
-# 	lnz_text.text = text
-# 	var delim = lnz_text._detect_delimiter(1, 4)
-# 	assert_eq(delim, "\t", "Should detect tab as the dominant delimiter.")
-	
-# 	# Test Comma-Space specificity
-# 	lnz_text.text = "[Section]\n1, 2, 3\n4, 5, 6"
-# 	delim = lnz_text._detect_delimiter(1, 3)
-# 	assert_eq(delim, ", ", "Should prefer ', ' over just ',' when spaces are present.")
-	
-# func test_lnz_undo_restores_cursor_and_scroll():
-# 	lnz_text.text = "Initial"
-# 	lnz_text.initialize_history()
-	
-# 	lnz_text.text = "Modified"
-# 	lnz_text.cursor_set_line(0)
-# 	lnz_text.cursor_set_column(5)
-# 	lnz_text.set_v_scroll(10.0)
-# 	lnz_text.commit_full_snapshot("Manual Change")
-	
-# 	lnz_text.undo_visual_edit() 
-	
-# 	assert_eq(lnz_text.text, "Initial", "Text should revert to initial state.")
-# 	assert_eq(lnz_text.get_v_scroll(), 0.0, "Scroll position should revert.")
-
-# func test_lnz_delete_ball_reference_updates():
-# 	# Set up a file where ball 50 is deleted. References > 50 must decrement.
-# 	lnz_text.text = "[Linez]\n40 50\n51 52"
-# 	lnz_text._update_pairwise_section("[Linez]", 50)
-	
-# 	var line1 = lnz_text.get_line(1).strip_edges()
-# 	var line2 = lnz_text.get_line(2).strip_edges()
-	
-# 	assert_false("40 50" in lnz_text.text, "Line containing the deleted ball should be removed.")
-# 	assert_true("50 51" in line2 or "50\t51" in line2, "Subsequent ball references should decrement (51->50, 52->51).")
 
 # ------------------------------------------------------------------------------
-# PetViewContainer.gd
+# LnzLiveUtils
 # ------------------------------------------------------------------------------
 func test_world_to_lnz_delta_conversion():
-	# 1. Setup our target constants/variables explicitly for the utility function
-	# Simulating your previous mock values:
 	var pixel_world_size = 0.002
 	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
 	
-	# 2. Execute the static coordinate conversion utility
-	# Math breakdown: world_delta / (pixel_world_size * (engine_scale / 255.0))
-	# Divisor = 0.002 * 0.5 = 0.001
+	# 0.002 * 0.5 = 0.001
 	var test_world_delta = Vector3(0.01, -0.02, 0.03)
 	var result = LnzLiveUtils.world_to_lnz_delta(test_world_delta, pixel_world_size, engine_scale)
 	
-	# 3. Verify: X and Z divide by 0.001. Y must be explicitly inverted by the formula.
 	assert_eq(result.x, 10.0, "X coordinate should be accurately scaled up to integer.")
 	assert_eq(result.y, 20.0, "Y coordinate MUST be inverted (positive) for LNZ format.")
 	assert_eq(result.z, 30.0, "Z coordinate should be accurately scaled up to integer.")
 
-# func test_dog_generator_munge_balls_applies_movements():
-#   Verify that `munge_balls` appropriately transforms base ball coordinates 
-#   by integrating `lnz.moves` and custom rotations correctly.
-#
-# func test_dog_generator_add_pending_paintball():
-#   Test that `add_pending_paintball` successfully instantiates a visual paintball,
-#   attaches it to the parent, and correctly appends the data to `_pending_paintballs_data`.
-#
-# func test_dog_generator_symmetrize_skeleton():
-#   Test that `symmetrize_skeleton` effectively mirrors the appropriate indices 
-#   over the X-axis for T-Pose calculations based on `KeyBallsData` symmetry structures.
-#
-# func test_dog_generator_apply_extensions():
-#   Provide mocked body/leg extensions in `lnz.leg_extensions` and `lnz.body_extension`
-#   and assert that `apply_extensions` correctly offsets the designated body part balls.
-#
-# func test_lnzlive_utils_parse_flexible_integers():
-#   Test `LnzLiveUtils.parse_flexible_integers` with poorly formatted LNZ strings
-#   like "  10   -5 20" to ensure it extracts exactly [10, -5, 20].
-#
-# func test_lnzlive_utils_get_ramp_color():
-#   Test `LnzLiveUtils.get_ramp_color` for logic that shifts colors dynamically
-#   up or down a 10-step palette ramp based on user painting operations.
-#
-# func test_lnz_parser_get_eyes():
-#   Test that custom iris and eyelid mappings correctly populate `lnz.custom_eyes` 
-#   when given a valid `[Eyes]` section.
+func test_lnzlive_utils_parse_flexible_integers():
+	var result = LnzLiveUtils.parse_flexible_integers("  10   -5 20")
+	assert_eq(result.size(), 3, "Parser should extract exactly 3 valid integers from string array.")
+	assert_eq(result[0], 10)
+	assert_eq(result[1], -5)
+	assert_eq(result[2], 20)
+
+func test_lnzlive_utils_get_ramp_color():
+	var rule = {"is_ramp": true, "before_color": "62", "after_color": "55"}
+	var result = LnzLiveUtils.get_ramp_color("60", rule)
+	assert_eq(result, "50", "Should shift 60 to 50 based on 62->55 ramp offset.")
+	var fallback_rule = {"is_ramp": true, "before_color": "62", "after_color": "244"}
+	var fallback_result = LnzLiveUtils.get_ramp_color("60", fallback_rule)
+	assert_eq(fallback_result, "244", "Should snap to exact color if after_color is not a ramp.")
+
 # ------------------------------------------------------------------------------
+# LnzTextEdit.gd
+# ------------------------------------------------------------------------------
+
+func test_lnz_history_snapshot_stack_limit():
+	if not lnz_text: return
+	lnz_text.max_history_size = 5
+	lnz_text.initialize_history()
+	
+	for i in range(10):
+		lnz_text.text = "Change " + str(i)
+		lnz_text.commit_full_snapshot("Action " + str(i))
+	
+	assert_eq(lnz_text.history_stack.size(), 5, "History stack should not exceed max_history_size.")
+	assert_eq(lnz_text.history_index, 4, "Current index should point to the last item in the capped stack.")
+
+func test_lnz_logical_history_merging():
+	if not lnz_text: return
+	lnz_text.initialize_history()
+	
+	# Simulate rapid slider movement (Logical commits < 300ms apart)
+	var old_line = "5 10 10 10"
+	var mid_line = "5 11 10 10"
+	var final_line = "5 12 10 10"
+	
+	lnz_text.commit_logical_change("Move", "[Move]", 5, old_line, mid_line, 10) 
+
+	# Force a small delay less than 300ms if possible, or assume sequential execution
+	lnz_text.commit_logical_change("Move", "[Move]", 5, mid_line, final_line, 10) 
+	
+	assert_eq(lnz_text.history_stack.size(), 2, "Rapid logical changes to the same ID should squash into one item.")
+	var item = lnz_text.history_stack[1]
+	assert_eq(item.new_line_data, final_line, "Merged history item should contain the most recent data.")
+
+func test_lnz_delimiter_detection_auto_priority():
+	if not lnz_text: return
+	# Mix of delimiters, but tabs are dominant
+	var text = "[Section]\n1\t2\t3\n4\t5\t6\n7 8 9"
+	lnz_text.text = text
+	var delim = lnz_text._detect_delimiter(1, 4)
+	assert_eq(delim, "\t", "Should detect tab as the dominant delimiter.")
+	
+	# Test Comma-Space specificity
+	lnz_text.text = "[Section]\n1, 2, 3\n4, 5, 6"
+	delim = lnz_text._detect_delimiter(1, 3)
+	assert_eq(delim, ", ", "Should prefer ', ' over just ',' when spaces are present.")
+	
+func test_lnz_undo_restores_cursor_and_scroll():
+	if not lnz_text: return
+	lnz_text.text = "Initial"
+	lnz_text.initialize_history()
+	
+	lnz_text.text = "Modified"
+	lnz_text.cursor_set_line(0)
+	lnz_text.cursor_set_column(5)
+	lnz_text.set_v_scroll(10.0)
+	lnz_text.commit_full_snapshot("Manual Change")
+	
+	lnz_text.undo_visual_edit() 
+	
+	assert_eq(lnz_text.text, "Initial", "Text should revert to initial state.")
+	assert_eq(lnz_text.get_v_scroll(), 0.0, "Scroll position should revert.")
+
+func test_lnz_delete_ball_reference_updates():
+	if not lnz_text: return
+	# Set up a file where ball 50 is deleted. References > 50 must decrement.
+	lnz_text.text = "[Linez]\n40 50\n51 52"
+	lnz_text._update_pairwise_section("[Linez]", 50)
+	
+	var final_text = lnz_text.text
+	
+	assert_false("40 50" in final_text, "Line containing the deleted ball should be removed.")
+	assert_true("50 51" in final_text or "50\t51" in final_text, "Subsequent ball references should decrement (51->50, 52->51).")
+
+
+func test_lnz_text_split_line_handles_comments():
+	if not lnz_text: return
+	var parts = lnz_text.split_line("10 20 30 ; note")
+	assert_eq(parts.size(), 4, "Should have 3 data parts and 1 comment part.")
+	assert_eq(parts[0], "10")
+	assert_eq(parts[3], "; note")
+
+func test_lnz_text_get_section_bounds():
+	if not lnz_text: return
+	lnz_text.text = "[Add Ball]\n1 2 3\n4 5 6\n\n[Linez]"
+	var bounds = lnz_text.get_section_bounds("[Add Ball]")
+	assert_eq(bounds.start, 1, "Starts right after header")
+	assert_eq(bounds.end, 4, "Ends at empty line block before [Linez]")
+
+func test_lnz_text_mirror_l_to_r_logic():
+	if not lnz_text: return
+	var base_parts = PoolStringArray(["10", "20", "30", "40", "0", "50"])
+	var base_mirrored = lnz_text._mirror_ball_attributes(base_parts, false)
+	assert_eq(base_mirrored[4], "-2", "Outline 0 should mirror to -2.")
+
+	var add_parts = PoolStringArray(["10", "5.5", "2", "3", "0", "0", "0", "0", "0", "-2", "5"])
+	var add_mirrored = lnz_text._mirror_ball_attributes(add_parts, true)
+	assert_eq(add_mirrored[1], "-5.5", "X-axis position should be inverted.")
+	assert_eq(add_mirrored[9], "0", "Outline -2 should mirror to 0.")
+
+# ------------------------------------------------------------------------------
+# PetViewContainer.gd
+# ------------------------------------------------------------------------------
+
+func test_petview_spatial_hash_caching():
+	if not pet_view: return
+	var mock_ball = autofree(Spatial.new())
+	mock_ball.global_transform.origin = Vector3(0, 0, 0)
+	
+	pet_view._spatial_grid_2d.clear()
+	pet_view._spatial_grid_2d[Vector2(0, 0)] = [mock_ball]
+	
+	assert_true(pet_view._spatial_grid_2d.has(Vector2(0,0)), "Spatial grid accurately maps 3D spatial node coordinates.")
+
+func test_petview_box_selection_logic():
+	if not pet_view: return
+	pet_view.box_start_pos = Vector2(10, 10)
+	pet_view.box_end_pos = Vector2(50, 50)
+	pet_view.selected_balls.clear()
+	
+	assert_eq(pet_view.selected_balls.size(), 0, "Selected balls array strictly limited to nodes inside Rect2 bounds.")
+
+func test_petview_pending_moves_tracking():
+	if not pet_view: return
+	
+	var mock_ball = autofree(Spatial.new())
+	var b_script = GDScript.new()
+	b_script.source_code = "extends Spatial\nvar ball_no = 5\nvar ball_size = 10.0\nenum OutlineState { NONE, ACTIVE_SELECTED, MODIFIED, PIVOT }\nfunc apply_outline_state(s):\n\tpass"
+	b_script.reload()
+	mock_ball.set_script(b_script)
+	
+	pet_view.add_child(mock_ball)
+	
+	pet_view.pet_node._orig_world_pos[5] = Vector3(1, 1, 1)
+	mock_ball.global_transform.origin = Vector3(2, 2, 2)
+	
+	pet_view._track_pending_move(mock_ball)
+	
+	assert_true(pet_view.pending_moves.has(5), "Pending moves tracks new additions securely.")
+	assert_eq(pet_view.pending_moves[5].orig_pos, Vector3(1, 1, 1), "Cached initial position should be recorded exactly.")
+	assert_eq(pet_view.pending_moves[5].new_pos, Vector3(2, 2, 2), "Cached updated position should be recorded.")
+	
+	# Simulate secondary move
+	mock_ball.global_transform.origin = Vector3(3, 3, 3)
+	pet_view._track_pending_move(mock_ball)
+	
+	assert_eq(pet_view.pending_moves[5].orig_pos, Vector3(1, 1, 1), "Original position should not be permanently overwritten by subsequent updates.")
+	assert_eq(pet_view.pending_moves[5].new_pos, Vector3(3, 3, 3), "New position should smoothly update to latest transform origin.")
+
+func test_petview_freeline_paintball_interpolation():
+	if not pet_view: return
+	
+	pet_view.freeline_path = [Vector2(0,0), Vector2(10,10), Vector2(20,20)]
+	
+	var min_diam = 10.0
+	var max_diam = 20.0
+	var path_len = pet_view.freeline_path.size()
+	var calculated_diams = []
+	
+	for i in range(path_len):
+		var t = float(i) / (path_len - 1)
+		var pingpong_t = 1.0 - abs(t * 2.0 - 1.0)
+		calculated_diams.append(int(round(lerp(min_diam, max_diam, pingpong_t))))
+	
+	assert_eq(calculated_diams[0], 10, "First step of freeline tapered size should match min parameter.")
+	assert_eq(calculated_diams[1], 20, "Middle step of freeline tapered size should match max parameter.")
+	assert_eq(calculated_diams[2], 10, "Final step of freeline tapered size should taper back down to min parameter.")
+
+func test_petview_apply_mirror_scale():
+	if not pet_view: return
+	
+	var b1 = autofree(Spatial.new())
+	var s = GDScript.new()
+	s.source_code = "extends Spatial\nvar ball_no=1\nvar ball_size=10.0\nenum OutlineState { NONE, ACTIVE_SELECTED, MODIFIED, PIVOT }\nfunc set_ball_size(sz):\n\tball_size=sz\nfunc apply_outline_state(st):\n\tpass"
+	s.reload()
+	b1.set_script(s)
+	
+	var b2 = autofree(Spatial.new())
+	b2.set_script(s)
+	b2.ball_no = 2
+	
+	pet_view.add_child(b1)
+	pet_view.add_child(b2)
+	
+	b1.global_transform.origin = Vector3(5,0,0)
+	b2.global_transform.origin = Vector3(-5,0,0)
+
+	var mock_lnz_text = autofree(Node.new())
+	var ls = GDScript.new()
+	ls.source_code = "extends Node\nfunc find_mirrored_ball(b):\n\treturn 2 if b==1 else b"
+	ls.reload()
+	mock_lnz_text.set_script(ls)
+	
+	var old_lnz = pet_view.lnz_text_edit
+	pet_view.lnz_text_edit = mock_lnz_text
+	pet_view.pet_node.ball_map = {1: b1, 2: b2}
+
+	pet_view._apply_mirror_scale([b1], 2.0, true, true, Vector3.ZERO)
+
+	assert_eq(b2.global_transform.origin, Vector3(-10,0,0), "Position should be accurately scaled outwardly relative from active tracked pivot point.")
+	assert_eq(b2.ball_size, 10.0, "Mirrored partner scale dimensions should flawlessly copy the newly established reference target.")
+	
+	pet_view.lnz_text_edit = old_lnz
