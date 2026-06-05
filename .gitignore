@@ -20,3 +20,6 @@ export/index.html
 export/index.js
 export/index.pck
 *.html
+
+# Don't save user ChromaDB LLM-RAG sessions
+docs/chromadb-sessions/
