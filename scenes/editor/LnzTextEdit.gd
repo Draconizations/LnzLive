@@ -1,6 +1,6 @@
 extends TextEdit
 
-# LnzTextEdit.gd – syncs the LNZ text file with the 3D pet editor
+# LnzTextEdit.gd
 # - Loads and saves .lnz files
 # - Creates automatic backups before overwriting
 # - Preserves scroll and cursor positions across edits
@@ -2134,7 +2134,7 @@ func _apply_preset_to_ball(ball_no, properties, do_save = true):
 		if do_save:
 			save_file()
 
-func _write_preset_to_ball(ball_no, properties, _write_target, should_override):
+func write_preset_to_ball(ball_no, properties, _write_target, should_override):
 	var applied_something = false
 	if properties.get("apply_ballz", true):
 		_apply_preset_to_ball(ball_no, properties, false)
