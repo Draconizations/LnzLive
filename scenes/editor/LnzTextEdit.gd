@@ -3348,6 +3348,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
+	
 	if species == KeyBallsData.Species.CAT:
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
@@ -3371,6 +3372,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		if i in balls_to_exclude:
 			i += 1
 			continue
+			
 		var line = get_line(start_of_section + i).lstrip(" ")
 		if line.begins_with(";"):
 			i += 1
@@ -3382,21 +3384,19 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		var parsed_line = []
 		for delim in delimiters:
 			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
+				parsed_line = Array(line.split(delim, false))
 				break
 
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item
-			if n == 0 and !color_index.empty():
-				final_line += str(color_index) + " "
-			elif n == 1 and !outline_color_index.empty():
-				final_line += str(outline_color_index) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(start_of_section + i, final_line)
+		if parsed_line.size() > 1:
+			if not color_index.empty():
+				parsed_line[0] = str(color_index)
+			if not outline_color_index.empty():
+				parsed_line[1] = str(outline_color_index)
+			
+			# Rebuild string exactly once
+			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			set_line(start_of_section + i, final_line)
+			
 		i += 1
 	
 	section_find = search('[Add Ball]', 0, 0, 0)
@@ -3406,6 +3406,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
 			i += 1
 			continue
+			
 		var line = get_line(start_of_section + i).lstrip(" ")
 		if line.begins_with(";"):
 			i += 1
@@ -3417,25 +3418,25 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 		var parsed_line = []
 		for delim in delimiters:
 			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
+				parsed_line = Array(line.split(delim, false))
 				break
 
 		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 			i += 1
 			continue
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item
-			if n == 4 and !color_index.empty():
-				final_line += str(color_index) + " "
-			elif n == 5 and !outline_color_index.empty():
-				final_line += str(outline_color_index) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(start_of_section + i, final_line)
+			
+		if parsed_line.size() > 5:
+			if not color_index.empty():
+				parsed_line[4] = str(color_index)
+			if not outline_color_index.empty():
+				parsed_line[5] = str(outline_color_index)
+				
+			# Rebuild string exactly once
+			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			set_line(start_of_section + i, final_line)
+			
 		i += 1
+		
 	save_file(true)
 	commit_full_snapshot("Applied Colors")
 
@@ -3443,6 +3444,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 	save_backup()
 	var species = KeyBallsData.species
 	var balls_to_exclude = []
+	
 	if species == KeyBallsData.Species.CAT:
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.keys())
 		balls_to_exclude.append_array(KeyBallsData.eyes_cat.values())
@@ -3470,12 +3472,14 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		if i in balls_to_exclude:
 			i += 1
 			continue
+			
 		var line = get_line(start_of_section + i).lstrip(" ")
 		if line.begins_with(";"):
 			i += 1
 			continue
 		elif line.begins_with("["):
 			break
+			
 		if !(i in core_ball_nos):
 			i += 1
 			continue
@@ -3484,21 +3488,19 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		var parsed_line = []
 		for delim in delimiters:
 			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
+				parsed_line = Array(line.split(delim, false))
 				break
 
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item
-			if n == 0 and !color_index.empty():
-				final_line += str(color_index) + " "
-			elif n == 1 and !outline_color_index.empty():
-				final_line += str(outline_color_index) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(start_of_section + i, final_line)
+		if parsed_line.size() > 1:
+			if not color_index.empty():
+				parsed_line[0] = str(color_index)
+			if not outline_color_index.empty():
+				parsed_line[1] = str(outline_color_index)
+				
+			# Rebuild string exactly once
+			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			set_line(start_of_section + i, final_line)
+			
 		i += 1
 	
 	section_find = search('[Add Ball]', 0, 0, 0)
@@ -3508,6 +3510,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		if i + KeyBallsData.max_base_ball_num in balls_to_exclude:
 			i += 1
 			continue
+			
 		var line = get_line(start_of_section + i).lstrip(" ")
 		if line.begins_with(";"):
 			i += 1
@@ -3519,28 +3522,28 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 		var parsed_line = []
 		for delim in delimiters:
 			if line.split(delim).size() > 2:
-				parsed_line = line.split(delim, false)
+				parsed_line = Array(line.split(delim, false))
 				break
 
 		if parsed_line.size() == 0 or int(parsed_line[0]) in balls_to_exclude:
 			i += 1
 			continue
+			
 		if !(int(parsed_line[0]) in core_ball_nos):
-			i+=1
+			i += 1
 			continue
-		var n = 0
-		var final_line = ""
-		for r_item in parsed_line:
-			var item = r_item
-			if n == 4 and !color_index.empty():
-				final_line += str(color_index) + " "
-			elif n == 5 and !outline_color_index.empty():
-				final_line += str(outline_color_index) + " "
-			else:
-				final_line += item + " "
-			n += 1
-		set_line(start_of_section + i, final_line)
+			
+		if parsed_line.size() > 5:
+			if not color_index.empty():
+				parsed_line[4] = str(color_index)
+			if not outline_color_index.empty():
+				parsed_line[5] = str(outline_color_index)
+				
+			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			set_line(start_of_section + i, final_line)
+			
 		i += 1
+		
 	save_file(true)
 	commit_full_snapshot("Applied Colors")
 
