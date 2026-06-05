@@ -1,6 +1,6 @@
 extends Control
 
-# PetViewContainer.gd – manages 3D viewport interaction, modes, tools, and states
+# PetViewContainer.gd
 # - Translates 2D mouse input into 3D world interactions (raycasting/selection)
 # - Manages Modes (Move, Paint, Line, etc.)
 # - Handles coordinate conversion between spatial world and LNZ units
