@@ -275,9 +275,11 @@ All the static assets, examples, and original game data required to render the m
 
 ## Local Retrieval-Augmented Code Assistant
 
-We include scripts to run a (totally local! no data centers involved, but does require a capable PC with decent GPU specs) retrieval-augmented generation (RAG) code assistant using large-language models (LLMs). Before querying the LLM, a script "retrieves" the most relevant code snippets from the codebase and "augments" the prompt. The LLM then generates an answer using the codebase as its reference material. To make this work, we periodically scan the repository's Godot and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) and pass this text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search.
+Totally local code assistance! Requires a capable PC with decent GPU specs to run, though. In `docs/`, we include scripts to run a local retrieval-augmented generation (RAG) code assistance queries using any locally installed large-language models (LLMs) served from your machine. 
 
-If you use LM Studio to run a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as embedding model (default: `text-embedding-qwen3-embedding-0.6b`), ensure you have LM Studio running with both the embedding and chat models loaded. You can then query the repository directly from your terminal using the provided script:
+Before querying the LLM, a script "retrieves" the most relevant code snippets from the codebase and "augments" the prompt. The LLM then generates an answer using the codebase as its reference material. To make this work, we periodically scan the repository's Godot and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) and pass this text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search.
+
+If you use LM Studio to serve a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as embedding model (default: `text-embedding-qwen3-embedding-0.6b`), then start the server and ensure you have LM Studio running with both the embedding and chat models loaded. You can then query the repository directly from your terminal using the provided script:
 
 ```
 # Ask a question about the codebase
