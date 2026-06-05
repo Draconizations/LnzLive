@@ -50,7 +50,9 @@ onready var find_panel = get_node("../FindPanel")
 var is_user_file = false
 var filepath: String
 
-var split_regex = RegEx.new()
+var _split_regex: RegEx = RegEx.new()
+var _search_regex: RegEx = RegEx.new()
+var _last_compiled_pattern: String = ""
 
 var set_column_popup: ConfirmationDialog
 var col_input: LineEdit
@@ -114,7 +116,7 @@ func _safe_connect(target, sig, method):
 func _ready():
 	_setup_context_menu()
 
-	split_regex.compile("[\\s,]+")
+	_split_regex.compile("[\\s,]+")
 
 	wrap_enabled = false
 
@@ -826,13 +828,15 @@ func _find_text(forward):
 	if !find_panel.get_node("VBoxContainer/HBoxContainer/MatchCaseCheckBox").pressed:
 		pattern = "(?i)" + pattern
 
-	var regex = RegEx.new()
-	var error = regex.compile(pattern)
-	if error != OK:
-		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
-		return
+	if pattern != _last_compiled_pattern:
+		var error = _search_regex.compile(pattern)
+		if error != OK:
+			find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Invalid Regex
+			return
+		_last_compiled_pattern = pattern
+		
+	var all_matches = _search_regex.search_all(all_text)
 
-	var all_matches = regex.search_all(all_text)
 	if all_matches.size() == 0:
 		find_line_edit.add_color_override("font_color", Color(1, 0.2, 0.2)) # Not found
 		return
@@ -1241,8 +1245,7 @@ func _get_line_no_from_line_index(target_line_index: int, section_tag: String) -
 		if line.begins_with("["):
 			break
 			
-		if line.begins_with(";") or line.empty():
-			continue
+		if line.begins_with(";") or line.empty(): continue
 		
 		line_counter += 1
 		
@@ -1342,8 +1345,7 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
 
-		if line.empty() or line.begins_with(";"):
-			continue
+		if line.empty() or line.begins_with(";"): continue
 		
 		lines_scanned += 1
 		var data_part = line.split(";", false)[0]
@@ -1385,7 +1387,7 @@ func split_line(line: String) -> PoolStringArray:
 	if data_part.empty() and comment_part.empty():
 		return PoolStringArray()
 		
-	var normalized_line = split_regex.sub(data_part, " ", true)
+	var normalized_line = _split_regex.sub(data_part, " ", true)
 	var parts = normalized_line.split(" ", false)
 	
 	parts.append(comment_part)
@@ -1415,8 +1417,7 @@ func _for_each_line_in_section(tag: String, callback):
 		return
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i)
-		if line.strip_edges() == "" or line.begins_with(";"):
-			continue
+		if line.strip_edges() == "" or line.begins_with(";"): continue
 		callback.call(i, line)
 
 
@@ -1458,8 +1459,7 @@ func _toggle_comment():
 
 	for i in range(start_line, end_line + 1):
 		var line_text = get_line(i)
-		if line_text.strip_edges().empty():
-			continue
+		if line_text.strip_edges().empty(): continue
 			
 		lines_to_process.append(i)
 		if not line_text.lstrip(" \t").begins_with(comment_prefix):
@@ -1487,12 +1487,10 @@ func _set_delimiter():
 		var line_text = get_line(i)
 		var stripped = line_text.strip_edges()
 		
-		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
-			continue
+		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"): continue
 		
 		var parts = split_line(line_text) 
-		if parts.size() == 0:
-			continue
+		if parts.size() == 0: continue
 			
 		var data_parts = Array(parts)
 		var comment_part = ""
@@ -1559,12 +1557,10 @@ func _on_set_column_confirmed():
 		var line_text = get_line(i)
 		var stripped = line_text.strip_edges()
 		
-		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"):
-			continue
+		if stripped.empty() or stripped.begins_with("[") or stripped.begins_with(";"): continue
 			
 		var parts = split_line(line_text)
-		if parts.size() <= 1:
-			continue
+		if parts.size() <= 1: continue
 			
 		var data_parts = Array(parts) # Cast PoolStringArray to standard Array
 		var comment_part = data_parts.pop_back() # Peels off the last element
@@ -1694,12 +1690,10 @@ func check_linez_limits(b1: int, b2: int) -> bool:
 	
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"):
-			continue
+		if line.empty() or line.begins_with(";"): continue
 		
 		var parts = split_line(line)
-		if parts.size() < 2:
-			continue
+		if parts.size() < 2: continue
 		
 		total_valid += 1
 		var lb1 = int(parts[0])
@@ -1724,8 +1718,7 @@ func _get_omitted_balls() -> Array:
 	
 	for i in range(start_of_section, end_of_section):
 		var line = get_line(i).lstrip(" ")
-		if line.empty() or line.begins_with(";"):
-			continue
+		if line.empty() or line.begins_with(";"): continue
 		
 		var ball_no_str = line.split(";", false)[0].strip_edges().split(" ", false)[0]
 		if ball_no_str.is_valid_integer():
@@ -1794,8 +1787,7 @@ func get_project_ball_section() -> Array:
 
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";"):
-			continue
+		if line.empty() or line.begins_with(";"): continue
 
 		var comment = ""
 		if line.find(";") != -1:
@@ -1803,8 +1795,7 @@ func get_project_ball_section() -> Array:
 			line = line.substr(0, line.find(";")).strip_edges()
 
 		var parts = split_line(line)
-		if parts.empty():
-			continue
+		if parts.empty(): continue
 
 		if parts.size() >= 3:
 			if parts.size() == 3:
@@ -1865,12 +1856,10 @@ func _update_pairwise_section(header: String, ball_no: int):
 	# Iterate backwards so that cutting a line doesn't skip the next one
 	for i in range(bounds.end - 1, bounds.start - 1, -1):
 		var line = get_line(i).strip_edges()
-		if line == "" or line.begins_with("[") or line.begins_with(";"):
-			continue
+		if line == "" or line.begins_with("[") or line.begins_with(";"): continue
 			
 		var parts = split_line(line)
-		if parts.size() < 2:
-			continue
+		if parts.size() < 2: continue
 			
 		var b1 = int(parts[0])
 		var b2 = int(parts[1])
@@ -2024,8 +2013,7 @@ func _write_project_ball_section(projections: Array):
 		for i in range(existing_lines.size()):
 			var line = existing_lines[i]
 			var line_strip = line.strip_edges()
-			if line_strip.empty() or line_strip.begins_with(";"):
-				continue
+			if line_strip.empty() or line_strip.begins_with(";"): continue
 
 			var line_parts = line_strip.split(";")
 			var data_part = line_parts[0].strip_edges()
@@ -2798,12 +2786,10 @@ func create_line(start_ball, end_ball):
 	var line_updated = false
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line == "" or line.begins_with(";"):
-			continue
+		if line.empty() or line == "" or line.begins_with(";"): continue
 
 		var parts = split_line(line)
-		if parts.size() < 2:
-			continue
+		if parts.size() < 2: continue
 
 		var b1 = int(parts[0])
 		var b2 = int(parts[1])
@@ -2929,8 +2915,7 @@ func resize_ball(ball_no: int, size_dif: int):
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
+			if raw == "" or raw.begins_with(";"): continue
 			if count == addball_index:
 				var old_line = get_line(i) 
 				var parts = split_line(raw)
@@ -2955,8 +2940,7 @@ func resize_ball(ball_no: int, size_dif: int):
 		var count = 0
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
+			if raw == "" or raw.begins_with(";"): continue
 			if count == ball_no:
 				var old_line = get_line(i)
 				var parts = split_line(raw)
@@ -3018,8 +3002,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 				var count = 0
 				for i in range(start_line, end_line):
 					var raw = get_line(i).strip_edges()
-					if raw == "" or raw.begins_with(";"):
-						continue
+					if raw == "" or raw.begins_with(";"): continue
 					if count == idx:
 						var old_line = get_line(i)
 						var parts = split_line(raw)
@@ -3045,8 +3028,7 @@ func move_ball(ball_no: int, new_pos: Vector3):
 		
 		for i in range(start_line, end_line):
 			var raw = get_line(i).strip_edges()
-			if raw == "" or raw.begins_with(";"):
-				continue
+			if raw == "" or raw.begins_with(";"): continue
 			var parts = split_line(raw)
 			
 			if parts.size() >= 4 and parts[0].to_int() == ball_no:
@@ -3347,8 +3329,7 @@ func _on_ToolsMenu_clear_ball_paintballz(ball_no: int):
 		var line = get_line(i)
 		var stripped = line.strip_edges()
 		
-		if stripped.empty() or stripped.begins_with(";"): 
-			continue
+		if stripped.empty() or stripped.begins_with(";"): continue
 
 		var parts = split_line(stripped) 
 		if parts.size() > 0 and parts[0].is_valid_integer() and int(parts[0]) == ball_no:
@@ -3624,8 +3605,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 				for rule in recolor_rules:
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.balls_on or not texture_match:
-						continue
+					if not all_recolor_info.balls_on or not texture_match: continue
 
 					var new_color = null
 					if rule.is_ramp:
@@ -3643,8 +3623,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 				for rule in recolor_rules:
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.ball_outlines_on or not texture_match:
-						continue
+					if not all_recolor_info.ball_outlines_on or not texture_match: continue
 
 					var new_outline_color = null
 					if rule.is_ramp:
@@ -3715,8 +3694,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 				for rule in recolor_rules:
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not all_recolor_info.ball_outlines_on or not texture_match:
-						continue
+					if not all_recolor_info.ball_outlines_on or not texture_match: continue
 
 					var new_outline_color = null
 					if rule.is_ramp:
@@ -3783,8 +3761,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 
 				for rule in recolor_rules:
 					var texture_match = rule.before_texture.empty() or rule.before_texture == texture
-					if not texture_match:
-						continue
+					if not texture_match: continue
 						
 					var new_outline_color = null
 					if rule.is_ramp:
@@ -3902,12 +3879,12 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = split_line(line)
 				
-				# FIX: Polygons must have at least 5 columns (4 balls + 1 color)
+				# Polygons must have at least 5 columns (4 balls + 1 color)
 				if parsed_line.size() < 5:
 					i += 1
 					continue
 				
-				# FIX: Correct indices for LNZ format: ball1, ball2, ball3, ball4, color...
+				# ball1, ball2, ball3, ball4, color
 				var mainColor = parsed_line[4]
 				
 				# Optional fields: safely get them or set to null if missing
@@ -4068,8 +4045,7 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 		var delim = _detect_delimiter(ballz_bounds.start, ballz_bounds.end)
 		for i in range(ballz_bounds.start, ballz_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"):
-				continue
+			if line.empty() or line.begins_with(";"): continue
 			
 			var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
 			if ball_no != -1 and not (ball_no in balls_to_exclude):
@@ -4085,8 +4061,7 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 
 		for i in range(addball_bounds.start, addball_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"):
-				continue
+			if line.empty() or line.begins_with(";"): continue
 			
 			var addball_id = KeyBallsData.max_base_ball_num + current_addball_idx
 			
@@ -4102,8 +4077,7 @@ func _on_ToolsMenu_apply_global_fuzz(fuzz):
 		var delim = _detect_delimiter(linez_bounds.start, linez_bounds.end)
 		for i in range(linez_bounds.start, linez_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";"):
-				continue
+			if line.empty() or line.begins_with(";"): continue
 			
 			var parts = split_line(line)
 			if parts.size() > 2:
@@ -4179,8 +4153,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
-		if line.begins_with("[") or line.begins_with(";") or line.empty():
-			continue
+		if line.begins_with("[") or line.begins_with(";") or line.empty(): continue
 			
 		var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
 		if ball_no == -1: continue
@@ -4236,8 +4209,7 @@ func _mirror_l_to_r_full(reverse: bool = false):
 	
 	for line in addball_lines_content:
 		var strip_line = line.strip_edges()
-		if strip_line.begins_with("[") or strip_line.begins_with(";") or strip_line.empty():
-			continue
+		if strip_line.begins_with("[") or strip_line.begins_with(";") or strip_line.empty(): continue
 
 		var is_source = false
 		var parts = split_line(strip_line)
@@ -4598,8 +4570,7 @@ func _mirror_l_to_r_ball(target_ball_no: int):
 		var data_idx = 0
 		for i in range(addball_lines.size()):
 			var line = addball_lines[i].strip_edges()
-			if line.empty() or line.begins_with(";"):
-				continue
+			if line.empty() or line.begins_with(";"): continue
 
 			var current_addball_no = KeyBallsData.max_base_ball_num + data_idx
 			var parts = split_line(line)
@@ -4677,8 +4648,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 
 	for i in range(ballz_bounds.start, ballz_bounds.end):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";") or line.begins_with("["):
-			continue
+		if line.empty() or line.begins_with(";") or line.begins_with("["): continue
 
 		var ball_no = _get_line_no_from_line_index(i, "[Ballz Info]")
 		if ball_no == -1: continue
@@ -4710,8 +4680,7 @@ func _build_ball_map_for_mirror(left_balls_list: Array, middle_balls_list: Array
 
 		for i in range(addball_bounds.start, addball_bounds.end):
 			var line = get_line(i).strip_edges()
-			if line.empty() or line.begins_with(";") or line.begins_with("["):
-				continue
+			if line.empty() or line.begins_with(";") or line.begins_with("["): continue
 
 			var parts = split_line(line)
 			var base_ball = parts[0].to_int()
@@ -4787,12 +4756,10 @@ func _process_section_for_mirror(section_name: String, line_processor, left_ball
 
 	for i in range(bounds.start, bounds.end):
 		var line = get_line(i).strip_edges()
-		if line.empty() or line.begins_with(";") or line.begins_with("["):
-			continue
+		if line.empty() or line.begins_with(";") or line.begins_with("["): continue
 
 		var parts = split_line(line)
-		if parts.empty():
-			continue
+		if parts.empty(): continue
 
 		var processed_lines = line_processor.call_func(parts, left_balls_list, middle_balls_list, ball_map, delim)
 		results.append_array(processed_lines)
