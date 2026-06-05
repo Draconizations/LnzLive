@@ -376,7 +376,7 @@ func _on_ToolsMenu_print_ball_colors():
 	for b in ball_map:
 		var ball = ball_map[b]
 		var d
-		if b < 67:
+		if b < KeyBallsData.max_base_ball_num:
 			d = lnz.balls[b]
 		else:
 			d = lnz.addballs[b]
