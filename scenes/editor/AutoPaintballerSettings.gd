@@ -257,13 +257,21 @@ func _on_RandomizeButton_pressed():
 
 	for b_idx in range(affected_ballz.size()):
 		var current_ball = affected_ballz[b_idx]
-
 		seed(base_seed + (b_idx * 13)) 
-
 		var num_spots = int(properties.num_spots)
-		var spots_per_ball = num_spots / affected_ballz.size()
-		if b_idx < (num_spots % affected_ballz.size()):
-			spots_per_ball += 1
+		var spots_per_ball = 0
+		if properties.get("size_adaptive", false) and pet_node and pet_node.lnz and pet_node.lnz.balls:
+			var total_w = 0.0
+			for id in affected_ballz:
+				if pet_node.lnz.balls.has(id): total_w += pet_node.lnz.balls[id].size
+			var current_w = 1.0
+			if pet_node.lnz.balls.has(affected_ballz[b_idx]): current_w = pet_node.lnz.balls[affected_ballz[b_idx]].size
+			if total_w > 0: spots_per_ball = int(round((current_w / total_w) * num_spots))
+			else: spots_per_ball = num_spots / affected_ballz.size()
+		else:
+			spots_per_ball = num_spots / affected_ballz.size()
+			if b_idx < (num_spots % affected_ballz.size()):
+				spots_per_ball += 1
 
 		match distribution_mode:
 			Distribution.FRACTAL:
@@ -995,6 +1003,7 @@ func get_properties():
 	properties["diffusion_b"] = find_node("DiffusionActivator").value
 	properties["diffusion_a"] = find_node("DiffusionInhibitor").value
 	properties["stripe_timestep"] = find_node("StripeTimestep").value
+	properties["size_adaptive"] = find_node("SizeAdaptive").pressed
 	properties["leopard_radius_min"] = find_node("LeopardRadiusMin").value
 	properties["leopard_radius_max"] = find_node("LeopardRadiusMax").value
 	properties["leopard_irregularity"] = find_node("LeopardIrregularity").value
@@ -1061,9 +1070,11 @@ func _apply_settings_dict(data: Dictionary):
 	
 	if data.has("stripe_feed_rate"): find_node("StripeFeedRate").value = data["stripe_feed_rate"]
 	if data.has("stripe_kill_rate"): find_node("StripeKillRate").value = data["stripe_kill_rate"]
+	if data.has("stripe_timestep"): find_node("StripeTimestep").value = data["stripe_timestep"]
 	if data.has("diffusion_b"): find_node("DiffusionActivator").value = data["diffusion_b"]
 	if data.has("diffusion_a"): find_node("DiffusionInhibitor").value = data["diffusion_a"]
-	if data.has("stripe_timestep"): find_node("StripeTimestep").value = data["stripe_timestep"]
+	if data.has("size_adaptive"): find_node("SizeAdaptive").pressed = data["size_adaptive"]
+
 	
 	if data.has("leopard_radius_min"): find_node("LeopardRadiusMin").value = data["leopard_radius_min"]
 	if data.has("leopard_radius_max"): find_node("LeopardRadiusMax").value = data["leopard_radius_max"]
