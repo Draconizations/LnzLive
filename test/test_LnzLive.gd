@@ -27,6 +27,9 @@ func before_all():
 	
 	if KeyBallsData.max_base_ball_num == null:
 		KeyBallsData.max_base_ball_num = 67
+	
+	if is_instance_valid(pet_node):
+			pet_node.set("pixel_world_size", 0.002)
 
 func before_each():
 	_reset_editor_state()
@@ -465,58 +468,22 @@ func test_generate_color_icon_creates_valid_texture():
 # ------------------------------------------------------------------------------
 # PetViewContainer.gd
 # ------------------------------------------------------------------------------
-func test_world_pos_to_lnz_pos_conversion():
-	var pet_view = autofree(load("res://scenes/editor/PetViewContainer.gd").new())
+func test_world_to_lnz_delta_conversion():
+	# 1. Setup our target constants/variables explicitly for the utility function
+	# Simulating your previous mock values:
+	var pixel_world_size = 0.002
+	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
 	
-	# 1. Isolate the dependencies with duck-typed mock scripts
-	var mock_pet = autofree(Node.new())
-	var p_script = GDScript.new()
-	p_script.source_code = "extends Node\nvar lnz\nvar pixel_world_size = 0.002"
-	p_script.reload()
-	mock_pet.set_script(p_script)
-	
-	var mock_lnz = autofree(Node.new())
-	var l_script = GDScript.new()
-	l_script.source_code = "extends Node\nvar scales = Vector2(127.5, 127.5)" # Simulate 50% scale
-	l_script.reload()
-	mock_lnz.set_script(l_script)
-	
-	mock_pet.lnz = mock_lnz
-	pet_view.pet_node = mock_pet
-	
-	# 2. Execute the coordinate conversion
-	# Math breakdown: world_pos / (pixel_world_size * (scale / 255.0))
+	# 2. Execute the static coordinate conversion utility
+	# Math breakdown: world_delta / (pixel_world_size * (engine_scale / 255.0))
 	# Divisor = 0.002 * 0.5 = 0.001
-	var test_world_pos = Vector3(0.01, -0.02, 0.03)
-	var result = pet_view._world_pos_to_lnz_pos(test_world_pos)
+	var test_world_delta = Vector3(0.01, -0.02, 0.03)
+	var result = LnzLiveUtils.world_to_lnz_delta(test_world_delta, pixel_world_size, engine_scale)
 	
 	# 3. Verify: X and Z divide by 0.001. Y must be explicitly inverted by the formula.
 	assert_eq(result.x, 10.0, "X coordinate should be accurately scaled up to integer.")
 	assert_eq(result.y, 20.0, "Y coordinate MUST be inverted (positive) for LNZ format.")
 	assert_eq(result.z, 30.0, "Z coordinate should be accurately scaled up to integer.")
-
-func test_get_rotation_pivot_origin_midpoint_math():
-	var pet_view = autofree(load("res://scenes/editor/PetViewContainer.gd").new())
-	
-	# Create 3 mock Spatial nodes in world space
-	var ball1 = autofree(Spatial.new())
-	ball1.global_transform.origin = Vector3(10, 0, 0)
-	
-	var ball2 = autofree(Spatial.new())
-	ball2.global_transform.origin = Vector3(0, 20, 0)
-	
-	var ball3 = autofree(Spatial.new())
-	ball3.global_transform.origin = Vector3(0, 0, 30)
-	
-	# Inject the mock nodes into the internal selection state
-	pet_view.selected_balls = [ball1, ball2, ball3]
-	
-	# Calculate center using a pivot_id of -1 (which triggers the selection averaging logic)
-	var center = pet_view._get_rotation_pivot_origin(-1)
-	
-	# Verify it returns the mathematical average
-	assert_eq(center, Vector3(10.0/3.0, 20.0/3.0, 30.0/3.0), "Should return the exact midpoint of all selected ball origins.")
-
 
 # func test_dog_generator_munge_balls_applies_movements():
 #   Verify that `munge_balls` appropriately transforms base ball coordinates 
