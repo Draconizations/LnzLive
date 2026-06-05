@@ -570,7 +570,7 @@ func _process(_delta):
 		var b_name = lnz_text_edit.get_ball_name(highlighted_ball.ball_no)
 		var total_count = _nearby_balls_cache.size()
 		var current_idx = max(0, _current_tab_index) + 1
-		header = "Hovered: %s #%d (tabbable %d/%d)" % [b_name, highlighted_ball.ball_no, current_idx, total_count]
+		header = "Hovered: %s #%d (cyclable %d/%d)" % [b_name, highlighted_ball.ball_no, current_idx, total_count]
 	elif selecting_on and last_selected_is_valid():
 		highlighted_ball = last_selected
 		var b_name = lnz_text_edit.get_ball_name(highlighted_ball.ball_no)
@@ -581,9 +581,9 @@ func _process(_delta):
 		var intended = get_intended_ball(_get_viewport_pos_from_screen_pos(get_local_mouse_position())) 
 		
 		if is_instance_valid(linez_start_ball): 
-			body = "Line Mode: Left-click target to END line (TAB to cycle ballz)"
+			body = "Line Mode: Left-click target to END line (key N to cycle ballz)"
 		else:
-			body = "Line Mode: Left-click target to START line (TAB to cycle ballz)"
+			body = "Line Mode: Left-click target to START line (key N to cycle ballz)"
 		
 		Input.set_custom_mouse_cursor(rope, 0, Vector2(30, 31))
 
@@ -645,7 +645,7 @@ func _process(_delta):
 				Input.set_custom_mouse_cursor(bigbrush, 0, Vector2(30, 31))
 
 	elif recolor_mode:
-		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes."
+		body = "Recolor Mode: Use Color Swap to replace colors or Paint Bucket to queue changes.\n(key N to cycle nearby ballz)"
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif selecting_on:
@@ -1436,6 +1436,7 @@ func _gui_input(event):
 		and not auto_paintballer_mode
 		and not preset_mode
 		and not linez_mode
+		and not recolor_mode
 	):
 		_reset_tab_state()
 
@@ -1738,6 +1739,7 @@ func _gui_input(event):
 		var target_ball = get_intended_ball(_get_viewport_pos_from_screen_pos(event.position))
 		if target_ball:
 			recolor_settings_instance.queue_bucket_change(target_ball)
+			_reset_tab_state()
 			get_tree().set_input_as_handled()
 			return
 
@@ -1892,8 +1894,8 @@ func _unhandled_key_input(event):
 		if event.scancode in [KEY_X, KEY_Y, KEY_Z, KEY_SHIFT, KEY_CONTROL, KEY_ALT]:
 			mark_ui_dirty()
 
-	if event is InputEventKey and event.pressed and event.scancode == KEY_TAB:
-		if selecting_on:
+	if event is InputEventKey and event.pressed and event.scancode == KEY_N:
+		if selecting_on or recolor_mode:
 			get_tree().set_input_as_handled()
 			_cycle_nearby_ballz()
 			return

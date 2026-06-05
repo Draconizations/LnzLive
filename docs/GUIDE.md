@@ -59,7 +59,7 @@ If you encounter a bug or have a suggestion, please raise an issue in the GitHub
 | **Select Mode** | `X` or `M` | Jumps to the `[Move]` entries involving hovered ball |
 | **Select Mode** | `C` or `P` | Jumps to the `[Project Ball]` entries involving hovered ball |
 | **Select Mode** | `V` or `L` | Jumps to the `[Linez]` entries involving hovered ball |
-| **Select Mode** | `TAB` | Cycle through nearby balls (when overlapping or hard to select) |
+| **Select Mode** | `N` | Cycle through nearby balls (when overlapping or hard to select) |
 | **Select Mode** | `right-click` | Open Tools Menu for hovered ball |
 | **Select Mode** | `CTRL` + `SPACE` or `right-click` | Open Tools Menu for hovered ball |
 | **Shape Mode** | `D` or `ALT` + `P` | **Open/Close Shape Mode** |
