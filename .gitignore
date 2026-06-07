@@ -22,4 +22,7 @@ export/index.pck
 *.html
 
 # Don't save user ChromaDB LLM-RAG sessions
-docs/chromadb-sessions/
+docs/llm-rag-sessions/
+
+# Don't save Godot 3.2 docs .rst files
+docs/godot/

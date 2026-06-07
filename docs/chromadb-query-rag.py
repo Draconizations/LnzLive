@@ -25,8 +25,7 @@ def load_condensed_history(filepath):
     if not summaries:
         return ""
         
-    # Combine the summaries into a single memory block
-    combined = "\n".join(f"- {s}" for s in summaries[-3:]) # Keep the last 3 summaries
+    combined = "\n".join(f"- {s}" for s in summaries[-3:])
     return f"\n\n--- PREVIOUS SESSION MEMORY ---\n{combined}\n-------------------------------\n"
 
 def query_llm(system_prompt, user_prompt, host, model_name):
@@ -34,7 +33,6 @@ def query_llm(system_prompt, user_prompt, host, model_name):
     url = f"{host.rstrip('/')}/chat/completions"
     headers = {"Content-Type": "application/json"}
     
-    # We now strictly send ONLY a System and a User message to keep Jinja templates happy
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt}
@@ -87,7 +85,7 @@ def query_llm(system_prompt, user_prompt, host, model_name):
 
 def condense_interaction(user_query, full_response, host, model_name):
     """Makes a fast, background call to condense the interaction into a summary."""
-    print("Condensing session memory in the background...")
+    print("Condensing session memory...")
     url = f"{host.rstrip('/')}/chat/completions"
     headers = {"Content-Type": "application/json"}
     
@@ -119,7 +117,7 @@ def condense_interaction(user_query, full_response, host, model_name):
         return "Summary failed to generate."
 
 
-def get_collection(db_name, coll_name):
+def get_collection(db_name, coll_name, embedding_func):
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "llm-rag-chromadb", db_name)
     client = chromadb.PersistentClient(path=path)
     return client.get_collection(name=coll_name, embedding_function=embedding_func)
@@ -132,11 +130,34 @@ def truncate_context(text, max_chars=12000):
 
 def get_role_prompt(role):
     roles = {
-        "planner": "You are a project manager. Focus on milestones, timelines, and logical task order.",
-        "interviewer": "You are an interviewer. Your goal is to understand the user's needs. Ask one insightful clarifying question at a time.",
-        "architect": "You are a software architect. Focus on system design, scalability, and code structure.",
-        "coder": "You are a senior developer. Focus on writing clean, efficient, and robust code snippets.",
-        "user": "You are a helpful assistant."
+        "planner": (
+            "You are a meticulous Project Manager specialized in Godot development. "
+            "Your priority is breaking down complex features into actionable milestones. "
+            "Always organize tasks by logical order of operations (dependency management), "
+            "estimate technical effort, and ensure the development roadmap remains coherent."
+        ),
+        "interviewer": (
+            "You are a Technical Consultant. Your job is to elicit high-quality requirements. "
+            "Before suggesting solutions, ask one probing, insightful question at a time to uncover "
+            "edge cases, performance constraints, or user-experience goals. Do not overwhelm the user; "
+            "guide the conversation step-by-step."
+        ),
+        "architect": (
+            "You are a Lead Software Architect. Your focus is on long-term system stability, "
+            "decoupling, and scalability. When analyzing code, look for opportunities to unify "
+            "math logic into global utilities (like LnzLiveUtils). Always prioritize maintainable "
+            "patterns and explain the 'why' behind your structural decisions."
+        ),
+        "coder": (
+            "You are a Senior Godot/GDScript Engineer. Your code must be production-ready: "
+            "DRY (Don't Repeat Yourself), memory-efficient, and well-commented. "
+            "Always assume the user wants high-performance code, and if a logic pattern is "
+            "inefficient, point it out immediately and suggest the optimized GDScript alternative."
+        ),
+        "user": (
+            "You are a Power User who uses LnzLive editor to hex edit models."
+            "You care deeply about quality-of-life improvements, new features that make hexing easier, and UI/UX flow."
+        )
     }
     return roles.get(role, roles["user"])
 
@@ -146,11 +167,15 @@ def main():
     parser.add_argument("--session", type=str, default=None, help="Name or tag for the conversation session")
     parser.add_argument("--host", type=str, default="http://localhost:1234/v1", help="LMStudio local server URL")
     parser.add_argument("--num_results", type=int, nargs='+', default=[2], 
-                        help="Chunks to retrieve per DB (e.g., --num-chunks 2 4 1)")
+                        help="Chunks to retrieve per DB (e.g., --num_results 2 4 1)")
     parser.add_argument("--include", nargs='+', choices=['main', 'godot', 'lnz'], default=['main'],
                         help="List of DBs to search (e.g., --include godot lnz)")
     parser.add_argument("--role", choices=['planner', 'interviewer', 'architect', 'coder', 'user'], default='user')
     parser.add_argument("--file_types", nargs='+', help="Filter main DB by extension (e.g., gd tres md)")
+    
+    # NEW ARGUMENTS
+    parser.add_argument("--script", nargs='+', help="List of scripts to prioritize in the context (e.g., player.gd LnzLiveUtils.gd)")
+    parser.add_argument("--interactive", action="store_true", help="Enable interactive selection of which chunks to feed the LLM")
     
     args = parser.parse_args()
     LLM_MODEL = "qwen/qwen3.6-35b-a3b"
@@ -160,14 +185,7 @@ def main():
         api_key="lm-studio", api_base=args.host, model_name="text-embedding-qwen3-embedding-0.6b"
     )
 
-    # 2. Define our collection mapping
-    # Note: 'main' is always included, extra dbs are appended if requested
-    db_map = {'main': ('main', 'repo_knowledgebase')}
-    if args.include:
-        for inc in args.include:
-            db_map[inc] = (inc, f"{inc}_docs")
-
-    # 3. Session Setup
+    # 2. Session Setup
     if not args.session: args.session = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     session_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "llm-rag-sessions")
     os.makedirs(session_dir, exist_ok=True)
@@ -175,17 +193,20 @@ def main():
     session_file_full = os.path.join(session_dir, f"{args.session}.full.md")
     session_memory_string = load_condensed_history(session_file_condensed)
 
-    # 4. Search ALL collections
+    # 3. Search ALL collections
     context_str = ""
-    print(f"Searching {args.include}...")
+    candidates = []
     
+    print(f"\nSearching {args.include}...")
     for i, db_key in enumerate(args.include):
         limit = args.num_results[i] if i < len(args.num_results) else args.num_results[-1]
+        oversample_limit = limit * 3 # Request 3x to ensure we find enough matches after filtering
         
         try:
             db_map = {
                 'main': ('main', 'repo_knowledgebase'),
-                'godot': ('godot', 'godot_docs')
+                'godot': ('godot', 'godot_docs'),
+                'lnz': ('lnz', 'lnz_docs')
             }
             db_path, coll_name = db_map[db_key]
             
@@ -193,43 +214,64 @@ def main():
             client = chromadb.PersistentClient(path=path)
             col = client.get_collection(name=coll_name, embedding_function=embedding_func)
             
-            oversample_limit = limit * 3
-            res = col.query(query_texts=[args.query], n_results=limit, include=['documents', 'metadatas', 'distances'])
+            res = col.query(query_texts=[args.query], n_results=oversample_limit, include=['documents', 'metadatas', 'distances'])
             
             if res['documents'] and res['documents'][0]:
-                print(f"[{db_key.upper()} RESULTS (Seeking {limit} chunks from {limit * 3} candidates)]")
-                
-                count = 0
                 for doc, meta, dist in zip(res['documents'][0], res['metadatas'][0], res['distances'][0]):
-                    if count >= limit: break
-                    
                     source_name = meta.get('filename', 'Unknown')
                     
-                    # FILTER LOGIC (Keep only if match)
+                    # EXTENSION FILTER LOGIC
                     if args.file_types and db_key == 'main':
                         if not any(source_name.endswith(f".{ext.lstrip('.')}") for ext in args.file_types):
                             continue
 
-                    # CONVERT DISTANCE TO SIMILARITY SCORE
-                    # ChromaDB distance is usually squared L2 or cosine distance.
-                    # For cosine distance, similarity = 1 - distance.
-                    similarity = 1.0 - dist
+                    # SCRIPT PRIORITY LOGIC
+                    is_priority = False
+                    if args.script and any(script.lower() in source_name.lower() for script in args.script):
+                        is_priority = True
                     
-                    chunk_idx = meta.get('chunk_index', 0)
-                    print(f" -> Found: {source_name} (Chunk: {chunk_idx}) | Similarity: {similarity:.4f}")
-                    
-                    context_str += f"\n--- Start of Snippet from {source_name} (Chunk {chunk_idx}) ---\n{doc}\n---\n"
-                    count += 1
-                        
-                if count == 0:
-                    print(f" -> No chunks matched the file filter for {db_key}.")
-            else:
-                print(f" -> No relevant chunks found in {db_key}.")
-                
+                    candidates.append({
+                        'db': db_key,
+                        'file': source_name,
+                        'chunk': meta.get('chunk_index', 0),
+                        'doc': doc,
+                        'sim': 1.0 - dist,
+                        'priority': is_priority
+                    })
         except Exception as e:
             print(f"Could not load {db_key}: {e}")
 
-    # 5. Finalize Prompt and Call LLM
+    # 4. Sort and Present Results
+    # Sort first by priority (True > False), then by semantic similarity score
+    candidates.sort(key=lambda x: (x['priority'], x['sim']), reverse=True)
+
+    print("\n--- Found Chunks ---")
+    for idx, c in enumerate(candidates):
+        priority_flag = "[PRIORITY] " if c['priority'] else ""
+        print(f"[{idx}] {priority_flag}{c['file']} (Chunk {c['chunk']}) | Sim: {c['sim']:.4f} | Source: {c['db']}")
+    
+    # 5. Selection Logic
+    if args.interactive:
+        selection = input("\nEnter indices to include (e.g., 0 2 3) or 'all': ").strip()
+        if selection.lower() == 'all':
+            indices = range(len(candidates))
+        else:
+            indices = [int(i) for i in selection.split() if i.isdigit()]
+    else:
+        # Auto-select the top N results based on the sum of the --num_results limits
+        total_limit = sum(args.num_results)
+        indices = list(range(min(total_limit, len(candidates))))
+        print(f"\nAuto-selecting top {len(indices)} chunks.")
+        
+    # BUILD CONTEXT FROM SELECTION
+    for i in indices:
+        if i < len(candidates):
+            c = candidates[i]
+            context_str += f"\n--- Start of Snippet from {c['file']} (Chunk {c['chunk']}) ---\n{c['doc']}\n---\n"
+            if not args.interactive:
+                print(f" -> Added: {c['file']} (Chunk {c['chunk']})")
+
+    # 6. Finalize Prompt and Call LLM
     safe_memory = truncate_context(session_memory_string, max_chars=12000)
     base_role = get_role_prompt(args.role)
     system_prompt = (
