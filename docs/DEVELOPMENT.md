@@ -275,11 +275,24 @@ All the static assets, examples, and original game data required to render the m
 
 ## Local Retrieval-Augmented Code Assistant
 
-Totally local code assistance! Requires a capable PC with decent GPU specs to run, though. In `docs/`, we include scripts to run a local retrieval-augmented generation (RAG) code assistance queries using any locally installed large-language models (LLMs) served from your machine. 
+Local and offline code assistance to help in developing LnzLive! Requires a capable PC with decent GPU specs to run, though.
 
-Before querying the LLM, a script "retrieves" the most relevant code snippets from the codebase and "augments" the prompt. The LLM then generates an answer using the codebase as its reference material. To make this work, we periodically scan the repository's Godot and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) and pass this text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search.
+Included in `docs/` are scripts to build and run local retrieval-augmented generation (RAG) code assistance queries using any locally installed large language models (LLMs) served from your machine. 
 
-If you use LM Studio to serve a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as embedding model (default: `text-embedding-qwen3-embedding-0.6b`), then start the server and ensure you have LM Studio running with both the embedding and chat models loaded. You can then query the repository directly from your terminal using the provided script:
+The `chromadb-build-rag.py` script chunks scripts, shaders, and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) from the repository, and passes text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search. Additional database constructed from the [Godot 3.2 documentation](https://docs.godotengine.org/en/3.2/) can be searched during query as well by including arguments `--include godot lnz`.
+
+```
+python docs/chromadb-build-rag.py --repo-path . --db-type main
+
+# After placing .rst files from https://github.com/godotengine/godot-docs/tree/3.2 into docs/godot/
+python docs/chromadb-build-rag.py --repo-path ./docs/godot --db-type godot
+```
+
+If the codebase has changed significantly, you may need to rebuild the ChromaDB database and index.
+
+Before querying the LLM, the `chromadb-query-rag.py` script retrieves the most relevant code snippets from the codebase and augments the prompt. The LLM then generates an answer using the codebase as its reference material. 
+
+To run, you can use LM Studio to serve a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as a lightweight text embedding model (default: `text-embedding-qwen3-embedding-0.6b`), start the server and load both embedding and chat models. Then, query the repository directly from your terminal using the provided script:
 
 ```
 # Ask a question about the codebase
@@ -287,8 +300,20 @@ python docs/chromadb-query-rag.py --query "How does the symmetry tool coordinate
 
 # You can also assign a session name to keep a running conversation log!
 python docs/chromadb-query-rag.py --session "paintball_tools" --query "Explain the coordinate conversion logic."
+
+# Include Godot documentation:
+python docs/chromadb-query-rag.py --session "pool_arrays" --query "How do pool arrays work and where do we use them in LnzLive?" --include main godot --num_results 4 2 --file_types gd
+
+Searching ['main', 'godot']...
+[MAIN RESULTS (Seeking 4 chunks from 12 candidates)]
+ -> Found: Paintball.gd (Chunk: 1)
+ -> Found: Line.gd (Chunk: 2)
+ -> Found: Line.gd (Chunk: 1)
+ -> Found: lnzlive_utils.gd (Chunk: 0)
+[GODOT RESULTS (Seeking 2 chunks from 6 candidates)]
+ -> Found: class_geometry.rst (Chunk: 15)
+ -> Found: class_poolbytearray.rst (Chunk: 2)
+
 ```
 
-The context saved sessions write out the complete LLM output to `chromadb-sessions/{session}.full.md` and separately condense results to `chromadb-sessions/{session}.md`, which feeds into the next query.
-
-Note: If the codebase has changed significantly, you may need to rebuild the ChromaDB index using the `chromadb-build-rag.py` script so the AI has the latest context.
+The context saved sessions write out the complete LLM output to `llm-rag-sessions/{session}.full.md` and separately condense results to `llm-rag-sessions/{session}.md`, which feeds into the next query.
