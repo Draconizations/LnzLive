@@ -13,10 +13,10 @@ signal clear_paintballz
 signal delete_mode_toggled(is_on)
 
 var _is_loading_settings = false
-
 #var _preview_ball_rotation = Vector3.ZERO
 #var _is_dragging_preview = false
 #var _last_mouse_pos = Vector2.ZERO
+var cached_palette_colors = []
 
 onready var paintballz_tree = find_node("PaintballzTree")
 #onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
@@ -83,6 +83,10 @@ func _ready():
 	find_node("ClearButton").connect("pressed", self, "_on_ClearButton_pressed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_DeleteModeCheckBox_toggled")
 
+	var interp_btn = find_node("InterpolateButton")
+	if is_instance_valid(interp_btn):
+		interp_btn.connect("pressed", self, "_on_InterpolateColors_pressed")
+
 	var viewport_size = get_viewport().size
 	var panel = self
 	var panel_size = panel.rect_size
@@ -113,6 +117,72 @@ func _ready():
 
 	_setup_slots_tree()
 	load_settings()
+	set_process(true)
+
+func _get_ball_node(ball_no: int) -> Spatial:
+	if ball_no < 0: return null
+	var all_balls = get_tree().get_nodes_in_group("balls") + get_tree().get_nodes_in_group("addballs")
+	for b in all_balls:
+		if "ball_no" in b and b.ball_no == ball_no:
+			return b
+	return null
+
+func _get_pb_world_radius(dict: Dictionary, node: Node, base_ball: Spatial) -> float:
+	if is_instance_valid(node):
+		var mi = node if node is MeshInstance else node.get_node_or_null("MeshInstance")
+		if mi: return mi.scale.x * 0.5
+	if is_instance_valid(base_ball):
+		var diam_pct = float(dict.get("diameter", dict.get("size", dict.get("diam", 20.0))))
+		return base_ball.scale.x * (diam_pct / 100.0) * 0.5
+	return 0.05
+
+func _on_InterpolateColors_pressed():
+	var steps_spinbox = find_node("InterpolateStepsSpinBox")
+	if not is_instance_valid(steps_spinbox): return
+	var steps = int(steps_spinbox.value)
+	if steps <= 0: return
+	
+	var color_lineedit = find_node("Color")
+	if not is_instance_valid(color_lineedit): return
+	var color_str = color_lineedit.text
+	var color_list = LnzLiveUtils.parse_number_list(color_str)
+	if color_list.size() < 2: return
+	
+	var new_list = []
+	for i in range(color_list.size() - 1):
+		var c1_idx = color_list[i]
+		var c2_idx = color_list[i+1]
+		var col1 = get_color_from_index(c1_idx)
+		var col2 = get_color_from_index(c2_idx)
+		
+		new_list.append(c1_idx)
+		for step in range(1, steps + 1):
+			var t = float(step) / float(steps + 1)
+			var interp_col = col1.linear_interpolate(col2, t)
+			var closest_idx = get_closest_palette_index(interp_col)
+			new_list.append(closest_idx)
+			
+	new_list.append(color_list[color_list.size() - 1])
+	
+	var res_str = PoolStringArray()
+	for idx in new_list:
+		res_str.append(str(idx))
+	color_lineedit.text = res_str.join(",")
+	save_settings()
+
+func _process(delta):
+	if _is_loading_settings: return
+	
+	var raw_array = null
+	if is_instance_valid(dog_generator) and "_pending_paintballs_data" in dog_generator:
+		raw_array = dog_generator.get("_pending_paintballs_data")
+	elif is_instance_valid(dog_generator) and "pending_paintballs" in dog_generator:
+		raw_array = dog_generator.get("pending_paintballs")
+	
+	if typeof(raw_array) != TYPE_ARRAY:
+		var pvc = get_tree().root.find_node("PetViewContainer", true, false)
+		if is_instance_valid(pvc) and "pending_paintballs" in pvc:
+			raw_array = pvc.get("pending_paintballs")
 
 #	call_deferred("update_preview")
 
@@ -128,6 +198,126 @@ func _ready():
 #		_preview_ball_rotation.x += diff.y * 0.01
 #		_last_mouse_pos = event.position
 #		update_preview()
+	if typeof(raw_array) != TYPE_ARRAY or raw_array.empty():
+		return
+
+	var props = get_properties()
+
+	var items = []
+	for i in range(raw_array.size()):
+		var val = raw_array[i]
+		var dict = {}
+		var node = null
+		
+		if typeof(val) == TYPE_DICTIONARY:
+			dict = val
+			node = val.get("node")
+		elif typeof(val) == TYPE_OBJECT and val is Node:
+			node = val
+			if "paintball_data" in val: dict = val.get("paintball_data")
+			elif val.has_meta("paintball_data"): dict = val.get_meta("paintball_data")
+
+		var base_no = dict.get("base_ball_no", dict.get("ball", -1))
+		if base_no == -1 and is_instance_valid(node) and "base_ball_no" in node:
+			base_no = node.get("base_ball_no")
+
+		var base_ball = _get_ball_node(base_no)
+		if not is_instance_valid(base_ball): continue
+
+		var world_pos = Vector3.ZERO
+		if is_instance_valid(node) and node.is_inside_tree():
+			world_pos = node.global_transform.origin
+		elif is_instance_valid(base_ball):
+			var rel = dict.get("relative_pos_local", Vector3.ZERO)
+			world_pos = base_ball.to_global(rel)
+
+		items.append({
+			"raw": val,
+			"dict": dict,
+			"node": node,
+			"base_ball": base_ball,
+			"world_pos": world_pos,
+			"radius": _get_pb_world_radius(dict, node, base_ball)
+		})
+
+	if props.get("random_walk", false):
+		var walk_steps = props.get("walk_steps", 3)
+		var walk_spread = props.get("walk_spread", 50.0) / 100.0
+		var new_walks = []
+
+		for item in items:
+			var dict = item.dict
+			if dict.get("walk_done", false): continue
+			dict["walk_done"] = true
+
+			var base_origin = item.base_ball.global_transform.origin
+			var curr_pos = item.world_pos
+			var curr_size = dict.get("diameter", dict.get("size", 20.0))
+			
+			var dir = Vector3(rand_range(-1,1), rand_range(-1,1), rand_range(-1,1)).normalized()
+			
+			for s in range(walk_steps):
+				var normal = (curr_pos - base_origin).normalized()
+				var tangent = (dir - normal * dir.dot(normal)).normalized()
+				
+				dir = (tangent + Vector3(rand_range(-0.5,0.5), rand_range(-0.5,0.5), rand_range(-0.5,0.5))).normalized()
+				
+				var step_dist = item.radius * rand_range(1.0, 2.5) * walk_spread
+				curr_pos += tangent * step_dist
+				curr_pos = base_origin + (curr_pos - base_origin).normalized() * (item.world_pos - base_origin).length()
+				
+				curr_size *= rand_range(0.7, 0.95)
+
+				curr_size = max(1.0, floor(curr_size))
+				
+				var child_dict = dict.duplicate(true)
+				child_dict["walk_done"] = true 
+				child_dict["noise_checked"] = true 
+				if child_dict.has("node"): child_dict.erase("node")
+				if child_dict.has("mesh"): child_dict.erase("mesh")
+
+				var local_rel = item.base_ball.to_local(curr_pos)
+				var pixel_scale = 0.002
+				var engine_scale = 1.0
+				if is_instance_valid(dog_generator):
+					if "pixel_world_size" in dog_generator: pixel_scale = dog_generator.pixel_world_size
+					if "lnz" in dog_generator and dog_generator.lnz != null:
+						if "scales" in dog_generator.lnz:
+							engine_scale = dog_generator.lnz.scales.x
+
+				var lnz_rel = LnzLiveUtils.world_to_lnz_delta(curr_pos - base_origin, pixel_scale, engine_scale)
+
+				child_dict["relative_pos_local"] = local_rel
+				child_dict["relative_pos_lnz"] = lnz_rel
+				if child_dict.has("x"):
+					child_dict["x"] = lnz_rel.x
+					child_dict["y"] = lnz_rel.y
+					child_dict["z"] = lnz_rel.z
+				if child_dict.has("position"):
+					child_dict["position"] = lnz_rel
+
+				child_dict["diameter"] = max(1.0, curr_size)
+				if child_dict.has("size"): child_dict["size"] = max(1.0, curr_size)
+				
+				new_walks.append(child_dict)
+
+		for w in new_walks:
+			if is_instance_valid(dog_generator) and dog_generator.has_method("add_pending_paintball"):
+				dog_generator.add_pending_paintball(w)
+
+func get_closest_palette_index(target_color: Color) -> int:
+	if cached_palette_colors.empty():
+		return 0
+	var best_index = 0
+	var min_dist = INF
+	for i in range(cached_palette_colors.size()):
+		var c = cached_palette_colors[i]
+		# Using Euclidean distance in RGB space
+		var dist = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+		if dist < min_dist:
+			min_dist = dist
+			best_index = i
+	return best_index
 
 func _on_ApplyButton_pressed():
 	print("[STATUS] PaintballSettings: apply_paintballz signal emitted")
@@ -154,6 +344,15 @@ func _on_palette_changed(palette_name = ""):
 	var img_width = img.get_width()
 	var img_height = img.get_height()
 	
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+			
 	for slot in design_color_slots:
 		# Parse the color string (e.g. "105" or "105, 95") and grab the first index
 		var color_list = LnzLiveUtils.parse_number_list(str(slot.color))
@@ -170,6 +369,11 @@ func _on_palette_changed(palette_name = ""):
 	
 	_refresh_slot_buttons()
 	find_node("DesignCanvas").update()
+
+func get_color_from_index(index: int) -> Color:
+	if index >= 0 and index < cached_palette_colors.size():
+		return cached_palette_colors[index]
+	return Color.white
 
 func is_design_mode_active():
 	return find_node("TabContainer").current_tab == 1
@@ -200,6 +404,9 @@ func get_properties():
 	properties["ordered"] = find_node("Ordered").pressed
 	properties["repeat"] = find_node("Repeat").pressed
 	properties["shuffle"] = find_node("Shuffle").pressed
+	properties["random_walk"] = find_node("RandomWalkCheckBox").pressed
+	properties["walk_steps"] = find_node("WalkStepsSpinBox").value
+	properties["walk_spread"] = find_node("WalkSpreadSpinBox").value
 	return properties
 
 func export_paintball_json():
@@ -324,6 +531,13 @@ func _apply_settings_dict(data: Dictionary):
 	if data.has("ordered"): find_node("Ordered").pressed = data["ordered"]
 	if data.has("repeat"): find_node("Repeat").pressed = data["repeat"]
 	if data.has("shuffle"): find_node("Shuffle").pressed = data["shuffle"]
+	
+	if data.has("noise_splatter"): find_node("NoiseSplatterCheckBox").pressed = data["noise_splatter"]
+	if data.has("noise_scale"): find_node("NoiseScaleSpinBox").value = data["noise_scale"]
+	if data.has("noise_threshold"): find_node("NoiseThresholdSpinBox").value = data["noise_threshold"]
+	if data.has("random_walk"): find_node("RandomWalkCheckBox").pressed = data["random_walk"]
+	if data.has("walk_steps"): find_node("WalkStepsSpinBox").value = data["walk_steps"]
+	if data.has("walk_spread"): find_node("WalkSpreadSpinBox").value = data["walk_spread"]
 	_is_loading_settings = false
 	save_settings()
 
@@ -483,6 +697,9 @@ func _connect_settings_signals():
 	find_node("Repeat").connect("toggled", self, "_on_setting_changed")
 	find_node("Shuffle").connect("toggled", self, "_on_setting_changed")
 	find_node("EraserCheckBox").connect("toggled", self, "_on_setting_changed")
+	find_node("RandomWalkCheckBox").connect("toggled", self, "_on_setting_changed")
+	find_node("WalkStepsSpinBox").connect("value_changed", self, "_on_setting_changed")
+	find_node("WalkSpreadSpinBox").connect("value_changed", self, "_on_setting_changed")
 
 	var export_btn = find_node("ExportSettingsButton")
 	if export_btn: export_btn.connect("pressed", self, "export_paintball_json")
@@ -766,7 +983,6 @@ func _populate_slots_tree():
 
 		# Col 0: Display Color
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CUSTOM)
-		# TreeItem doesn't support easy bg color per cell
 		var icon = _create_color_icon(slot.color)
 		if icon:
 			var img_data = icon.get_data()
@@ -848,7 +1064,6 @@ func _create_color_icon(color_str) -> Texture:
 		if icon:
 			return icon
 
-	# Fallback
 	var img = Image.new()
 	img.create(16, 16, false, Image.FORMAT_RGBA8)
 	img.fill(Color.white)
@@ -1004,6 +1219,9 @@ func save_settings():
 	config.set_value("PaintballProperties", "repeat", find_node("Repeat").pressed)
 	config.set_value("PaintballProperties", "shuffle", find_node("Shuffle").pressed)
 	config.set_value("PaintballProperties", "eraser", find_node("EraserCheckBox").pressed)
+	config.set_value("PaintballProperties", "random_walk", find_node("RandomWalkCheckBox").pressed)
+	config.set_value("PaintballProperties", "walk_steps", find_node("WalkStepsSpinBox").value)
+	config.set_value("PaintballProperties", "walk_spread", find_node("WalkSpreadSpinBox").value)
 
 	config.set_value("DesignMode", "design_paintballs", find_node("DesignCanvas").design_paintballs)
 	config.set_value("DesignMode", "brush_size", find_node("BrushSizeSlider").value)
@@ -1025,6 +1243,7 @@ func save_settings():
 		print("[ERROR] PaintballSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
 	else:
 		pass # Optionally enable for super noisy debug: print("[STATUS] PaintballSettings: configuration auto-saved")
+	config.save(SETTINGS_PATH)
 
 func load_settings():
 	var config = ConfigFile.new()
@@ -1057,6 +1276,9 @@ func load_settings():
 	find_node("Repeat").pressed = config.get_value("PaintballProperties", "repeat", false)
 	find_node("Shuffle").pressed = config.get_value("PaintballProperties", "shuffle", false)
 	find_node("EraserCheckBox").pressed = config.get_value("PaintballProperties", "eraser", false)
+	find_node("RandomWalkCheckBox").pressed = config.get_value("PaintballProperties", "random_walk", false)
+	find_node("WalkStepsSpinBox").value = config.get_value("PaintballProperties", "walk_steps", 3.0)
+	find_node("WalkSpreadSpinBox").value = config.get_value("PaintballProperties", "walk_spread", 50.0)
 
 	var loaded_paintballs = config.get_value("DesignMode", "design_paintballs", [])
 	if loaded_paintballs.size() > 0:
@@ -1126,6 +1348,13 @@ func _on_reset_defaults_pressed():
 	find_node("Repeat").pressed = false
 	find_node("Shuffle").pressed = false
 	find_node("EraserCheckBox").pressed = false
+
+	find_node("NoiseSplatterCheckBox").pressed = false
+	find_node("NoiseScaleSpinBox").value = 20.0
+	find_node("NoiseThresholdSpinBox").value = 50.0
+	find_node("RandomWalkCheckBox").pressed = false
+	find_node("WalkStepsSpinBox").value = 3.0
+	find_node("WalkSpreadSpinBox").value = 50.0
 
 	find_node("MirrorX").pressed = false
 	find_node("MirrorY").pressed = false
