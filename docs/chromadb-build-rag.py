@@ -81,14 +81,17 @@ def chunk_gdscript(text, chunk_size, overlap):
     return [c for c in chunks if c.strip()]
 
 def process_repository(repo_path, extensions, chunk_size, overlap):
-    """Reads and chunks files matching the given extensions."""
+    """Reads and chunks files, explicitly excluding our local RAG data folders."""
     documents = []
     metadatas = []
     ids = []
     
+    exclude_dirs = {'llm-rag-chromadb', 'llm-rag-sessions', 'chroma_db'}
     chunk_counter = 0 
 
-    for root, _, files in os.walk(repo_path):
+    for root, dirs, files in os.walk(repo_path):
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+        
         for file in files:
             if any(file.endswith(ext) for ext in extensions):
                 file_path = os.path.join(root, file)
@@ -97,7 +100,7 @@ def process_repository(repo_path, extensions, chunk_size, overlap):
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
-                    # Route to the smart chunker if it's a GDScript file
+                    # Route to the smart chunker
                     if file.endswith('.gd'):
                         chunks = chunk_gdscript(content, chunk_size, overlap)
                     else:
@@ -119,30 +122,35 @@ def process_repository(repo_path, extensions, chunk_size, overlap):
     return documents, metadatas, ids
 
 def main():
-    parser = argparse.ArgumentParser(description="Prepare a local GitHub repo for RAG using ChromaDB and LMStudio.")
-    parser.add_argument("--repo-path", type=str, required=True, help="Path to the cloned GitHub repository")
+    parser = argparse.ArgumentParser(description="Prepare local knowledge bases for RAG.")
+    parser.add_argument("--repo-path", type=str, required=True, help="Path to the files to embed")
+    parser.add_argument("--db-type", choices=['main', 'godot'], default='main', help="Type of DB to build")
     
-    default_db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chroma_db")
-    parser.add_argument("--db-path", type=str, default=default_db_path, help="Folder to save the ChromaDB database")
-    parser.add_argument("--collection", type=str, default="repo_knowledgebase", help="Name of the ChromaDB collection")
+    # Defaults to docs/llm-rag-chromadb/{main, godot}
+    base_db_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "llm-rag-chromadb")
+    
     parser.add_argument("--host", type=str, default="http://localhost:1234/v1", help="LMStudio local server URL")
-    
-    # New chunking parameters
-    parser.add_argument("--chunk-size", type=int, default=1500, help="Maximum characters per chunk")
-    parser.add_argument("--chunk-overlap", type=int, default=250, help="Number of overlapping characters for split chunks")
+    parser.add_argument("--chunk-size", type=int, default=1000, help="Max characters per chunk")
+    parser.add_argument("--chunk-overlap", type=int, default=200, help="Overlap for chunks")
     
     args = parser.parse_args()
 
-    target_extensions = ['.gd', '.tres', '.tscn', '.md']
+    # Define settings per database type
+    configs = {
+        'main': {'ext': ['.gd', '.tres', '.tscn', '.md'], 'coll': 'repo_knowledgebase', 'path': os.path.join(base_db_dir, 'main')},
+        'godot': {'ext': ['.rst'], 'coll': 'godot_docs', 'path': os.path.join(base_db_dir, 'godot')}
+    }
     
-    print(f"Scanning {args.repo_path} for {target_extensions}...")
-    documents, metadatas, ids = process_repository(args.repo_path, target_extensions, args.chunk_size, args.chunk_overlap)
+    cfg = configs[args.db_type]
+    
+    print(f"Scanning {args.repo_path} for {cfg['ext']}...")
+    documents, metadatas, ids = process_repository(args.repo_path, cfg['ext'], args.chunk_size, args.chunk_overlap)
     
     if not documents:
         print("No matching files found or read. Exiting.")
         return
 
-    print(f"Found {len(documents)} chunks to embed.")
+    print(f"Found {len(documents)} chunks to embed for {args.db_type} database.")
 
     embedding_func = OpenAIEmbeddingFunction(
         api_key="lm-studio",
@@ -150,14 +158,14 @@ def main():
         model_name="text-embedding-qwen3-embedding-0.6b"
     )
 
-    chroma_client = chromadb.PersistentClient(path=args.db_path)
+    chroma_client = chromadb.PersistentClient(path=cfg['path'])
     
     collection = chroma_client.get_or_create_collection(
-        name=args.collection,
+        name=cfg['coll'],
         embedding_function=embedding_func
     )
 
-    print("Adding chunks to ChromaDB (this may take a while depending on your hardware)...")
+    print(f"Adding chunks to {cfg['coll']} collection...")
     
     batch_size = 25
     for i in range(0, len(documents), batch_size):
@@ -169,7 +177,7 @@ def main():
         )
         print(f"Processed batch {i} to {end_idx}...")
 
-    print(f"Success! Database saved to {args.db_path}.")
+    print(f"Success! {args.db_type} database saved to {cfg['path']}.")
 
 if __name__ == "__main__":
     main()
