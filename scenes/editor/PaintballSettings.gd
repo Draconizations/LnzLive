@@ -152,15 +152,27 @@ func _on_InterpolateColors_pressed():
 	for i in range(color_list.size() - 1):
 		var c1_idx = color_list[i]
 		var c2_idx = color_list[i+1]
-		var col1 = get_color_from_index(c1_idx)
-		var col2 = get_color_from_index(c2_idx)
 		
 		new_list.append(c1_idx)
-		for step in range(1, steps + 1):
-			var t = float(step) / float(steps + 1)
-			var interp_col = col1.linear_interpolate(col2, t)
-			var closest_idx = get_closest_palette_index(interp_col)
-			new_list.append(closest_idx)
+		
+		var in_same_ramp = false
+		if c1_idx >= 10 and c1_idx <= 199 and c2_idx >= 10 and c2_idx <= 199:
+			if int(c1_idx / 10) == int(c2_idx / 10):
+				in_same_ramp = true
+				
+		if in_same_ramp:
+			for step in range(1, steps + 1):
+				var t = float(step) / float(steps + 1)
+				var interp_idx = int(round(lerp(c1_idx, c2_idx, t)))
+				new_list.append(interp_idx)
+		else:
+			var col1 = get_color_from_index(c1_idx)
+			var col2 = get_color_from_index(c2_idx)
+			for step in range(1, steps + 1):
+				var t = float(step) / float(steps + 1)
+				var interp_col = col1.linear_interpolate(col2, t)
+				var closest_idx = get_closest_palette_index(interp_col)
+				new_list.append(closest_idx)
 			
 	new_list.append(color_list[color_list.size() - 1])
 	
