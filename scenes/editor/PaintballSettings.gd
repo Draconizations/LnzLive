@@ -86,6 +86,19 @@ func _ready():
 	var interp_btn = find_node("InterpolateButton")
 	if is_instance_valid(interp_btn):
 		interp_btn.connect("pressed", self, "_on_InterpolateColors_pressed")
+		
+	var gen_pal_btn = find_node("GenPaletteButton")
+	if is_instance_valid(gen_pal_btn):
+		gen_pal_btn.connect("pressed", self, "_on_GeneratePaletteButton_pressed")
+		
+	var gen_pal_select = find_node("GenPaletteTypeSelect")
+	if is_instance_valid(gen_pal_select):
+		if gen_pal_select.get_item_count() == 0:
+			gen_pal_select.add_item("Monochromatic")
+			gen_pal_select.add_item("Analogous")
+			gen_pal_select.add_item("Complementary")
+			gen_pal_select.add_item("Triadic")
+			gen_pal_select.add_item("Split Complementary")
 
 	var viewport_size = get_viewport().size
 	var panel = self
@@ -181,6 +194,99 @@ func _on_InterpolateColors_pressed():
 		res_str.append(str(idx))
 	color_lineedit.text = res_str.join(",")
 	save_settings()
+
+func _on_GeneratePaletteButton_pressed():
+	randomize()
+	
+	var base_input = find_node("GenPaletteBaseInput")
+	var type_select = find_node("GenPaletteTypeSelect")
+	var color_lineedit = find_node("Color")
+	
+	if not is_instance_valid(color_lineedit): 
+		return
+	
+	var base_index = 0
+	
+	var has_valid_input = false
+	if is_instance_valid(base_input):
+		if base_input is LineEdit and base_input.text.strip_edges() != "":
+			var parsed = LnzLiveUtils.parse_number_list(base_input.text)
+			if parsed.size() > 0: 
+				base_index = parsed[0]
+				has_valid_input = true
+		elif base_input is SpinBox:
+			base_index = int(base_input.value)
+			has_valid_input = true
+
+	if not has_valid_input:
+		var parsed = LnzLiveUtils.parse_number_list(color_lineedit.text)
+		if parsed.size() > 0: 
+			base_index = parsed[randi() % parsed.size()]
+		else:
+			# Absolute fallback if everything is empty
+			base_index = randi() % 256 
+		
+	var base_color = get_color_from_index(base_index)
+	
+	var p_type = 0
+	if is_instance_valid(type_select):
+		p_type = type_select.selected
+		
+	var generated_colors = []
+	var h = base_color.h
+	var s = base_color.s
+	var v = base_color.v
+	
+	generated_colors.append(base_color)
+	
+	match p_type:
+		0: # Monochromatic (Value & Saturation)
+			for i in range(1, 5):
+				var nv = clamp(v + rand_range(-0.4, 0.4), 0.1, 1.0)
+				var ns = clamp(s + rand_range(-0.4, 0.4), 0.0, 1.0)
+				generated_colors.append(Color.from_hsv(h, ns, nv))
+		1: # Analogous (Neighboring)
+			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.05, 0.12), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.05, 0.12) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.13, 0.20), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.13, 0.20) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+		2: # Complementary 
+			var comp_h = fmod(h + 0.5 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(comp_h, s, v))
+			generated_colors.append(Color.from_hsv(h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(comp_h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+		3: # Triadic 
+			var t1 = fmod(h + 0.333 + rand_range(-0.05, 0.05), 1.0)
+			var t2 = fmod(h + 0.666 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(t1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(t2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(t1, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(t2, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+		4: # Split Complementary
+			var sc1 = fmod(h + 0.416 + rand_range(-0.05, 0.05), 1.0)
+			var sc2 = fmod(h + 0.583 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(sc1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(sc2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(sc1, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(sc2, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+
+	var new_indices = []
+	for c in generated_colors:
+		var idx = get_closest_palette_index(c)
+		if not new_indices.has(idx):
+			new_indices.append(idx)
+			
+	var res_str = PoolStringArray()
+	for idx in new_indices:
+		res_str.append(str(idx))
+		
+	color_lineedit.text = res_str.join(",")
+	save_settings()
+	
+	var gen_btn = find_node("GenPaletteButton")
+	if is_instance_valid(gen_btn): gen_btn.release_focus()
+	if is_instance_valid(base_input) and base_input is Control: base_input.release_focus()
+	color_lineedit.release_focus()
 
 func _process(delta):
 	if _is_loading_settings: return
