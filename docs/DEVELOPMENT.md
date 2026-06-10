@@ -50,25 +50,7 @@ Upload to GitHub: `git push origin feature-name`
 
 #### 8. **Test LnzLive**
 
-Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;)
-
-LnzLive does include a small set of unit tests under `test/` for the [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) test system intended to keep existing functions functional. We are far from having every test or edge case covered, though. We recommend running these tests before moving to the next step, or the reviewer will do so.
-
-Even better if your new feature adds unit test(s) for new functions! When writing unit tests, focus on pure logic and isolated math.
-
-Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/index.html) and this [video tutorial on GUT](https://youtu.be/5DrhMiuLRl0?si=xYc7ewrJqfZhFoYb) or this [longer talk on unit tests by the GUT developer](https://youtu.be/ImqhHLlPfZg?si=qrk4ZZwU3IsV_s_p). This version of GUT is already included in the repository under `addons/gut/`, but does need to be enabled in Godot editor...
-
-1. Enable GUT and Open the Interface
-   - In the Godot editor, go to Project -> Project Settings.
-   - Click the Plugins tab at the top.
-   - Find Gut in the list and check the Enable box.
-   - Close the settings. You will now see a new GUT tab at the very bottom of your editor window (next to Output, Debugger, etc.). Click it to open the testing panel.
-
-2. Run `test_LnzLive.gd`
-   - Inside the GUT panel, scroll down until you see a section called "Test Directories".
-   - Enter `res://test` into "Directory 0"
-   - Scroll to "XML Output" and enter `res://test/test.xml` (this will save a success/fail test record)
-   - Click the "Run All" button. GUT will automatically find your script and execute all functions starting with `test_`.
+Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;) LnzLive does include a set of unit tests using [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) (see [Developer Tools](#developer-tools)).
 
 #### 9. **Submit a Pull Request**
 
@@ -91,14 +73,12 @@ The pipeline flows as follows: **Text Input \-\> LNZ Parser \-\> Data Classes \-
 1. **Text Input (`scenes/editor/LnzTextEdit.gd`)**: The user loads an LNZ file. This script manages the raw string representation, regex searching, and maintains the undo/redo history states.  
 2. **Data Classes and Parsers (`data_classes/`)**: Parsed data is stored in specialized, typed memory structures that map to their respective `.lnz` sections. The raw text array is scanned, delimited into sections (`[Ballz Info]`, `[Linez]`, etc.) and variation blocks (`#1`, `#2.A`), and compiled into a structured memory map by the `lnz_parser.gd` script (`LnzParser` class). These scripts also parse the model (`.bhd`) and animation (`.bdt`) files included in `resources/animations/`.
 3. **Model Generator (`scenes/dog_generator.gd`)**: Process takes structured data (alongside model `.bhd` and animations `.bdt` frame data) to dynamically create and configure Godot visual nodes.
-4. **Interative Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
+4. **Viewport (`scenes/editor/PetViewContainer.gd`)**: The generated model is rendered in the 3D viewport. The user interacts via 2D mouse inputs (raycasting, dragging, selecting), which in turn signal changes back to the Text Input.
 
 ### Logic
 
-To achieve a "Live Update" without performance stutter, LnzLive uses a specific handshake loop:
-
-1. **User interacts via Interactive Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into LNZ integer units.  
-2. **Interactive Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly.
+1. **User interacts via Viewport:** A user clicks and drags a 3D ball. PetViewContainer.gd uses Godot's 3D raycasting to identify the node, reads its attached metadata (like `ball_no`), and translates the 3D drag delta into LNZ integer units.  
+2. **Viewport signals Text Editor:** PetViewContainer calls a targeted injection function on LnzTextEdit (e.g., `update_ball_position_in_text(ball_no, new_x, new_y, new_z)`). It does *not* modify the 3D node directly.
 3. **Text Editor triggers Model Generator:** LnzTextEdit emits an `apply_changes` signal to notify `dog_generator`.gd that the file content has changed, which triggers a reload of the visual model.
 4. **Model Generator reconstructs visual model:** `dog_generator.gd` asks `LnzParser` to do a fast re-compile of the active lines from memory. The parser updates the Data Classes. Finally, the generator applies these new XYZ transforms to the mapped Godot Spatial nodes, completing the visual feedback loop.
 
@@ -273,13 +253,38 @@ All the static assets, examples, and original game data required to render the m
 * **`styles/`**: Godot UI theme resources (`.tres` StyleBoxes) for panels, buttons, and text fields across the editor.
 * **`textures/` & `texture_atlas/`**: The massive collection of base `.bmp` and `.png` textures. The `texture_atlas/` folder contains pre-baked sprite sheets generated by the utility scripts to allow the shaders to sample textures efficiently without loading hundreds of individual images into memory.
 
-## Local Retrieval-Augmented Code Assistant
+## Developer Tools
 
-Local and offline code assistance to help in developing LnzLive! Requires a capable PC with decent GPU specs to run, though.
+### Godot Unit Testing (GUT)
 
-Included in `docs/` are scripts to build and run local retrieval-augmented generation (RAG) code assistance queries using any locally installed large language models (LLMs) served from your machine. 
+LnzLive includes a set of unit tests under `test/` for the [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) test system intended to keep existing functions functional. The test set is far from having every function or edge case covered. We recommend running these tests before moving to the next step, or the reviewer will do so before including your changes in new versions of LnzLive.
 
-The `chromadb-build-rag.py` script chunks scripts, shaders, and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) from the repository, and passes text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search. Additional database constructed from the [Godot 3.2 documentation](https://docs.godotengine.org/en/3.2/) can be searched during query as well by including arguments `--include godot lnz`.
+Even better if your new feature adds unit test(s) for new functions! When writing unit tests, focus on pure logic and isolated math.
+
+Check out [GUT v7.4.3 documentation](https://gut.readthedocs.io/en/godot_3x/index.html) and this [video tutorial on GUT](https://youtu.be/5DrhMiuLRl0?si=xYc7ewrJqfZhFoYb) or this [longer talk on unit tests by the GUT developer](https://youtu.be/ImqhHLlPfZg?si=qrk4ZZwU3IsV_s_p). This version of GUT is already included in the repository under `addons/gut/`, but does need to be enabled in Godot editor...
+
+1. Enable GUT and Open the Interface
+   - In the Godot editor, go to Project -> Project Settings.
+   - Click the Plugins tab at the top.
+   - Find Gut in the list and check the Enable box.
+   - Close the settings. You will now see a new GUT tab at the very bottom of your editor window (next to Output, Debugger, etc.). Click it to open the testing panel.
+
+2. Run `test_LnzLive.gd`
+   - Inside the GUT panel, scroll down until you see a section called "Test Directories".
+   - Enter `res://test` into "Directory 0"
+   - Scroll to "XML Output" and enter `res://test/test.xml` (this will save a success/fail test record)
+   - Click the "Run All" button. GUT will automatically find your script and execute all functions starting with `test_`.
+
+### Local Retrieval-Augmented Code Assistance
+
+Local and offline code assistance to help in developing LnzLive! Included in `docs/` are Python scripts to build and run local retrieval-augmented generation (RAG) code assistance queries using any locally installed large language models (LLMs) served from your personal computer and custom session records and context management. Requires a PC with decent GPU specs to run, familiarity with running Python scripts, familiarity with loading and serving local LLMs, and installation of ChromaDB Python library (`pip install chromadb`). Because this runs entirely on your personal computer, these data, code, and queries never go through any cloud APIs or data centers.
+
+
+The `chromadb-build-rag.py` script chunks scripts, shaders, and documentation files (`.gd`, `.tres`, `.tscn`, and `.md`) from the repository, and passes text through an embedding model, which compacts text into mathematical vectors. These vectors are saved in ChromaDB, which acts as a database for semantic search. 
+
+Additional database can be constructed from the [Godot 3.2 documentation](https://docs.godotengine.org/en/3.2/) (`.rst` files) can be searched during query as well by adding the argument `--include main godot`. That way, recommendations from the LLM are more likely to be based in real documentation for the 3.2 version of the Godot game engine moreover than newer versions like Godot 4.0 or hallucinated GDscript functions.
+
+If the codebase has changed significantly, you may need to rebuild the ChromaDB database and index:
 
 ```
 python docs/chromadb-build-rag.py --repo-path . --db-type main
@@ -288,11 +293,9 @@ python docs/chromadb-build-rag.py --repo-path . --db-type main
 python docs/chromadb-build-rag.py --repo-path ./docs/godot --db-type godot
 ```
 
-If the codebase has changed significantly, you may need to rebuild the ChromaDB database and index.
+The `chromadb-query-rag.py` script relies on serving a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as a lightweight text embedding model (default: `text-embedding-qwen3-embedding-0.6b`) to a server (default: `http://localhost:1234/v1`, which is default for [LM Studio](https://lmstudio.ai/) UI). You can change these by editing `rag_config.json`.
 
-Before querying the LLM, the `chromadb-query-rag.py` script retrieves the most relevant code snippets from the codebase and augments the prompt. The LLM then generates an answer using the codebase as its reference material. 
-
-To run, you can use LM Studio to serve a local LLM (default: `qwen/qwen3.6-35b-a3b`) as well as a lightweight text embedding model (default: `text-embedding-qwen3-embedding-0.6b`), start the server and load both embedding and chat models. Then, query the repository directly from your terminal using the provided script:
+Before querying the LLM, the  script retrieves the most relevant code snippets from the codebase using semantic similarity and augments your prompt using retrieved context.
 
 ```
 # Ask a question about the codebase
@@ -301,19 +304,48 @@ python docs/chromadb-query-rag.py --query "How does the symmetry tool coordinate
 # You can also assign a session name to keep a running conversation log!
 python docs/chromadb-query-rag.py --session "paintball_tools" --query "Explain the coordinate conversion logic."
 
-# Include Godot documentation:
-python docs/chromadb-query-rag.py --session "pool_arrays" --query "How do pool arrays work and where do we use them in LnzLive?" --include main godot --num_results 4 2 --file_types gd
+# Example of prompting session using Godot documentation:
+
+python docs/chromadb-query-rag.py --query "How does the symmetry tool coordinate logic work?"
+
+Searching ['main']...
+ -> Added: ToolsMenu.gd (Chunk 2) | Score: 0.470
+ -> Added: dog_generator.gd (Chunk 98) | Score: 0.369
+ -> Added: key_balls_data.gd (Chunk 25) | Score: 0.303
+
+--- Response ---
+
+Based on the provided code snippets, the symmetry tool coordinates logic through a combination of **data-driven mapping** (in `key_balls_data.gd`) and **geometric transformation** (in `dog_generator.gd`).
+
+{full response saved to docs/llm-rag-sessions/20260610_084309.md}
+
+python docs/chromadb-query-rag.py --query "What code issues do you foresee with the mirror function that could cause bugs for users?" --session 20260610_084309
+
+Searching ['main']...
+ -> Added: LnzTextEdit.gd (Chunk 217) | Score: 0.326
+ -> Added: LnzTextEdit.gd (Chunk 215) | Score: 0.281
+ -> Added: LnzTextEdit.gd (Chunk 202) | Score: 0.266
+
+--- Response ---
+
+Based on the provided code snippets, here are the potential issues and bugs that could affect users:
+
+{full response saved to docs/llm-rag-sessions/20260610_084309.md}
+
+python docs/chromadb-query-rag.py --query "What can we do to guard against those instances?" --include main godot --session 202606
+10_084309
 
 Searching ['main', 'godot']...
-[MAIN RESULTS (Seeking 4 chunks from 12 candidates)]
- -> Found: Paintball.gd (Chunk: 1)
- -> Found: Line.gd (Chunk: 2)
- -> Found: Line.gd (Chunk: 1)
- -> Found: lnzlive_utils.gd (Chunk: 0)
-[GODOT RESULTS (Seeking 2 chunks from 6 candidates)]
- -> Found: class_geometry.rst (Chunk: 15)
- -> Found: class_poolbytearray.rst (Chunk: 2)
+ -> Added: exporting_for_pc.rst (Chunk 1) | Score: -0.150
+ -> Added: class_phashtranslation.rst (Chunk 2) | Score: -0.165
+ -> Added: class_audioeffectlowpassfilter.rst (Chunk 1) | Score: -0.171
+
+--- Response ---
+
+To guard against the issues identified in the previous analysis, you can implement the following defensive programming patterns and code corrections.
+
+{full response saved to docs/llm-rag-sessions/20260610_084309.md}
 
 ```
 
-The context saved sessions write out the complete LLM output to `llm-rag-sessions/{session}.full.md` and separately condense results to `llm-rag-sessions/{session}.md`, which feeds into the next query.
+The context saved sessions write out the complete LLM output to `docs/llm-rag-sessions/{session}.md`, which feeds into the next query and condenses that context when the total session record exceeds estimated max tokens set in your config file (default: `2000`).

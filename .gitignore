@@ -21,8 +21,9 @@ export/index.js
 export/index.pck
 *.html
 
-# Don't save user ChromaDB LLM-RAG sessions
-docs/llm-rag-sessions/
+# ChromaDB LLM-RAG includes scripts but not databases (too large for GitHub)
+docs/llm-rag-sessions/*
+docs/llm-rag-chromadb/*
 
-# Don't save Godot 3.2 docs .rst files
+# Don't save Godot 3.2 docs .rst files (keep local)
 docs/godot/
