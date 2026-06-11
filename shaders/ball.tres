@@ -217,6 +217,8 @@ vec2 calculate_uvs(vec2 offset) {
         vec2 adj_offset = offset - base_center_offset;
         vec2 snapped_uv = (floor(adj_offset) + 0.5) / texture_size_raw + vec2(0.5);
 
+        snapped_uv = fract(snapped_uv);
+
         if (is_atlas) {
             snapped_uv.x = 1.0 - snapped_uv.x;
             snapped_uv.y = 1.0 - snapped_uv.y;
