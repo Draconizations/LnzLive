@@ -86,9 +86,65 @@ func _ready():
 	_on_Distribution_item_selected(0)
 	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
 
+	_setup_color_previews()
 	_connect_settings_signals()
 	load_settings()
 	call_deferred("_on_palette_changed")
+
+func _setup_color_previews():
+	_setup_preview_wrapper("ColorList")
+	_setup_preview_wrapper("OutlineColorList")
+
+func _setup_preview_wrapper(le_name: String):
+	var le = find_node(le_name, true, false)
+	if not le: return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var pos = le.get_index()
+	var orig_owner = le.owner
+	
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [le_name])
+
+func _on_color_list_text_changed(new_text: String, le_name: String):
+	_update_previews_inner(new_text, find_node(le_name + "_Preview", true, false))
+
+func _refresh_all_previews():
+	var color_node = find_node("ColorList", true, false)
+	var color_prev = find_node("ColorList_Preview", true, false)
+	if color_node and color_prev:
+		_update_previews_inner(color_node.text, color_prev)
+		
+	var out_node = find_node("OutlineColorList", true, false)
+	var out_prev = find_node("OutlineColorList_Preview", true, false)
+	if out_node and out_prev:
+		_update_previews_inner(out_node.text, out_prev)
+
+func _update_previews_inner(text: String, container: Container):
+	LnzLiveUtils.update_color_list_previews(container, text, cached_palette_colors)
 
 func _on_palette_changed(palette_name = ""):
 	if not is_instance_valid(pet_node) or not "current_palette_texture" in pet_node or not pet_node.current_palette_texture:
@@ -112,6 +168,7 @@ func _on_palette_changed(palette_name = ""):
 			cached_palette_colors.append(Color.black)
 			
 	img.unlock()
+	_refresh_all_previews()
 
 func get_closest_palette_index(target_color: Color) -> int:
 	if cached_palette_colors.empty():
@@ -762,8 +819,12 @@ func get_properties():
 	properties["num_rings"] = find_node("NumRings").value
 	properties["size_min"] = find_node("SizeMin").value
 	properties["size_max"] = find_node("SizeMax").value
-	properties["color_list"] = find_node("ColorList").text
-	properties["outline_color_list"] = find_node("OutlineColorList").text
+	
+	var color_list_node = find_node("ColorList", true, false)
+	properties["color_list"] = color_list_node.text if color_list_node else ""
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	properties["outline_color_list"] = outline_color_list_node.text if outline_color_list_node else ""
+	
 	properties["outline_type_min"] = find_node("OutlineTypeMin").value
 	properties["outline_type_max"] = find_node("OutlineTypeMax").value
 	properties["fuzz_min"] = find_node("FuzzMin").value
@@ -839,8 +900,11 @@ func _apply_settings_dict(data: Dictionary):
 	if data.has("size_min"): find_node("SizeMin").value = data["size_min"]
 	if data.has("size_max"): find_node("SizeMax").value = data["size_max"]
 	
-	if data.has("color_list"): find_node("ColorList").text = str(data["color_list"])
-	if data.has("outline_color_list"): find_node("OutlineColorList").text = str(data["outline_color_list"])
+	var color_list_node = find_node("ColorList", true, false)
+	if data.has("color_list") and color_list_node: color_list_node.text = str(data["color_list"])
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	if data.has("outline_color_list") and outline_color_list_node: outline_color_list_node.text = str(data["outline_color_list"])
+	
 	if data.has("outline_type_min"): find_node("OutlineTypeMin").value = data["outline_type_min"]
 	if data.has("outline_type_max"): find_node("OutlineTypeMax").value = data["outline_type_max"]
 	if data.has("fuzz_min"): find_node("FuzzMin").value = data["fuzz_min"]
@@ -856,6 +920,7 @@ func _apply_settings_dict(data: Dictionary):
 	
 	_is_loading_settings = false
 	_on_setting_changed()
+	_refresh_all_previews()
 
 func export_autopaintballer_json():
 	var settings_dict = get_properties()
@@ -996,8 +1061,12 @@ func _on_UnselectButton_pressed():
 
 func _connect_settings_signals():
 	find_node("AffectedBallz").connect("text_changed", self, "_on_setting_changed")
-	find_node("ColorList").connect("text_changed", self, "_on_setting_changed")
-	find_node("OutlineColorList").connect("text_changed", self, "_on_setting_changed")
+	
+	var color_list_node = find_node("ColorList", true, false)
+	if color_list_node: color_list_node.connect("text_changed", self, "_on_setting_changed")
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	if outline_color_list_node: outline_color_list_node.connect("text_changed", self, "_on_setting_changed")
+	
 	find_node("TextureList").connect("text_changed", self, "_on_setting_changed")
 	find_node("FractalAxiom").connect("text_changed", self, "_on_setting_changed")
 	find_node("Seed").connect("text_changed", self, "_on_setting_changed")
@@ -1068,9 +1137,13 @@ func load_settings():
 	find_node("SizeMin").value = config.get_value("AutoPaintballer", "size_min", 10.0)
 	find_node("SizeMax").value = config.get_value("AutoPaintballer", "size_max", 20.0)
 	find_node("PixelMode").pressed = config.get_value("AutoPaintballer", "pixel_mode", false)
-	find_node("ColorList").text = config.get_value("AutoPaintballer", "color_list", "")
+	
+	var color_list_node = find_node("ColorList", true, false)
+	if color_list_node: color_list_node.text = config.get_value("AutoPaintballer", "color_list", "")
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	if outline_color_list_node: outline_color_list_node.text = config.get_value("AutoPaintballer", "outline_color_list", "244")
+	
 	find_node("TextureList").text = config.get_value("AutoPaintballer", "texture_list", "0")
-	find_node("OutlineColorList").text = config.get_value("AutoPaintballer", "outline_color_list", "244")
 	find_node("OutlineTypeMin").value = config.get_value("AutoPaintballer", "outline_type_min", -1.0)
 	find_node("OutlineTypeMax").value = config.get_value("AutoPaintballer", "outline_type_max", -1.0)
 	find_node("FuzzMin").value = config.get_value("AutoPaintballer", "fuzz_min", 0.0)
@@ -1131,6 +1204,7 @@ func load_settings():
 	_on_UseSeed_toggled(find_node("UseSeed").pressed)
 
 	_is_loading_settings = false
+	_refresh_all_previews()
 
 func _on_reset_defaults_pressed():
 	_is_loading_settings = true
@@ -1144,9 +1218,13 @@ func _on_reset_defaults_pressed():
 
 	find_node("SizeMin").value = 10.0
 	find_node("SizeMax").value = 20.0
-	find_node("ColorList").text = ""
+	
+	var color_list_node = find_node("ColorList", true, false)
+	if color_list_node: color_list_node.text = ""
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	if outline_color_list_node: outline_color_list_node.text = "244"
+	
 	find_node("TextureList").text = "0"
-	find_node("OutlineColorList").text = "244"
 	find_node("OutlineTypeMin").value = -1.0
 	find_node("OutlineTypeMax").value = -1.0
 	find_node("FuzzMin").value = 0.0
@@ -1209,6 +1287,7 @@ func _on_reset_defaults_pressed():
 
 	_is_loading_settings = false
 	save_settings()
+	_refresh_all_previews()
 
 func _on_SurpriseButton_pressed():
 	_is_loading_settings = true
@@ -1241,9 +1320,12 @@ func _on_SurpriseButton_pressed():
 		find_node("FuzzMin").value = 0
 		find_node("FuzzMax").value = 0
 
-	find_node("ColorList").text = _generate_surprise_color_string()
+	var color_list_node = find_node("ColorList", true, false)
+	if color_list_node: color_list_node.text = _generate_surprise_color_string()
+	var outline_color_list_node = find_node("OutlineColorList", true, false)
+	if outline_color_list_node: outline_color_list_node.text = _get_random_static_accent()
+	
 	find_node("TextureList").text = _generate_surprise_texture_string()
-	find_node("OutlineColorList").text = _get_random_static_accent()
 	
 	var out_type = -1
 	if randf() < 0.3:
@@ -1255,6 +1337,7 @@ func _on_SurpriseButton_pressed():
 
 	_is_loading_settings = false
 	save_settings()
+	_refresh_all_previews()
 	_on_RandomizeButton_pressed()
 
 func _randomize_mode_params(mode):

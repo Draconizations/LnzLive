@@ -118,6 +118,7 @@ func _ready():
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
 
+	_setup_color_previews()
 	_connect_settings_signals()
 	_connect_design_signals()
 
@@ -131,6 +132,61 @@ func _ready():
 	_setup_slots_tree()
 	load_settings()
 	set_process(true)
+
+func _setup_color_previews():
+	_setup_preview_wrapper("Color")
+	_setup_preview_wrapper("OutlineColor")
+
+func _setup_preview_wrapper(le_name: String):
+	var le = find_node(le_name, true, false)
+	if not le: return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var pos = le.get_index()
+	var orig_owner = le.owner
+	
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [le_name])
+
+func _on_color_list_text_changed(new_text: String, le_name: String):
+	_update_previews_inner(new_text, find_node(le_name + "_Preview", true, false))
+
+func _refresh_all_previews():
+	var color_node = find_node("Color", true, false)
+	var color_prev = find_node("Color_Preview", true, false)
+	if color_node and color_prev:
+		_update_previews_inner(color_node.text, color_prev)
+		
+	var out_node = find_node("OutlineColor", true, false)
+	var out_prev = find_node("OutlineColor_Preview", true, false)
+	if out_node and out_prev:
+		_update_previews_inner(out_node.text, out_prev)
+
+func _update_previews_inner(text: String, container: Container):
+	LnzLiveUtils.update_color_list_previews(container, text, cached_palette_colors)
 
 func _get_ball_node(ball_no: int) -> Spatial:
 	if ball_no < 0: return null
@@ -194,6 +250,7 @@ func _on_InterpolateColors_pressed():
 		res_str.append(str(idx))
 	color_lineedit.text = res_str.join(",")
 	save_settings()
+	_refresh_all_previews()
 
 func _on_GeneratePaletteButton_pressed():
 	randomize()
@@ -282,6 +339,7 @@ func _on_GeneratePaletteButton_pressed():
 		
 	color_lineedit.text = res_str.join(",")
 	save_settings()
+	_refresh_all_previews()
 	
 	var gen_btn = find_node("GenPaletteButton")
 	if is_instance_valid(gen_btn): gen_btn.release_focus()
@@ -481,6 +539,7 @@ func _on_palette_changed(palette_name = ""):
 	
 	_refresh_slot_buttons()
 	find_node("DesignCanvas").update()
+	_refresh_all_previews()
 
 func get_color_from_index(index: int) -> Color:
 	if index >= 0 and index < cached_palette_colors.size():
@@ -652,6 +711,7 @@ func _apply_settings_dict(data: Dictionary):
 	if data.has("walk_spread"): find_node("WalkSpreadSpinBox").value = data["walk_spread"]
 	_is_loading_settings = false
 	save_settings()
+	_refresh_all_previews()
 
 func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
 	print("[STATUS] PaintballSettings: paste_paintball_design started on ball_no: %d" % ball_no)
@@ -759,8 +819,12 @@ func _connect_settings_signals():
 	find_node("DiameterMax").connect("value_changed", self, "_on_setting_changed")
 	find_node("Tapered").connect("toggled", self, "_on_setting_changed")
 	find_node("PixelMode").connect("toggled", self, "_on_setting_changed")
-	find_node("Color").connect("text_changed", self, "_on_setting_changed")
-	find_node("OutlineColor").connect("text_changed", self, "_on_setting_changed")
+	
+	var color_node = find_node("Color", true, false)
+	if color_node: color_node.connect("text_changed", self, "_on_setting_changed")
+	var outline_color_node = find_node("OutlineColor", true, false)
+	if outline_color_node: outline_color_node.connect("text_changed", self, "_on_setting_changed")
+	
 	find_node("OutlineTypeMin").connect("value_changed", self, "_on_setting_changed")
 	find_node("OutlineTypeMax").connect("value_changed", self, "_on_setting_changed")
 	find_node("FuzzMin").connect("value_changed", self, "_on_setting_changed")
@@ -1281,8 +1345,12 @@ func save_settings():
 	config.set_value("PaintballProperties", "diameter_max", find_node("DiameterMax").value)
 	config.set_value("PaintballProperties", "tapered", find_node("Tapered").pressed)
 	config.set_value("PaintballProperties", "pixel_mode", find_node("PixelMode").pressed)
-	config.set_value("PaintballProperties", "color", find_node("Color").text)
-	config.set_value("PaintballProperties", "outline_color", find_node("OutlineColor").text)
+	
+	var color_node = find_node("Color", true, false)
+	if color_node: config.set_value("PaintballProperties", "color", color_node.text)
+	var outline_color_node = find_node("OutlineColor", true, false)
+	if outline_color_node: config.set_value("PaintballProperties", "outline_color", outline_color_node.text)
+	
 	config.set_value("PaintballProperties", "outline_type_min", find_node("OutlineTypeMin").value)
 	config.set_value("PaintballProperties", "outline_type_max", find_node("OutlineTypeMax").value)
 	config.set_value("PaintballProperties", "fuzz_min", find_node("FuzzMin").value)
@@ -1338,8 +1406,12 @@ func load_settings():
 	find_node("DiameterMax").value = config.get_value("PaintballProperties", "diameter_max", 20.0)
 	find_node("Tapered").pressed = config.get_value("PaintballProperties", "tapered", false)
 	find_node("PixelMode").pressed = config.get_value("PaintballProperties", "pixel_mode", false)
-	find_node("Color").text = config.get_value("PaintballProperties", "color", "")
-	find_node("OutlineColor").text = config.get_value("PaintballProperties", "outline_color", "244")
+	
+	var color_node = find_node("Color", true, false)
+	if color_node: color_node.text = config.get_value("PaintballProperties", "color", "")
+	var outline_color_node = find_node("OutlineColor", true, false)
+	if outline_color_node: outline_color_node.text = config.get_value("PaintballProperties", "outline_color", "244")
+	
 	find_node("OutlineTypeMin").value = config.get_value("PaintballProperties", "outline_type_min", -1.0)
 	find_node("OutlineTypeMax").value = config.get_value("PaintballProperties", "outline_type_max", -1.0)
 	find_node("FuzzMin").value = config.get_value("PaintballProperties", "fuzz_min", 0.0)
@@ -1401,6 +1473,7 @@ func load_settings():
 	_refresh_slot_buttons()
 	_is_loading_settings = false
 	_on_palette_changed()
+	_refresh_all_previews()
 
 func _on_reset_defaults_pressed():
 	print("[STATUS] PaintballSettings: resetting to default settings")
@@ -1410,8 +1483,12 @@ func _on_reset_defaults_pressed():
 	find_node("DiameterMax").value = 20.0
 	find_node("Tapered").pressed = false
 	find_node("PixelMode").pressed = false
-	find_node("Color").text = ""
-	find_node("OutlineColor").text = "244"
+	
+	var color_node = find_node("Color", true, false)
+	if color_node: color_node.text = ""
+	var outline_color_node = find_node("OutlineColor", true, false)
+	if outline_color_node: outline_color_node.text = "244"
+	
 	find_node("OutlineTypeMin").value = -1.0
 	find_node("OutlineTypeMax").value = -1.0
 	find_node("FuzzMin").value = 0.0
@@ -1495,3 +1572,4 @@ func _on_reset_defaults_pressed():
 	_is_loading_settings = false
 	save_settings()
 	_on_palette_changed()
+	_refresh_all_previews()

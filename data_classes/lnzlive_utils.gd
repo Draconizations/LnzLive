@@ -50,6 +50,40 @@ static func parse_flexible_integers(s: String) -> Array:
 	
 	return result
 
+static func update_color_list_previews(container: Container, text: String, palette_colors: Array, max_previews: int = 8):
+	if not is_instance_valid(container): return
+	for child in container.get_children():
+		child.queue_free()
+
+	if palette_colors.empty():
+		return
+
+	var parsed = parse_number_list(text)
+	var count = min(parsed.size(), max_previews)
+
+	for i in range(count):
+		var color_idx = parsed[i]
+		var c = Color.white
+		if color_idx >= 0 and color_idx < palette_colors.size():
+			c = palette_colors[color_idx]
+
+		var rect = ColorRect.new()
+		rect.rect_min_size = Vector2(16, 16)
+		rect.color = c
+
+		var border = ReferenceRect.new()
+		border.editor_only = false
+		border.border_color = Color(0, 0, 0, 0.5) if c.v > 0.5 else Color(1, 1, 1, 0.5)
+		border.set_anchors_and_margins_preset(Control.PRESET_WIDE)
+		rect.add_child(border)
+
+		container.add_child(rect)
+
+	if parsed.size() > max_previews:
+		var label = Label.new()
+		label.text = "+" + str(parsed.size() - max_previews)
+		container.add_child(label)
+
 static func get_ramp_color(current_color_str: String, rule):
     if not rule.get("is_ramp") or \
        not current_color_str.is_valid_integer() or \
