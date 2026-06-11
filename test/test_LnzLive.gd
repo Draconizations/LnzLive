@@ -403,6 +403,10 @@ func test_generate_color_icon_creates_valid_texture():
 # ------------------------------------------------------------------------------
 # LnzLiveUtils
 # ------------------------------------------------------------------------------
+
+# need to test list-ranges and parsing palettes
+
+
 func test_world_to_lnz_delta_conversion():
 	var pixel_world_size = 0.002
 	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
