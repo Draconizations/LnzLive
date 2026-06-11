@@ -1452,7 +1452,7 @@ func _gui_input(event):
 	# Guard against entering hotkeys into text area when interacting with view container:
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and event.pressed:
 		var focus_owner := get_focus_owner()
-		if focus_owner and focus_owner is TextEdit:
+		if focus_owner and (focus_owner is TextEdit or focus_owner is LineEdit):
 			focus_owner.release_focus()
 
 	# Open Tools Menu via right-click on hovered ball:
@@ -1657,7 +1657,7 @@ func _gui_input(event):
 					b.apply_outline_state(b.OutlineState.NONE)
 			if hover and hover != linez_start_ball and hover.has_method("apply_outline_state"):
 				hover.apply_outline_state(hover.OutlineState.HOVER)
-		elif not preset_mode and not paintball_mode and not project_mode and not move_mode:
+		elif not preset_mode and not paintball_mode and not project_mode and not move_mode and not recolor_mode:
 			Input.set_custom_mouse_cursor(hand_neutral, 0, Vector2(30, 31))
 
 	# Update hovered ball_label and trigger highlight for selectable ball:
