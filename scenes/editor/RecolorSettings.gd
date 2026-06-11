@@ -243,11 +243,11 @@ func _on_RecolorButton_pressed():
 	var lines = swap_lines_container.get_children()
 	var recolor_info = {recolors = []}
 	for l in lines:
-		var before_color = l.get_node("BeforeColor").text
-		var before_texture = l.get_node("BeforeTexture").text
-		var after_color = l.get_node("AfterColor").text
-		var after_texture = l.get_node("AfterTexture").text
-		var is_ramp = l.get_node("ColorRampCheck").pressed
+		var before_color = l.find_node("BeforeColor", true, false).text
+		var before_texture = l.find_node("BeforeTexture", true, false).text
+		var after_color = l.find_node("AfterColor", true, false).text
+		var after_texture = l.find_node("AfterTexture", true, false).text
+		var is_ramp = l.find_node("ColorRampCheck", true, false).pressed
 
 		if before_color.empty() and before_texture.empty():
 			continue
@@ -280,10 +280,10 @@ func _on_RecolorButton_pressed():
 func _on_ClearSwap_pressed():
 	var lines = swap_lines_container.get_children()
 	for l in lines:
-		l.get_node("BeforeColor").text = ""
-		l.get_node("BeforeTexture").text = ""
-		l.get_node("AfterColor").text = ""
-		l.get_node("AfterTexture").text = ""
+		l.find_node("BeforeColor", true, false).text = ""
+		l.find_node("BeforeTexture", true, false).text = ""
+		l.find_node("AfterColor", true, false).text = ""
+		l.find_node("AfterTexture", true, false).text = ""
 
 	for cb in color_swap_check_container.get_children():
 		if cb is CheckBox or cb is Button:
