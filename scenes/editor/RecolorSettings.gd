@@ -23,13 +23,27 @@ onready var bucket_texture_icon = $VBoxContainer/ScrollContainer/VBoxContainer/B
 var recolor_line_scene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes = {} # ball_no -> properties
 
+var dog_generator = null
+var cached_palette_colors = []
+
 var is_docked = false
 
 func _ready():
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_palette_changed")
+
 	_setup_swap_lines()
 
-	bucket_color_edit.connect("text_changed", self, "_on_bucket_property_changed")
-	bucket_outline_edit.connect("text_changed", self, "_on_bucket_property_changed")
+	_setup_grid_preview(bucket_color_edit, bucket_color_icon, "BucketColor")
+	_setup_grid_preview(bucket_outline_edit, bucket_outline_icon, "BucketOutline")
+
+	#bucket_color_edit.connect("text_changed", self, "_on_bucket_property_changed")
+	#bucket_outline_edit.connect("text_changed", self, "_on_bucket_property_changed")
 	bucket_texture_edit.connect("text_changed", self, "_on_bucket_property_changed")
 
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
@@ -40,6 +54,8 @@ func _ready():
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
 
+	_on_palette_changed()
+
 func set_docked(docked: bool):
 	is_docked = docked
 
@@ -48,31 +64,23 @@ func _setup_swap_lines():
 		var line = recolor_line_scene.instance()
 		line.name = "Line" + str(i+1)
 		swap_lines_container.add_child(line)
+		
+		var before_color = line.get_node("BeforeColor")
+		var after_color = line.get_node("AfterColor")
+		
+		_setup_preview_wrapper(before_color, "BeforeColor_Line" + str(i))
+		_setup_preview_wrapper(after_color, "AfterColor_Line" + str(i))
 
-func get_color_preview_icon(color_index: int) -> ImageTexture:
-	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-	if not pet_node: return null
+# func get_color_preview_icon(color_index: int) -> ImageTexture:
+# 	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+# 	if not pet_node: return null
 
-	if pet_node.has_method("generate_color_icon"):
-		return pet_node.generate_color_icon(color_index)
+# 	if pet_node.has_method("generate_color_icon"):
+# 		return pet_node.generate_color_icon(color_index)
 
-	return null
+# 	return null
 
 func _on_bucket_property_changed(new_text):
-	var color_idx = int(bucket_color_edit.text)
-	var icon = get_color_preview_icon(color_idx)
-	if icon:
-		bucket_color_icon.texture = icon
-	else:
-		bucket_color_icon.texture = null
-
-	var outline_idx = int(bucket_outline_edit.text)
-	var o_icon = get_color_preview_icon(outline_idx)
-	if o_icon:
-		bucket_outline_icon.texture = o_icon
-	else:
-		bucket_outline_icon.texture = null
-
 	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 	if pet_node and bucket_texture_edit.text != "":
 		var tex_idx = int(bucket_texture_edit.text)
@@ -81,6 +89,107 @@ func _on_bucket_property_changed(new_text):
 			bucket_texture_icon.texture = tex
 	else:
 		bucket_texture_icon.texture = null
+
+func _setup_preview_wrapper(le: LineEdit, le_name: String):
+	if not le: return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var pos = le.get_index()
+	var orig_owner = le.owner
+	
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _setup_grid_preview(le: LineEdit, icon_node: TextureRect, le_name: String):
+	if not is_instance_valid(icon_node): return
+	var parent = icon_node.get_parent()
+	var pos = icon_node.get_index()
+	var orig_owner = icon_node.owner
+	
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	preview_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	parent.add_child(preview_container)
+	parent.move_child(preview_container, pos)
+	
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+		
+	icon_node.queue_free() 
+	
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _on_color_list_text_changed(new_text: String, container: Container):
+	LnzLiveUtils.update_color_list_previews(container, new_text, cached_palette_colors)
+
+func _refresh_all_previews():
+	var grid = bucket_color_edit.get_parent()
+	
+	var bucket_c_prev = grid.get_node_or_null("BucketColor_Preview")
+	if bucket_c_prev: _on_color_list_text_changed(bucket_color_edit.text, bucket_c_prev)
+	
+	var bucket_o_prev = grid.get_node_or_null("BucketOutline_Preview")
+	if bucket_o_prev: _on_color_list_text_changed(bucket_outline_edit.text, bucket_o_prev)
+	
+	for i in range(swap_lines_container.get_child_count()):
+		var line = swap_lines_container.get_child(i)
+		
+		var bc = line.get_node_or_null("BeforeColorWrapper/BeforeColor")
+		var bc_prev = line.get_node_or_null("BeforeColorWrapper/BeforeColor_Line" + str(i) + "_Preview")
+		if bc and bc_prev: _on_color_list_text_changed(bc.text, bc_prev)
+
+		var ac = line.get_node_or_null("AfterColorWrapper/AfterColor")
+		var ac_prev = line.get_node_or_null("AfterColorWrapper/AfterColor_Line" + str(i) + "_Preview")
+		if ac and ac_prev: _on_color_list_text_changed(ac.text, ac_prev)
+
+func _on_palette_changed(palette_name = ""):
+	if not dog_generator or not dog_generator.current_palette_texture:
+		return
+		
+	var img = dog_generator.current_palette_texture.get_data()
+	if img == null:
+		return
+		
+	img.lock()
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+	
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+			
+	img.unlock()
+	_refresh_all_previews()
 
 func queue_bucket_change(ball_node):
 	if not is_instance_valid(ball_node): return

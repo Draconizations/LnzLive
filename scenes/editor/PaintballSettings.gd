@@ -16,7 +16,6 @@ var _is_loading_settings = false
 #var _preview_ball_rotation = Vector3.ZERO
 #var _is_dragging_preview = false
 #var _last_mouse_pos = Vector2.ZERO
-var cached_palette_colors = []
 
 onready var paintballz_tree = find_node("PaintballzTree")
 #onready var preview_container = $VBoxContainer/TabContainer/Design/GridContainer/PreviewContainer
@@ -30,6 +29,7 @@ onready var paintballz_tree = find_node("PaintballzTree")
 var dog_generator = null
 var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
+var cached_palette_colors = []
 
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
 

@@ -43,6 +43,7 @@ onready var params_container = find_node("ParamsContainer")
 var pet_node = null
 
 var _is_loading_settings = false
+
 var cached_palette_colors = []
 
 var _ordered_color_index = 0
