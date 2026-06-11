@@ -40,9 +40,10 @@ signal affected_list_changed(ball_ids)
 signal unselect_all
 
 onready var params_container = find_node("ParamsContainer")
-onready var pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+var pet_node = null
 
 var _is_loading_settings = false
+var cached_palette_colors = []
 
 var _ordered_color_index = 0
 var _ordered_outline_color_index = 0
@@ -50,6 +51,14 @@ var _ordered_texture_index = 0
 var _ordered_ball_index = 0
 
 func _ready():
+	if get_tree().root.has_node("Root/PetRoot/Node"):
+		pet_node = get_tree().root.get_node("Root/PetRoot/Node")
+	elif get_tree().root.has_node("Root/PetRoot"):
+		pet_node = get_tree().root.get_node("Root/PetRoot")
+		
+	if pet_node:
+		pet_node.connect("palette_changed", self, "_on_palette_changed")
+		
 	var viewport_size = get_viewport().size
 	var panel = self
 	var panel_size = panel.rect_size
@@ -75,11 +84,52 @@ func _ready():
 	find_node("RandomSystemButton").connect("pressed", self, "_on_RandomSystemButton_pressed")
 	
 	_on_Distribution_item_selected(0)
-
 	_on_FractalPreset_item_selected(find_node("FractalPreset").selected)
 
 	_connect_settings_signals()
 	load_settings()
+	call_deferred("_on_palette_changed")
+
+func _on_palette_changed(palette_name = ""):
+	if not is_instance_valid(pet_node) or not "current_palette_texture" in pet_node or not pet_node.current_palette_texture:
+		return
+		
+	var img = pet_node.current_palette_texture.get_data()
+	if img == null:
+		return
+		
+	img.lock()
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+	
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+			
+	img.unlock()
+
+func get_closest_palette_index(target_color: Color) -> int:
+	if cached_palette_colors.empty():
+		return 0
+	var best_index = 0
+	var min_dist = INF
+	for i in range(cached_palette_colors.size()):
+		var c = cached_palette_colors[i]
+		var dist = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+		if dist < min_dist:
+			min_dist = dist
+			best_index = i
+	return best_index
+
+func get_color_from_index(index: int) -> Color:
+	if index >= 0 and index < cached_palette_colors.size():
+		return cached_palette_colors[index]
+	return Color.white
 
 func _on_UseSeed_toggled(button_pressed):
 	var seed_edit = find_node("Seed")
@@ -90,7 +140,7 @@ func _on_RandomSystemButton_pressed():
 	var rules_edit = find_node("FractalRules")
 	var angle_edit = find_node("FractalAngle")
 	
-	var random_system = _generate_random_lsystem()
+	var random_system = LnzLiveUtils.generate_random_lsystem()
 	axiom_edit.text = random_system.axiom
 	rules_edit.text = random_system.rules_text
 	angle_edit.value = [30, 45, 60, 90, 120][randi() % 5]
@@ -225,17 +275,21 @@ func _on_Distribution_item_selected(index):
 
 func _on_RandomizeButton_pressed():
 	var properties = get_properties()
+	
 	var affected_ballz = LnzLiveUtils.parse_number_list(properties.affected_ballz)
 	if affected_ballz.empty():
-		return
+		affected_ballz = [0]
+		find_node("AffectedBallz").text = "0"
 
 	var color_list = LnzLiveUtils.parse_number_list(properties.color_list)
 	if color_list.empty():
-		return
+		color_list = [105]
+		find_node("ColorList").text = "105"
 
 	var outline_color_list = LnzLiveUtils.parse_number_list(properties.outline_color_list)
 	if outline_color_list.empty():
-		return
+		outline_color_list = [244]
+		find_node("OutlineColorList").text = "244"
 
 	var texture_list_str = properties.texture_list
 	var texture_list = LnzLiveUtils.parse_number_list(texture_list_str, true) # Allow negatives
@@ -253,7 +307,10 @@ func _on_RandomizeButton_pressed():
 
 	var global_data = null
 	if distribution_mode == Distribution.STRIPES:
-		global_data = _calculate_gray_scott_grid(properties)
+		global_data = LnzLiveUtils.calculate_gray_scott_grid(
+			32, 100, properties.diffusion_a, properties.diffusion_b, 
+			properties.stripe_feed_rate, properties.stripe_kill_rate, properties.stripe_timestep
+		)
 
 	for b_idx in range(affected_ballz.size()):
 		var current_ball = affected_ballz[b_idx]
@@ -371,7 +428,7 @@ func _generate_star_pattern(properties, ball_no, num_stars, color_list, outline_
 
 	for i in range(num_stars):
 		var star_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		var basis = _get_basis_from_normal(star_center)
+		var basis = LnzLiveUtils.get_basis_from_normal(star_center)
 		var star_color = [color_list[randi() % color_list.size()]]
 		var star_outline = [outline_color_list[randi() % outline_color_list.size()]]
 		var base_size = rand_range(properties.size_min, properties.size_max)
@@ -396,7 +453,7 @@ func _generate_leopard_pattern(properties, ball_no, num_spots, color_list, outli
 
 	for i in range(num_spots):
 		var spot_center = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		var basis = _get_basis_from_normal(spot_center)
+		var basis = LnzLiveUtils.get_basis_from_normal(spot_center)
 		var spot_radius = rand_range(properties.leopard_radius_min, properties.leopard_radius_max)
 		var pb_size = rand_range(properties.size_min, properties.size_max)
 		
@@ -422,31 +479,6 @@ func _generate_leopard_pattern(properties, ball_no, num_spots, color_list, outli
 			paintballz.append(_create_paintball(pos, pb_size * 0.9, ball_no, properties, [c_in], outline_color_list, texture_list))
 	return paintballz
 
-func _calculate_gray_scott_grid(properties):
-	var size = 32
-	var grid = []
-	grid.resize(size * size)
-	for i in range(size * size): grid[i] = {"a": 1.0, "b": 0.0}
-	grid[(size/2) * size + (size/2)].b = 1.0
-	
-	for t in range(100):
-		var next = []
-		next.resize(size * size)
-		for x in range(1, size - 1):
-			for y in range(1, size - 1):
-				var i = y * size + x
-				var a = grid[i].a
-				var b = grid[i].b
-				var lp_a = (grid[i-1].a + grid[i+1].a + grid[i-size].a + grid[i+size].a) - 4 * a
-				var lp_b = (grid[i-1].b + grid[i+1].b + grid[i-size].b + grid[i+size].b) - 4 * b
-				var r = a * b * b
-				next[i] = {
-					"a": clamp(a + (properties.diffusion_a * lp_a - r + properties.stripe_feed_rate * (1 - a)) * properties.stripe_timestep, 0, 1),
-					"b": clamp(b + (properties.diffusion_b * lp_b + r - (properties.stripe_kill_rate + properties.stripe_feed_rate) * b) * properties.stripe_timestep, 0, 1)
-				}
-		for i in range(size * size): if next[i]: grid[i] = next[i]
-	return grid
-
 func _generate_stripes_pattern(properties, ball_no, spots_to_make, grid, color_list, outline_color_list, texture_list):
 	var paintballz = []
 	var offset_u = randf() # Unique UV offset per ball to vary sampling
@@ -469,11 +501,23 @@ func _generate_stripes_pattern(properties, ball_no, spots_to_make, grid, color_l
 # XX: Random Walk Generator
 func _generate_random_walk(p, ball_no, spots, color_list, outline_color_list, texture_list):
 	var paintballz = []
-	var last = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-	for i in range(spots):
-		var step = Vector3(rand_range(-0.3, 0.3), rand_range(-0.3, 0.3), rand_range(-0.3, 0.3))
-		last = (last + step).normalized()
-		paintballz.append(_create_paintball(last, rand_range(p.size_min, p.size_max), ball_no, p, color_list, outline_color_list, texture_list))
+	var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
+	
+	var walk_path = LnzLiveUtils.generate_surface_walk(
+		start_pos, Vector3.ZERO, 1.0, spots, 0.3
+	)
+	
+	for dir in walk_path:
+		paintballz.append(_create_paintball(
+			dir.normalized(), 
+			rand_range(p.size_min, p.size_max), 
+			ball_no, 
+			p, 
+			color_list, 
+			outline_color_list, 
+			texture_list
+		))
+		
 	return paintballz
 
 # XX: Cluster Generator
@@ -504,7 +548,7 @@ func _generate_rainbow_pattern(p, ball_no, num_rainbows, color_list, outline_col
 	var paintballz = []
 	for i in range(num_rainbows):
 		var start = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		var basis = _get_basis_from_normal(start)
+		var basis = LnzLiveUtils.get_basis_from_normal(start)
 		var rot_axis = basis.x.slerp(start, p.rainbow_curvature).rotated(start, deg2rad(p.rainbow_angle))
 		var pb_size = rand_range(p.size_min, p.size_max)
 		
@@ -538,53 +582,6 @@ func _generate_voronoi_pattern(properties, ball_no, spots_to_make, color_list, o
 			paintballz.append(_create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list))
 	return paintballz
 
-# func _generate_voronoi_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-# 	var paintballz = []
-# 	var num_cells = int(properties.voronoi_cells)
-# 	var edge_size = properties.voronoi_edge_size
-	
-# 	if num_cells < 2: return []
-	
-# 	var cell_centers = []
-# 	for i in range(num_cells):
-# 		cell_centers.append(Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized())
-
-# 	for i in range(properties.num_spots * 2): # Try twice as many random points to find spots on edges
-# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		
-# 		# Find the two closest cell centers to 'pos'
-# 		var closest_centers = []
-# 		for center in cell_centers:
-# 			closest_centers.append({"center": center, "dist_sq": pos.distance_squared_to(center)})
-		
-# 		closest_centers.sort_custom(self, "_sort_by_dist_sq")
-		
-# 		var D1_sq = closest_centers[0].dist_sq
-# 		var D2_sq = closest_centers[1].dist_sq
-		
-# 		# Edge Condition: Small difference between D1 and D2 means the point is near the boundary.
-# 		var center_dist_diff = abs(D1_sq - D2_sq)
-		
-# 		# Normalize difference
-# 		var edge_value = center_dist_diff / max(0.001, D1_sq + D2_sq)
-		
-# 		# Place spot if close to the boundary defined by edge_size
-# 		if edge_value < edge_size: 
-# 			var size = rand_range(properties.size_min, properties.size_max)
-			
-# 			var paintball = _create_paintball(
-# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-# 			)
-# 			paintballz.append(paintball)
-			
-# 			if paintballz.size() >= properties.num_spots:
-# 				break
-			
-# 	return paintballz
-	
-# func _sort_by_dist_sq(a, b):
-# 	return a.dist_sq < b.dist_sq
-
 # 18: Wave (Spherical Harmonics) Generator
 func _generate_wave_pattern(properties, ball_no, spots_to_make, color_list, outline_color_list, texture_list):
 	var paintballz = []
@@ -617,69 +614,6 @@ func _generate_wave_pattern(properties, ball_no, spots_to_make, color_list, outl
 			paintballz.append(_create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list))
 	return paintballz
 
-# func _generate_wave_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-# 	var paintballz = []
-# 	var L = int(properties.wave_degree_l) # Degree (Vertical Frequency)
-# 	var M = int(properties.wave_order_m)  # Order (Horizontal Frequency)
-# 	var threshold = properties.wave_threshold
-	
-# 	# Clamp M to L
-# 	M = min(M, L) 
-	
-# 	if L < 0 or M < 0: return []
-	
-# 	for i in range(properties.num_spots * 2): # Try twice as many random points
-# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		
-# 		var x = pos.x
-# 		var y = pos.y
-# 		var z = pos.z
-		
-# 		# Spherical Coordinates:
-# 		var cos_theta = clamp(y, -1.0, 1.0) # Cosine of the polar angle (elevation)
-# 		var sin_theta = sqrt(max(0.0, 1.0 - cos_theta * cos_theta))
-# 		var phi = atan2(z, x) # Azimuthal angle (longitude)
-		
-# 		var P_lm = 0.0 
-		
-# 		# --- Associated Legendre Polynomial P_l^m(x) (max L=3) ---
-# 		if L == 0:
-# 			P_lm = 1.0
-# 		elif L == 1:
-# 			if M == 0: P_lm = cos_theta
-# 			elif M == 1: P_lm = sin_theta
-# 		elif L == 2:
-# 			if M == 0: P_lm = 0.5 * (3.0 * cos_theta * cos_theta - 1.0)
-# 			elif M == 1: P_lm = 3.0 * cos_theta * sin_theta
-# 			elif M == 2: P_lm = 3.0 * sin_theta * sin_theta
-# 		elif L == 3:
-# 			if M == 0: P_lm = 0.5 * (5.0 * pow(cos_theta, 3) - 3.0 * cos_theta)
-# 			elif M == 1: P_lm = 1.5 * (5.0 * cos_theta * cos_theta - 1.0) * sin_theta
-# 			elif M == 2: P_lm = 15.0 * cos_theta * sin_theta * sin_theta
-# 			elif M == 3: P_lm = 15.0 * pow(sin_theta, 3)
-# 		else: # For L > 3, we default to the highest implemented value to avoid math complexity
-# 			L = 3
-# 			M = min(M, L)
-			
-# 		# The Real Spherical Harmonic is proportional to P_l^m(cos(theta)) * cos(m * phi)
-# 		var Y_lm = P_lm * cos(M * phi)
-		
-# 		# Map value Y_lm (typically [-1, 1]) to [0, 1] density
-# 		var density = (Y_lm + 1.0) / 2.0
-		
-# 		if density > threshold:
-# 			var size = rand_range(properties.size_min, properties.size_max)
-			
-# 			var paintball = _create_paintball(
-# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-# 			)
-# 			paintballz.append(paintball)
-			
-# 			if paintballz.size() >= properties.num_spots:
-# 				break
-
-# 	return paintballz
-
 # 04: Noise Field Generator
 func _generate_noise_pattern(p, ball_no, spots, color_list, outline_color_list, texture_list):
 	var pbs = []
@@ -693,41 +627,11 @@ func _generate_noise_pattern(p, ball_no, spots, color_list, outline_color_list, 
 			if pb: pbs.append(pb)
 	return pbs
 
-# func _generate_noise_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-# 	var paintballz = []
-# 	var noise = OpenSimplexNoise.new()
-	
-# 	noise.seed = randi()
-# 	noise.period = properties.noise_scale
-# 	noise.octaves = int(properties.noise_octaves)
-# 	var threshold = properties.noise_threshold
-	
-# 	for i in range(properties.num_spots * 2):
-# 		var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-		
-# 		# Get 3D noise value
-# 		var noise_value = noise.get_noise_3d(pos.x, pos.y, pos.z)
-		
-# 		# Normalize noise from [-1, 1] to [0, 1]
-# 		var density = (noise_value + 1.0) / 2.0
-		
-# 		if density > threshold:
-# 			var size = rand_range(properties.size_min, properties.size_max)
-			
-# 			var paintball = _create_paintball(
-# 				pos, size, properties, affected_ballz, color_list, outline_color_list, texture_list
-# 			)
-# 			paintballz.append(paintball)
-			
-# 			if paintballz.size() >= properties.num_spots:
-# 				break
-				
-# 	return paintballz
-
 # 16: L-System Fractal Generator
 func _generate_fractal_pattern(p, ball_no, color_list, outline_color_list, texture_list):
 	var axiom = p.fractal_axiom
-	var rules = _parse_lsystem_rules(p.fractal_rules)
+	var rules = LnzLiveUtils.parse_lsystem_rules(p.fractal_rules)
+	
 	if p.fractal_preset == FractalPreset.DRAGON_CURVE:
 		axiom = "F"
 		rules = {"F": "F+G", "G": "F-G"}
@@ -738,9 +642,9 @@ func _generate_fractal_pattern(p, ball_no, color_list, outline_color_list, textu
 		axiom = "X"
 		rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
 	
-	var s = _generate_lsystem_string(axiom, rules, int(p.fractal_iterations))
+	var s = LnzLiveUtils.generate_lsystem_string(axiom, rules, int(p.fractal_iterations))
 	var pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-	var basis = _get_basis_from_normal(pos)
+	var basis = LnzLiveUtils.get_basis_from_normal(pos)
 	var state = {"pos": pos, "heading": basis.x}
 	var stack = []
 	var pbs = []
@@ -760,79 +664,11 @@ func _generate_fractal_pattern(p, ball_no, color_list, outline_color_list, textu
 			"]": if !stack.empty(): state = stack.pop_back()
 	return pbs
 
-# func _generate_fractal_pattern(properties, affected_ballz, color_list, outline_color_list, texture_list):
-# 	var paintballz = []
-# 	var axiom = ""
-# 	var rules = {}
-
-# 	match properties.fractal_preset:
-# 		FractalPreset.DRAGON_CURVE:
-# 			axiom = "F"
-# 			rules = {"F": "F+G", "G": "F-G"}
-# 		FractalPreset.SIERPINSKI:
-# 			axiom = "A"
-# 			rules = {"A": "B-A-B", "B": "A+B+A"}
-# 		FractalPreset.BARNSLEY_FERN:
-# 			axiom = "X"
-# 			rules = {"X": "F+[[X]-X]-F[-FX]+X", "F": "FF"}
-# 		_: # Default to Custom
-# 			axiom = properties.fractal_axiom
-# 			rules = _parse_lsystem_rules(properties.fractal_rules)
-	
-# 	if axiom.empty() or rules.empty():
-# 		push_warning("Fractal generation failed: Axiom or Rules are not defined.")
-# 		return []
-
-# 	var fractal_string = _generate_lsystem_string(axiom, rules, properties.fractal_iterations)
-	
-# 	var start_pos = Vector3(rand_range(-1, 1), rand_range(-1, 1), rand_range(-1, 1)).normalized()
-# 	if start_pos.length_squared() == 0: start_pos = Vector3.FORWARD
-	
-# 	var basis = _get_basis_from_normal(start_pos)
-# 	var turtle_state = {"pos": start_pos, "heading": basis.x}
-# 	var state_stack = []
-
-# 	var paintball_size = rand_range(properties.size_min, properties.size_max)
-# 	var step_angle_rad = atan(paintball_size * 0.02) * 0.9
-
-# 	for command in fractal_string:
-# 		match command:
-# 			"F", "G", "A", "B": # Draw forward
-# 				var move_axis = turtle_state.heading.cross(turtle_state.pos).normalized()
-# 				if move_axis.length_squared() > 0:
-# 					turtle_state.pos = turtle_state.pos.rotated(move_axis, step_angle_rad)
-# 					turtle_state.heading = turtle_state.heading.rotated(move_axis, step_angle_rad)
-					
-# 					var paintball = _create_paintball(
-# 						turtle_state.pos,
-# 						paintball_size,
-# 						properties, affected_ballz, color_list, outline_color_list, texture_list
-# 					)
-# 					paintballz.append(paintball)
-# 			"+": # Turn Right
-# 				var turn_axis = turtle_state.pos
-# 				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(-properties.fractal_angle))
-# 			"-": # Turn Left
-# 				var turn_axis = turtle_state.pos
-# 				turtle_state.heading = turtle_state.heading.rotated(turn_axis, deg2rad(properties.fractal_angle))
-# 			"[": # Push state
-# 				state_stack.append(turtle_state.duplicate(true))
-# 			"]": # Pop state
-# 				if not state_stack.empty():
-# 					turtle_state = state_stack.pop_back()
-# 	return paintballz
-
 func _on_ApplyButton_pressed():
 	emit_signal("apply_auto_paintballz")
 
 func _on_ClearButton_pressed():
 	emit_signal("clear_auto_paintballz")
-
-# func show():
-# 	$Panel.show()
-
-# func hide():
-# 	$Panel.hide()
 
 func _create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list):
 	if not properties is Dictionary:
@@ -858,7 +694,7 @@ func _create_paintball(pos, size, ball_no, properties, color_list, outline_color
 
 	var final_diameter = size
 
-	if properties.get("pixel_mode", false):
+	if properties.get("pixel_mode", false) and is_instance_valid(pet_node) and "ball_map" in pet_node:
 		var visual_base = pet_node.ball_map.get(ball_no)
 		if visual_base:
 			var base_pixel_size = visual_base.ball_size 
@@ -876,103 +712,6 @@ func _create_paintball(pos, size, ball_no, properties, color_list, outline_color
 	
 	return pb
 
-# func _create_paintball(pos, size, ball_no, properties, color_list, outline_color_list, texture_list):
-# 	var color
-# 	var outline_color
-# 	var texture
-
-# 	if properties.ordered:
-# 		color = color_list[_ordered_color_index % color_list.size()]
-# 		_ordered_color_index += 1
-# 		outline_color = outline_color_list[_ordered_outline_color_index % outline_color_list.size()]
-# 		_ordered_outline_color_index += 1
-# 		texture = texture_list[_ordered_texture_index % texture_list.size()]
-# 		_ordered_texture_index += 1
-# 	else:
-# 		color = color_list[randi() % color_list.size()]
-# 		outline_color = outline_color_list[randi() % outline_color_list.size()]
-# 		texture = texture_list[randi() % texture_list.size()]
-
-# 	return PaintBallData.new(
-# 		ball_no, size, pos, color, outline_color,
-# 		floor(rand_range(properties.outline_type_min, properties.outline_type_max)),
-# 		floor(rand_range(properties.fuzz_min, properties.fuzz_max)),
-# 		0, texture, 1 if properties.anchored else 0, properties.group
-# 	)
-
-func _get_basis_from_normal(normal_vec):
-	var basis_y = normal_vec.normalized()
-	var cross_vec = Vector3.UP.cross(basis_y)
-
-	if cross_vec.length_squared() < 0.0001:
-		cross_vec = Vector3.RIGHT.cross(basis_y)
-	
-	var basis_x = cross_vec.normalized()
-	var basis_z = basis_y.cross(basis_x).normalized()
-	
-	return Basis(basis_x, basis_y, basis_z)
-
-
-func _parse_lsystem_rules(rules_text: String) -> Dictionary:
-	var rules = {}
-	var lines = rules_text.split("\n", false)
-	for line in lines:
-		var parts = line.split("=", false, 1)
-		if parts.size() == 2:
-			var key = parts[0].strip_edges()
-			var value = parts[1].strip_edges()
-			if not key.empty():
-				rules[key] = value
-	return rules
-
-func _generate_lsystem_string(axiom, rules, iterations):
-	var current_string = axiom
-	for i in range(iterations):
-		var new_string = ""
-		for char_idx in range(current_string.length()):
-			var current_char = current_string[char_idx]
-			if rules.has(current_char):
-				new_string += rules[current_char]
-			else:
-				new_string += current_char
-		current_string = new_string
-	return current_string
-
-func _generate_random_lsystem() -> Dictionary:
-	var variables = ["F", "G", "A", "B", "X"]
-	var constants = ["+", "-"]
-	var all_chars = variables + constants
-
-	var axiom = variables[randi() % variables.size()]
-
-	var rules = {}
-	var num_rules = 2 + randi() % 2 
-	
-	variables.shuffle()
-	
-	for i in range(num_rules):
-		var key = variables[i]
-		var value = ""
-		var value_length = 3 + randi() % 5
-		
-		var current_len = 0
-		while current_len < value_length:
-			if randf() < 0.2 and current_len < value_length - 2:
-				value += "[" + all_chars[randi() % all_chars.size()] + "]"
-				current_len += 3
-			else:
-				value += all_chars[randi() % all_chars.size()]
-				current_len += 1
-		
-		rules[key] = value
-
-	var rule_lines = []
-	for key in rules:
-		rule_lines.append(key + "=" + rules[key])
-	var rules_text = PoolStringArray(rule_lines).join("\n")
-
-	return {"axiom": axiom, "rules_text": rules_text}
-
 func get_properties():
 	var properties = {}
 	properties["affected_ballz"] = find_node("AffectedBallz").text
@@ -985,7 +724,7 @@ func get_properties():
 	properties["band_spacing"] = find_node("BandSpacing").value
 	properties["band_offset"] = find_node("BandOffset").value
 	properties["band_angle"] = find_node("BandAngle").value
-	properties["band_direction"] = find_node("BandDirection").selected # New for Bands
+	properties["band_direction"] = find_node("BandDirection").selected 
 	properties["noise_scale"] = find_node("NoiseScale").value
 	properties["noise_threshold"] = find_node("NoiseThreshold").value
 	properties["noise_octaves"] = find_node("NoiseOctaves").value
@@ -1578,14 +1317,62 @@ func _randomize_mode_params(mode):
 			find_node("WaveThreshold").value = rand_range(0.4, 0.8)
 
 func _generate_surprise_color_string() -> String:
-	var parts = []
-	for i in range(randi() % 3 + 1):
-		var base = (randi() % 19 + 1) * 10 
-		parts.append(str(base) + "-" + str(base + 9))
-	if randf() > 0.4:
-		for i in range(randi() % 3 + 1):
-			parts.append(_get_random_static_accent())
-	return PoolStringArray(parts).join(",")
+	if cached_palette_colors.empty() and is_instance_valid(pet_node) and "current_palette_texture" in pet_node:
+		_on_palette_changed()
+		
+	var base_index = randi() % 256
+	var base_color = get_color_from_index(base_index)
+	
+	var p_type = randi() % 5
+	var generated_colors = []
+	var h = base_color.h
+	var s = base_color.s
+	var v = base_color.v
+	
+	generated_colors.append(base_color)
+	
+	match p_type:
+		0: # Monochromatic (Value & Saturation)
+			for _i in range(1, 5):
+				var nv = clamp(v + rand_range(-0.4, 0.4), 0.1, 1.0)
+				var ns = clamp(s + rand_range(-0.4, 0.4), 0.0, 1.0)
+				generated_colors.append(Color.from_hsv(h, ns, nv))
+		1: # Analogous
+			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.05, 0.12), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.05, 0.12) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.13, 0.20), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.13, 0.20) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+		2: # Complementary
+			var comp_h = fmod(h + 0.5 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(comp_h, s, v))
+			generated_colors.append(Color.from_hsv(h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(comp_h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+		3: # Triadic 
+			var t1 = fmod(h + 0.333 + rand_range(-0.05, 0.05), 1.0)
+			var t2 = fmod(h + 0.666 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(t1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(t2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(t1, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(t2, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+		4: # Split Complementary
+			var sc1 = fmod(h + 0.416 + rand_range(-0.05, 0.05), 1.0)
+			var sc2 = fmod(h + 0.583 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(sc1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(sc2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
+			generated_colors.append(Color.from_hsv(sc1, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+			generated_colors.append(Color.from_hsv(sc2, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+
+	var new_indices = []
+	for c in generated_colors:
+		var idx = get_closest_palette_index(c)
+		if not new_indices.has(idx):
+			new_indices.append(idx)
+			
+	var res_str = PoolStringArray()
+	for idx in new_indices:
+		res_str.append(str(idx))
+		
+	return res_str.join(",")
 
 func _generate_surprise_texture_string() -> String:
 	var parts = []

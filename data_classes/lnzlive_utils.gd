@@ -128,6 +128,18 @@ static func get_ramp_color(current_color_str: String, rule):
 
 
 ### SPATIAL UTILITIES ###
+static func get_basis_from_normal(normal_vec: Vector3) -> Basis:
+	var basis_y = normal_vec.normalized()
+	var cross_vec = Vector3.UP.cross(basis_y)
+
+	if cross_vec.length_squared() < 0.0001:
+		cross_vec = Vector3.RIGHT.cross(basis_y)
+	
+	var basis_x = cross_vec.normalized()
+	var basis_z = basis_y.cross(basis_x).normalized()
+	
+	return Basis(basis_x, basis_y, basis_z)
+
 static func intersect_ray_with_plane(ray_origin: Vector3, ray_dir: Vector3, plane_normal: Vector3, plane_point: Vector3) -> Object:
 	var denom = plane_normal.dot(ray_dir)
 	if abs(denom) < 0.0001:
@@ -173,3 +185,147 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	var snapped = round((current_base_size - offset) * (engine_scale / 255.0))
 	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
 	return snapped
+
+### PATTERN & PAINTBALL UTILITIES ###
+static func generate_surface_walk(start_pos: Vector3, center: Vector3, step_scale_radius: float, steps: int, walk_spread: float) -> Array:
+	var path: Array = []
+	var curr_pos: Vector3 = start_pos
+	var actual_dist: float = (start_pos - center).length()
+	if actual_dist == 0:
+		actual_dist = 1.0
+		curr_pos = center + Vector3.UP
+		
+	var dir: Vector3 = Vector3(rand_range(-1.0, 1.0), rand_range(-1.0, 1.0), rand_range(-1.0, 1.0)).normalized()
+	
+	for _s in range(steps):
+		var normal = (curr_pos - center).normalized()
+		var tangent = (dir - normal * dir.dot(normal)).normalized()
+		
+		dir = (tangent + Vector3(rand_range(-0.5, 0.5), rand_range(-0.5, 0.5), rand_range(-0.5, 0.5))).normalized()
+		
+		var step_dist = step_scale_radius * rand_range(1.0, 2.5) * walk_spread
+		curr_pos += tangent * step_dist
+		curr_pos = center + (curr_pos - center).normalized() * actual_dist
+		
+		path.append(curr_pos)
+		
+	return path
+
+static func calculate_gray_scott_grid(size: int, iterations: int, diff_a: float, diff_b: float, feed: float, kill: float, timestep: float) -> Array:
+	var grid = []
+	grid.resize(size * size)
+	for i in range(size * size): grid[i] = {"a": 1.0, "b": 0.0}
+	grid[(size/2) * size + (size/2)].b = 1.0
+	
+	for _t in range(iterations):
+		var next = []
+		next.resize(size * size)
+		for x in range(1, size - 1):
+			for y in range(1, size - 1):
+				var i = y * size + x
+				var a = grid[i].a
+				var b = grid[i].b
+				var lp_a = (grid[i-1].a + grid[i+1].a + grid[i-size].a + grid[i+size].a) - 4 * a
+				var lp_b = (grid[i-1].b + grid[i+1].b + grid[i-size].b + grid[i+size].b) - 4 * b
+				var r = a * b * b
+				next[i] = {
+					"a": clamp(a + (diff_a * lp_a - r + feed * (1 - a)) * timestep, 0.0, 1.0),
+					"b": clamp(b + (diff_b * lp_b + r - (kill + feed) * b) * timestep, 0.0, 1.0)
+				}
+		for i in range(size * size): 
+			if next[i] != null: 
+				grid[i] = next[i]
+	return grid
+
+static func parse_lsystem_rules(rules_text: String) -> Dictionary:
+	var rules = {}
+	var lines = rules_text.split("\n", false)
+	for line in lines:
+		var parts = line.split("=", false, 1)
+		if parts.size() == 2:
+			var key = parts[0].strip_edges()
+			var value = parts[1].strip_edges()
+			if not key.empty():
+				rules[key] = value
+	return rules
+
+static func generate_lsystem_string(axiom: String, rules: Dictionary, iterations: int) -> String:
+	var current_string = axiom
+	for _i in range(iterations):
+		var new_string = ""
+		for char_idx in range(current_string.length()):
+			var current_char = current_string[char_idx]
+			if rules.has(current_char):
+				new_string += rules[current_char]
+			else:
+				new_string += current_char
+		current_string = new_string
+	return current_string
+
+static func generate_random_lsystem() -> Dictionary:
+	var variables = ["F", "G", "A", "B", "X"]
+	var constants = ["+", "-"]
+	var all_chars = variables + constants
+
+	var axiom = variables[randi() % variables.size()]
+	var rules = {}
+	var num_rules = 2 + randi() % 2 
+	
+	variables.shuffle()
+	
+	for i in range(num_rules):
+		var key = variables[i]
+		var value = ""
+		var value_length = 3 + randi() % 5
+		
+		var current_len = 0
+		while current_len < value_length:
+			if randf() < 0.2 and current_len < value_length - 2:
+				value += "[" + all_chars[randi() % all_chars.size()] + "]"
+				current_len += 3
+			else:
+				value += all_chars[randi() % all_chars.size()]
+				current_len += 1
+		
+		rules[key] = value
+
+	var rule_lines = []
+	for key in rules:
+		rule_lines.append(key + "=" + rules[key])
+	var rules_text = PoolStringArray(rule_lines).join("\n")
+
+	return {"axiom": axiom, "rules_text": rules_text}
+
+### IMAGE/MASKING UTILITIES ###
+static func compute_distance_transform(mask: Array, size: int) -> Array:
+	var dists = []
+	dists.resize(size * size)
+	for i in range(dists.size()):
+		if not mask[i]:
+			dists[i] = 0.0
+			continue
+		
+		var x = i % size
+		var y = i / size
+		var min_d = 100.0
+		for my in range(size):
+			for mx in range(size):
+				if not mask[my * size + mx]:
+					var d = sqrt(pow(x - mx, 2) + pow(y - my, 2))
+					if d < min_d: min_d = d
+
+		min_d = min(min_d, min(x + 0.5, min(y + 0.5, min(size - 1 - x + 0.5, size - 1 - y + 0.5))))
+		dists[i] = min_d
+	return dists
+
+static func clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float) -> int:
+	var cleared = 0
+	for y in range(size):
+		for x in range(size):
+			var idx = y * size + x
+			if mask[idx]:
+				var d = sqrt(pow(x - cx, 2) + pow(y - cy, 2))
+				if d <= radius:
+					mask[idx] = false
+					cleared += 1
+	return cleared

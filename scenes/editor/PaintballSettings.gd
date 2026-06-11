@@ -358,7 +358,10 @@ func _process(delta):
 			"radius": _get_pb_world_radius(dict, node, base_ball)
 		})
 
-	if props.get("random_walk", false):
+	var is_random_walk = props.get("random_walk", false)
+	var is_freeline = props.get("freeline", false)
+
+	if is_random_walk and not is_freeline:
 		var walk_steps = props.get("walk_steps", 3)
 		var walk_spread = props.get("walk_spread", 50.0) / 100.0
 		var new_walks = []
@@ -369,23 +372,13 @@ func _process(delta):
 			dict["walk_done"] = true
 
 			var base_origin = item.base_ball.global_transform.origin
-			var curr_pos = item.world_pos
 			var curr_size = dict.get("diameter", dict.get("size", 20.0))
 			
-			var dir = Vector3(rand_range(-1,1), rand_range(-1,1), rand_range(-1,1)).normalized()
+			var walk_positions = LnzLiveUtils.generate_surface_walk(item.world_pos, base_origin, item.radius, walk_steps, walk_spread)
 			
 			for s in range(walk_steps):
-				var normal = (curr_pos - base_origin).normalized()
-				var tangent = (dir - normal * dir.dot(normal)).normalized()
-				
-				dir = (tangent + Vector3(rand_range(-0.5,0.5), rand_range(-0.5,0.5), rand_range(-0.5,0.5))).normalized()
-				
-				var step_dist = item.radius * rand_range(1.0, 2.5) * walk_spread
-				curr_pos += tangent * step_dist
-				curr_pos = base_origin + (curr_pos - base_origin).normalized() * (item.world_pos - base_origin).length()
-				
+				var curr_pos = walk_positions[s]
 				curr_size *= rand_range(0.7, 0.95)
-
 				curr_size = max(1.0, floor(curr_size))
 				
 				var child_dict = dict.duplicate(true)
@@ -422,6 +415,9 @@ func _process(delta):
 		for w in new_walks:
 			if is_instance_valid(dog_generator) and dog_generator.has_method("add_pending_paintball"):
 				dog_generator.add_pending_paintball(w)
+	else:
+		for item in items:
+			item.dict["walk_done"] = true
 
 func get_closest_palette_index(target_color: Color) -> int:
 	if cached_palette_colors.empty():
@@ -430,7 +426,6 @@ func get_closest_palette_index(target_color: Color) -> int:
 	var min_dist = INF
 	for i in range(cached_palette_colors.size()):
 		var c = cached_palette_colors[i]
-		# Using Euclidean distance in RGB space
 		var dist = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
 		if dist < min_dist:
 			min_dist = dist
@@ -476,7 +471,6 @@ func _on_palette_changed(palette_name = ""):
 		var color_list = LnzLiveUtils.parse_number_list(str(slot.color))
 		if color_list and color_list.size() > 0:
 			var index = int(color_list[0])
-			
 			var x = index % img_width
 			var y = index / img_width
 			
@@ -658,39 +652,6 @@ func _apply_settings_dict(data: Dictionary):
 	if data.has("walk_spread"): find_node("WalkSpreadSpinBox").value = data["walk_spread"]
 	_is_loading_settings = false
 	save_settings()
-
-func _compute_distance_transform(mask: Array, size: int) -> Array:
-	var dists = []
-	dists.resize(size * size)
-	for i in range(dists.size()):
-		if not mask[i]:
-			dists[i] = 0.0
-			continue
-		
-		var x = i % size
-		var y = i / size
-		var min_d = 100.0
-		for my in range(size):
-			for mx in range(size):
-				if not mask[my * size + mx]:
-					var d = sqrt(pow(x - mx, 2) + pow(y - my, 2))
-					if d < min_d: min_d = d
-
-		min_d = min(min_d, min(x + 0.5, min(y + 0.5, min(size - 1 - x + 0.5, size - 1 - y + 0.5))))
-		dists[i] = min_d
-	return dists
-
-func _clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: float) -> int:
-	var cleared = 0
-	for y in range(size):
-		for x in range(size):
-			var idx = y * size + x
-			if mask[idx]:
-				var d = sqrt(pow(x - cx, 2) + pow(y - cy, 2))
-				if d <= radius:
-					mask[idx] = false
-					cleared += 1
-	return cleared
 
 func paste_paintball_design(center_dir: Vector3, basis: Basis, ball_no: int, ball_lnz_diameter: float, override_footprint: float = -1.0, design_rotation_angle: float = 0.0, jitter_enabled: bool = true) -> Dictionary:
 	print("[STATUS] PaintballSettings: paste_paintball_design started on ball_no: %d" % ball_no)
@@ -1360,7 +1321,7 @@ func save_settings():
 	if save_err != OK:
 		print("[ERROR] PaintballSettings: failed to save config to %s (Error: %s)" % [SETTINGS_PATH, save_err])
 	else:
-		pass # Optionally enable for super noisy debug: print("[STATUS] PaintballSettings: configuration auto-saved")
+		pass
 	config.save(SETTINGS_PATH)
 
 func load_settings():
