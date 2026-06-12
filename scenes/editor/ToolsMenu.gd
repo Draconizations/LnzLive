@@ -26,7 +26,6 @@ signal unomit_ball(ball_no)
 signal hide_ball(ball_no)
 
 var selected_visual_ball = null
-
 var current_action
 
 onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
@@ -51,7 +50,6 @@ enum ToolsAction {
 	CLEAR_PAINTBALLZ = 15
 }
 
-func _ready():
 	# add_submenu_item("Color...", "RecolorMenu")
 	# add_item("Create Addballz + Linez")         # index 1
 	# add_item("Create Addballz")                 # index 2
@@ -66,7 +64,12 @@ func _ready():
 	# add_item("Apply Global Fuzz")               # index 11
 	# add_item("Copy Ballz Colors to Clipboard")  # index 12
 	# add_item("Ball Info")                       # index 13
+var dog_generator = null
+var cached_palette_colors = []
+var color_line_edit: LineEdit
+var outcol_line_edit: LineEdit
 
+func _ready():
 	add_submenu_item("Color...", "RecolorMenu", ToolsAction.RECOLOR)
 	add_item("Create Addballz + Linez", ToolsAction.CREATE_ADDBALLZ_LINEZ)
 	add_item("Create Addballz", ToolsAction.CREATE_ADDBALLZ)
@@ -95,11 +98,121 @@ func _ready():
 	var recolor_menu = get_node_or_null("RecolorMenu")
 	if recolor_menu:
 		recolor_menu.add_stylebox_override("panel", panel_style)
+	
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_palette_changed")
+
+	color_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit")
+	outcol_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit2")
+	
+	var color_popup = get_parent().get_node("ColorPopup")
+	if color_popup:
+		color_popup.rect_min_size = Vector2(240, 100) # Ensure popup is tall/wide enough for padding + icons
+		
+		var vbox = color_popup.get_node("VBoxContainer")
+		if vbox:
+			vbox.anchor_right = 1.0
+			vbox.anchor_bottom = 1.0
+			vbox.margin_right = 0
+			vbox.margin_bottom = 0
+	
+	_setup_preview_wrapper(color_line_edit, "ColorEdit")
+	_setup_preview_wrapper(outcol_line_edit, "OutcolEdit")
+	
+	# Apply comfortable padding to all standard LineEdits inside the menu popups
+	var le_style = color_line_edit.get_stylebox("normal").duplicate()
+	if le_style is StyleBoxFlat:
+		le_style.content_margin_left = 10
+		le_style.content_margin_right = 10
+		le_style.content_margin_top = 6
+		le_style.content_margin_bottom = 6
+		
+	color_line_edit.add_stylebox_override("normal", le_style)
+	outcol_line_edit.add_stylebox_override("normal", le_style)
+	
+	if fuzz_line_edit: fuzz_line_edit.add_stylebox_override("normal", le_style)
+	
+	for head_edit in ["HeadMoveLineEditX", "HeadMoveLineEditY", "HeadMoveLineEditZ"]:
+		var edit = get_parent().get_node_or_null("HeadMovePopup/VBoxContainer/" + head_edit)
+		if edit: edit.add_stylebox_override("normal", le_style)
+
+	_on_palette_changed()
+
+
+func _setup_preview_wrapper(le: LineEdit, le_name: String):
+	if not is_instance_valid(le): return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.rect_min_size = le.rect_min_size
+
+	var pos = le.get_index()
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _on_color_list_text_changed(new_text: String, container: Container):
+	# Removed ClassDB check because LnzLiveUtils is an AutoLoad singleton.
+	if LnzLiveUtils:
+		LnzLiveUtils.update_color_list_previews(container, new_text, cached_palette_colors)
+
+func _on_palette_changed(palette_name = ""):
+	if not is_instance_valid(dog_generator) or not dog_generator.current_palette_texture:
+		return
+
+	var img = dog_generator.current_palette_texture.get_data()
+	if img == null:
+		return
+
+	img.lock()
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+
+	img.unlock()
+	_refresh_all_previews()
+
+func _refresh_all_previews():
+	if not is_instance_valid(color_line_edit) or not is_instance_valid(outcol_line_edit): return
+	
+	var cw = color_line_edit.get_parent()
+	if cw and cw.has_node("ColorEdit_Preview"):
+		_on_color_list_text_changed(color_line_edit.text, cw.get_node("ColorEdit_Preview"))
+
+	var ow = outcol_line_edit.get_parent()
+	if ow and ow.has_node("OutcolEdit_Preview"):
+		_on_color_list_text_changed(outcol_line_edit.text, ow.get_node("OutcolEdit_Preview"))
+
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
-		var base_color = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit").text
-		var outline_color = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit2").text
+		var base_color = color_line_edit.text
+		var outline_color = outcol_line_edit.text
 		if current_action == RecolorAction.ENTIRE:
 			emit_signal("color_entire_pet", base_color, outline_color)
 		else:
@@ -510,7 +623,8 @@ func _on_ClearButton_pressed():
 		l.get_node("AfterColor").text = ""
 		l.get_node("AfterTexture").text = ""
 	for cb in popup.get_node("CheckContainer").get_children():
-		cb.pressed = true
+		if cb.has_method("set_pressed"):
+			cb.pressed = true
 
 func _sort_by_count(a, b):
 	return a.count > b.count
