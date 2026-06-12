@@ -64,10 +64,14 @@ enum ToolsAction {
 	# add_item("Apply Global Fuzz")               # index 11
 	# add_item("Copy Ballz Colors to Clipboard")  # index 12
 	# add_item("Ball Info")                       # index 13
+
 var dog_generator = null
+
 var cached_palette_colors = []
+
 var color_line_edit: LineEdit
 var outcol_line_edit: LineEdit
+var fuzz_line_edit: LineEdit
 
 func _ready():
 	add_submenu_item("Color...", "RecolorMenu", ToolsAction.RECOLOR)
@@ -107,12 +111,17 @@ func _ready():
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_palette_changed")
 
+	_resize_and_anchor_popup("ColorPopup", Vector2(240, 110))
+	_resize_and_anchor_popup("FuzzPopup", Vector2(160, 60))
+	_resize_and_anchor_popup("HeadMovePopup", Vector2(160, 120))
+
 	color_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit")
 	outcol_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit2")
+	fuzz_line_edit = get_parent().get_node_or_null("FuzzPopup/VBoxContainer/GlobalFuzzAmount")
 	
 	var color_popup = get_parent().get_node("ColorPopup")
 	if color_popup:
-		color_popup.rect_min_size = Vector2(240, 100) # Ensure popup is tall/wide enough for padding + icons
+		color_popup.rect_min_size = Vector2(200, 100) # Ensure popup is tall/wide enough for padding + icons
 		
 		var vbox = color_popup.get_node("VBoxContainer")
 		if vbox:
@@ -143,6 +152,18 @@ func _ready():
 
 	_on_palette_changed()
 
+func _resize_and_anchor_popup(popup_name: String, new_size: Vector2):
+	var popup = get_parent().get_node_or_null(popup_name)
+	if popup:
+		popup.rect_min_size = new_size
+		popup.rect_size = new_size
+		
+		var vbox = popup.get_node_or_null("VBoxContainer")
+		if vbox:
+			vbox.anchor_right = 1.0
+			vbox.anchor_bottom = 1.0
+			vbox.margin_right = 0
+			vbox.margin_bottom = 0
 
 func _setup_preview_wrapper(le: LineEdit, le_name: String):
 	if not is_instance_valid(le): return
