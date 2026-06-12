@@ -84,6 +84,17 @@ func _ready():
 	add_item("Ball Info", ToolsAction.BALL_INFO)
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
+	
+	var panel_style = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
+	panel_style.content_margin_left = 12
+	panel_style.content_margin_right = 12
+	panel_style.content_margin_top = 8
+	panel_style.content_margin_bottom = 12
+	add_stylebox_override("panel", panel_style)
+
+	var recolor_menu = get_node_or_null("RecolorMenu")
+	if recolor_menu:
+		recolor_menu.add_stylebox_override("panel", panel_style)
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
