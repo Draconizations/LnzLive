@@ -51,8 +51,8 @@ onready var size_option_btn = $VBoxContainer/ScrollContainer/VBoxContainer/SizeH
 onready var zoom_option_btn = $VBoxContainer/ScrollContainer/VBoxContainer/SizeHBox/ZoomOptionButton
 onready var texture_rect = $VBoxContainer/ScrollContainer/VBoxContainer/CanvasScroll/CenterContainer/TextureRect
 onready var palette_grid = $VBoxContainer/ScrollContainer/VBoxContainer/PaletteScroll/PaletteGrid
-onready var active_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/ActiveColorRect
-onready var active_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/ActiveColorRect/ColorIndexLabel
+onready var active_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer/ActiveColorRect
+onready var active_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer/ActiveColorRect/ColorIndexLabel
 
 onready var brush_size_spin = $VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer/BrushSizeSpin
 onready var brush_spacing_spin = $VBoxContainer/ScrollContainer/VBoxContainer/BrushHBox/HBoxContainer2/BrushSpacingSpin
@@ -61,8 +61,8 @@ onready var brush_shape_option = $VBoxContainer/ScrollContainer/VBoxContainer/Br
 onready var brush_pattern_option = $VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox/BrushPatternOption
 onready var dither_amount_spin = $VBoxContainer/ScrollContainer/VBoxContainer/DitherHBox/DitherAmountSpin
 onready var use_secondary_check = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/UseSecondaryCheckBox
-onready var active_secondary_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/ActiveSecondaryColorRect
-onready var secondary_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/ActiveSecondaryColorRect/SecondaryColorIndexLabel
+onready var active_secondary_color_rect = $VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer/ActiveSecondaryColorRect
+onready var secondary_color_label = $VBoxContainer/ScrollContainer/VBoxContainer/ColorContainer/ActiveSecondaryColorRect/SecondaryColorIndexLabel
 
 onready var current_tool_label = $VBoxContainer/ScrollContainer/VBoxContainer/CurrentToolLabel
 
@@ -71,7 +71,7 @@ onready var eraser_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/
 onready var fill_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/FillButton
 onready var contiguous_check_box = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/ContiguousCheckBox
 onready var eyedropper_btn = $VBoxContainer/ScrollContainer/VBoxContainer/ToolsHBox/EyedropperButton
-onready var ramp_recolor_check = $VBoxContainer/ScrollContainer/VBoxContainer/RampRecolorCheckBox
+onready var ramp_recolor_check = $VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/RampRecolorCheckBox
 
 onready var mirror_h_btn = $VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox/MirrorHCheckBox
 onready var mirror_v_btn = $VBoxContainer/ScrollContainer/VBoxContainer/MirrorHBox/MirrorVCheckBox
@@ -321,7 +321,7 @@ func _on_palette_color_selected(index):
 	if index >= 0 and index < palette_colors.size():
 		current_color = palette_colors[index]
 	active_color_rect.color = current_color
-	active_color_label.text = "Index: " + str(current_color_index)
+	active_color_label.text = "Primary: " + str(current_color_index)
 	
 	var luma = current_color.r * 0.299 + current_color.g * 0.587 + current_color.b * 0.114
 	if luma > 0.5:
@@ -341,7 +341,7 @@ func _on_palette_color_right_selected(index):
 	if index >= 0 and index < palette_colors.size():
 		secondary_color = palette_colors[index]
 	active_secondary_color_rect.color = secondary_color
-	secondary_color_label.text = "Sec: " + str(secondary_color_index)
+	secondary_color_label.text = "Secondary: " + str(secondary_color_index)
 
 	var luma = secondary_color.r * 0.299 + secondary_color.g * 0.587 + secondary_color.b * 0.114
 	if luma > 0.5:

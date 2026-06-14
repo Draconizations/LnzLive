@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://scenes/editor/RecolorSettings.gd" type="Script" id=1]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=2]
@@ -8,15 +8,31 @@
 size = 36
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=2]
+[sub_resource type="StyleBoxFlat" id=2]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.14902, 0.235294, 0.235294, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
+[sub_resource type="DynamicFont" id=3]
 size = 30
 font_data = ExtResource( 3 )
 
-[sub_resource type="DynamicFont" id=3]
+[sub_resource type="DynamicFont" id=4]
+size = 30
+font_data = ExtResource( 3 )
+
+[sub_resource type="DynamicFont" id=5]
 size = 24
 font_data = ExtResource( 3 )
 
-[sub_resource type="StyleBoxFlat" id=4]
+[sub_resource type="StyleBoxFlat" id=6]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -28,7 +44,7 @@ corner_radius_bottom_right = 2
 corner_radius_bottom_left = 2
 anti_aliasing = false
 
-[sub_resource type="StyleBoxFlat" id=5]
+[sub_resource type="StyleBoxFlat" id=7]
 content_margin_left = 5.0
 content_margin_right = 5.0
 content_margin_top = 2.0
@@ -72,8 +88,34 @@ margin_bottom = 25.0
 custom_fonts/font = SubResource( 1 )
 text = "Recolor Mode"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+[node name="HelpBoxScroll" type="ScrollContainer" parent="VBoxContainer"]
 margin_top = 29.0
+margin_right = 470.0
+margin_bottom = 79.0
+rect_min_size = Vector2( 0, 50 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HelpBoxScroll"]
+margin_right = 470.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/HelpBoxScroll/VBoxContainer"]
+margin_right = 470.0
+margin_bottom = 50.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_styles/normal = SubResource( 2 )
+custom_fonts/normal_font = SubResource( 3 )
+text = "Click on ballz to queue color and other changes, and then click Apply Bucket to save to LNZ.
+
+Check Ramp to recolor all colors of ramp (e.g. 10-19) to corresponding colors of other ramp. "
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+margin_top = 83.0
 margin_right = 470.0
 margin_bottom = 595.0
 size_flags_horizontal = 3
@@ -101,7 +143,7 @@ custom_constants/separation = 5
 [node name="Title" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_right = 458.0
 margin_bottom = 21.0
-custom_fonts/font = SubResource( 2 )
+custom_fonts/font = SubResource( 4 )
 text = "Color Swap"
 
 [node name="CheckContainer" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
@@ -112,7 +154,7 @@ margin_bottom = 51.0
 [node name="Balls" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer"]
 margin_right = 63.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Ballz"
 
@@ -120,7 +162,7 @@ text = "Ballz"
 margin_left = 67.0
 margin_right = 149.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Outlines"
 
@@ -128,7 +170,7 @@ text = "Outlines"
 margin_left = 153.0
 margin_right = 250.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Paintballz"
 
@@ -136,7 +178,7 @@ text = "Paintballz"
 margin_left = 254.0
 margin_right = 315.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Linez"
 
@@ -148,7 +190,7 @@ margin_bottom = 81.0
 [node name="Polygons" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer2"]
 margin_right = 88.0
 margin_bottom = 25.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 pressed = true
 text = "Polygons"
 
@@ -173,48 +215,48 @@ alignment = 1
 margin_left = 113.0
 margin_right = 168.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Clear"
 
 [node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_left = 172.0
 margin_right = 245.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Autofill"
 
 [node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
 margin_left = 249.0
 margin_right = 345.0
 margin_bottom = 25.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Randomize"
 
 [node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 371.0
 margin_right = 458.0
 margin_bottom = 396.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Recolor"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
@@ -231,14 +273,14 @@ custom_constants/separation = 10
 [node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_right = 458.0
 margin_bottom = 21.0
-custom_fonts/font = SubResource( 2 )
+custom_fonts/font = SubResource( 4 )
 text = "Paint Bucket"
 
 [node name="Hint" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 31.0
 margin_right = 458.0
 margin_bottom = 48.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Click Ballz to queue visual changes"
 autowrap = true
 
@@ -252,7 +294,7 @@ columns = 3
 margin_top = 5.0
 margin_right = 84.0
 margin_bottom = 22.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Color:"
 
 [node name="ColorEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -260,7 +302,7 @@ margin_left = 88.0
 margin_right = 430.0
 margin_bottom = 27.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 55"
 
 [node name="ColorIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -275,7 +317,7 @@ stretch_mode = 6
 margin_top = 36.0
 margin_right = 84.0
 margin_bottom = 53.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Outline Col:"
 
 [node name="OutlineEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -284,7 +326,7 @@ margin_top = 31.0
 margin_right = 430.0
 margin_bottom = 58.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 245"
 
 [node name="OutlineIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -300,7 +342,7 @@ stretch_mode = 6
 margin_top = 67.0
 margin_right = 84.0
 margin_bottom = 84.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Outline Type:"
 
 [node name="TypeEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -309,7 +351,7 @@ margin_top = 62.0
 margin_right = 430.0
 margin_bottom = 89.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="Spacer1" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -322,7 +364,7 @@ margin_bottom = 89.0
 margin_top = 98.0
 margin_right = 84.0
 margin_bottom = 115.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Fuzz:"
 
 [node name="FuzzEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -331,7 +373,7 @@ margin_top = 93.0
 margin_right = 430.0
 margin_bottom = 120.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="Spacer2" type="Control" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -344,7 +386,7 @@ margin_bottom = 120.0
 margin_top = 129.0
 margin_right = 84.0
 margin_bottom = 146.0
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 text = "Texture:"
 
 [node name="TextureEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -353,7 +395,7 @@ margin_top = 124.0
 margin_right = 430.0
 margin_bottom = 151.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 3 )
+custom_fonts/font = SubResource( 5 )
 placeholder_text = "e.g. 0"
 
 [node name="TextureIcon" type="TextureRect" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer"]
@@ -369,22 +411,22 @@ stretch_mode = 6
 margin_top = 219.0
 margin_right = 458.0
 margin_bottom = 244.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Apply Bucket"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]
 margin_top = 254.0
 margin_right = 458.0
 margin_bottom = 279.0
-custom_styles/hover = SubResource( 4 )
-custom_styles/pressed = SubResource( 4 )
-custom_styles/focus = SubResource( 5 )
-custom_styles/disabled = SubResource( 5 )
-custom_styles/normal = SubResource( 5 )
-custom_fonts/font = SubResource( 2 )
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
 text = "Clear Bucket"
