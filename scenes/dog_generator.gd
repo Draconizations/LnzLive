@@ -56,6 +56,7 @@ var current_bdt: BdtParser
 
 var t_pose_checkbox = null
 var t_pose_active = false
+var is_setting_tpose = false
 var _saved_anim_index = 0
 var _saved_frame_index = 0
 
@@ -2025,6 +2026,9 @@ func get_real_ball_size(ball_size):
 # _on_TPoseCheckBox_toggled
 
 func set_animation(anim_index: int):
+	if t_pose_active and not is_setting_tpose:
+		disable_tpose()
+
 	if not bhd or bhd.animation_ranges.empty():
 		print("[ERROR] dog_generator: set_animation: No valid BHD loaded.")
 		return
@@ -2052,6 +2056,9 @@ func set_animation(anim_index: int):
 	anim_picker.text = str(anim_index)
 
 func set_frame(frame: int):
+	if t_pose_active and not is_setting_tpose:
+		disable_tpose()
+
 	if not current_bdt or current_bdt.frames.empty():
 		return
 
@@ -2107,6 +2114,16 @@ func symmetrize_skeleton():
 						r_ball.rotation.y = -l_ball.rotation.y
 						r_ball.rotation.z = -l_ball.rotation.z
 
+func disable_tpose():
+	if not t_pose_active: 
+		return
+		
+	is_setting_tpose = true
+	if t_pose_checkbox:
+		t_pose_checkbox.pressed = false
+	t_pose_active = false
+	is_setting_tpose = false
+
 func _on_AnimPicker_text_entered(new_text):
 	var i = int(new_text)
 	if i < bhd.animation_ranges.size():
@@ -2122,6 +2139,9 @@ func _on_NextAnim_pressed():
 	set_animation(current_animation + 1)
 
 func _on_TPoseCheckBox_toggled(button_pressed):
+	if is_setting_tpose:
+		return
+
 	t_pose_active = button_pressed
 
 	if t_pose_active:
@@ -2132,12 +2152,18 @@ func _on_TPoseCheckBox_toggled(button_pressed):
 		if play_button.pressed:
 			play_button.pressed = false
 		
+		is_setting_tpose = true 
+		
 		set_animation(0) 
 		set_frame(0)
+		
+		is_setting_tpose = false 
 
 	else:
+		is_setting_tpose = true 
 		set_animation(_saved_anim_index)
 		set_frame(_saved_frame_index)
+		is_setting_tpose = false
 
 
 ### VISIBILITY ###
