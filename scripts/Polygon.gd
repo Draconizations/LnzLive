@@ -155,10 +155,8 @@ func set_species(new_value: int, is_babyz_mode: bool = false) -> void:
 		
 		if is_babyz_mode:
 			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
-			$MeshInstance.material_override.set_shader_param("should_quantize", true)
 		else:
 			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
-			$MeshInstance.material_override.set_shader_param("should_quantize", false)
 		
 		$MeshInstance.material_override.set_shader_param("palette_size", 256)
 

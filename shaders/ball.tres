@@ -375,7 +375,7 @@ void fragment() {
         highlight_pct = step(outdist, h_outer) - step(outdist, h_inner);
     }
 
-    // TEXTURING & QUANTIZING
+    // TEXTURING
     // Maps screen or object space to UVs, handling texture atlas rects and texture tiling
     int texture_limit = is_babyz_mode ? 230 : 150;
     vec3 texture_color;
@@ -385,33 +385,15 @@ void fragment() {
         vec2 offset = FRAGCOORD.xy - center_fragcoord;
         vec2 tex_coords = calculate_uvs(offset);
 
-        if (is_atlas) {
-            // Samples texture to snap colors to nearest target palette
-            vec4 raw_color = texture(ball_texture, tex_coords);
-            if (raw_color.a < 0.1) is_transparent = true;
+        float raw_val = texture(ball_texture, tex_coords).r;
+        int palette_index = int(round(raw_val * 255.0));
 
-            if (should_quantize) {
-                bool transp;
-                texture_color = get_closest_babyz_color(raw_color, transp);
-                if (transp) is_transparent = true;
-            } else {
-                int palette_index = get_closest_petz_index(raw_color);
-                if (palette_index == TRANSPARENT_COLOR_INDEX || raw_color.a < 0.1) is_transparent = true;
-                texture_color = apply_palette_shift(palette_index);
-            }
+        is_transparent = (palette_index == TRANSPARENT_COLOR_INDEX);
+
+        if (is_babyz_mode) {
+            texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.5)).rgb;
         } else {
-            // Get palette index directly from the RED channel for non-atlas textures
-            int palette_index = int(texture(ball_texture, tex_coords).r * 255.0);
-            
-            if (should_quantize) {
-                vec4 original_color = texture(petz_palette, vec2(float(palette_index) / 255.0, 0.5));
-                bool transp;
-                texture_color = get_closest_babyz_color(original_color, transp);
-                if (transp) is_transparent = true;
-            } else {
-                is_transparent = (palette_index == TRANSPARENT_COLOR_INDEX);
-                texture_color = apply_palette_shift(palette_index);
-            }
+            texture_color = apply_palette_shift(palette_index);
         }
     } else {
         // Untextured, if range check failed or has_texture is false

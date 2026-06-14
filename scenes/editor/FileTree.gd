@@ -673,41 +673,31 @@ func scan_local_textures():
 	while filename != "":
 		if filename.to_lower().ends_with(".bmp"):
 			var full_path = textures_dir.plus_file(filename)
-
 			var new_item = create_item(local_storage_textures)
 			new_item.set_text(0, filename)
 			new_item.set_metadata(0, full_path)
 
-			# Check whether valid BMP file
-			var is_valid_bmp = false
-			if file.open(full_path, File.READ) == OK:
-				if file.get_len() >= 2:
-					var b1 = file.get_8()
-					var b2 = file.get_8()
-					if b1 == 66 and b2 == 77: # 'B' and 'M'
-						is_valid_bmp = true
-				file.close()
-
-			if not is_valid_bmp:
-				new_item.set_text(0, filename + " (FILE ISSUE)")
+			# Validate texture BMP file
+			var validation = LnzLiveUtils.validate_8bit_bmp(full_path)
+			
+			if not validation["valid"]:
+				new_item.set_text(0, filename + " (INVALID: " + validation["reason"] + ")")
 			else:
-				# Load image for texture
-				var img_indexed = Image.new()
-				var err = img_indexed.load(full_path, true, true)
+				# Load full texture for the UI
+				var img = Image.new()
+				var err = img.load(full_path, true, true)
 				
-				if err != OK or img_indexed.get_width() == 0:
-					new_item.set_text(0, filename + " (FILE ISSUE)")
-				else:
+				if err == OK and img.get_width() > 0:
+					# Create texture for model generation
 					var full_tex = ImageTexture.new()
-					full_tex.flags = 0
-					full_tex.create_from_image(img_indexed, ImageTexture.FLAG_REPEAT)
+					full_tex.create_from_image(img, ImageTexture.FLAG_REPEAT)
 					
 					var res_name = filename.to_lower()
 					if preloader.has_resource(res_name):
 						preloader.remove_resource(res_name)
 					preloader.add_resource(res_name, full_tex)
 
-					# Load image for preview
+					# Load image for thumbnail
 					if file.open(full_path, File.READ) == OK:
 						var buf = file.get_buffer(file.get_len())
 						file.close()
@@ -725,12 +715,10 @@ func scan_local_textures():
 							var icon_tex = ImageTexture.new()
 							icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 							new_item.set_icon(0, icon_tex)
-
-							new_item.set_text(0, filename + " (" + str(w) + "x" + str(h) + ")")
-						else:
-							new_item.set_text(0, filename + " (FILE ISSUE)")
-					else:
-						new_item.set_text(0, filename + " (FILE ISSUE)")
+					
+					new_item.set_text(0, filename + " (" + str(img.get_width()) + "x" + str(img.get_height()) + ")")
+				else:
+					new_item.set_text(0, filename + " (LOAD FAILED)")
 
 		filename = dir.get_next()
 	dir.list_dir_end()

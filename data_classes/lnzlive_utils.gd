@@ -363,3 +363,185 @@ static func clear_mask_circle(mask: Array, size: int, cx: int, cy: int, radius: 
 					mask[idx] = false
 					cleared += 1
 	return cleared
+
+static func verify_palette_compatibility(bmp_palette: Array, palette: Array) -> float:
+	# Sample every 10th index to compute an average color difference score between the BMP palette and the target palette
+	var total_diff = 0.0
+	var samples = 0
+	for i in range(0, 256, 10): 
+		if i < bmp_palette.size() and i < palette.size():
+			var bmp_col = bmp_palette[i]
+			var petz_col = palette[i]
+			total_diff += abs(bmp_col.r - petz_col.r) + abs(bmp_col.g - petz_col.g) + abs(bmp_col.b - petz_col.b)
+			samples += 1
+	
+	return total_diff / float(samples)
+
+static func validate_8bit_bmp(path: String) -> Dictionary:
+	var f = File.new()
+	if f.open(path, File.READ) != OK:
+		return {"valid": false, "reason": "Could not open file"}
+		
+	if f.get_len() < 54:
+		f.close()
+		return {"valid": false, "reason": "File too small"}
+	
+	# Check Magic Bytes 'BM'
+	if f.get_8() != 66 or f.get_8() != 77:
+		f.close()
+		return {"valid": false, "reason": "Not a BMP file"}
+	
+	f.seek(14)
+	var header_size = f.get_32()
+	
+	# Simple BPP check (BMP header byte 28)
+	f.seek(28)
+	var bpp = f.get_16()
+	f.close()
+	
+	if bpp != 8:
+		return {"valid": false, "reason": "Not an 8-bit BMP (BPP: " + str(bpp) + ")"}
+		
+	return {"valid": true}
+
+static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: bool = false) -> Dictionary:
+	var f = File.new()
+	if f.open(path, File.READ) != OK:
+		return {}
+		
+	if f.get_len() < 54:
+		f.close()
+		return {}
+	
+	f.seek(0)
+	if f.get_8() != 66 or f.get_8() != 77: # 'B' and 'M'
+		f.close()
+		return {}
+	
+	f.seek(10)
+	var pixel_offset = f.get_32()
+	
+	f.seek(14)
+	var header_size = f.get_32()
+	
+	var w = 0
+	var h_raw = 0
+	var bpp = 0
+	
+	# Header Parsing
+	if header_size == 12:
+		w = f.get_16()
+		h_raw = f.get_16()
+		f.seek(24)
+		bpp = f.get_16()
+	elif header_size >= 40:
+		w = f.get_32()
+		h_raw = f.get_32()
+		f.seek(28)
+		bpp = f.get_16()
+		f.seek(30)
+		if f.get_32() != 0:
+			print("[WARNING] load_raw_8bit_bmp: Compressed BMPs not supported: ", path)
+			f.close()
+			return {}
+	else:
+		f.close()
+		return {}
+
+	# Extract Palette
+	f.seek(14 + header_size) 
+	var bmp_palette = []
+	
+	if debug:
+		print("[DEBUG] BMP Import - Dumping first 5 palette entries for: ", path)
+		
+	for i in range(256):
+		var b = f.get_8()
+		var g = f.get_8()
+		var r = f.get_8()
+		var res = f.get_8()
+		var col = Color(r/255.0, g/255.0, b/255.0)
+		bmp_palette.append(col)
+		
+		if debug and i < 5:
+			print("  Entry ", i, ": (R:", r, " G:", g, " B:", b, ")")
+	
+	var h = abs(h_raw)
+	var is_bottom_up = (h_raw > 0)
+	
+	if bpp != 8:
+		f.close()
+		return {}
+		
+	f.seek(pixel_offset)
+	var row_size = int((w + 3) / 4) * 4
+	var index_data = PoolByteArray()
+	index_data.resize(w * h)
+	
+	for i in range(h):
+		var y = (h - 1 - i) if is_bottom_up else i
+		var row_data = f.get_buffer(row_size)
+		for x in range(w):
+			if x < row_data.size():
+				index_data[y * w + x] = row_data[x]
+				
+	f.close()
+
+	var target_tex = BABYZ_PALETTE if is_babyz_mode else DEFAULT_PALETTE
+	var target_palette = extract_palette_from_image(target_tex)
+
+	# Validate and Requantize
+	var diff = verify_palette_compatibility(bmp_palette, target_palette)
+	
+	if debug:
+		print("[DEBUG] Palette difference score: ", diff)
+	
+	if diff > 0.05:
+		if debug:
+			print("[INFO] Palette mismatch detected. Requantizing: ", path)
+		index_data = requantize_bmp_data(index_data, bmp_palette, target_palette)
+
+	if debug:
+		var unique_indices = {}
+		for idx in index_data:
+			unique_indices[idx] = true
+
+		print("[DEBUG] BMP Import - File: ", path)
+		print("[DEBUG] - Detected unique palette indices in file: ", unique_indices.keys().size())
+		print("[DEBUG] - Contains Magenta (253)?: ", unique_indices.has(253))
+
+	return { "w": w, "h": h, "data": index_data }
+
+static func extract_palette_from_image(tex: Texture) -> Array:
+	var img = tex.get_data()
+	if img == null:
+		print("[ERROR] extract_palette_from_image: Texture data is null!")
+		return []
+		
+	img.lock()
+	var pal = []
+	for i in range(256):
+		pal.append(img.get_pixel(i, 0))
+	img.unlock()
+	return pal
+
+static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, target_palette: Array) -> PoolByteArray:
+	var lut = PoolByteArray()
+	lut.resize(256)
+	for i in range(bmp_palette.size()):
+		var best_idx = 0
+		var min_dist = 1000000.0
+		var col1 = bmp_palette[i]
+		for j in range(target_palette.size()):
+			var col2 = target_palette[j]
+			var d = pow(col1.r - col2.r, 2) + pow(col1.g - col2.g, 2) + pow(col1.b - col2.b, 2)
+			if d < min_dist:
+				min_dist = d
+				best_idx = j
+		lut[i] = best_idx
+		
+	var new_data = PoolByteArray()
+	new_data.resize(raw_data.size())
+	for i in range(raw_data.size()):
+		new_data[i] = lut[raw_data[i]]
+	return new_data
