@@ -229,6 +229,7 @@ func _on_NotificationTimer_timeout():
 # _on_ApplyChangesButton_pressed
 
 func _load_file(filepath: String, user_flag: bool):
+	print("#".repeat(100))
 	var t_start = OS.get_ticks_msec()
 
 	if pet_node and pet_node.has_method("unhide_all_balls"):
@@ -1604,8 +1605,15 @@ func _on_set_column_confirmed():
 # get_project_ball_section
 
 func get_ball_name(ball_no: int) -> String:
-	var species = KeyBallsData.species
-	var max_base = KeyBallsData.max_base_ball_num
+	if KeyBallsData == null:
+		return ""
+		
+	var species = KeyBallsData.get("species")
+	var max_base = KeyBallsData.get("max_base_ball_num")
+	
+	if species == null or max_base == null:
+		return ""
+
 	var ball_name = ""
 
 	if ball_no < max_base:

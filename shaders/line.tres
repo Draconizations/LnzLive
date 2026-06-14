@@ -138,7 +138,7 @@ vec3 apply_palette_shift(int palette_index) {
         }
     }
 
-    return texture(palette, vec2(float(effective_index) / float(palette_size), 0.5)).rgb;
+    return texture(palette, vec2(float(effective_index) / 255.0, 0.5)).rgb;
 }
 
 void fragment() {
@@ -158,9 +158,12 @@ void fragment() {
     float one_pixel = 0.5 / (floor(line_width_in_pixels) + 0.5);
 
     // TEXTURING & QUANTIZING
+    // Maps screen or object space to UVs, handling texture atlas rects and texture tiling
     vec2 uv = (SCREEN_UV - center_of_line_screen_uv) * (1000.0 / texture_size_raw);
     vec2 tex_coords;
-   int texture_limit = is_babyz_mode ? 230 : 150;
+
+    // int palette_index;
+    int texture_limit = is_babyz_mode ? 230 : 150;
 
     if (is_atlas) {
         vec2 tiled_uv = fract(uv);
@@ -170,7 +173,9 @@ void fragment() {
         vec2 atlas_dim = atlas_rect.zw;
         tex_coords = (atlas_pos + tiled_uv * atlas_dim) / atlas_size;
     } else {
-        tex_coords = uv;
+        // Enforce math-level repeating to prevent edge stretching on non-power-of-2 BMPs
+        tex_coords = fract(uv);
+        // tex_coords = uv_scaled;
     }
 
     vec3 texture_color;
@@ -181,77 +186,24 @@ void fragment() {
     bool is_any_edge = is_right_edge || is_left_edge;
 
     if (is_right_edge && r_color_index != -1) {
-        texture_color = texture(palette, vec2(float(r_color_index) / float(palette_size), 0.5)).rgb;
+        texture_color = texture(palette, vec2(float(r_color_index) / 255.0, 0.5)).rgb;
     } else if (is_left_edge && l_color_index != -1) {
-        texture_color = texture(palette, vec2(float(l_color_index) / float(palette_size), 0.5)).rgb;
+        texture_color = texture(palette, vec2(float(l_color_index) / 255.0, 0.5)).rgb;
     } else {
         if (!render_flat_colors && has_texture && color_index >= 10 && color_index < texture_limit) {
-            if (is_atlas) {
-                 vec4 raw_color = texture(line_texture, tex_coords);
-                 if (raw_color.a < 0.1) is_transparent = true;
-                 if (should_quantize) {
-                    // textured, atlas, quantized
-                     vec4 original_color = raw_color;
-                     if (distance(original_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                        texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
-                        is_transparent = true;
-                     } else {
-                         vec4 best_color = vec4(0.0);
-                         float best_distance_sq = 1e20;
-                         for (int i = 0; i < 256; i++) {
-                             if (i >= palette_size) break;
-                             if (i == TRANSPARENT_COLOR_INDEX) continue;
-                             float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
-                             vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
-                             float d_sq = dot(original_color.rgb - babyz_color.rgb, original_color.rgb - babyz_color.rgb);
-                             if (d_sq < best_distance_sq) { best_distance_sq = d_sq; best_color = babyz_color; }
-                         }
-                         texture_color = best_color.rgb;
-                     }
-                 } else {
-                     vec4 best_color = vec4(0.0);
-                     float best_dist = 1e20;
-                     int best_index = 0;
-                     if (distance(raw_color.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                         best_index = 253;
-                     } else {
-                         for (int i=0; i<256; i++) {
-                             vec4 p_col = texture(petz_palette, vec2((float(i) + 0.5)/256.0, 0.5));
-                             float d = distance(raw_color.rgb, p_col.rgb);
-                             if (d < best_dist) { best_dist = d; best_index = i; }
-                         }
-                     }
-                     is_transparent = (best_index == 253);
-                     if (raw_color.a < 0.1) is_transparent = true;
-                     texture_color = apply_palette_shift(best_index);
-                 }
-            } else if (should_quantize) {
-                int p_idx = int(texture(line_texture, tex_coords).r * 255.0);
-                vec4 orig_col = texture(petz_palette, vec2(float(p_idx)/255.0, 0.5));
-                if (distance(orig_col.rgb, TRANSPARENT_COLOR_MAGENTA.rgb) < 0.01) {
-                    texture_color = TRANSPARENT_COLOR_MAGENTA.rgb;
-                    is_transparent = true;
-                } else {
-                    vec4 best_color = vec4(0.0);
-                    float best_d_sq = 1e20;
-                    for (int i = 0; i < 256; i++) {
-                        if (i >= palette_size) break;
-                        if (i == TRANSPARENT_COLOR_INDEX) continue;
-                        float babyz_normalized_index = (float(i) + 0.5) / float(palette_size);
-                        vec4 babyz_color = texture(palette, vec2(babyz_normalized_index, 0.5));
-                        float d_sq = dot(orig_col.rgb - babyz_color.rgb, orig_col.rgb - babyz_color.rgb);
-                        if (d_sq < best_d_sq) { best_d_sq = d_sq; best_color = babyz_color; }
-                    }
-                    texture_color = best_color.rgb;
-                }
+            float raw_val = texture(line_texture, tex_coords).r;
+            int palette_index = int(round(raw_val * 255.0));
+
+            is_transparent = (palette_index == TRANSPARENT_COLOR_INDEX);
+
+            if (is_babyz_mode) {
+                texture_color = texture(palette, vec2(float(palette_index) / 255.0, 0.5)).rgb;
             } else {
-                int p_idx = int(texture(line_texture, tex_coords).r * 255.0);
-                is_transparent = (p_idx == 253);
-                texture_color = apply_palette_shift(p_idx);
+                texture_color = apply_palette_shift(palette_index);
             }
         } else {
             // untextured, if range check failed or has_texture is false
-            texture_color = texture(palette, vec2(float(color_index) / float(palette_size), 0.5)).rgb;
+            texture_color = texture(palette, vec2(float(color_index) / 255.0, 0.5)).rgb;
             is_transparent = false;
         }
     }

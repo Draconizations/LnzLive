@@ -37,13 +37,19 @@ func _update_ball_label(ball_no):
 			return
 
 	ball_label.add_color_override("font_color", Color.white)
-	var max_base = KeyBallsData.max_base_ball_num
-	var type_label = "(base)" if ball_no < max_base else "(add)"
+
+	var max_base = 0
+	if KeyBallsData.get("max_base_ball_num") != null:
+		max_base = KeyBallsData.max_base_ball_num
+	
+	var type_label = ""
+	if KeyBallsData.get("max_base_ball_num") != null:
+		type_label = "(base)" if ball_no < max_base else "(add)"
 	
 	var name_ext = ""
 	if lnz_edit.has_method("get_ball_name"):
 		var b_name = lnz_edit.get_ball_name(ball_no)
-		if typeof(b_name) == TYPE_STRING and b_name != "":
+		if b_name != null and b_name is String and b_name != "":
 			name_ext = ": " + b_name
 	
 	ball_label.text = "Curr Ball #" + str(ball_no) + " " + type_label + name_ext

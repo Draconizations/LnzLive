@@ -784,47 +784,6 @@ func _get_background_color() -> Color:
 		return palette_colors[palette_colors.size() - 1]
 	return Color(1, 0, 1, 1)
 
-func _load_raw_8bit_bmp(path: String) -> Dictionary:
-	var f = File.new()
-	if f.open(path, File.READ) != OK:
-		return {}
-		
-	if f.get_len() < 54:
-		f.close()
-		return {}
-	
-	f.seek(10)
-	var pixel_offset = f.get_32()
-	
-	f.seek(18)
-	var w = f.get_32()
-	var h_raw = f.get_32()
-	var h = abs(h_raw)
-	var is_bottom_up = (h_raw > 0)
-	
-	f.seek(28)
-	var bpp = f.get_16()
-	
-	if bpp != 8:
-		f.close()
-		return {} # Not an 8-bit indexed BMP
-		
-	f.seek(pixel_offset)
-	var row_size = int((w + 3) / 4) * 4
-	
-	var index_data = PoolByteArray()
-	index_data.resize(w * h)
-	
-	for i in range(h):
-		var y = (h - 1 - i) if is_bottom_up else i
-		var row_data = f.get_buffer(row_size)
-		for x in range(w):
-			if x < row_data.size():
-				index_data[y * w + x] = row_data[x]
-	
-	f.close()
-	return { "w": w, "h": h, "data": index_data }
-
 func _on_LoadButton_pressed():
 	var fname = filename_line_edit.text.strip_edges()
 	if fname == "":
@@ -857,7 +816,7 @@ func _on_LoadButton_pressed():
 
 	var raw_bmp_data = {}
 	if loaded_path != "":
-		raw_bmp_data = _load_raw_8bit_bmp(loaded_path)
+		raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path)
 
 	# 8bit BMP
 	if raw_bmp_data.has("data"):

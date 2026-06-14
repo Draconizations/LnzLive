@@ -789,12 +789,15 @@ func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
 # generate_color_icon
 # load_palette_resource
 
-func load_texture(texture_filename: String, preloader: ResourcePreloader):
+func load_texture(texture_filename: String, preloader: ResourcePreloader) -> Texture:
 	var t_start = OS.get_ticks_msec()
-
 	if _texture_cache.has(texture_filename):
 		_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
 		return _texture_cache[texture_filename]
+
+	var texture = null
+	var base_name = texture_filename.get_basename()
+	var extension = texture_filename.get_extension()
 
 	# Check atlas manifest first
 	var atlas_key = texture_filename.get_basename() # e.g. "hair10" from "hair10.bmp"
@@ -811,7 +814,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 				break
 
 	if manifest_entry:
-		var atlas_file = manifest_entry["atlas"]
+		var atlas_file = manifest_entry["babyz_atlas"] if is_babyz_mode else manifest_entry["petz_atlas"]
 		# Fix extension .bmp -> .png for atlas file
 		if atlas_file.to_lower().ends_with(".bmp"):
 			atlas_file = atlas_file.get_basename() + ".png"
@@ -829,7 +832,7 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			var region = Rect2(
 				manifest_entry["x"], manifest_entry["y"], manifest_entry["w"], manifest_entry["h"]
 			)
-			var texture = AtlasTexture.new()
+			texture = AtlasTexture.new()
 			texture.atlas = atlas_tex
 			texture.region = region
 
@@ -841,9 +844,6 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 			print("[WARNING] dog_generator: load_texture: texture atlas file not found: " + atlas_path)
 
 	print("[INFO] dog_generator: load_texture: loading individual texture: " + texture_filename)
-	var texture = null
-	var base_name = texture_filename.get_basename()
-	var extension = texture_filename.get_extension()
 	var filename_variants = []
 	filename_variants.append(texture_filename)
 	filename_variants.append(texture_filename.to_upper())
@@ -857,27 +857,55 @@ func load_texture(texture_filename: String, preloader: ResourcePreloader):
 
 	var deduped = []
 	for v in filename_variants:
-		if not (v in deduped):
+		if not v in deduped:
 			deduped.append(v)
 	filename_variants = deduped
 
-	for variant in filename_variants:
-		var resource_path = "res://resources/textures/" + variant
-		var user_resource_path = "user://resources/textures/" + variant
+	# ALL MODES + USER TEXTURE: exact 8-bit index parsing
+	if texture == null:
+		var loaded_path = ""
+		var dir = Directory.new()
+		for variant in filename_variants:
+			if dir.file_exists("user://resources/textures/" + variant):
+				loaded_path = "user://resources/textures/" + variant
+				break
+			elif dir.file_exists("res://resources/textures/" + variant):
+				loaded_path = "res://resources/textures/" + variant
+				break
 
-		if ResourceLoader.exists(resource_path):
-			texture = ResourceLoader.load(resource_path)
-			break
-		elif ResourceLoader.exists(user_resource_path):
-			texture = ResourceLoader.load(user_resource_path)
-			break
+		if loaded_path != "":
+			var raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz_mode)
+			if raw_bmp_data.has("data"):
+				var w = raw_bmp_data["w"]
+				var h = raw_bmp_data["h"]
+				var data = raw_bmp_data["data"]
+				var img = Image.new()
+				img.create_from_data(w, h, false, Image.FORMAT_R8, data)
+				texture = ImageTexture.new()
+				texture.create_from_image(img, 0)
+				print("[INFO] dog_generator: CPU-baked exact index map from binary: " + loaded_path)
+	
+	# FALLBACK: native loader
+	if texture == null:
+		for variant in filename_variants:
+			var resource_path = "res://resources/textures/" + variant
+			var user_resource_path = "user://resources/textures/" + variant
 
+			if ResourceLoader.exists(resource_path):
+				texture = ResourceLoader.load(resource_path)
+				break
+			elif ResourceLoader.exists(user_resource_path):
+				texture = ResourceLoader.load(user_resource_path)
+				break
+
+	# PRELOADER FALLBACK
 	if texture == null:
 		if preloader.has_resource(texture_filename.to_lower()):
 			texture = preloader.get_resource(texture_filename.to_lower())
 
 	_texture_cache[texture_filename] = texture
 	_perf_texture_load_time += (OS.get_ticks_msec() - t_start)
+	
 	return texture
 
 func load_texture_from_list(texture_id: int, texture_list: Array) -> Texture:
@@ -1173,11 +1201,6 @@ func generate_balls(all_ball_data: Dictionary, species: int, texture_list: Array
 			
 			node.set_surface_normal(Vector3(0, 0, -1))
 			#node.set_owner(root)
-			
-			var shader_mat = node.get_node("MeshInstance").material_override
-			if shader_mat:
-				var is_atlas = shader_mat.get_shader_param("is_atlas")
-				shader_mat.set_shader_param("should_quantize", is_babyz_mode and not is_atlas)
 
 			if no_texture_rotate.has(int(key)):
 				node.set_tile_texture(false)
@@ -2249,8 +2272,10 @@ func _on_TransparencyCheckBox_toggled(button_pressed):
 			line.set_transparency(button_pressed)
 	var paintballs = get_tree().get_nodes_in_group("paintballs")
 	for paintball in paintballs:
-		if paintball is Spatial:
+		if paintball.has_method("set_transparency"):
 			paintball.set_transparency(button_pressed)
+		elif paintball.get_parent().has_method("set_transparency"):
+			paintball.get_parent().set_transparency(button_pressed)
 
 func set_visibility_for_group(group_name: String, is_visible: bool):
 	var nodes = get_tree().get_nodes_in_group(group_name)
