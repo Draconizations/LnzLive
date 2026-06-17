@@ -241,6 +241,9 @@ func _load_file(filepath: String, user_flag: bool):
 	var contents = file.get_as_text()
 	file.close()
 
+	if contents.strip_edges().empty() and self.text.strip_edges().empty():
+		return
+
 	self.filepath = filepath
 	is_user_file = user_flag
 
@@ -293,6 +296,13 @@ func save_backup():
 		console_log.log_message(msg)
 
 func save_file(skip_history: bool = false):
+	if text.strip_edges().empty():
+		var msg = "No LNZ to save or load! Open example or paste LNZ into Text Editor first."
+		print("[STATUS] LnzTextEdit: save_file: " + msg)
+		if console_log:
+			console_log.log_message(msg)
+		return
+
 	var t_start = OS.get_ticks_msec()
 
 	if not skip_history and history_index >= 0:
