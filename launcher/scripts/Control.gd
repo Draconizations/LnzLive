@@ -458,8 +458,46 @@ func update_ui_state() -> void:
 		btn_update.disabled = false
 		btn_update.visible = true
 		
-		if local_version == target_remote_version:
-			btn_update.text = "Update to " + target_asset_name + " (Patch)"
+		var is_downgrade: bool = false
+		
+		if local_version != "None" and local_version != "Unknown" and local_version != "":
+			var t_arr: Array = _parse_version_string(target_remote_version)
+			var l_arr: Array = _parse_version_string(local_version)
+			for i in range(3):
+				if t_arr[i] < l_arr[i]: 
+					is_downgrade = true
+					break
+				elif t_arr[i] > l_arr[i]: 
+					break
+		
+		if not is_downgrade and local_version == target_remote_version and local_asset_name != target_asset_name:
+			var target_date: String = ""
+			var local_date: String = ""
+			for asset in current_release_assets:
+				var asset_dict: Dictionary = asset as Dictionary
+				var a_name: String = str(asset_dict["name"]).get_file()
+				
+				if a_name == target_asset_name:
+					target_date = str(asset_dict["updated_at"])
+				if a_name == local_asset_name:
+					local_date = str(asset_dict["updated_at"])
+			
+			if local_date != "" and target_date != "" and target_date < local_date:
+				is_downgrade = true
+				
+		var is_stable: bool = "stable" in target_asset_name.to_lower()
+		
+		if is_downgrade:
+			# Differentiate label depending on if it's a version downgrade or asset downgrade
+			if local_version == target_remote_version:
+				btn_update.text = "Downgrade to " + target_asset_name
+			else:
+				btn_update.text = "Downgrade to " + target_remote_version
+		elif local_version == target_remote_version:
+			if not is_stable:
+				btn_update.text = "Update to " + target_asset_name + " (Patch)"
+			else:
+				btn_update.text = "Update to " + target_asset_name
 		else:
 			btn_update.text = "Update to " + target_remote_version 
 			
