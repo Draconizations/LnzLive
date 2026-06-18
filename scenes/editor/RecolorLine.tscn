@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 [ext_resource path="res://resources/styles/styleboxflat_button_normal.tres" type="StyleBox" id=1]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=2]
 
@@ -6,8 +6,20 @@
 size = 24
 font_data = ExtResource( 2 )
 
+[sub_resource type="StyleBoxFlat" id=3]
+content_margin_left = 5.0
+content_margin_right = 5.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
+bg_color = Color( 0.7, 0.2, 0.2, 1 )
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = false
+
 [node name="HBoxContainer" type="HBoxContainer"]
-margin_right = 421.0
+margin_right = 450.0
 margin_bottom = 24.0
 __meta__ = {
 "_edit_use_anchors_": false
@@ -18,7 +30,6 @@ margin_right = 85.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-
 placeholder_text = "Color"
 
 [node name="BeforeTexture" type="LineEdit" parent="."]
@@ -35,7 +46,6 @@ margin_top = 5.0
 margin_right = 191.0
 margin_bottom = 19.0
 custom_fonts/font = SubResource( 1 )
-
 text = "->"
 
 [node name="AfterColor" type="LineEdit" parent="."]
@@ -44,7 +54,6 @@ margin_right = 280.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-
 placeholder_text = "Color"
 
 [node name="AfterTexture" type="LineEdit" parent="."]
@@ -53,7 +62,6 @@ margin_right = 369.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 custom_fonts/font = SubResource( 1 )
-
 placeholder_text = "Texture"
 
 [node name="ColorRampCheck" type="CheckBox" parent="."]
@@ -61,5 +69,16 @@ margin_left = 373.0
 margin_right = 421.0
 margin_bottom = 24.0
 custom_fonts/font = SubResource( 1 )
-
 text = "Ramp"
+
+[node name="RemoveButton" type="Button" parent="."]
+margin_left = 425.0
+margin_right = 445.0
+margin_bottom = 24.0
+custom_styles/hover = SubResource( 3 )
+custom_styles/pressed = SubResource( 3 )
+custom_styles/focus = SubResource( 3 )
+custom_styles/disabled = SubResource( 3 )
+custom_styles/normal = SubResource( 3 )
+custom_fonts/font = SubResource( 1 )
+text = "X"
