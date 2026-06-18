@@ -1,11 +1,11 @@
-extends Node
+extends Reference
 class_name AddBallData
 ## addball_data.gd
 ## A data class that holds the properties for objects built from [Add Ball] LNZ data
 
 export var base = 0
 export var size = 1
-export var position = Vector3(0,0,0)
+export var position = Vector3(0, 0, 0)
 export var color_index = -1
 export var outline = -1
 export var z_add = 0.0
@@ -15,20 +15,26 @@ export var body_area = 1
 export var ball_no = -1
 export var texture_id = -1
 export var outline_color_index = 0
+export var add_group = 0
+export var anchor_ball = -1
+
 
 func _init(
- base: int,
- ball_no: int,
- size: int,
- position: Vector3,
- color_index: int = -1,
- outline_color_index: int = 0,
- outline = -1,
- fuzz = 0,
- z_add = 0.0,
- group = -1,
- body_area = 1,
- texture_id = -1):
+	base: int,
+	ball_no: int,
+	size: int,
+	position: Vector3,
+	color_index: int = -1,
+	outline_color_index: int = 0,
+	outline = -1,
+	fuzz = 0,
+	z_add = 0.0,
+	group = -1,
+	body_area = 1,
+	texture_id = -1,
+	add_group: int = 0,
+	anchor_ball: int = -1
+):
 	self.size = size
 	self.position = position
 	self.color_index = color_index
@@ -41,3 +47,5 @@ func _init(
 	self.ball_no = ball_no
 	self.texture_id = texture_id
 	self.outline_color_index = outline_color_index
+	self.add_group = add_group
+	self.anchor_ball = anchor_ball

@@ -4,75 +4,97 @@ signal recolor(recolor_info)
 signal apply_bucket(ball_no, properties)
 signal apply_batch_bucket(changes)
 
-onready var swap_scroll = $ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
-onready var swap_lines_container = $ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
-onready var bucket_container = $ScrollContainer/VBoxContainer/BucketContainer
+onready var swap_scroll = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer
+onready var swap_lines_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/ScrollContainer/RecolorLines
+onready var bucket_container = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer
 
-onready var color_swap_check_container = $ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
+onready var color_swap_check_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/CheckContainer
 
-onready var bucket_color_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorEdit
-onready var bucket_outline_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineEdit
-onready var bucket_type_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
-onready var bucket_fuzz_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
-onready var bucket_texture_edit = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
+onready var bucket_color_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorEdit
+onready var bucket_outline_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineEdit
+onready var bucket_type_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TypeEdit
+onready var bucket_fuzz_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/FuzzEdit
+onready var bucket_texture_edit = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureEdit
 
-onready var bucket_color_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
-onready var bucket_outline_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
-onready var bucket_texture_icon = $ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
+onready var bucket_color_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/ColorIcon
+onready var bucket_outline_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
+onready var bucket_texture_icon = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
 
 var recolor_line_scene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes = {} # ball_no -> properties
 
+var dog_generator = null
+var cached_palette_colors = []
+
 var is_docked = false
 
 func _ready():
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_palette_changed")
+
 	_setup_swap_lines()
 
-	bucket_color_edit.connect("text_changed", self, "_on_bucket_property_changed")
-	bucket_outline_edit.connect("text_changed", self, "_on_bucket_property_changed")
+	_setup_grid_preview(bucket_color_edit, bucket_color_icon, "BucketColor")
+	_setup_grid_preview(bucket_outline_edit, bucket_outline_icon, "BucketOutline")
+
 	bucket_texture_edit.connect("text_changed", self, "_on_bucket_property_changed")
 
-	$ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
-	$ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ApplyButton.connect("pressed", self, "_on_ApplyBucket_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
 
-	$ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
-	$ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AddButton.connect("pressed", self, "_on_AddSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
+	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
+
+	_on_palette_changed()
 
 func set_docked(docked: bool):
 	is_docked = docked
 
 func _setup_swap_lines():
-	for i in range(9):
-		var line = recolor_line_scene.instance()
-		line.name = "Line" + str(i+1)
-		swap_lines_container.add_child(line)
+	for i in range(3):
+		_add_swap_line()
 
-func get_color_preview_icon(color_index: int) -> ImageTexture:
-	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-	if not pet_node: return null
+func _add_swap_line() -> Control:
+	var line = recolor_line_scene.instance()
+	swap_lines_container.add_child(line)
+	var id = line.get_instance_id()
+	line.name = "Line_" + str(id)
+	
+	var before_color = line.get_node("BeforeColor")
+	var after_color = line.get_node("AfterColor")
+	
+	_setup_preview_wrapper(before_color, "BeforeColor_" + str(id))
+	_setup_preview_wrapper(after_color, "AfterColor_" + str(id))
+	
+	var remove_btn = line.get_node_or_null("RemoveButton")
+	if remove_btn:
+		remove_btn.connect("pressed", self, "_on_remove_line_pressed", [line])
 
-	if pet_node.has_method("generate_color_icon"):
-		return pet_node.generate_color_icon(color_index)
+	return line
 
-	return null
+func _on_AddSwap_pressed():
+	_add_swap_line()
+
+func _on_remove_line_pressed(line: Control):
+	if swap_lines_container.get_child_count() > 1:
+		line.queue_free()
+	else:
+		line.find_node("BeforeColor", true, false).text = ""
+		line.find_node("BeforeTexture", true, false).text = ""
+		line.find_node("AfterColor", true, false).text = ""
+		line.find_node("AfterTexture", true, false).text = ""
+		line.find_node("ColorRampCheck", true, false).pressed = false
+		_refresh_all_previews()
 
 func _on_bucket_property_changed(new_text):
-	var color_idx = int(bucket_color_edit.text)
-	var icon = get_color_preview_icon(color_idx)
-	if icon:
-		bucket_color_icon.texture = icon
-	else:
-		bucket_color_icon.texture = null
-
-	var outline_idx = int(bucket_outline_edit.text)
-	var o_icon = get_color_preview_icon(outline_idx)
-	if o_icon:
-		bucket_outline_icon.texture = o_icon
-	else:
-		bucket_outline_icon.texture = null
-
 	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 	if pet_node and bucket_texture_edit.text != "":
 		var tex_idx = int(bucket_texture_edit.text)
@@ -81,6 +103,109 @@ func _on_bucket_property_changed(new_text):
 			bucket_texture_icon.texture = tex
 	else:
 		bucket_texture_icon.texture = null
+
+func _setup_preview_wrapper(le: LineEdit, le_name: String):
+	if not le: return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var pos = le.get_index()
+	var orig_owner = le.owner
+	
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _setup_grid_preview(le: LineEdit, icon_node: TextureRect, le_name: String):
+	if not is_instance_valid(icon_node): return
+	var parent = icon_node.get_parent()
+	var pos = icon_node.get_index()
+	var orig_owner = icon_node.owner
+	
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	preview_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	parent.add_child(preview_container)
+	parent.move_child(preview_container, pos)
+	
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+		
+	icon_node.queue_free() 
+	
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _on_color_list_text_changed(new_text: String, container: Container):
+	LnzLiveUtils.update_color_list_previews(container, new_text, cached_palette_colors)
+
+func _refresh_all_previews():
+	var grid = bucket_color_edit.get_parent()
+	
+	var bucket_c_prev = grid.get_node_or_null("BucketColor_Preview")
+	if bucket_c_prev: _on_color_list_text_changed(bucket_color_edit.text, bucket_c_prev)
+	
+	var bucket_o_prev = grid.get_node_or_null("BucketOutline_Preview")
+	if bucket_o_prev: _on_color_list_text_changed(bucket_outline_edit.text, bucket_o_prev)
+	
+	for i in range(swap_lines_container.get_child_count()):
+		var line = swap_lines_container.get_child(i)
+		if line.is_queued_for_deletion(): continue
+		var id = line.name.replace("Line_", "")
+		
+		var bc = line.get_node_or_null("BeforeColor_" + str(id) + "Wrapper/BeforeColor")
+		var bc_prev = line.get_node_or_null("BeforeColor_" + str(id) + "Wrapper/BeforeColor_" + str(id) + "_Preview")
+		if bc and bc_prev: _on_color_list_text_changed(bc.text, bc_prev)
+
+		var ac = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor")
+		var ac_prev = line.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor_" + str(id) + "_Preview")
+		if ac and ac_prev: _on_color_list_text_changed(ac.text, ac_prev)
+
+func _on_palette_changed(palette_name = ""):
+	if not dog_generator or not dog_generator.current_palette_texture:
+		return
+		
+	var img = dog_generator.current_palette_texture.get_data()
+	if img == null:
+		return
+		
+	img.lock()
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+	
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+			
+	img.unlock()
+	_refresh_all_previews()
 
 func queue_bucket_change(ball_node):
 	if not is_instance_valid(ball_node): return
@@ -113,6 +238,9 @@ func queue_bucket_change(ball_node):
 		ball_node.update_ball()
 
 func _on_ClearBucket_pressed():
+	clear_buckets()
+
+func clear_buckets():
 	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 	if pet_node and pet_node.has_method("restore_ball_visual_states"):
 		pet_node.restore_ball_visual_states(queued_bucket_changes.keys())
@@ -131,11 +259,12 @@ func _on_RecolorButton_pressed():
 	var lines = swap_lines_container.get_children()
 	var recolor_info = {recolors = []}
 	for l in lines:
-		var before_color = l.get_node("BeforeColor").text
-		var before_texture = l.get_node("BeforeTexture").text
-		var after_color = l.get_node("AfterColor").text
-		var after_texture = l.get_node("AfterTexture").text
-		var is_ramp = l.get_node("ColorRampCheck").pressed
+		if l.is_queued_for_deletion(): continue
+		var before_color = l.find_node("BeforeColor", true, false).text
+		var before_texture = l.find_node("BeforeTexture", true, false).text
+		var after_color = l.find_node("AfterColor", true, false).text
+		var after_texture = l.find_node("AfterTexture", true, false).text
+		var is_ramp = l.find_node("ColorRampCheck", true, false).pressed
 
 		if before_color.empty() and before_texture.empty():
 			continue
@@ -168,10 +297,12 @@ func _on_RecolorButton_pressed():
 func _on_ClearSwap_pressed():
 	var lines = swap_lines_container.get_children()
 	for l in lines:
-		l.get_node("BeforeColor").text = ""
-		l.get_node("BeforeTexture").text = ""
-		l.get_node("AfterColor").text = ""
-		l.get_node("AfterTexture").text = ""
+		if l.is_queued_for_deletion(): continue
+		l.find_node("BeforeColor", true, false).text = ""
+		l.find_node("BeforeTexture", true, false).text = ""
+		l.find_node("AfterColor", true, false).text = ""
+		l.find_node("AfterTexture", true, false).text = ""
+		l.find_node("ColorRampCheck", true, false).pressed = false
 
 	for cb in color_swap_check_container.get_children():
 		if cb is CheckBox or cb is Button:
@@ -183,6 +314,8 @@ func _on_ClearSwap_pressed():
 		for cb in check_container_2.get_children():
 			if cb is CheckBox:
 				cb.pressed = true
+				
+	_refresh_all_previews()
 
 func _on_AutofillSwap_pressed():
 	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
@@ -199,31 +332,50 @@ func _on_AutofillSwap_pressed():
 
 	sorted_pairs.sort_custom(self, "_sort_by_count")
 
+	var needed_lines = sorted_pairs.size()
+	if needed_lines == 0:
+		needed_lines = 1
+		
 	var lines = swap_lines_container.get_children()
+	
+	# Add if missing
+	while lines.size() < needed_lines:
+		var l = _add_swap_line()
+		lines.append(l)
+		
+	# Remove if too many
+	while lines.size() > needed_lines:
+		var l = lines.pop_back()
+		l.queue_free()
 
 	for i in range(lines.size()):
 		var line_node = lines[i]
+		if line_node.is_queued_for_deletion(): continue
 		if i < sorted_pairs.size():
 			var pair = sorted_pairs[i].key.split(",")
-			line_node.get_node("BeforeColor").text = pair[0]
-			line_node.get_node("BeforeTexture").text = pair[1]
-			line_node.get_node("AfterColor").text = ""
-			line_node.get_node("AfterTexture").text = ""
+			line_node.find_node("BeforeColor", true, false).text = pair[0]
+			line_node.find_node("BeforeTexture", true, false).text = pair[1]
+			line_node.find_node("AfterColor", true, false).text = ""
+			line_node.find_node("AfterTexture", true, false).text = ""
 		else:
-			line_node.get_node("BeforeColor").text = ""
-			line_node.get_node("BeforeTexture").text = ""
-			line_node.get_node("AfterColor").text = ""
-			line_node.get_node("AfterTexture").text = ""
+			line_node.find_node("BeforeColor", true, false).text = ""
+			line_node.find_node("BeforeTexture", true, false).text = ""
+			line_node.find_node("AfterColor", true, false).text = ""
+			line_node.find_node("AfterTexture", true, false).text = ""
+			
+		line_node.find_node("ColorRampCheck", true, false).pressed = false
+		
+	_refresh_all_previews()
 
 func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty(): return
 
 	for i in range(bounds.start, bounds.end):
 		var line = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
 			var color = parts[color_idx]
 			var texture = parts[texture_idx]
@@ -249,9 +401,10 @@ func _on_RandomizeSwap_pressed():
 	var lines = swap_lines_container.get_children()
 
 	for l in lines:
-		var after_color_edit = l.get_node("AfterColor")
-		var after_texture_edit = l.get_node("AfterTexture")
-		var is_ramp = l.get_node("ColorRampCheck").pressed
+		if l.is_queued_for_deletion(): continue
+		var after_color_edit = l.find_node("AfterColor", true, false)
+		var after_texture_edit = l.find_node("AfterTexture", true, false)
+		var is_ramp = l.find_node("ColorRampCheck", true, false).pressed
 
 		var random_color
 		if is_ramp:
@@ -264,8 +417,10 @@ func _on_RandomizeSwap_pressed():
 		var random_texture = randi() % (max_texture_id + 1)
 		after_texture_edit.text = str(random_texture)
 
+	_refresh_all_previews()
+
 func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty(): return current_max
 
 	var new_max = current_max
@@ -273,7 +428,7 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 		var line = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"): continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > texture_idx:
 			var texture_str = parts[texture_idx]
 			if texture_str.is_valid_integer():

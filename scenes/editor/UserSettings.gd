@@ -12,6 +12,7 @@ onready var color_rect = get_node("BackgroundColorRect")
 onready var view_palette_button = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton")
 onready var shrink_spinner = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ShrinkSpinBox")
 onready var file_tree = get_tree().get_root().get_node("Root/SceneRoot/HSplitContainer/VBoxContainer/SidebarTabs/FileTree/Tree")
+onready var pet_view_container = get_node("HSplitContainer/HSplitContainer/PetViewContainer")
 
 onready var settings_dialog = get_node("UserSettingsDialog")
 onready var user_settings_btn = get_node("HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/FileOptionButton/PopupPanel/FileOptionContainer/UserSettingsButton")
@@ -20,6 +21,16 @@ onready var lnz_text_edit = get_node("HSplitContainer/HSplitContainer/TextPanelC
 var _cached_window_size = Vector2(1024, 600)
 var _cached_window_pos = Vector2()
 var preferred_delimiter = "comma_space"
+
+var using_alt_font = false
+var font_size_offset = 0
+
+const MIN_FONT_OFFSET = -8
+const MAX_FONT_OFFSET = 24
+
+var base_fonts = {}
+
+signal global_font_updated
 
 var file_tree_expanded_sections = {
 	"Examples": true,
@@ -34,6 +45,22 @@ var stretch_mode = SceneTree.STRETCH_MODE_2D
 var stretch_aspect = SceneTree.STRETCH_ASPECT_EXPAND
 
 func _ready():
+	var global_theme = Theme.new()
+	var default_global_font = DynamicFont.new()
+	default_global_font.font_data = load("res://resources/fonts/PixelCode.ttf")
+	default_global_font.size = 14
+	global_theme.default_font = default_global_font
+	self.theme = global_theme
+
+	base_fonts[default_global_font.get_instance_id()] = {
+		"ref": weakref(default_global_font),
+		"base_size": default_global_font.size,
+		"base_data": default_global_font.font_data
+	}
+
+	get_tree().connect("node_added", self, "_on_node_added")
+	_traverse_and_register_fonts(get_tree().root)
+
 	_cached_window_size = OS.window_size
 	_cached_window_pos = OS.window_position
 	
@@ -53,6 +80,13 @@ func _ready():
 		settings_dialog.connect("max_history_changed", self, "_on_max_history_changed")
 		settings_dialog.connect("stretch_mode_changed", self, "_on_stretch_mode_changed")
 		settings_dialog.connect("stretch_aspect_changed", self, "_on_stretch_aspect_changed")
+
+	get_tree().root.connect("size_changed", self, "_on_window_size_changed")
+
+func _on_toggle_ref_image_btn_pressed():
+	var ref_settings = get_tree().root.find_node("ReferenceImageSettings", true, false)
+	if ref_settings:
+		ref_settings.toggle_reference_image()
 
 func _on_user_settings_pressed():
 	settings_dialog.init_settings(preferred_delimiter, color_rect.color, shrink_spinner.value, max_history_size, stretch_mode, stretch_aspect)
@@ -78,6 +112,11 @@ func _on_stretch_aspect_changed(new_aspect):
 	_apply_screen_shrink(shrink_spinner.value)
 	save_settings()
 
+func _on_window_size_changed():
+		if not OS.window_fullscreen and not OS.window_maximized:
+			_cached_window_size = OS.window_size
+			_cached_window_pos = OS.window_position
+
 func get_preferred_delimiter() -> String:
 	var delims = {
 		"comma_space": ", ",
@@ -88,10 +127,10 @@ func get_preferred_delimiter() -> String:
 	}
 	return delims.get(preferred_delimiter, "auto")
 
-func _process(_delta):
-	if not OS.window_fullscreen and not OS.window_maximized:
-		_cached_window_size = OS.window_size
-		_cached_window_pos = OS.window_position
+# func _process(_delta):
+# 	if not OS.window_fullscreen and not OS.window_maximized:
+# 		_cached_window_size = OS.window_size
+# 		_cached_window_pos = OS.window_position
 
 func _notification(what):
 	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
@@ -114,6 +153,9 @@ func save_settings():
 	
 	config.set_value("LNZOptions", "preferred_delimiter", preferred_delimiter)
 	config.set_value("LNZOptions", "max_history_size", max_history_size)
+
+	config.set_value("Display", "using_alt_font", using_alt_font)
+	config.set_value("Display", "font_size_offset", font_size_offset)
 
 	if file_tree and file_tree.has_method("get_expanded_states"):
 		file_tree_expanded_sections = file_tree.get_expanded_states()
@@ -173,12 +215,140 @@ func load_settings():
 		if lnz_text_edit:
 			lnz_text_edit.max_history_size = max_history_size
 
+		using_alt_font = config.get_value("Display", "using_alt_font", false)
+		font_size_offset = config.get_value("Display", "font_size_offset", 0)
+
 	else:
 		OS.center_window()
 		color_rect.color = default_color
 		color_picker.color = default_color
 		if lnz_text_edit:
 			lnz_text_edit.max_history_size = 50
+
+		shrink_spinner.value = 1.0
+		stretch_mode = SceneTree.STRETCH_MODE_2D
+		stretch_aspect = SceneTree.STRETCH_ASPECT_EXPAND
+		_apply_screen_shrink(1.0)
+
+	var btn = get_node_or_null("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/FontToggleButton")
+	if btn:
+		if using_alt_font:
+			btn.text = "Font: Cascadia"
+		else:
+			btn.text = "Font: Pixel"
+
+	_apply_global_font_settings()
+
+func _traverse_and_register_fonts(node: Node):
+	_on_node_added(node)
+	for child in node.get_children():
+		_traverse_and_register_fonts(child)
+
+func _on_node_added(node: Node):
+	if not node is Control and not node is WindowDialog:
+		return
+
+	var fonts_added = false
+	var overrides = [
+		"font", "normal_font", "bold_font", "italics_font",
+		"bold_italics_font", "title_font", "title_button_font",
+		"font_separator", "mono_font"
+	]
+
+	for o in overrides:
+		if node.has_font_override(o):
+			var f = node.get_font(o)
+			if f is DynamicFont and not base_fonts.has(f.get_instance_id()):
+				base_fonts[f.get_instance_id()] = {
+					"ref": weakref(f),
+					"base_size": f.size,
+					"base_data": f.font_data
+				}
+				fonts_added = true
+
+	if node.theme and node.theme.default_font:
+		var f = node.theme.default_font
+		if f is DynamicFont and not base_fonts.has(f.get_instance_id()):
+			base_fonts[f.get_instance_id()] = {
+				"ref": weakref(f),
+				"base_size": f.size,
+				"base_data": f.font_data
+			}
+			fonts_added = true
+
+	if fonts_added:
+		_apply_global_font_settings()
+
+func _apply_global_font_settings():
+	var cascadia_data = null
+	if using_alt_font:
+		cascadia_data = load("res://resources/fonts/CascadiaCode.ttf")
+		if not cascadia_data:
+			print("WARNING: CascadiaCode.ttf not found at res://resources/fonts/CascadiaCode.ttf")
+
+	var keys_to_erase = []
+	for id in base_fonts.keys():
+		var f_info = base_fonts[id]
+		var f = f_info.ref.get_ref()
+		
+		if not f:
+			keys_to_erase.append(id)
+			continue
+
+		var target_base_size = f_info.base_size
+
+		if using_alt_font and cascadia_data:
+			f.font_data = cascadia_data
+			
+			var path = f_info.base_data.font_path
+			
+			if "PixelCode" in path:
+				target_base_size = int(f_info.base_size * 1.0)
+			elif "pixel_maz" in path:
+				target_base_size = int(f_info.base_size * 0.5) 
+				
+		else:
+			f.font_data = f_info.base_data
+
+		f.size = max(4, target_base_size + font_size_offset)
+
+	for id in keys_to_erase:
+		base_fonts.erase(id)
+
+	emit_signal("global_font_updated")
+
+func increase_font_size():
+	if font_size_offset < MAX_FONT_OFFSET:
+		font_size_offset += 2
+		_apply_global_font_settings()
+		save_settings()
+
+func decrease_font_size():
+	if font_size_offset > MIN_FONT_OFFSET:
+		font_size_offset -= 2
+		_apply_global_font_settings()
+		save_settings()
+
+func toggle_font_type():
+	using_alt_font = !using_alt_font
+	_apply_global_font_settings()
+	save_settings()
+	return using_alt_font
+
+func _on_FontToggleButton_pressed():
+	toggle_font_type()
+	var btn = get_node_or_null("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/HBoxContainer/FontToggleButton")
+	if btn:
+		if using_alt_font:
+			btn.text = "Font: Cascadia"
+		else:
+			btn.text = "Font: Pixel"
+
+func _on_DecreaseFontButton_pressed():
+	decrease_font_size()
+
+func _on_IncreaseFontButton_pressed():
+	increase_font_size()
 
 func _on_color_changed(new_color: Color):
 	color_rect.color = new_color

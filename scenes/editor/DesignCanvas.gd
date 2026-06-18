@@ -10,6 +10,8 @@ var is_drawing = false
 var coordinate_multiplier = 1.0
 var brush_spacing = 5.0
 var last_draw_pos = Vector2.ZERO
+var current_mouse_pos = Vector2.ZERO
+var is_mouse_inside = false
 
 var mirror_x = false
 var mirror_y = false
@@ -35,8 +37,11 @@ func _gui_input(event):
 				is_drawing = false
 
 	elif event is InputEventMouseMotion:
+		current_mouse_pos = event.position
+		update()
 		if is_drawing:
-			if event.position.distance_to(last_draw_pos) >= brush_spacing:
+			var pixel_spacing = (brush_spacing / 100.0) * rect_size.x
+			if event.position.distance_to(last_draw_pos) >= pixel_spacing:
 				if eraser_mode:
 					_erase_at(event.position)
 				else:
@@ -47,7 +52,8 @@ func _erase_at(pos):
 	var rect_size = get_rect().size
 	var center = rect_size / 2.0
 
-	var erase_radius = brush_size / 2.0
+	var pixel_diameter = (brush_size / 100.0) * rect_size.x
+	var erase_radius = pixel_diameter / 2.0
 
 	var to_remove = []
 	for i in range(design_paintballs.size()):
@@ -131,7 +137,12 @@ func _draw():
 	for pb in design_paintballs:
 		var pos = _norm_to_local(pb.x, pb.y)
 		var color = _get_slot_color(pb.color_slot)
-		draw_circle(pos, pb.diameter / 2.0, color)
+		var pixel_diameter = (pb.diameter / 100.0) * rect_size.x
+		draw_circle(pos, pixel_diameter / 2.0, color)
+
+	if is_mouse_inside:
+		var current_pixel_diam = (brush_size / 100.0) * rect_size.x
+		draw_arc(current_mouse_pos, current_pixel_diam / 2.0, 0, TAU, 32, Color(1, 1, 1, 0.8), 1.0)
 
 func _norm_to_local(nx, ny):
 	var center = rect_size / 2.0
@@ -151,7 +162,11 @@ func clear():
 	emit_signal("design_changed")
 
 func _on_mouse_entered():
-	pass
+	is_mouse_inside = true
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	update()
 
 func _on_mouse_exited():
-	pass
+	is_mouse_inside = false
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	update()

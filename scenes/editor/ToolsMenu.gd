@@ -10,13 +10,14 @@ extends PopupMenu
 
 signal color_entire_pet(color_index, outline_color_index)
 signal color_part_pet(core_ball_nos, color_index, outline_color_index, part)
-signal add_ball(selected_ball, connect_line)
+signal create_addball(selected_ball, connect_line)
 signal delete_ball(selected_ball)
 signal copy_l_to_r(ball_no)
 signal copy_r_to_l(ball_no)
 signal recolor(recolor_info)
 signal move_head(x,y,z)
 signal apply_global_fuzz(fuzz)
+signal clear_ball_paintballz(ball_no)
 signal print_ball_colors()
 signal paintball_mode_for_ball_toggled(ball)
 
@@ -25,35 +26,214 @@ signal unomit_ball(ball_no)
 signal hide_ball(ball_no)
 
 var selected_visual_ball = null
-
 var current_action
 
 onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE, TONGUE }
 
+enum ToolsAction {
+	RECOLOR = 10,
+	CREATE_ADDBALLZ_LINEZ = 1,
+	CREATE_ADDBALLZ = 2,
+	DELETE_ADDBALLZ = 3,
+	OMIT_UNOMIT = 4,
+	CONNECT_LINEZ = 5,
+	COPY_L_TO_R = 6,
+	COPY_R_TO_L = 7,
+	PAINTBALL_MODE = 8,
+	EXPORT_CLOTHES = 9,
+	HIDE_BALLZ = 11,
+	APPLY_FUZZ = 12,
+	COPY_COLORS = 13,
+	BALL_INFO = 14,
+	CLEAR_PAINTBALLZ = 15
+}
+
+	# add_submenu_item("Color...", "RecolorMenu")
+	# add_item("Create Addballz + Linez")         # index 1
+	# add_item("Create Addballz")                 # index 2
+	# add_item("Delete Addballz")                 # index 3
+	# add_item("Omit/Unomit Ballz")               # index 4
+	# add_item("Connect by Linez")                # index 5
+	# add_item("Copy-Mirror (L-to-R)")        # index 6
+	# add_item("Copy-Mirror (R-to-L)")        # index 7
+	# add_item("Paintball Mode")                  # index 8
+	# add_item("Export to Clothes CLZ")           # index 9
+	# add_item("Hide Ballz")                      # index 10
+	# add_item("Apply Global Fuzz")               # index 11
+	# add_item("Copy Ballz Colors to Clipboard")  # index 12
+	# add_item("Ball Info")                       # index 13
+
+var dog_generator = null
+
+var cached_palette_colors = []
+
+var color_line_edit: LineEdit
+var outcol_line_edit: LineEdit
+var fuzz_line_edit: LineEdit
+
 func _ready():
-	add_submenu_item("Color...", "RecolorMenu")
-	add_item("Create Addballz + Linez")         # index 1
-	add_item("Create Addballz")                 # index 2
-	add_item("Delete Addballz")                 # index 3
-	add_item("Omit/Unomit Ballz")               # index 4
-	add_item("Connect by Linez")                # index 5
-	add_item("Copy-Mirror (cam L-to-R)")        # index 6
-	add_item("Copy-Mirror (cam R-to-L)")        # index 7
-	add_item("Paintball Mode")                  # index 8
-	add_item("Export to Clothes CLZ")           # index 9
-	add_item("Hide Ballz")                      # index 10
-	add_item("Apply Global Fuzz")               # index 11
-	add_item("Copy Ballz Colors to Clipboard")  # index 12
-	add_item("Ball Info")                       # index 13
+	add_submenu_item("Color...", "RecolorMenu", ToolsAction.RECOLOR)
+	add_item("Create Addballz + Linez", ToolsAction.CREATE_ADDBALLZ_LINEZ)
+	add_item("Create Addballz", ToolsAction.CREATE_ADDBALLZ)
+	add_item("Delete Addballz / Omit", ToolsAction.DELETE_ADDBALLZ)
+	add_item("Omit/Unomit Ballz", ToolsAction.OMIT_UNOMIT)
+	add_item("Clear Paintballz from Ballz", ToolsAction.CLEAR_PAINTBALLZ)
+	add_item("Connect by Linez", ToolsAction.CONNECT_LINEZ)
+	add_item("Copy-Mirror (L-to-R)", ToolsAction.COPY_L_TO_R)
+	add_item("Copy-Mirror (R-to-L)", ToolsAction.COPY_R_TO_L)
+	add_item("Paintball Mode", ToolsAction.PAINTBALL_MODE)
+	add_item("Export to Clothes CLZ", ToolsAction.EXPORT_CLOTHES)
+	add_item("Hide Ballz", ToolsAction.HIDE_BALLZ)
+	add_item("Apply Global Fuzz", ToolsAction.APPLY_FUZZ)
+	add_item("Copy Ballz Colors to Clipboard", ToolsAction.COPY_COLORS)
+	add_item("Ball Info", ToolsAction.BALL_INFO)
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
+	
+	var panel_style = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
+	panel_style.content_margin_left = 12
+	panel_style.content_margin_right = 12
+	panel_style.content_margin_top = 8
+	panel_style.content_margin_bottom = 12
+	add_stylebox_override("panel", panel_style)
+
+	var recolor_menu = get_node_or_null("RecolorMenu")
+	if recolor_menu:
+		recolor_menu.add_stylebox_override("panel", panel_style)
+	
+	if get_tree().get_root().has_node("Root/PetRoot/Node"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
+	elif get_tree().get_root().has_node("Root/PetRoot"):
+		dog_generator = get_tree().get_root().get_node("Root/PetRoot")
+		
+	if dog_generator:
+		dog_generator.connect("palette_changed", self, "_on_palette_changed")
+
+	_resize_and_anchor_popup("ColorPopup", Vector2(240, 110))
+	_resize_and_anchor_popup("FuzzPopup", Vector2(160, 60))
+	_resize_and_anchor_popup("HeadMovePopup", Vector2(160, 120))
+
+	color_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit")
+	outcol_line_edit = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit2")
+	fuzz_line_edit = get_parent().get_node_or_null("FuzzPopup/VBoxContainer/GlobalFuzzAmount")
+	
+	var color_popup = get_parent().get_node("ColorPopup")
+	if color_popup:
+		color_popup.rect_min_size = Vector2(200, 100) # Ensure popup is tall/wide enough for padding + icons
+		
+		var vbox = color_popup.get_node("VBoxContainer")
+		if vbox:
+			vbox.anchor_right = 1.0
+			vbox.anchor_bottom = 1.0
+			vbox.margin_right = 0
+			vbox.margin_bottom = 0
+	
+	_setup_preview_wrapper(color_line_edit, "ColorEdit")
+	_setup_preview_wrapper(outcol_line_edit, "OutcolEdit")
+	
+	# Apply comfortable padding to all standard LineEdits inside the menu popups
+	var le_style = color_line_edit.get_stylebox("normal").duplicate()
+	if le_style is StyleBoxFlat:
+		le_style.content_margin_left = 10
+		le_style.content_margin_right = 10
+		le_style.content_margin_top = 6
+		le_style.content_margin_bottom = 6
+		
+	color_line_edit.add_stylebox_override("normal", le_style)
+	outcol_line_edit.add_stylebox_override("normal", le_style)
+	
+	if fuzz_line_edit: fuzz_line_edit.add_stylebox_override("normal", le_style)
+	
+	for head_edit in ["HeadMoveLineEditX", "HeadMoveLineEditY", "HeadMoveLineEditZ"]:
+		var edit = get_parent().get_node_or_null("HeadMovePopup/VBoxContainer/" + head_edit)
+		if edit: edit.add_stylebox_override("normal", le_style)
+
+	_on_palette_changed()
+
+func _resize_and_anchor_popup(popup_name: String, new_size: Vector2):
+	var popup = get_parent().get_node_or_null(popup_name)
+	if popup:
+		popup.rect_min_size = new_size
+		popup.rect_size = new_size
+		
+		var vbox = popup.get_node_or_null("VBoxContainer")
+		if vbox:
+			vbox.anchor_right = 1.0
+			vbox.anchor_bottom = 1.0
+			vbox.margin_right = 0
+			vbox.margin_bottom = 0
+
+func _setup_preview_wrapper(le: LineEdit, le_name: String):
+	if not is_instance_valid(le): return
+	var parent = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.rect_min_size = le.rect_min_size
+
+	var pos = le.get_index()
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _on_color_list_text_changed(new_text: String, container: Container):
+	# Removed ClassDB check because LnzLiveUtils is an AutoLoad singleton.
+	if LnzLiveUtils:
+		LnzLiveUtils.update_color_list_previews(container, new_text, cached_palette_colors)
+
+func _on_palette_changed(palette_name = ""):
+	if not is_instance_valid(dog_generator) or not dog_generator.current_palette_texture:
+		return
+
+	var img = dog_generator.current_palette_texture.get_data()
+	if img == null:
+		return
+
+	img.lock()
+	var img_width = img.get_width()
+	var img_height = img.get_height()
+
+	cached_palette_colors.clear()
+	for i in range(256):
+		var x = i % img_width
+		var y = i / img_width
+		if x < img_width and y < img_height:
+			cached_palette_colors.append(img.get_pixel(x, y))
+		else:
+			cached_palette_colors.append(Color.black)
+
+	img.unlock()
+	_refresh_all_previews()
+
+func _refresh_all_previews():
+	if not is_instance_valid(color_line_edit) or not is_instance_valid(outcol_line_edit): return
+	
+	var cw = color_line_edit.get_parent()
+	if cw and cw.has_node("ColorEdit_Preview"):
+		_on_color_list_text_changed(color_line_edit.text, cw.get_node("ColorEdit_Preview"))
+
+	var ow = outcol_line_edit.get_parent()
+	if ow and ow.has_node("OutcolEdit_Preview"):
+		_on_color_list_text_changed(outcol_line_edit.text, ow.get_node("OutcolEdit_Preview"))
+
 
 func _on_LineEdit_gui_input(event):
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
-		var base_color = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit").text
-		var outline_color = get_parent().get_node("ColorPopup/VBoxContainer/LineEdit2").text
+		var base_color = color_line_edit.text
+		var outline_color = outcol_line_edit.text
 		if current_action == RecolorAction.ENTIRE:
 			emit_signal("color_entire_pet", base_color, outline_color)
 		else:
@@ -157,6 +337,21 @@ func _on_RecolorMenuButton_pressed():
 		pet_view.recolor_mode_check_box.pressed = true
 
 func _on_ToolsMenu_index_pressed(index):
+	if index >= get_item_count(): return
+
+	if get_item_text(index).begins_with("Exit "):
+		var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		if is_instance_valid(pet_view):
+			pet_view.paintball_check_box.pressed = false
+			pet_view.line_mode_check_box.pressed = false
+			pet_view.move_mode_check_box.pressed = false
+			pet_view.preset_mode_check_box.pressed = false
+			pet_view.recolor_mode_check_box.pressed = false
+			pet_view.project_mode_check_box.pressed = false
+			pet_view.auto_paintballer_check_box.pressed = false
+		return
+
+	var id = get_item_id(index)
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
@@ -164,69 +359,105 @@ func _on_ToolsMenu_index_pressed(index):
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
-		is_ball_selected = is_instance_valid(selected_visual_ball)
+		is_ball_selected = true
 		is_addball = ball_no > KeyBallsData.max_base_ball_num
 		is_omitted = selected_visual_ball.get("omitted") == true
 
-	if index == 1: # Create Addballz + Linez
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("add_ball", selected_visual_ball, true)
-	elif index == 2: # Create Addballz
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("add_ball", selected_visual_ball, false)
-	elif index == 3: # Delete Addballz
-		if is_instance_valid(selected_visual_ball):
-			if is_omitted:
-				emit_signal("unomit_ball", ball_no)
-			elif is_addball:
-				emit_signal("delete_ball", ball_no)
-			else:
-				emit_signal("omit_ball", ball_no)
-	elif index == 4: # Omit/Unomit Ballz
-		if is_instance_valid(selected_visual_ball):
-			if is_omitted:
-				emit_signal("unomit_ball", ball_no)
-			else:
-				emit_signal("omit_ball", ball_no)
-	elif index == 5: # Connect by Linez
-		if is_instance_valid(selected_visual_ball):
-			var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-			pet_view.line_mode_close = true
-			pet_view.line_mode_check_box.pressed = true
-			pet_view.linez_start_ball = selected_visual_ball
-			selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
-	elif index == 6: # Copy-Mirror (L-to-R)
-		emit_signal("copy_l_to_r", ball_no)
-	elif index == 7: # Copy-Mirror (R-to-L)
-		emit_signal("copy_r_to_l", ball_no)
-	elif index == 8: # Paintball Mode
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
-	elif index == 9: # Export to Clothes CLZ
-		get_parent().get_node("ExportClothes").open(ball_no)
-	elif index == 10: # Hide Ballz
-		if is_instance_valid(selected_visual_ball):
-			emit_signal("hide_ball", ball_no)
-	elif index == 11: # Apply Global Fuzz
-		var options = get_parent().get_node("FuzzPopup")
-		options.popup_centered()
-		# var options = get_parent().get_node("HeadMovePopup")
-		# options.popup_centered()
-	elif index == 12: # Print Ballz Colors
-		emit_signal("print_ball_colors")
-	elif index == 13: # Jump to ball
-		if is_ball_selected:
-			var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-			if is_instance_valid(lnz_text_edit):
-				lnz_text_edit._on_Node_ball_selected(0, ball_no, is_addball, -1)
-		return
+	# Match against IDs so reordering items in _ready() doesn't break logic
+	match id:
+		ToolsAction.CREATE_ADDBALLZ_LINEZ: # Create Addballz + Linez
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("create_addball", selected_visual_ball, true)
+
+		ToolsAction.CREATE_ADDBALLZ: # Create Addballz
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("create_addball", selected_visual_ball, false)
+
+		ToolsAction.DELETE_ADDBALLZ: # Delete Addballz
+			if is_instance_valid(selected_visual_ball):
+				if is_omitted:
+					emit_signal("unomit_ball", ball_no)
+				elif is_addball:
+					emit_signal("delete_ball", ball_no)
+				else:
+					emit_signal("omit_ball", ball_no)
+
+		ToolsAction.OMIT_UNOMIT: # Omit/Unomit Ballz
+			if is_instance_valid(selected_visual_ball):
+				if is_omitted:
+					emit_signal("unomit_ball", ball_no)
+				else:
+					emit_signal("omit_ball", ball_no)
+
+		ToolsAction.CONNECT_LINEZ: # Connect by Linez
+			if is_instance_valid(selected_visual_ball):
+				var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+				pet_view.line_mode_close = true
+				pet_view.line_mode_check_box.pressed = true
+				pet_view.linez_start_ball = selected_visual_ball
+				selected_visual_ball.apply_outline_state(selected_visual_ball.OutlineState.ACTIVE_SELECTED)
+
+		ToolsAction.COPY_L_TO_R: # Copy-Mirror (L-to-R)
+			emit_signal("copy_l_to_r", ball_no)
+
+		ToolsAction.COPY_R_TO_L: # Copy-Mirror (R-to-L)
+			emit_signal("copy_r_to_l", ball_no)
+
+		ToolsAction.PAINTBALL_MODE: # Paintball Mode
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("paintball_mode_for_ball_toggled", selected_visual_ball)
+
+		ToolsAction.EXPORT_CLOTHES: # Export to Clothes CLZ
+			get_parent().get_node("ExportClothes").open(ball_no)
+
+		ToolsAction.HIDE_BALLZ: # Hide Ballz
+			if is_instance_valid(selected_visual_ball):
+				emit_signal("hide_ball", ball_no)
+
+		ToolsAction.APPLY_FUZZ: # Apply Global Fuzz
+			var options = get_parent().get_node("FuzzPopup")
+			options.popup_centered()
+
+		ToolsAction.COPY_COLORS: # Print Ballz Colors
+			emit_signal("print_ball_colors")
+
+		ToolsAction.BALL_INFO: # Jump to ball
+			if is_ball_selected:
+				var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+				if is_instance_valid(lnz_text_edit):
+					lnz_text_edit.select_ball(0, ball_no, is_addball, -1)
+			return
+
+		ToolsAction.CLEAR_PAINTBALLZ: # Clear Paintballz
+			if is_ball_selected:
+				emit_signal("clear_ball_paintballz", ball_no)
+
 
 func _on_ToolsMenu_about_to_show():
+	while get_item_count() > 15:
+		remove_item(get_item_count() - 1)
+
+	for i in range(14):
+		set_item_disabled(i, false)
+
 	var ball_no = -1
 	var is_addball = false
 	var is_omitted = false
 	var is_ball_selected = false
 	var b_name = "Unknown Ball"
+	
+	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var active_mode = ""
+	if is_instance_valid(pet_view):
+		if pet_view.move_mode: active_mode = "Move Mode"
+		elif pet_view.paintball_mode: active_mode = "Paintball Mode"
+		elif pet_view.linez_mode: active_mode = "Line Mode"
+		elif pet_view.preset_mode: active_mode = "Preset Mode"
+		elif pet_view.project_mode: active_mode = "Project Mode"
+		elif pet_view.auto_paintballer_mode: active_mode = "Auto Paintballer"
+		elif pet_view.recolor_mode: active_mode = "Recolor Mode"
+
+	var in_mode = active_mode != ""
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
@@ -240,95 +471,133 @@ func _on_ToolsMenu_about_to_show():
 		is_omitted = selected_visual_ball.get("omitted") == true
 
 	if is_ball_selected:
-		set_item_text(13, "Jump to #%d (%s)" % [ball_no, b_name])
+		set_item_text(get_item_index(ToolsAction.BALL_INFO), "Jump to #%d (%s)" % [ball_no, b_name])
 	else:
-		set_item_text(13, "No Ballz Selected")
+		set_item_text(get_item_index(ToolsAction.BALL_INFO), "No Ballz Selected")
 
 	var option_text = ""
 
-	# 1: Create Addballz + Linez
+	# Create Addballz + Linez
+	var idx =  get_item_index(ToolsAction.CREATE_ADDBALLZ_LINEZ)
 	option_text = "Create Addballz + Linez"
-	set_item_disabled(1, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(1, option_text)
+	set_item_text(idx, option_text)
 
-	# 2: Create Addballz
+	# Create Addballz
+	idx = get_item_index(ToolsAction.CREATE_ADDBALLZ)
 	option_text = "Create Addballz"
-	set_item_disabled(2, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(2, option_text)
+	set_item_text(idx, option_text)
 
-	# 3: Delete Addballz
+	# Delete Addballz
+	idx = get_item_index(ToolsAction.DELETE_ADDBALLZ)
 	option_text = "Delete Addballz"
-	set_item_disabled(3, !is_ball_selected or !is_addball)
+	set_item_disabled(idx, !is_ball_selected or !is_addball)
 	if is_ball_selected and is_addball:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(3, option_text)
+	set_item_text(idx, option_text)
 
-	# 4: Omit/Unomit Ballz
-	set_item_disabled(4, !is_ball_selected)
+	# Omit/Unomit Ballz
+	idx =  get_item_index(ToolsAction.OMIT_UNOMIT)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		var type_str = "Addballz" if is_addball else "Ballz"
 		if is_omitted:
-			set_item_text(4, "Unomit " + type_str + " (#" + str(ball_no) + ")")
+			set_item_text(idx, "Unomit " + type_str + " (#" + str(ball_no) + ")")
 		else:
-			set_item_text(4, "Omit " + type_str + " (#" + str(ball_no) + ")")
+			set_item_text(idx, "Omit " + type_str + " (#" + str(ball_no) + ")")
 	else:
-		set_item_text(4, "Omit / Unomit Ballz")
-		set_item_disabled(4, !is_ball_selected)
+		set_item_text(idx, "Omit / Unomit Ballz")
+		set_item_disabled(idx, !is_ball_selected)
 
-	# 5: Connect by Linez
+	# Connect by Linez
+	idx = get_item_index(ToolsAction.CONNECT_LINEZ)
 	option_text = "Connect by Linez"
-	set_item_disabled(4, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (Start: #" + str(ball_no) + ")"
-	set_item_text(5, option_text)
+	set_item_text(idx, option_text)
 
-	# 6/7: Copy-Mirror (L-to-R/R-to-L)
+	# Copy-Mirror (L-to-R/R-to-L)
 	if is_ball_selected:
-		set_item_text(6, "Copy-Mirror (#" + str(ball_no) + ")")
-		set_item_disabled(6, false)
+		idx = get_item_index(ToolsAction.COPY_L_TO_R)
+		set_item_text(idx, "Copy-Mirror (#" + str(ball_no) + ")")
+		set_item_disabled(idx, false)
 
-		set_item_text(7, "Copy-Mirror (all ballz)")
-		set_item_disabled(7, true)
+		idx = get_item_index(ToolsAction.COPY_R_TO_L)
+		set_item_text(idx, "Copy-Mirror (all ballz)")
+		set_item_disabled(idx, true)
 	else:
-		set_item_text(6, "Copy-Mirror (cam L-to-R, all ballz)")
-		set_item_disabled(6, false)
-		
-		set_item_text(7, "Copy-Mirror (cam R-to-L, all ballz)")
-		set_item_disabled(7, false)
+		idx = get_item_index(ToolsAction.COPY_L_TO_R)
+		set_item_text(idx, "Copy-Mirror (L-to-R, all ballz)")
+		set_item_disabled(idx, false)
 
-	# 8: Paintball Mode
+		idx = get_item_index(ToolsAction.COPY_R_TO_L)
+		set_item_text(idx, "Copy-Mirror (R-to-L, all ballz)")
+		set_item_disabled(idx, false)
+
+	# Paintball Mode
+	idx = get_item_index(ToolsAction.PAINTBALL_MODE)
 	option_text = "Paintball Mode"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
 	else:
 		option_text += " (all ballz)"
-	set_item_text(8, option_text)
+	set_item_text(idx, option_text)
 
-	# 9: Move Head Ballz
-	# set_item_text(9, "Move Head Ballz")
-
-	# 9: Export to Clothes CLZ
+	# Export to Clothes CLZ
+	idx = get_item_index(ToolsAction.EXPORT_CLOTHES)
 	option_text = "Export to Clothes CLZ"
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(9, option_text)
+	set_item_text(idx, option_text)
 
-	# 10: Hide Ballz
+	# Hide Ballz
+	idx = get_item_index(ToolsAction.HIDE_BALLZ)
 	option_text = "Hide Ballz"
-	set_item_disabled(10, !is_ball_selected)
+	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
 		option_text += " (#" + str(ball_no) + ")"
-	set_item_text(10, option_text)
+	set_item_text(idx, option_text)
 
-	# 11: Apply Global Fuzz
-	set_item_text(11, "Apply Global Fuzz")
+	# Apply Global Fuzz
+	idx = get_item_index(ToolsAction.APPLY_FUZZ)
+	set_item_text(idx, "Apply Global Fuzz")
 
-	# 12: Copy Ballz Colors to Clipboard
-	set_item_text(12, "Copy Ballz Colors to Clipboard")
+	# Copy Ballz Colors to Clipboard
+	idx = get_item_index(ToolsAction.COPY_COLORS)
+	set_item_text(idx, "Copy Ballz Colors to Clipboard")
+
+	# Clear Paintballz
+	idx = get_item_index(ToolsAction.CLEAR_PAINTBALLZ)
+	set_item_disabled(idx, !is_ball_selected)
+	set_item_text(idx, "Clear Paintballz (#%d)" % ball_no if is_ball_selected else "Clear Paintballz")
+
+	if in_mode:
+		# Disable everything involving interactive left-click
+		var allowed_ids = [
+			ToolsAction.RECOLOR,
+			ToolsAction.DELETE_ADDBALLZ,
+			ToolsAction.OMIT_UNOMIT,
+			ToolsAction.EXPORT_CLOTHES,
+			ToolsAction.APPLY_FUZZ,
+			ToolsAction.HIDE_BALLZ,
+			ToolsAction.COPY_COLORS,
+			ToolsAction.BALL_INFO,
+			ToolsAction.CLEAR_PAINTBALLZ
+		]
+		
+		for i in range(15):
+			var item_id = get_item_id(i)
+			if not item_id in allowed_ids:
+				set_item_disabled(i, true)
+
+		add_separator()
+		add_item("Exit " + active_mode)
 
 func _on_RecolorPopup_confirmed():
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
@@ -375,7 +644,8 @@ func _on_ClearButton_pressed():
 		l.get_node("AfterColor").text = ""
 		l.get_node("AfterTexture").text = ""
 	for cb in popup.get_node("CheckContainer").get_children():
-		cb.pressed = true
+		if cb.has_method("set_pressed"):
+			cb.pressed = true
 
 func _sort_by_count(a, b):
 	return a.count > b.count
@@ -415,7 +685,7 @@ func _on_AutofillButton_pressed():
 			line_node.get_node("AfterTexture").text = ""
 
 func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return
 
@@ -424,7 +694,7 @@ func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, textu
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
 			var color = parts[color_idx]
 			var texture = parts[texture_idx]
@@ -469,7 +739,7 @@ func _on_RandomizeButton_pressed():
 		after_texture_edit.text = str(random_texture)
 
 func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
-	var bounds = lnz_text_edit._get_section_bounds(section_name)
+	var bounds = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return current_max
 
@@ -479,7 +749,7 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit._split_line(line)
+		var parts = lnz_text_edit.split_line(line)
 		if parts.size() > texture_idx:
 			var texture_str = parts[texture_idx]
 			if texture_str.is_valid_integer():

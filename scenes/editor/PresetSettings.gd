@@ -30,7 +30,7 @@ onready var preview_world = scroll_vbox.get_node("PreviewContainer/Viewport/Prev
 
 var ball_scene = preload("res://Ball.tscn")
 var paintball_scene = preload("res://Paintball.tscn")
-var default_palette = preload("res://resources/palettes/petz_palette.png")
+var default_palette = LnzLiveUtils.DEFAULT_PALETTE
 var active_palette = default_palette
 onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
 var ball_texture_list = []
@@ -149,6 +149,8 @@ func _ready():
 	autofill_btn.connect("pressed", self, "_on_AutofillRecolorsButton_pressed")
 	apply_recolor_btn.connect("pressed", self, "_on_ApplyRecolorsButton_pressed")
 	clear_recolor_btn.connect("pressed", self, "_on_ClearRecolorsButton_pressed")
+
+	connect("visibility_changed", self, "_on_visibility_changed")
 	
 	var viewport_size = get_viewport().size
 	var panel_size = panel.rect_size
@@ -168,6 +170,20 @@ func _ready():
 	load_settings()
 
 	call_deferred("update_preview")
+
+func _on_visibility_changed():
+	if visible:
+		update_preview()
+	else:
+		clear_preview()
+
+func clear_preview():
+	if not is_instance_valid(preview_world):
+		return
+		
+	for child in preview_world.get_children():
+		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
+			child.queue_free()
 
 func set_texture_list(list):
 	ball_texture_list = list
@@ -198,13 +214,10 @@ func set_palette(palette_name):
 
 func sync_camera(main_camera_transform: Transform):
 	if preview_camera and is_instance_valid(preview_camera):
-		var rot = main_camera_transform.basis.get_euler()
-
+		preview_camera.global_transform.basis = main_camera_transform.basis
 		var dist = 3.0
-		var pos = main_camera_transform.basis.xform(Vector3(0, 0, dist))
-
-		preview_camera.transform.origin = pos
-		preview_camera.look_at(Vector3.ZERO, Vector3.UP)
+		preview_camera.global_transform.origin = main_camera_transform.basis.z * dist
+		preview_camera.global_transform.basis.x *= -1.0
 
 func _on_property_changed(_val = null):
 	if _ignore_ui_changes: return
@@ -440,6 +453,9 @@ func _load_texture(texture_filename: String) -> Texture:
 	return texture
 
 func update_preview():
+	if not visible:
+		return
+		
 	for child in preview_world.get_children():
 		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
 			child.free()
@@ -469,7 +485,7 @@ func update_preview():
 		base_visual_ball.outline = -1
 
 	if include_fuzz_chk.pressed:
-		base_visual_ball.fuzz_amount = int(fuzz_spinbox.value)
+		base_visual_ball.fuzz_amount = clamp(int(fuzz_spinbox.value) / 2, 0, 5)
 	else:
 		base_visual_ball.fuzz_amount = 0
 
@@ -546,7 +562,7 @@ func update_preview():
 				pb_visual.color_index = col
 				pb_visual.outline_color_index = out_col
 				pb_visual.outline = outline
-				pb_visual.fuzz_amount = fuzz
+				pb_visual.fuzz_amount = clamp(fuzz / 2, 0, 5)
 				pb_visual.palette = active_palette
 
 				pb_visual.z_add = z_add_counter

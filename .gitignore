@@ -14,9 +14,27 @@ export_presets.cfg
 # ignore WIP folders
 local/
 
-# Ignore engine (too big)
+# Ignore engine (too large for GitHub)
 engine/*.exe
+
+# Ignore exported files
 export/index.html
 export/index.js
 export/index.pck
-*.html
+export/favicon.png
+export/favicon.png.import
+export/index.audio.worklet.js
+export/index.png
+export/index.png.import
+export/index.wasm
+export/LnzLive*.exe
+export/LnzLive*.zip
+
+# Ignore databases and sessions for ChromaDB LLM-RAG (too large for GitHub)
+docs/llm-rag-sessions/
+docs/llm-rag-chromadb/
+docs/llm-rag-chromadb/godot/chroma.sqlite3
+docs/llm-rag-chromadb/main/chroma.sqlite3
+
+# Ignore Godot 3.2 docs .rst files (keep local)
+docs/godot/

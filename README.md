@@ -7,21 +7,41 @@
 
 ![screenshot](screenshot.png)
 
+## Quick Start
+
+For full instructions, see the [User Guide](docs/GUIDE.md)!
+
+1. **Download the Launcher:** Use the [LnzLive Launcher](https://github.com/tabbzi/LnzLive/releases/tag/launcher-v1.0) for automatic beta updates.
+2. **Load your LNZ:** * **Import:** `File > Import LNZ` to load a `.lnz` or `.txt` file.
+* **Paste:** Copy LNZ text from a resource editor (like LNZ Pro) and paste it directly into the right-hand editor panel.
+* **Examples:** Double-click any file in the `Examples` folder in the left sidebar.
+
+3. **Apply Changes:** Press `CTRL + S` or click **Apply Changes** to rebuild the 3D model after manual text edits.
+
+### Controls
+
+* **Rotate View:** `Left-click drag` in viewport.
+* **Zoom:** `Mouse wheel`.
+* **Pan:** `Middle-click drag` or `Space + Left-click drag`.
+* **Move Ball:** `Shift + Left-click drag` on a ball.
+* **Scale Ball:** `Shift + Alt + Left-click drag`.
+* **Quick Jump:** Hover a ball and press `B` (Ballz Info), `L` (Linez), or `M` (Move) to jump to that line in the text.
+
 ## Browser
 
 The web version of LnzLive Petz & Babyz beta can be accessed here:
 
 [https://tabbzi.itch.io/lnzlive](https://tabbzi.itch.io/lnzlive)
 
-## Instructions
+## Contribute
 
-See the [usage guide](GUIDE.md).
+We welcome contributions! Please see the [Developer Guide](docs/DEVELOPMENT.md) for setup instructions.
+
+If you would like to add suggestions or report bugs, raise [an issue](https://github.com/tabbzi/LnzLive/issues) (as long as it's not covered above) or a pull request.
 
 ## Limitations
 
-This app is in development. Expect crashes and visual bugs.
-
-If you would like to help with development, raise [an issue](https://github.com/tabbzi/LnzLive/issues) (as long as it's not covered above) or a pull request.
+This app is in development. Expect crashes and visual bugs. Directly loading game files (`.pet`, `.baby`, `.cat`, `.dog`) is a planned feature but not yet supported.
 
 ## Link to LnzLive
 

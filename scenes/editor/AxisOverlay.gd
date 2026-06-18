@@ -54,7 +54,8 @@ func _draw():
 
 	for axis in ["X","Y","Z"]:
 		var d3 = dirs[axis]
-		var d2 = Vector2(d3.x, -d3.y).normalized() * axis_length
+		#var d2 = Vector2(d3.x, -d3.y).normalized() * axis_length
+		var d2 = Vector2(-d3.x, -d3.y).normalized() * axis_length
 		var tip = origin + d2
 
 		var tip_clamped = Vector2(
@@ -70,19 +71,22 @@ func _draw():
 		if font:
 			# +X = "L"
 			var d3p = dirs["X"]
-			var d2p = Vector2(d3p.x, -d3p.y).normalized() * axis_length
+			#var d2p = Vector2(d3p.x, -d3p.y).normalized() * axis_length
+			var d2p = Vector2(-d3p.x, -d3p.y).normalized() * axis_length
 			var tip_p = origin + d2p
 			var tip_p_clamped = Vector2(
 				clamp(tip_p.x, 0, ps.x - self.position.x),
 				clamp(tip_p.y, 0, ps.y - self.position.y)
 			)
 			# offset perpendicular so it floats beside the arrow
-			var perp = Vector2(d2p.y, -d2p.x).normalized()
+			#var perp = Vector2(d2p.y, -d2p.x).normalized()
+			var perp = Vector2(-d2p.y, d2p.x).normalized()
 			draw_string(font, tip_p_clamped + perp * 22, "L", Color(1,1,1))
 
-			# -X = "RL"
+			# -X = "R"
 			var d3n = -d3p
-			var d2n = Vector2(d3n.x, -d3n.y).normalized() * axis_length
+			#var d2n = Vector2(d3n.x, -d3n.y).normalized() * axis_length
+			var d2n = Vector2(-d3n.x, -d3n.y).normalized() * axis_length
 			var tip_n = origin + d2n
 			var tip_n_clamped = Vector2(
 				clamp(tip_n.x, 0, ps.x - self.position.x),

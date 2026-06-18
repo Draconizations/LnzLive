@@ -3,6 +3,24 @@ extends Control
 const SETTINGS_PATH = "user://settings.cfg"
 
 func _ready():
+	print("Booting up LnzLive... debug mode is enabled, and messages will appear here, usually in the following format:")
+
+	print("- [STATUS]: nothing wrong! just informational messages")
+	print("- [WARNING]: non-critical issue, should still work but may cause other issues")
+	print("- [ERROR]: critical failure, might cause crash")
+
+	print("Please copy and share these messages if you run into any issues running LnzLive!")
+
+	print("\n--- System Information ---")
+	print("OS Name: ", OS.get_name())
+	print("OS Model: ", OS.get_model_name())
+	print("CPU Count: ", OS.get_processor_count())
+	print("RAM Usage (Static Godot): ", OS.get_static_memory_usage())
+	print("RAM Usage (Dynamic Godot): ", OS.get_dynamic_memory_usage())
+	print("GPU Adapter: ", VisualServer.get_video_adapter_name())
+	print("GPU Vendor: ", VisualServer.get_video_adapter_vendor())
+	print("--------------------------\n")
+
 	load_settings()
 
 func load_settings():

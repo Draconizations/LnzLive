@@ -17,12 +17,16 @@ export var texture_size           = Vector2(256, 256)  setget set_texture_size
 export var texture_size_raw       = Vector2.ZERO
 export var transparent_color      = 0                  setget set_transparent_color
 export var transparency_on        = true               setget set_transparency
+export var full_outline           = 0                  setget set_full_outline
+export var draw_order             = 0                  setget set_draw_order
+
+export var render_flat_colors     = false              setget set_render_flat_colors
 
 export var species                = 0                  setget set_species
 
-export var palette                = preload("res://resources/textures/petzpalette.png") setget set_palette
-const DEFAULT_PALETTE             = preload("res://resources/textures/petzpalette.png")
-const BABYZ_PALETTE               = preload("res://resources/palettes/babyz_palette.png")
+export var palette                = LnzLiveUtils.DEFAULT_PALETTE setget set_palette
+const DEFAULT_PALETTE             = LnzLiveUtils.DEFAULT_PALETTE
+const BABYZ_PALETTE               = LnzLiveUtils.BABYZ_PALETTE
 
 export var petz_palette           = DEFAULT_PALETTE
 
@@ -35,6 +39,7 @@ func _ready():
 
 	# Set initial shader parameters
 	$MeshInstance.material_override.set_shader_param("transparency_on", transparency_on)
+	$MeshInstance.material_override.set_shader_param("render_flat_colors", render_flat_colors)
 
 	# Pass the original texture to the shader
 	set_texture(texture)
@@ -78,6 +83,21 @@ func set_ball_world_pos2(new_value):
 func set_color_index(new_value):
 	color_index = new_value
 	$MeshInstance.material_override.set_shader_param("color_index", new_value)
+
+func set_full_outline(new_value):
+	full_outline = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("full_outline", new_value)
+
+func set_draw_order(new_value):
+	draw_order = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("draw_order", new_value)
+
+func set_render_flat_colors(new_value):
+	render_flat_colors = new_value
+	if has_node("MeshInstance") and $MeshInstance.material_override != null:
+		$MeshInstance.material_override.set_shader_param("render_flat_colors", new_value)
 
 func set_texture_size(new_value):
 	texture_size = new_value
@@ -125,19 +145,31 @@ func set_palette(new_value):
 		palette = DEFAULT_PALETTE
 		$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
 
-func set_species(new_value: int) -> void:
+# func set_species(new_value: int) -> void:
+# 	species = new_value
+# 	if $MeshInstance.material_override != null:
+# 		if species == 3:
+# 			# For Babyz species, use the Babyz palette and enable quantization
+# 			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
+# 			$MeshInstance.material_override.set_shader_param("should_quantize", true)
+# 			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+# 		else:
+# 			# For other species, use the default palette and disable quantization
+# 			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
+# 			$MeshInstance.material_override.set_shader_param("should_quantize", false)
+# 			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+
+func set_species(new_value: int, is_babyz_mode: bool = false) -> void:
 	species = new_value
 	if $MeshInstance.material_override != null:
-		if species == 3:
-			# For Babyz species, use the Babyz palette and enable quantization
+		$MeshInstance.material_override.set_shader_param("is_babyz_mode", is_babyz_mode)
+		
+		if is_babyz_mode:
 			$MeshInstance.material_override.set_shader_param("palette", BABYZ_PALETTE)
-			$MeshInstance.material_override.set_shader_param("should_quantize", true)
-			$MeshInstance.material_override.set_shader_param("palette_size", 256)
 		else:
-			# For other species, use the default palette and disable quantization
 			$MeshInstance.material_override.set_shader_param("palette", DEFAULT_PALETTE)
-			$MeshInstance.material_override.set_shader_param("should_quantize", false)
-			$MeshInstance.material_override.set_shader_param("palette_size", 256)
+		
+		$MeshInstance.material_override.set_shader_param("palette_size", 256)
 
 func set_transparent_color(new_value):
 	transparent_color = new_value
