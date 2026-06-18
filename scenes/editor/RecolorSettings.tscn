@@ -212,8 +212,8 @@ margin_bottom = 366.0
 alignment = 1
 
 [node name="AddButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 50.0
-margin_right = 105.0
+margin_left = 91.0
+margin_right = 131.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -224,8 +224,8 @@ custom_fonts/font = SubResource( 4 )
 text = "Add"
 
 [node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 109.0
-margin_right = 164.0
+margin_left = 135.0
+margin_right = 190.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -236,8 +236,8 @@ custom_fonts/font = SubResource( 4 )
 text = "Clear"
 
 [node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 168.0
-margin_right = 241.0
+margin_left = 194.0
+margin_right = 267.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -248,8 +248,8 @@ custom_fonts/font = SubResource( 4 )
 text = "Autofill"
 
 [node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 245.0
-margin_right = 341.0
+margin_left = 271.0
+margin_right = 367.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
