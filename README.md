@@ -27,6 +27,12 @@ For full instructions, see the [User Guide](docs/GUIDE.md)!
 * **Scale Ball:** `Shift + Alt + Left-click drag`.
 * **Quick Jump:** Hover a ball and press `B` (Ballz Info), `L` (Linez), or `M` (Move) to jump to that line in the text.
 
+## Launcher
+
+The launcher helps you keep up-to-date on the latest releases. You can download the executable here:
+
+[https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe](https://github.com/tabbzi/LnzLive/releases/download/launcher-v2.0/LnzLiveLauncher_v2.0.exe)
+
 ## Browser
 
 The web version of LnzLive Petz & Babyz beta can be accessed here:
