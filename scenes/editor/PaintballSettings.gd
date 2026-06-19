@@ -702,10 +702,6 @@ func _apply_settings_dict(data: Dictionary):
 	if data.has("ordered"): find_node("Ordered").pressed = data["ordered"]
 	if data.has("repeat"): find_node("Repeat").pressed = data["repeat"]
 	if data.has("shuffle"): find_node("Shuffle").pressed = data["shuffle"]
-	
-	if data.has("noise_splatter"): find_node("NoiseSplatterCheckBox").pressed = data["noise_splatter"]
-	if data.has("noise_scale"): find_node("NoiseScaleSpinBox").value = data["noise_scale"]
-	if data.has("noise_threshold"): find_node("NoiseThresholdSpinBox").value = data["noise_threshold"]
 	if data.has("random_walk"): find_node("RandomWalkCheckBox").pressed = data["random_walk"]
 	if data.has("walk_steps"): find_node("WalkStepsSpinBox").value = data["walk_steps"]
 	if data.has("walk_spread"): find_node("WalkSpreadSpinBox").value = data["walk_spread"]
@@ -1505,9 +1501,6 @@ func _on_reset_defaults_pressed():
 	find_node("Shuffle").pressed = false
 	find_node("EraserCheckBox").pressed = false
 
-	find_node("NoiseSplatterCheckBox").pressed = false
-	find_node("NoiseScaleSpinBox").value = 20.0
-	find_node("NoiseThresholdSpinBox").value = 50.0
 	find_node("RandomWalkCheckBox").pressed = false
 	find_node("WalkStepsSpinBox").value = 3.0
 	find_node("WalkSpreadSpinBox").value = 50.0
