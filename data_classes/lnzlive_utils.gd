@@ -85,32 +85,32 @@ static func update_color_list_previews(container: Container, text: String, palet
 		container.add_child(label)
 
 static func get_ramp_color(current_color_str: String, rule):
-    if not rule.get("is_ramp") or \
-       not current_color_str.is_valid_integer() or \
-       not str(rule.before_color).is_valid_integer() or \
-       not str(rule.after_color).is_valid_integer():
-        return null
+	if not rule.get("is_ramp") or \
+	   not current_color_str.is_valid_integer() or \
+	   not str(rule.before_color).is_valid_integer() or \
+	   not str(rule.after_color).is_valid_integer():
+		return null
 
-    var current_color: int = int(current_color_str)
-    var before_color: int = int(rule.before_color)
-    var after_color: int = int(rule.after_color)
+	var current_color: int = int(current_color_str)
+	var before_color: int = int(rule.before_color)
+	var after_color: int = int(rule.after_color)
 
-    if current_color < 10 or current_color > 199 or \
-       before_color < 10 or before_color > 199:
-        return null
+	if current_color < 10 or current_color > 199 or \
+	   before_color < 10 or before_color > 199:
+		return null
 
-    var current_base: int = (current_color / 10) * 10
-    var before_base: int = (before_color / 10) * 10
+	var current_base: int = (current_color / 10) * 10
+	var before_base: int = (before_color / 10) * 10
 
-    if current_base != before_base:
-        return null
+	if current_base != before_base:
+		return null
 
-    if after_color >= 10 and after_color <= 199:
-        var offset: int = current_color - current_base
-        var after_base: int = (after_color / 10) * 10
-        return str(after_base + offset)
-    else:
-        return str(after_color)
+	if after_color >= 10 and after_color <= 199:
+		var offset: int = current_color - current_base
+		var after_base: int = (after_color / 10) * 10
+		return str(after_base + offset)
+	else:
+		return str(after_color)
 
 
 # func _get_ramp_color(current_color_str: String, rule):
