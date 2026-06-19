@@ -113,54 +113,6 @@ static func get_ramp_color(current_color_str: String, rule):
 		return str(after_color)
 
 
-# func _get_ramp_color(current_color_str: String, rule):
-# 	# Rule must be a ramp rule with valid before/after colors
-# 	if not rule.is_ramp or rule.before_color.empty() or rule.after_color.empty():
-# 		return null
-
-# 	# All colors involved must be valid numbers
-# 	if not current_color_str.is_valid_integer() or \
-# 	   not rule.before_color.is_valid_integer() or \
-# 	   not rule.after_color.is_valid_integer():
-# 		return null
-
-# 	var current_color: int = int(current_color_str)
-# 	var before_color: int = int(rule.before_color)
-# 	var after_color: int = int(rule.after_color)
-
-# 	# Ramp ranges are 10-199
-# 	if current_color < 10 or current_color > 199:
-# 		return null
-# 	if before_color < 10 or before_color > 199:
-# 		return null
-
-# 	# Find the base of the 10-unit ramp range (e.g., 62 -> 60)
-# 	var current_base: int = int(current_color / 10) * 10
-# 	var before_base: int = int(before_color / 10) * 10
-
-# 	# Check if the current color is in the same ramp range as the rule's "before" color
-# 	if current_base != before_base:
-# 		return null # Not in the same ramp, this rule doesn't apply
-
-# 	if after_color >= 10 and after_color <= 199:
-# 		# "After" color is *also* in a ramp range (10-199)
-# 		# Map to the corresponding color in the "after" ramp
-# 		# e.g., Rule: 62 -> 55. Current: 60.
-# 		# offset = 60 - 60 = 0
-# 		# after_base = 50
-# 		# new_color = 50 + 0 = 50
-# 		var offset: int = current_color - current_base
-# 		var after_base: int = int(after_color / 10) * 10
-# 		var new_color: int = after_base + offset
-# 		return str(new_color)
-# 	else:
-# 		# "After" color is *outside* ramp ranges (e.g., 244)
-# 		# Map all colors in the "before" range to this single "after" color
-# 		# e.g., Rule: 62 -> 244. Current: 60.
-# 		# new_color = 244
-# 		return str(after_color)
-
-
 ### SPATIAL UTILITIES ###
 static func get_basis_from_normal(normal_vec: Vector3) -> Basis:
 	var basis_y = normal_vec.normalized()
@@ -186,6 +138,7 @@ static func flip_camera_view(camera_node: Camera):
 	camera_transform.basis.x *= -1
 	camera_node.transform = camera_transform
 
+
 ### COORDINATE CONVERSIONS ###
 static func world_to_lnz_delta(world_delta: Vector3, pixel_world_size: float, engine_scale: float) -> Vector3:
 	var lnz_scale = engine_scale / 255.0
@@ -198,6 +151,7 @@ static func lnz_to_world_delta(lnz_delta: Vector3, pixel_world_size: float, engi
 	var world_delta = lnz_delta
 	world_delta.y *= -1.0 # Invert Y back to world format
 	return world_delta * (pixel_world_size * lnz_scale)
+
 
 ### SIZE CONVERSIONS ###
 static func visual_size_to_lnz_size(target_visual: float, is_addball: bool, engine_scale: float, bhd_size: int = 0, enl_x: float = 100.0, enl_y: float = 0.0) -> int:
@@ -219,6 +173,7 @@ static func snap_visual_size(target_visual: float, is_addball: bool, engine_scal
 	var snapped = round((current_base_size - offset) * (engine_scale / 255.0))
 	snapped -= 1.0 - fmod(snapped, 2.0) # Apply LNZ's native snapping behavior
 	return snapped
+
 
 ### PATTERN & PAINTBALL UTILITIES ###
 static func generate_surface_walk(start_pos: Vector3, center: Vector3, step_scale_radius: float, steps: int, walk_spread: float) -> Array:
@@ -326,9 +281,13 @@ static func generate_random_lsystem() -> Dictionary:
 	var rule_lines = []
 	for key in rules:
 		rule_lines.append(key + "=" + rules[key])
-	var rules_text = PoolStringArray(rule_lines).join("\n")
+	
+	var rules_pool = PoolStringArray(rule_lines)
+	var rules_text = rules_pool.join("\n")
+	rules_pool.resize(0) 
 
 	return {"axiom": axiom, "rules_text": rules_text}
+
 
 ### IMAGE/MASKING UTILITIES ###
 static func compute_distance_transform(mask: Array, size: int) -> Array:
@@ -484,6 +443,7 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 		for x in range(w):
 			if x < row_data.size():
 				index_data[y * w + x] = row_data[x]
+		row_data.resize(0)
 				
 	f.close()
 
@@ -499,7 +459,9 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	if diff > 0.05:
 		if debug:
 			print("[INFO] Palette mismatch detected. Requantizing: ", path)
-		index_data = requantize_bmp_data(index_data, bmp_palette, target_palette)
+		var new_index_data = requantize_bmp_data(index_data, bmp_palette, target_palette)
+		index_data.resize(0)
+		index_data = new_index_data
 
 	if debug:
 		var unique_indices = {}
@@ -544,4 +506,6 @@ static func requantize_bmp_data(raw_data: PoolByteArray, bmp_palette: Array, tar
 	new_data.resize(raw_data.size())
 	for i in range(raw_data.size()):
 		new_data[i] = lut[raw_data[i]]
+	
+	lut.resize(0)
 	return new_data
