@@ -249,6 +249,7 @@ func _on_InterpolateColors_pressed() -> void:
 	for idx in new_list:
 		res_str.append(str(idx))
 	color_lineedit.text = res_str.join(",")
+	res_str.resize(0)
 	save_settings()
 	_refresh_all_previews()
 
@@ -338,6 +339,7 @@ func _on_GeneratePaletteButton_pressed() -> void:
 		res_str.append(str(idx))
 		
 	color_lineedit.text = res_str.join(",")
+	res_str.resize(0)
 	save_settings()
 	_refresh_all_previews()
 	

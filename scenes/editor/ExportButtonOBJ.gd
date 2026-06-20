@@ -179,6 +179,8 @@ func _on_SaveDialog_file_selected(path: String, content_bytes: PoolByteArray) ->
 		print("File saved successfully to: " + path)
 	else:
 		print("Error saving file to: " + path)
+		
+	content_bytes.resize(0)
 
 	if is_instance_valid(self):
 		for child in get_children():

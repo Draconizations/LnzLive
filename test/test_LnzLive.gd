@@ -528,11 +528,13 @@ func test_lnz_text_mirror_l_to_r_logic():
 	var base_parts = PoolStringArray(["10", "20", "30", "40", "0", "50"])
 	var base_mirrored = lnz_text._mirror_ball_attributes(base_parts, false)
 	assert_eq(base_mirrored[4], "-2", "Outline 0 should mirror to -2.")
+	base_parts.resize(0)
 
 	var add_parts = PoolStringArray(["10", "5.5", "2", "3", "0", "0", "0", "0", "0", "-2", "5"])
 	var add_mirrored = lnz_text._mirror_ball_attributes(add_parts, true)
 	assert_eq(add_mirrored[1], "-5.5", "X-axis position should be inverted.")
 	assert_eq(add_mirrored[9], "0", "Outline -2 should mirror to 0.")
+	add_parts.resize(0)
 
 # ------------------------------------------------------------------------------
 # PetViewContainer.gd

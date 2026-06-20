@@ -295,6 +295,8 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 	var range_array: PoolStringArray = PoolStringArray(ranges)
 	if affected_ballz:
 		affected_ballz.text = range_array.join(",")
+		
+	range_array.resize(0)
 
 func _on_AffectedBallz_text_entered(new_text: String) -> void:
 	var ids: Array = LnzLiveUtils.parse_number_list(new_text)

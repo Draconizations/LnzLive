@@ -714,6 +714,8 @@ func scan_local_textures() -> void:
 							var icon_tex: ImageTexture = ImageTexture.new()
 							icon_tex.create_from_image(icon_img, ImageTexture.FLAG_FILTER)
 							new_item.set_icon(0, icon_tex)
+							
+						buf.resize(0)
 					
 					new_item.set_text(0, filename + " (" + str(img.get_width()) + "x" + str(img.get_height()) + ")")
 				else:
@@ -949,6 +951,7 @@ func convert_bmp_to_palette_png(source_path: String, dest_dir: String, custom_de
 		
 	img.unlock()
 	f.close()
+	buffer.resize(0)
 	
 	var dest_filename: String = custom_dest_filename
 	if dest_filename == "":

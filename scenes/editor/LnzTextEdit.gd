@@ -1398,7 +1398,7 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 			
 	return most_frequent_delim
 
-func split_line(line: String) -> PoolStringArray:
+func split_line(line: String) -> Array:
 	var data_part = line
 	var comment_part = ""
 	var comment_idx = line.find(";")
@@ -1409,10 +1409,10 @@ func split_line(line: String) -> PoolStringArray:
 	
 	data_part = data_part.strip_edges()
 	if data_part.empty() and comment_part.empty():
-		return PoolStringArray()
+		return []
 		
 	var normalized_line = _split_regex.sub(data_part, " ", true)
-	var parts = normalized_line.split(" ", false)
+	var parts: Array = normalized_line.split(" ", false)
 	
 	parts.append(comment_part)
 	
@@ -1586,14 +1586,13 @@ func _on_set_column_confirmed():
 		var parts = split_line(line_text)
 		if parts.size() <= 1: continue
 			
-		var data_parts = Array(parts) # Cast PoolStringArray to standard Array
-		var comment_part = data_parts.pop_back() # Peels off the last element
+		var comment_part = parts.pop_back()
 			
-		if col_idx >= 0 and col_idx < data_parts.size():
-			data_parts[col_idx] = new_value
+		if col_idx >= 0 and col_idx < parts.size():
+			parts[col_idx] = new_value
 			
 			var delim = _detect_delimiter(i, i + 1) 
-			var final_line = _join_array(data_parts, delim) 
+			var final_line = _join_array(parts, delim) 
 			
 			if not comment_part.empty():
 				final_line += " " + comment_part
@@ -3428,7 +3427,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 				parsed_line[1] = str(outline_color_index)
 			
 			# Rebuild string exactly once
-			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			var final_line = parsed_line.join(" ") + " "
 			set_line(start_of_section + i, final_line)
 			
 		i += 1
@@ -3466,7 +3465,7 @@ func _on_ToolsMenu_color_entire_pet(color_index, outline_color_index):
 				parsed_line[5] = str(outline_color_index)
 				
 			# Rebuild string exactly once
-			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			var final_line = parsed_line.join(" ") + " "
 			set_line(start_of_section + i, final_line)
 			
 		i += 1
@@ -3532,7 +3531,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 				parsed_line[1] = str(outline_color_index)
 				
 			# Rebuild string exactly once
-			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			var final_line = parsed_line.join(" ") + " "
 			set_line(start_of_section + i, final_line)
 			
 		i += 1
@@ -3573,7 +3572,7 @@ func _on_ToolsMenu_color_part_pet(core_ball_nos, color_index, outline_color_inde
 			if not outline_color_index.empty():
 				parsed_line[5] = str(outline_color_index)
 				
-			var final_line = PoolStringArray(parsed_line).join(" ") + " "
+			var final_line = parsed_line.join(" ") + " "
 			set_line(start_of_section + i, final_line)
 			
 		i += 1
@@ -4851,14 +4850,14 @@ func _process_move_section_for_mirror(target_ball_no: int, mirrored_ball_no: int
 			var insert_line = _find_insertion_line(move_bounds.start, move_bounds.end)
 			_insert_text_at_cursor_at_line(insert_line, new_mirrored_line + "\n")
 
-func _process_linez_line_for_mirror(parts: PoolStringArray, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
+func _process_linez_line_for_mirror(parts: Array, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
 	if parts.size() < 2:
 		return []
 	var start_ball = parts[0].to_int()
 	var end_ball = parts[1].to_int()
 
 	if associated_left_balls.has(start_ball) or associated_left_balls.has(end_ball):
-		var mirrored_parts = Array(parts)
+		var mirrored_parts = parts
 		mirrored_parts[0] = str(_get_mirrored_counterpart(start_ball, target_ball_no, mirrored_ball_no, temp_addball_map))
 		mirrored_parts[1] = str(_get_mirrored_counterpart(end_ball, target_ball_no, mirrored_ball_no, temp_addball_map))
 		
@@ -4870,18 +4869,18 @@ func _process_linez_line_for_mirror(parts: PoolStringArray, target_ball_no: int,
 		return mirrored_parts
 	return []
 
-func _process_paintball_line_for_mirror(parts: PoolStringArray, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
+func _process_paintball_line_for_mirror(parts: Array, target_ball_no: int, mirrored_ball_no: int, associated_left_balls: Array, temp_addball_map: Dictionary) -> Array:
 	if parts.size() < 6: 
 		return []
 	var base_ball = parts[0].to_int()
 	if base_ball == target_ball_no:
-		var new_parts = Array(parts)
+		var new_parts = parts
 		new_parts[0] = str(mirrored_ball_no)
 		new_parts[2] = str(new_parts[2].to_float() * -1.0)
 		return new_parts
 	return []
 
-func _mirror_ball_attributes(parts: PoolStringArray, is_addball: bool) -> Dictionary:
+func _mirror_ball_attributes(parts: Array, is_addball: bool) -> Dictionary:
 	var mirrored_parts = {}
 	var outline_index = 4 if !is_addball else 9
 	var x_pos_index = -1 if !is_addball else 1
@@ -4896,14 +4895,14 @@ func _mirror_ball_attributes(parts: PoolStringArray, is_addball: bool) -> Dictio
 
 	return mirrored_parts
 
-func _mirror_move_processor(parts: PoolStringArray, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
+func _mirror_move_processor(parts: Array, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
 	var processed_lines = []
 	var move_ball = parts[0].to_int()
 
 	if move_ball in left_balls_list:
 		processed_lines.append(_join_array(parts, delim)) # Keep original
 
-		var mirrored_parts = Array(parts)
+		var mirrored_parts = parts
 		mirrored_parts[0] = str(get_corresponding_right_ball(move_ball))
 		mirrored_parts[1] = str(parts[1].to_float() * -1.0)
 		if parts.size() > 4:
@@ -4915,7 +4914,7 @@ func _mirror_move_processor(parts: PoolStringArray, left_balls_list: Array, midd
 
 	return processed_lines
 
-func _mirror_linez_processor(parts: PoolStringArray, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
+func _mirror_linez_processor(parts: Array, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
 	var processed_lines = []
 	var start_ball = parts[0].to_int()
 	var end_ball = parts[1].to_int()
@@ -4927,7 +4926,7 @@ func _mirror_linez_processor(parts: PoolStringArray, left_balls_list: Array, mid
 	var is_middle = start_ball in middle_balls_list and end_ball in middle_balls_list
 
 	# Update original line with new ball numbers
-	var updated_parts = Array(parts)
+	var updated_parts = parts
 	updated_parts[0] = str(ball_map[start_ball].new_ball_no)
 	updated_parts[1] = str(ball_map[end_ball].new_ball_no)
 	processed_lines.append(_join_array(updated_parts, delim))
@@ -4944,13 +4943,13 @@ func _mirror_linez_processor(parts: PoolStringArray, left_balls_list: Array, mid
 
 	return processed_lines
 
-func _mirror_projection_processor(parts: PoolStringArray, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
+func _mirror_projection_processor(parts: Array, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
 	var processed_lines = []
 	var base_ball = parts[0].to_int()
 	var move_ball = parts[1].to_int()
 
 	# Remap original line
-	var updated_parts = Array(parts)
+	var updated_parts = parts
 	updated_parts[0] = str(ball_map.get(base_ball, {"new_ball_no": base_ball}).new_ball_no)
 	updated_parts[1] = str(ball_map.get(move_ball, {"new_ball_no": move_ball}).new_ball_no)
 	processed_lines.append(_join_array(updated_parts, delim))
@@ -4963,7 +4962,7 @@ func _mirror_projection_processor(parts: PoolStringArray, left_balls_list: Array
 
 	return processed_lines
 
-func _mirror_paintball_processor(parts: PoolStringArray, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
+func _mirror_paintball_processor(parts: Array, left_balls_list: Array, middle_balls_list: Array, ball_map: Dictionary, delim: String) -> Array:
 	var processed_lines = []
 	var base_ball = parts[0].to_int()
 	var x_pos = parts[2].to_float()
@@ -4972,7 +4971,7 @@ func _mirror_paintball_processor(parts: PoolStringArray, left_balls_list: Array,
 		return []
 
 	# Update original line
-	var updated_parts = Array(parts)
+	var updated_parts = parts
 	updated_parts[0] = str(ball_map[base_ball].new_ball_no)
 	processed_lines.append(_join_array(updated_parts, delim))
 

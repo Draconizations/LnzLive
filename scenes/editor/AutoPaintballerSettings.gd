@@ -1055,7 +1055,10 @@ func update_selected_balls_text(ball_ids: Array) -> void:
 	else:
 		ranges.append(str(start) + "-" + str(prev))
 		
-	affected_edit.text = PoolStringArray(ranges).join(",")
+	var temp_pool: PoolStringArray = PoolStringArray(ranges)
+	affected_edit.text = temp_pool.join(",")
+	temp_pool.resize(0)
+	
 	_on_AffectedBallz_text_changed(affected_edit.text)
 
 func _on_UnselectButton_pressed() -> void:
@@ -1457,7 +1460,9 @@ func _generate_surprise_color_string() -> String:
 	for idx in new_indices:
 		res_str.append(str(idx))
 		
-	return res_str.join(",")
+	var result: String = res_str.join(",")
+	res_str.resize(0)
+	return result
 
 func _generate_surprise_texture_string() -> String:
 	var parts: Array = []
@@ -1478,7 +1483,11 @@ func _generate_surprise_texture_string() -> String:
 	else:
 		if parts.empty(): 
 			parts.append("0")
-	return PoolStringArray(parts).join(",")
+			
+	var temp_pool: PoolStringArray = PoolStringArray(parts)
+	var result = temp_pool.join(",")
+	temp_pool.resize(0)
+	return result
 
 func _get_random_static_accent() -> String:
 	if randf() > 0.4:
