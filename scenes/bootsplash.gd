@@ -23,7 +23,7 @@ func _ready():
 
 	load_settings()
 
-func load_settings():
+func load_settings() -> void:
 	var config = ConfigFile.new()
 	var err = config.load(SETTINGS_PATH)
 	
@@ -46,5 +46,5 @@ func load_settings():
 		print("Error loading window settings: ", err)
 		OS.center_window()
 
-func _on_Timer_timeout():
+func _on_Timer_timeout() -> void:
 	get_tree().change_scene("res://scenes/editor/editor.tscn")
