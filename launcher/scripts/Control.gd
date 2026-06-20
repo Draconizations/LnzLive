@@ -18,7 +18,7 @@ onready var btn_install: Button = $BtnInstall
 onready var btn_open_folder: Button = $BtnOpenFolder 
 
 var texture_rect: TextureRect
-var notes_scroll: ScrollContainer
+var notes_scroll
 var notes_text: RichTextLabel
 var executable_selector: OptionButton
 var btn_notes: Button
@@ -110,7 +110,7 @@ func setup_dynamic_ui() -> void:
 	add_child(btn_notes)
 	move_child(btn_notes, executable_selector.get_index() + 1)
 
-	var folder_hbox: HBoxContainer = HBoxContainer.new()
+	var folder_hbox = HBoxContainer.new()
 	folder_hbox.add_constant_override("separation", 10)
 	
 	var folder_index: int = btn_open_folder.get_index()

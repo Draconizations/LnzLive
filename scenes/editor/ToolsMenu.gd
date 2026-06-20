@@ -20,15 +20,14 @@ signal apply_global_fuzz(fuzz)
 signal clear_ball_paintballz(ball_no)
 signal print_ball_colors()
 signal paintball_mode_for_ball_toggled(ball)
-
 signal omit_ball(ball_no)
 signal unomit_ball(ball_no)
 signal hide_ball(ball_no)
 
-var selected_visual_ball = null
-var current_action
+var selected_visual_ball: Node = null
+var current_action: int = 0
 
-onready var option_recolor_menu_button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
+onready var option_recolor_menu_button: Button = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/DropDownMenu/ToolOptionButton/PopupPanel/ToolOptionContainer/RecolorMenuButton")
 
 enum RecolorAction { ENTIRE, LEGS, TAIL, HEAD, SNOUT, EARS, PAWS, NOSE, TONGUE }
 
@@ -50,30 +49,15 @@ enum ToolsAction {
 	CLEAR_PAINTBALLZ = 15
 }
 
-	# add_submenu_item("Color...", "RecolorMenu")
-	# add_item("Create Addballz + Linez")         # index 1
-	# add_item("Create Addballz")                 # index 2
-	# add_item("Delete Addballz")                 # index 3
-	# add_item("Omit/Unomit Ballz")               # index 4
-	# add_item("Connect by Linez")                # index 5
-	# add_item("Copy-Mirror (L-to-R)")        # index 6
-	# add_item("Copy-Mirror (R-to-L)")        # index 7
-	# add_item("Paintball Mode")                  # index 8
-	# add_item("Export to Clothes CLZ")           # index 9
-	# add_item("Hide Ballz")                      # index 10
-	# add_item("Apply Global Fuzz")               # index 11
-	# add_item("Copy Ballz Colors to Clipboard")  # index 12
-	# add_item("Ball Info")                       # index 13
+var dog_generator: Node = null
 
-var dog_generator = null
+var cached_palette_colors: Array = []
 
-var cached_palette_colors = []
+var color_line_edit
+var outcol_line_edit
+var fuzz_line_edit
 
-var color_line_edit: LineEdit
-var outcol_line_edit: LineEdit
-var fuzz_line_edit: LineEdit
-
-func _ready():
+func _ready() -> void:
 	add_submenu_item("Color...", "RecolorMenu", ToolsAction.RECOLOR)
 	add_item("Create Addballz + Linez", ToolsAction.CREATE_ADDBALLZ_LINEZ)
 	add_item("Create Addballz", ToolsAction.CREATE_ADDBALLZ)
@@ -92,14 +76,14 @@ func _ready():
 
 	option_recolor_menu_button.connect("pressed", self, "_on_RecolorMenuButton_pressed")
 	
-	var panel_style = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
+	var panel_style: StyleBoxFlat = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
 	panel_style.content_margin_left = 12
 	panel_style.content_margin_right = 12
 	panel_style.content_margin_top = 8
 	panel_style.content_margin_bottom = 12
 	add_stylebox_override("panel", panel_style)
 
-	var recolor_menu = get_node_or_null("RecolorMenu")
+	var recolor_menu: PopupMenu = get_node_or_null("RecolorMenu")
 	if recolor_menu:
 		recolor_menu.add_stylebox_override("panel", panel_style)
 	
@@ -134,7 +118,7 @@ func _ready():
 	_setup_preview_wrapper(outcol_line_edit, "OutcolEdit")
 	
 	# Apply comfortable padding to all standard LineEdits inside the menu popups
-	var le_style = color_line_edit.get_stylebox("normal").duplicate()
+	var le_style: StyleBoxFlat = color_line_edit.get_stylebox("normal").duplicate()
 	if le_style is StyleBoxFlat:
 		le_style.content_margin_left = 10
 		le_style.content_margin_right = 10
@@ -147,12 +131,12 @@ func _ready():
 	if fuzz_line_edit: fuzz_line_edit.add_stylebox_override("normal", le_style)
 	
 	for head_edit in ["HeadMoveLineEditX", "HeadMoveLineEditY", "HeadMoveLineEditZ"]:
-		var edit = get_parent().get_node_or_null("HeadMovePopup/VBoxContainer/" + head_edit)
+		var edit: Control = get_parent().get_node_or_null("HeadMovePopup/VBoxContainer/" + head_edit)
 		if edit: edit.add_stylebox_override("normal", le_style)
 
 	_on_palette_changed()
 
-func _resize_and_anchor_popup(popup_name: String, new_size: Vector2):
+func _resize_and_anchor_popup(popup_name: String, new_size: Vector2) -> void:
 	var popup = get_parent().get_node_or_null(popup_name)
 	if popup:
 		popup.rect_min_size = new_size
@@ -165,16 +149,16 @@ func _resize_and_anchor_popup(popup_name: String, new_size: Vector2):
 			vbox.margin_right = 0
 			vbox.margin_bottom = 0
 
-func _setup_preview_wrapper(le: LineEdit, le_name: String):
+func _setup_preview_wrapper(le, le_name: String) -> void:
 	if not is_instance_valid(le): return
-	var parent = le.get_parent()
+	var parent: Container = le.get_parent()
 
 	var hbox = HBoxContainer.new()
 	hbox.name = le_name + "Wrapper"
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.rect_min_size = le.rect_min_size
 
-	var pos = le.get_index()
+	var pos: int = le.get_index()
 	parent.remove_child(le)
 	parent.add_child(hbox)
 	parent.move_child(hbox, pos)
@@ -189,27 +173,27 @@ func _setup_preview_wrapper(le: LineEdit, le_name: String):
 	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
 		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
 
-func _on_color_list_text_changed(new_text: String, container: Container):
+func _on_color_list_text_changed(new_text: String, container: Container) -> void:
 	# Removed ClassDB check because LnzLiveUtils is an AutoLoad singleton.
 	if LnzLiveUtils:
 		LnzLiveUtils.update_color_list_previews(container, new_text, cached_palette_colors)
 
-func _on_palette_changed(palette_name = ""):
+func _on_palette_changed(palette_name = "") -> void:
 	if not is_instance_valid(dog_generator) or not dog_generator.current_palette_texture:
 		return
 
-	var img = dog_generator.current_palette_texture.get_data()
+	var img: Image = dog_generator.current_palette_texture.get_data()
 	if img == null:
 		return
 
 	img.lock()
-	var img_width = img.get_width()
-	var img_height = img.get_height()
+	var img_width: int = img.get_width()
+	var img_height: int = img.get_height()
 
 	cached_palette_colors.clear()
 	for i in range(256):
-		var x = i % img_width
-		var y = i / img_width
+		var x: int = i % img_width
+		var y: int = i / img_width
 		if x < img_width and y < img_height:
 			cached_palette_colors.append(img.get_pixel(x, y))
 		else:
@@ -218,7 +202,7 @@ func _on_palette_changed(palette_name = ""):
 	img.unlock()
 	_refresh_all_previews()
 
-func _refresh_all_previews():
+func _refresh_all_previews() -> void:
 	if not is_instance_valid(color_line_edit) or not is_instance_valid(outcol_line_edit): return
 	
 	var cw = color_line_edit.get_parent()
@@ -230,14 +214,14 @@ func _refresh_all_previews():
 		_on_color_list_text_changed(outcol_line_edit.text, ow.get_node("OutcolEdit_Preview"))
 
 
-func _on_LineEdit_gui_input(event):
+func _on_LineEdit_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
-		var base_color = color_line_edit.text
-		var outline_color = outcol_line_edit.text
+		var base_color: String = color_line_edit.text
+		var outline_color: String = outcol_line_edit.text
 		if current_action == RecolorAction.ENTIRE:
 			emit_signal("color_entire_pet", base_color, outline_color)
 		else:
-			var core_ball_nos = []
+			var core_ball_nos: Array = []
 			if current_action == RecolorAction.LEGS:
 				if KeyBallsData.species == KeyBallsData.Species.DOG:
 					core_ball_nos.append_array(KeyBallsData.legs_dog[0])
@@ -318,29 +302,29 @@ func _on_LineEdit_gui_input(event):
 					core_ball_nos.append_array(KeyBallsData.tongue_cat)
 				elif KeyBallsData.species == KeyBallsData.Species.BAB:
 					core_ball_nos.append_array(KeyBallsData.tongue_bab)
-			var part = RecolorAction.keys()[RecolorAction.values()[current_action]]
+			var part: String = RecolorAction.keys()[RecolorAction.values()[current_action]]
 			emit_signal("color_part_pet", core_ball_nos, base_color, outline_color, part)
 
-func _on_RecolorMenu_id_pressed(id):
+func _on_RecolorMenu_id_pressed(id: int) -> void:
 	current_action = id
 	if id == 9: # color swap
-		var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 		if pet_view:
 			pet_view.recolor_mode_check_box.pressed = true
 	else:
 		get_parent().get_node("ColorPopup").rect_position = get_global_mouse_position()
 		get_parent().get_node("ColorPopup").popup()
 
-func _on_RecolorMenuButton_pressed():
-	var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+func _on_RecolorMenuButton_pressed() -> void:
+	var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 	if pet_view:
 		pet_view.recolor_mode_check_box.pressed = true
 
-func _on_ToolsMenu_index_pressed(index):
+func _on_ToolsMenu_index_pressed(index: int) -> void:
 	if index >= get_item_count(): return
 
 	if get_item_text(index).begins_with("Exit "):
-		var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+		var pet_view: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 		if is_instance_valid(pet_view):
 			pet_view.paintball_check_box.pressed = false
 			pet_view.line_mode_check_box.pressed = false
@@ -351,11 +335,11 @@ func _on_ToolsMenu_index_pressed(index):
 			pet_view.auto_paintballer_check_box.pressed = false
 		return
 
-	var id = get_item_id(index)
-	var ball_no = -1
-	var is_addball = false
-	var is_omitted = false
-	var is_ball_selected = false
+	var id: int = get_item_id(index)
+	var ball_no: int = -1
+	var is_addball: bool = false
+	var is_omitted: bool = false
+	var is_ball_selected: bool = false
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
@@ -391,7 +375,7 @@ func _on_ToolsMenu_index_pressed(index):
 
 		ToolsAction.CONNECT_LINEZ: # Connect by Linez
 			if is_instance_valid(selected_visual_ball):
-				var pet_view = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+				var pet_view: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 				pet_view.line_mode_close = true
 				pet_view.line_mode_check_box.pressed = true
 				pet_view.linez_start_ball = selected_visual_ball
@@ -423,7 +407,7 @@ func _on_ToolsMenu_index_pressed(index):
 
 		ToolsAction.BALL_INFO: # Jump to ball
 			if is_ball_selected:
-				var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+				var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 				if is_instance_valid(lnz_text_edit):
 					lnz_text_edit.select_ball(0, ball_no, is_addball, -1)
 			return
@@ -433,21 +417,21 @@ func _on_ToolsMenu_index_pressed(index):
 				emit_signal("clear_ball_paintballz", ball_no)
 
 
-func _on_ToolsMenu_about_to_show():
+func _on_ToolsMenu_about_to_show() -> void:
 	while get_item_count() > 15:
 		remove_item(get_item_count() - 1)
 
 	for i in range(14):
 		set_item_disabled(i, false)
 
-	var ball_no = -1
-	var is_addball = false
-	var is_omitted = false
-	var is_ball_selected = false
-	var b_name = "Unknown Ball"
+	var ball_no: int = -1
+	var is_addball: bool = false
+	var is_omitted: bool = false
+	var is_ball_selected: bool = false
+	var b_name: String = "Unknown Ball"
 	
-	var pet_view = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
-	var active_mode = ""
+	var pet_view: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
+	var active_mode: String = ""
 	if is_instance_valid(pet_view):
 		if pet_view.move_mode: active_mode = "Move Mode"
 		elif pet_view.paintball_mode: active_mode = "Paintball Mode"
@@ -457,13 +441,13 @@ func _on_ToolsMenu_about_to_show():
 		elif pet_view.auto_paintballer_mode: active_mode = "Auto Paintballer"
 		elif pet_view.recolor_mode: active_mode = "Recolor Mode"
 
-	var in_mode = active_mode != ""
+	var in_mode: bool = active_mode != ""
 
 	if is_instance_valid(selected_visual_ball):
 		ball_no = selected_visual_ball.ball_no
 		is_ball_selected = is_instance_valid(selected_visual_ball)
 
-		var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+		var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 		if is_instance_valid(lnz_text_edit):
 			b_name = lnz_text_edit.get_ball_name(ball_no)
 
@@ -475,10 +459,10 @@ func _on_ToolsMenu_about_to_show():
 	else:
 		set_item_text(get_item_index(ToolsAction.BALL_INFO), "No Ballz Selected")
 
-	var option_text = ""
+	var option_text: String = ""
 
 	# Create Addballz + Linez
-	var idx =  get_item_index(ToolsAction.CREATE_ADDBALLZ_LINEZ)
+	var idx: int =  get_item_index(ToolsAction.CREATE_ADDBALLZ_LINEZ)
 	option_text = "Create Addballz + Linez"
 	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
@@ -505,7 +489,7 @@ func _on_ToolsMenu_about_to_show():
 	idx =  get_item_index(ToolsAction.OMIT_UNOMIT)
 	set_item_disabled(idx, !is_ball_selected)
 	if is_ball_selected:
-		var type_str = "Addballz" if is_addball else "Ballz"
+		var type_str: String = "Addballz" if is_addball else "Ballz"
 		if is_omitted:
 			set_item_text(idx, "Unomit " + type_str + " (#" + str(ball_no) + ")")
 		else:
@@ -579,7 +563,7 @@ func _on_ToolsMenu_about_to_show():
 
 	if in_mode:
 		# Disable everything involving interactive left-click
-		var allowed_ids = [
+		var allowed_ids: Array = [
 			ToolsAction.RECOLOR,
 			ToolsAction.DELETE_ADDBALLZ,
 			ToolsAction.OMIT_UNOMIT,
@@ -592,23 +576,23 @@ func _on_ToolsMenu_about_to_show():
 		]
 		
 		for i in range(15):
-			var item_id = get_item_id(i)
+			var item_id: int = get_item_id(i)
 			if not item_id in allowed_ids:
 				set_item_disabled(i, true)
 
 		add_separator()
 		add_item("Exit " + active_mode)
 
-func _on_RecolorPopup_confirmed():
+func _on_RecolorPopup_confirmed() -> void:
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
-	var lines = popup.get_node("RecolorLines").get_children()
-	var recolor_info = {recolors = []}
+	var lines: Array = popup.get_node("RecolorLines").get_children()
+	var recolor_info: Dictionary = {recolors = []}
 	for l in lines:
-		var before_color = l.get_node("BeforeColor").text
-		var before_texture = l.get_node("BeforeTexture").text
-		var after_color = l.get_node("AfterColor").text
-		var after_texture = l.get_node("AfterTexture").text
-		var is_ramp = l.get_node("ColorRampCheck").pressed
+		var before_color: String = l.get_node("BeforeColor").text
+		var before_texture: String = l.get_node("BeforeTexture").text
+		var after_color: String = l.get_node("AfterColor").text
+		var after_texture: String = l.get_node("AfterTexture").text
+		var is_ramp: bool = l.get_node("ColorRampCheck").pressed
 
 		if before_color.empty() and before_texture.empty():
 			continue
@@ -623,11 +607,11 @@ func _on_RecolorPopup_confirmed():
 			"is_ramp": is_ramp
 		})
 
-	var balls_on = popup.get_node("CheckContainer/Balls").pressed
-	var ball_outlines_on = popup.get_node("CheckContainer/Ball outlines").pressed
-	var paintballs_on = popup.get_node("CheckContainer/Paintballs").pressed
-	var lines_on = popup.get_node("CheckContainer/Lines").pressed
-	var polygons_on = popup.get_node("CheckContainer/Polygons").pressed
+	var balls_on: bool = popup.get_node("CheckContainer/Balls").pressed
+	var ball_outlines_on: bool = popup.get_node("CheckContainer/Ball outlines").pressed
+	var paintballs_on: bool = popup.get_node("CheckContainer/Paintballs").pressed
+	var lines_on: bool = popup.get_node("CheckContainer/Lines").pressed
+	var polygons_on: bool = popup.get_node("CheckContainer/Polygons").pressed
 	recolor_info.balls_on = balls_on
 	recolor_info.ball_outlines_on = ball_outlines_on
 	recolor_info.paintballs_on = paintballs_on
@@ -635,9 +619,9 @@ func _on_RecolorPopup_confirmed():
 	recolor_info.polygons_on = polygons_on
 	emit_signal("recolor", recolor_info)
 
-func _on_ClearButton_pressed():
+func _on_ClearButton_pressed() -> void:
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
-	var lines = popup.get_node("RecolorLines").get_children()
+	var lines: Array = popup.get_node("RecolorLines").get_children()
 	for l in lines:
 		l.get_node("BeforeColor").text = ""
 		l.get_node("BeforeTexture").text = ""
@@ -647,33 +631,33 @@ func _on_ClearButton_pressed():
 		if cb.has_method("set_pressed"):
 			cb.pressed = true
 
-func _sort_by_count(a, b):
+func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 	return a.count > b.count
 
-func _on_AutofillButton_pressed():
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+func _on_AutofillButton_pressed() -> void:
+	var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if not is_instance_valid(lnz_text_edit):
 		print("LnzTextEdit not found")
 		return
 
-	var pair_counts = {}
+	var pair_counts: Dictionary = {}
 	_process_section_for_autofill(lnz_text_edit, "[Ballz Info]", 0, 7, pair_counts)
 	_process_section_for_autofill(lnz_text_edit, "[Add Ball]", 4, 13, pair_counts)
 	_process_section_for_autofill(lnz_text_edit, "[Paint Ballz]", 5, 10, pair_counts)
 
-	var sorted_pairs = []
+	var sorted_pairs: Array = []
 	for key in pair_counts:
 		sorted_pairs.append({"key": key, "count": pair_counts[key]})
 
 	sorted_pairs.sort_custom(self, "_sort_by_count")
 
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
-	var lines = popup.get_node("RecolorLines").get_children()
+	var lines: Array = popup.get_node("RecolorLines").get_children()
 
 	for i in range(lines.size()):
-		var line_node = lines[i]
+		var line_node: Container = lines[i]
 		if i < sorted_pairs.size():
-			var pair = sorted_pairs[i].key.split(",")
+			var pair: Array = sorted_pairs[i].key.split(",")
 			line_node.get_node("BeforeColor").text = pair[0]
 			line_node.get_node("BeforeTexture").text = pair[1]
 			line_node.get_node("AfterColor").text = ""
@@ -684,34 +668,34 @@ func _on_AutofillButton_pressed():
 			line_node.get_node("AfterColor").text = ""
 			line_node.get_node("AfterTexture").text = ""
 
-func _process_section_for_autofill(lnz_text_edit, section_name, color_idx, texture_idx, pair_counts):
-	var bounds = lnz_text_edit.get_section_bounds(section_name)
+func _process_section_for_autofill(lnz_text_edit: Node, section_name: String, color_idx: int, texture_idx: int, pair_counts: Dictionary) -> void:
+	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return
 
 	for i in range(bounds.start, bounds.end):
-		var line = lnz_text_edit.get_line(i).strip_edges()
+		var line: String = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit.split_line(line)
+		var parts: Array = lnz_text_edit.split_line(line)
 		if parts.size() > max(color_idx, texture_idx):
-			var color = parts[color_idx]
-			var texture = parts[texture_idx]
-			var key = color + "," + texture
+			var color: String = parts[color_idx]
+			var texture: String = parts[texture_idx]
+			var key: String = color + "," + texture
 			if not pair_counts.has(key):
 				pair_counts[key] = 0
 			pair_counts[key] += 1
 
-func _on_RandomizeButton_pressed():
+func _on_RandomizeButton_pressed() -> void:
 	randomize()
 
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var lnz_text_edit: Node = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if not is_instance_valid(lnz_text_edit):
 		print("LnzTextEdit not found")
 		return
 
-	var max_texture_id = -1
+	var max_texture_id: int = -1
 	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Ballz Info]", 7, max_texture_id)
 	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Add Ball]", 13, max_texture_id)
 	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Paint Ballz]", 10, max_texture_id)
@@ -720,14 +704,14 @@ func _on_RandomizeButton_pressed():
 		max_texture_id = 0
 
 	var popup = get_parent().get_node("RecolorPopup/VBoxContainer")
-	var lines = popup.get_node("RecolorLines").get_children()
+	var lines: Array = popup.get_node("RecolorLines").get_children()
 
 	for l in lines:
 		var after_color_edit = l.get_node("AfterColor")
 		var after_texture_edit = l.get_node("AfterTexture")
-		var is_ramp = l.get_node("ColorRampCheck").pressed
+		var is_ramp: bool = l.get_node("ColorRampCheck").pressed
 
-		var random_color
+		var random_color: int
 		if is_ramp:
 			random_color = (randi() % 14 + 1) * 10
 		else:
@@ -735,25 +719,25 @@ func _on_RandomizeButton_pressed():
 
 		after_color_edit.text = str(random_color)
 
-		var random_texture = randi() % (max_texture_id + 1)
+		var random_texture: int = randi() % (max_texture_id + 1)
 		after_texture_edit.text = str(random_texture)
 
-func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, current_max):
-	var bounds = lnz_text_edit.get_section_bounds(section_name)
+func _find_max_texture_for_randomize(lnz_text_edit: Node, section_name: String, texture_idx: int, current_max: int) -> int:
+	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)
 	if bounds.empty():
 		return current_max
 
-	var new_max = current_max
+	var new_max: int = current_max
 	for i in range(bounds.start, bounds.end):
-		var line = lnz_text_edit.get_line(i).strip_edges()
+		var line: String = lnz_text_edit.get_line(i).strip_edges()
 		if line.empty() or line.begins_with(";"):
 			continue
 
-		var parts = lnz_text_edit.split_line(line)
+		var parts: Array = lnz_text_edit.split_line(line)
 		if parts.size() > texture_idx:
-			var texture_str = parts[texture_idx]
+			var texture_str: String = parts[texture_idx]
 			if texture_str.is_valid_integer():
-				var texture_id = int(texture_str)
+				var texture_id: int = int(texture_str)
 				if texture_id > new_max:
 					new_max = texture_id
 	return new_max
@@ -761,13 +745,13 @@ func _find_max_texture_for_randomize(lnz_text_edit, section_name, texture_idx, c
 # func _on_HeadMoveLineEdit_gui_input(event):
 # 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
 # 		var popup = get_parent().get_node("HeadMovePopup/VBoxContainer")
-# 		var x = popup.get_node("HeadMoveLineEditX").text.to_int()
-# 		var y = popup.get_node("HeadMoveLineEditY").text.to_int()
-# 		var z = popup.get_node("HeadMoveLineEditZ").text.to_int()
+# 		var x: int = popup.get_node("HeadMoveLineEditX").text.to_int()
+# 		var y: int = popup.get_node("HeadMoveLineEditY").text.to_int()
+# 		var z: int = popup.get_node("HeadMoveLineEditZ").text.to_int()
 # 		emit_signal("move_head", x, y, z)
 
-func _on_ApplyGlobalFuzz_gui_input(event):
+func _on_ApplyGlobalFuzz_gui_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.scancode == KEY_ENTER:
 		var popup = get_parent().get_node("FuzzPopup/VBoxContainer")
-		var fuzz = popup.get_node("GlobalFuzzAmount").text.to_int()
+		var fuzz: int = popup.get_node("GlobalFuzzAmount").text.to_int()
 		emit_signal("apply_global_fuzz", fuzz)

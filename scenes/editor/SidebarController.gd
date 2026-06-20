@@ -1,14 +1,17 @@
 extends VBoxContainer
+## SidebarController.gd
+## Manages the layout, docking, and visibility of UI panels in the sidebar
 
-onready var tab_container = get_node("SidebarTabs")
-onready var tree = get_node("SidebarTabs/FileTree/Tree")
-onready var spacer = get_node("SidebarSpacer")
-onready var collapse_btn = get_node("CollapseButton")
+onready var tab_container: TabContainer = get_node("SidebarTabs")
+onready var tree: Tree = get_node("SidebarTabs/FileTree/Tree")
+onready var spacer: Control = get_node("SidebarSpacer")
+onready var collapse_btn: Button = get_node("CollapseButton")
 
 var floating_layer: CanvasLayer = null
-const UTILITY_TABS = ["FileTree", "Palette", "Variations", "Texture"]
 
-const TAB_ICONS = {
+const UTILITY_TABS: Array = ["FileTree", "Palette", "Variations", "Texture"]
+
+const TAB_ICONS: Dictionary = {
 	"FileTree": "res://resources/icons/ico_tab_file.png",
 	"Palette": "res://resources/icons/ico_tab_palette.png",
 	"Variations": "res://resources/icons/ico_tab_variation.png",
@@ -22,12 +25,12 @@ const TAB_ICONS = {
 	"Shape": "res://resources/icons/ico_tab_shape.png"
 }
 
-func _ready():
+func _ready() -> void:
 	if tab_container:
 		tab_container.visible = true
 
 	if not floating_layer:
-		var existing_layer = get_tree().root.find_node("FloatingPanelsLayer", true, false)
+		var existing_layer: CanvasLayer = get_tree().root.find_node("FloatingPanelsLayer", true, false)
 		if existing_layer:
 			floating_layer = existing_layer
 		else:
@@ -39,7 +42,7 @@ func _ready():
 	tab_container.connect("tab_changed", self, "_on_tab_changed")
 	collapse_btn.connect("pressed", self, "_on_collapse_pressed")
 
-func add_tool_tab(control: Control, title: String):
+func add_tool_tab(control: Control, title: String) -> void:
 	if control == null or not is_instance_valid(control):
 		return
 
@@ -59,15 +62,15 @@ func add_tool_tab(control: Control, title: String):
 	
 	_update_tab_visibilities()
 
-func _ensure_tab_order():
+func _ensure_tab_order() -> void:
 	for i in range(UTILITY_TABS.size()):
-		var tab_name = UTILITY_TABS[i]
-		var tab_node = tab_container.find_node(tab_name, false, false)
+		var tab_name: String = UTILITY_TABS[i]
+		var tab_node: Node = tab_container.find_node(tab_name, false, false)
 		
 		if tab_node and tab_node.get_parent() == tab_container:
 			tab_container.move_child(tab_node, i)
 
-func dock_panel(panel: Control):
+func dock_panel(panel: Control) -> void:
 	if panel.get_parent() != tab_container:
 		if panel.get_parent():
 			panel.get_parent().remove_child(panel)
@@ -81,11 +84,11 @@ func dock_panel(panel: Control):
 	_update_tab_visibilities()
 	switch_to_tab(panel)
 
-func undock_panel(panel: Control):
+func undock_panel(panel: Control) -> void:
 	if panel.get_parent() != tab_container:
 		return
 
-	var was_current = (tab_container.get_current_tab_control() == panel)
+	var was_current: bool = (tab_container.get_current_tab_control() == panel)
 	tab_container.remove_child(panel)
 
 	if not floating_layer:
@@ -104,14 +107,14 @@ func undock_panel(panel: Control):
 		
 	_update_tab_visibilities()
 
-func switch_to_tab(panel: Control):
+func switch_to_tab(panel: Control) -> void:
 	if panel.get_parent() == tab_container:
-		var idx = panel.get_index()
+		var idx: int = panel.get_index()
 		if not tab_container.get_tab_disabled(idx):
 			tab_container.current_tab = idx
 
-func _update_tab_visibilities():
-	var is_any_mode_floating = false
+func _update_tab_visibilities() -> void:
+	var is_any_mode_floating: bool = false
 	if floating_layer:
 		for panel in floating_layer.get_children():
 			if panel.visible and not panel.name in UTILITY_TABS:
@@ -119,20 +122,20 @@ func _update_tab_visibilities():
 				break
 			
 	for i in range(tab_container.get_child_count()):
-		var child = tab_container.get_child(i)
+		var child: Control = tab_container.get_child(i)
 		if child.name in UTILITY_TABS:
 			tab_container.set_tab_disabled(i, false)
 		else:
 			tab_container.set_tab_disabled(i, is_any_mode_floating)
 
 		if TAB_ICONS.has(child.name):
-			var icon_path = TAB_ICONS[child.name]
+			var icon_path: String = TAB_ICONS[child.name]
 			tab_container.set_tab_icon(i, load(icon_path))
 			tab_container.set_tab_title(i, "")
 
-func _on_tab_changed(tab_index: int):
-	var control = tab_container.get_child(tab_index)
-	var pet_view = get_tree().root.find_node("PetViewContainer", true, false)
+func _on_tab_changed(tab_index: int) -> void:
+	var control: Control = tab_container.get_child(tab_index)
+	var pet_view: Node = get_tree().root.find_node("PetViewContainer", true, false)
 	if not pet_view or not is_instance_valid(pet_view): return
 
 	match control.name:
@@ -149,7 +152,7 @@ func _on_tab_changed(tab_index: int):
 		"FileTree":
 			pass
 
-func _on_collapse_pressed():
+func _on_collapse_pressed() -> void:
 	if tab_container:
 		tab_container.visible = !tab_container.visible
 		spacer.visible = !tab_container.visible

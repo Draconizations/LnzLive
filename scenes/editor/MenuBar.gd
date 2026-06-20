@@ -1,4 +1,6 @@
 extends HBoxContainer
+## MenuBar.gd
+## Manages main menu bar for File, Tool, Mode, Render, Export, and Help menus
 
 enum FileMenu {
 	IMPORT_LNZ,
@@ -53,18 +55,18 @@ enum ExportMenu {
 	EXPORT_CLOTHES
 }
 
-onready var file_menu_btn = $FileOptionButton
-onready var tool_menu_btn = $ToolOptionButton
-onready var mode_menu_btn = $ModeOptionButton
-onready var render_menu_btn = $RenderOptionButton
-onready var export_menu_btn = $ExportOptionButton
-onready var help_menu_btn = $HelpOptionButton
+onready var file_menu_btn: MenuButton = $FileOptionButton
+onready var tool_menu_btn: MenuButton = $ToolOptionButton
+onready var mode_menu_btn: MenuButton = $ModeOptionButton
+onready var render_menu_btn: MenuButton = $RenderOptionButton
+onready var export_menu_btn: MenuButton = $ExportOptionButton
+onready var help_menu_btn: MenuButton = $HelpOptionButton
 
-onready var pet_view_container = get_parent().get_parent()
-onready var scene_root = get_tree().root.get_node("Root/SceneRoot")
-onready var lnz_text_edit = scene_root.get_node("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+onready var pet_view_container: Control = get_parent().get_parent()
+onready var scene_root: Node = get_tree().root.get_node("Root/SceneRoot")
+onready var lnz_text_edit: Control = scene_root.get_node("HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 
-func _ready():
+func _ready() -> void:
 	file_menu_btn.flat = false
 	tool_menu_btn.flat = false
 	mode_menu_btn.flat = false
@@ -79,10 +81,10 @@ func _ready():
 	_setup_export_menu()
 	_setup_help_menu()
 
-func _style_popup(popup: PopupMenu):
+func _style_popup(popup: PopupMenu) -> void:
 	popup.add_font_override("font", preload("res://resources/fonts/font_pixel_maz_24.tres"))
 	
-	var panel_style = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
+	var panel_style: StyleBoxFlat = preload("res://resources/styles/styleboxflat_button_normal.tres").duplicate()
 	panel_style.content_margin_left = 12
 	panel_style.content_margin_right = 12
 	panel_style.content_margin_top = 8
@@ -94,8 +96,8 @@ func _style_popup(popup: PopupMenu):
 	popup.add_constant_override("vseparation", 8)
 	popup.add_color_override("font_color_hover", Color(1.0, 1.0, 1.0, 1.0))
 
-func _setup_file_menu():
-	var popup = file_menu_btn.get_popup()
+func _setup_file_menu() -> void:
+	var popup: PopupMenu = file_menu_btn.get_popup()
 	_style_popup(popup)
 	popup.add_item("Import LNZ", FileMenu.IMPORT_LNZ)
 	popup.add_item("Import Texture", FileMenu.IMPORT_TEXTURE)
@@ -107,8 +109,8 @@ func _setup_file_menu():
 	popup.add_item("Shader Settings", FileMenu.SHADER_SETTINGS)
 	popup.connect("id_pressed", self, "_on_file_menu_id_pressed")
 
-func _setup_tool_menu():
-	var popup = tool_menu_btn.get_popup()
+func _setup_tool_menu() -> void:
+	var popup: PopupMenu = tool_menu_btn.get_popup()
 	_style_popup(popup)
 	
 	popup.add_check_item("Auto Paintballer", ToolMenu.AUTO_PAINTBALLER)
@@ -130,8 +132,8 @@ func _setup_tool_menu():
 	
 	popup.connect("id_pressed", self, "_on_tool_menu_id_pressed")
 
-func _setup_mode_menu():
-	var popup = mode_menu_btn.get_popup()
+func _setup_mode_menu() -> void:
+	var popup: PopupMenu = mode_menu_btn.get_popup()
 	_style_popup(popup)
 	
 	popup.add_check_item("Select Mode", ModeMenu.SELECT)
@@ -160,8 +162,8 @@ func _setup_mode_menu():
 	
 	popup.connect("id_pressed", self, "_on_mode_menu_id_pressed")
 
-func _setup_render_menu():
-	var popup = render_menu_btn.get_popup()
+func _setup_render_menu() -> void:
+	var popup: PopupMenu = render_menu_btn.get_popup()
 	_style_popup(popup)
 	
 	popup.add_check_item("Draw Polygons", RenderMenu.DRAW_POLYGONS)
@@ -181,8 +183,8 @@ func _setup_render_menu():
 	
 	popup.connect("id_pressed", self, "_on_render_menu_id_pressed")
 
-func _setup_export_menu():
-	var popup = export_menu_btn.get_popup()
+func _setup_export_menu() -> void:
+	var popup: PopupMenu = export_menu_btn.get_popup()
 	_style_popup(popup)
 	
 	popup.add_item("Export OBJ 3D Model", ExportMenu.EXPORT_OBJ)
@@ -190,8 +192,8 @@ func _setup_export_menu():
 	
 	popup.connect("id_pressed", self, "_on_export_menu_id_pressed")
 
-func _setup_help_menu():
-	var popup = help_menu_btn.get_popup()
+func _setup_help_menu() -> void:
+	var popup: PopupMenu = help_menu_btn.get_popup()
 	_style_popup(popup)
 	popup.add_item("Basic Controls", HelpMenu.BASIC_CONTROLS)
 	popup.add_separator()
@@ -200,14 +202,14 @@ func _setup_help_menu():
 	popup.add_item("Petz Paletteiare", HelpMenu.PALETTEIARE)
 	popup.connect("id_pressed", self, "_on_help_menu_id_pressed")
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	# Keep visual Menus fully synced with PetViewContainer's legacy internal state
-	var tool_popup = tool_menu_btn.get_popup()
+	var tool_popup: PopupMenu = tool_menu_btn.get_popup()
 	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.AUTO_PAINTBALLER), $ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox.pressed)
 	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.VIEW_PALETTE), $ToolOptionButton/PopupPanel/ToolOptionContainer/ViewPaletteButton.pressed)
 	tool_popup.set_item_checked(tool_popup.get_item_index(ToolMenu.VIEW_VARIATIONS), $ToolOptionButton/PopupPanel/ToolOptionContainer/ViewVariationsCheckBox.pressed)
 	
-	var mode_popup = mode_menu_btn.get_popup()
+	var mode_popup: PopupMenu = mode_menu_btn.get_popup()
 	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.SELECT), $ModeOptionButton/PopupPanel/ModeOptionContainer/SelectCheckBox.pressed)
 	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.PAINTBALL), $ModeOptionButton/PopupPanel/ModeOptionContainer/PaintballModeCheckBox.pressed)
 	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.SHAPE), $ModeOptionButton/PopupPanel/ModeOptionContainer/ProjectModeCheckBox.pressed)
@@ -217,7 +219,7 @@ func _process(_delta):
 	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.RECOLOR), $ModeOptionButton/PopupPanel/ModeOptionContainer/RecolorModeCheckBox.pressed)
 	mode_popup.set_item_checked(mode_popup.get_item_index(ModeMenu.TEXTURE_EDITOR), $ModeOptionButton/PopupPanel/ModeOptionContainer/TextureEditorModeCheckBox.pressed)
 
-	var render_popup = render_menu_btn.get_popup()
+	var render_popup: PopupMenu = render_menu_btn.get_popup()
 	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_POLYGONS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PolygonCheckBox.pressed)
 	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_LINES), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/LineCheckBox.pressed)
 	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.DRAW_PAINTBALLS), $RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PaintballCheckBox.pressed)
@@ -227,7 +229,7 @@ func _process(_delta):
 	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.SHOW_SPECIAL), $RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/ToggleSpecialBalls.pressed)
 	render_popup.set_item_checked(render_popup.get_item_index(RenderMenu.TRANSPARENCY), $RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/TransparencyCheckBox.pressed)
 
-func _on_file_menu_id_pressed(id):
+func _on_file_menu_id_pressed(id: int) -> void:
 	match id:
 		FileMenu.IMPORT_LNZ:
 			$FileOptionButton/PopupPanel/FileOptionContainer/MenuImportLNZ.emit_signal("pressed")
@@ -245,7 +247,7 @@ func _on_file_menu_id_pressed(id):
 			if pet_view_container.has_method("_on_ShaderSettingsButton_pressed"):
 				pet_view_container._on_ShaderSettingsButton_pressed()
 
-func _on_tool_menu_id_pressed(id):
+func _on_tool_menu_id_pressed(id: int) -> void:
 	match id:
 		ToolMenu.AUTO_PAINTBALLER:
 			_toggle_legacy($ToolOptionButton/PopupPanel/ToolOptionContainer/AutoPaintballerModeCheckBox)
@@ -259,7 +261,7 @@ func _on_tool_menu_id_pressed(id):
 			if lnz_text_edit.has_method("_on_HeadShotButton_pressed"):
 				lnz_text_edit._on_HeadShotButton_pressed()
 
-func _on_mode_menu_id_pressed(id):
+func _on_mode_menu_id_pressed(id: int) -> void:
 	match id:
 		ModeMenu.SELECT:
 			_toggle_legacy($ModeOptionButton/PopupPanel/ModeOptionContainer/SelectCheckBox, true)
@@ -278,7 +280,7 @@ func _on_mode_menu_id_pressed(id):
 		ModeMenu.TEXTURE_EDITOR:
 			_toggle_legacy($ModeOptionButton/PopupPanel/ModeOptionContainer/TextureEditorModeCheckBox)
 
-func _on_render_menu_id_pressed(id):
+func _on_render_menu_id_pressed(id: int) -> void:
 	match id:
 		RenderMenu.DRAW_POLYGONS:
 			_toggle_legacy($RenderOptionButton/PopupPanel/HBoxContainer/DrawToggleContainer/PolygonCheckBox)
@@ -299,21 +301,21 @@ func _on_render_menu_id_pressed(id):
 		RenderMenu.UNHIDE_BALLS:
 			$RenderOptionButton/PopupPanel/HBoxContainer/VisualToggleContainer/UnhideBallsButton.emit_signal("pressed")
 
-func _on_export_menu_id_pressed(id):
+func _on_export_menu_id_pressed(id: int) -> void:
 	match id:
 		ExportMenu.EXPORT_OBJ:
 			$ExportOptionButton/PopupPanel/VBoxContainer/ExportButtonOBJ.emit_signal("pressed")
 		ExportMenu.EXPORT_CLOTHES:
 			$ExportOptionButton/PopupPanel/VBoxContainer/ExportButtonClothes.emit_signal("pressed")
 
-func _toggle_legacy(node: CheckBox, emit_pressed: bool = false):
+func _toggle_legacy(node: CheckBox, emit_pressed: bool = false) -> void:
 	node.pressed = not node.pressed
 	if emit_pressed:
 		node.emit_signal("pressed")
 	else:
 		node.emit_signal("toggled", node.pressed)
 
-func _on_help_menu_id_pressed(id):
+func _on_help_menu_id_pressed(id: int) -> void:
 	match id:
 		HelpMenu.BASIC_CONTROLS:
 			scene_root.get_node("HelpPopupDialog").popup_centered()

@@ -1,44 +1,45 @@
 extends WindowDialog
+## ExportClothes.gd
+## Handles the UI and logic for exporting CLZ data
 
-onready var species_label = $VBoxContainer/SettingsGrid/SpeciesValue
-onready var kind_option = $VBoxContainer/SettingsGrid/KindOption
-onready var base_container = $VBoxContainer/SettingsGrid/BaseContainer
+onready var species_label: Label = $VBoxContainer/SettingsGrid/SpeciesValue
+onready var kind_option: OptionButton = $VBoxContainer/SettingsGrid/KindOption
+onready var base_container: Control = $VBoxContainer/SettingsGrid/BaseContainer
 onready var dog_base_input = $VBoxContainer/SettingsGrid/BaseContainer/DogBaseInput
 onready var cat_base_input = $VBoxContainer/SettingsGrid/BaseContainer/CatBaseInput
 onready var baby_base_input = $VBoxContainer/SettingsGrid/BaseContainer/BabyBaseInput
-onready var dog_label = $VBoxContainer/SettingsGrid/BaseContainer/DogLabel
-onready var cat_label = $VBoxContainer/SettingsGrid/BaseContainer/CatLabel
-onready var baby_label = $VBoxContainer/SettingsGrid/BaseContainer/BabyLabel
+onready var dog_label: Label = $VBoxContainer/SettingsGrid/BaseContainer/DogLabel
+onready var cat_label: Label = $VBoxContainer/SettingsGrid/BaseContainer/CatLabel
+onready var baby_label: Label = $VBoxContainer/SettingsGrid/BaseContainer/BabyLabel
+onready var text_edit: TextEdit = $VBoxContainer/TextEdit
 
-onready var text_edit = $VBoxContainer/TextEdit
+var dog_generator: Node = null
+var current_species: int = 0
 
-var dog_generator
-var current_species
+const KIND_PETZ: Array = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_BackL", "Sock_BackR", "Tail", "Hat", "Hat2", "EarringL", "EarringR", "NoseThing", "NoseThing2", "Glasses"]
+const KIND_BABYZ: Array = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses", "EarringL", "EarringR", "Tail"]
 
-const KIND_PETZ = ["Shirt", "Pant", "Sock_FrontL", "Sock_FrontR", "Sock_BackL", "Sock_BackR", "Tail", "Hat", "Hat2", "EarringL", "EarringR", "NoseThing", "NoseThing2", "Glasses"]
-const KIND_BABYZ = ["Diaper", "Coveralls", "Jumper", "Onesie", "Pants", "Shirt", "Socks", "Hat", "Hat2", "NoseThing", "NoseThing2", "Glasses", "EarringL", "EarringR", "Tail"]
-
-func _ready():
+func _ready() -> void:
 	dog_generator = get_tree().root.get_node("Root/PetRoot/Node")
 
-func open(target_ball_no = -1):
+func open(target_ball_no: int = -1) -> void:
 	popup_centered()
 	initialize_data(target_ball_no)
 
-func initialize_data(target_ball_no):
-	var lnz = dog_generator.lnz
-	if !lnz:
+func initialize_data(target_ball_no: int) -> void:
+	var lnz: Node = dog_generator.lnz
+	if not lnz:
 		return
 
 	current_species = lnz.species
 
-	var species_text = "Petz"
+	var species_text: String = "Petz"
 	if current_species == KeyBallsData.Species.BABY:
 		species_text = "Babyz"
 	species_label.text = species_text
 
 	kind_option.clear()
-	var options = KIND_PETZ
+	var options: Array = KIND_PETZ
 	if current_species == KeyBallsData.Species.BABY:
 		options = KIND_BABYZ
 
@@ -47,7 +48,8 @@ func initialize_data(target_ball_no):
 
 	_setup_base_inputs(target_ball_no)
 
-func _setup_base_inputs(target_ball_no):
+func _setup_base_inputs(target_ball_no: int) -> void:
+	# Reset visibility
 	dog_label.visible = false
 	dog_base_input.visible = false
 	cat_label.visible = false
@@ -55,6 +57,7 @@ func _setup_base_inputs(target_ball_no):
 	baby_label.visible = false
 	baby_base_input.visible = false
 
+	# Reset text
 	dog_base_input.text = ""
 	cat_base_input.text = ""
 	baby_base_input.text = ""
@@ -74,8 +77,8 @@ func _setup_base_inputs(target_ball_no):
 		cat_base_input.visible = true
 
 		if target_ball_no != -1:
-			var dog_ball = -1
-			var cat_ball = -1
+			var dog_ball: int = -1
+			var cat_ball: int = -1
 
 			if current_species == KeyBallsData.Species.DOG:
 				dog_ball = target_ball_no
@@ -91,27 +94,27 @@ func _setup_base_inputs(target_ball_no):
 			if cat_ball != -1:
 				cat_base_input.text = str(cat_ball)
 
-func _find_equivalent_ball(src_ball, src_defs, dest_defs):
+func _find_equivalent_ball(src_ball: int, src_defs: Dictionary, dest_defs: Dictionary) -> int:
 	if src_defs.has(src_ball):
-		var name = src_defs[src_ball].name
+		var name: String = src_defs[src_ball].name
 		for k in dest_defs:
 			if dest_defs[k].name == name:
 				return k
 	return -1
 
-func _on_GenerateButton_pressed():
+func _on_GenerateButton_pressed() -> void:
 	generate_clz()
 
-func _on_CopyButton_pressed():
+func _on_CopyButton_pressed() -> void:
 	OS.set_clipboard(text_edit.text)
 
-func generate_clz():
-	var lnz = dog_generator.lnz
+func generate_clz() -> void:
+	var lnz: Node = dog_generator.lnz
 
-	var dog_base = -1
-	var cat_base = -1
-	var baby_base = -1
-	var target_base = -1
+	var dog_base: int = -1
+	var cat_base: int = -1
+	var baby_base: int = -1
+	var target_base: int = -1
 
 	if current_species == KeyBallsData.Species.BABY:
 		if baby_base_input.text.is_valid_integer():
@@ -134,25 +137,27 @@ func generate_clz():
 
 	# 1. Collect [Add Ball] entries
 	# Filter for addballs based on target_base
-	var relevant_addballs = []
-	var old_to_new_idx = {} # original ball_no -> new index (1, 2, 3...)
-	var next_idx = 1
+	var relevant_addballs: Array = []
+	var old_to_new_idx: Dictionary = {} # original ball_no -> new index (1, 2, 3...)
+	var next_idx: int = 1
 
 	# Iterate all addballs in LNZ
-	var sorted_keys = lnz.addballs.keys()
+	var sorted_keys: Array = lnz.addballs.keys()
 	sorted_keys.sort()
 
 	for k in sorted_keys:
 		if lnz.omissions.has(k):
 			continue
-		var ab = lnz.addballs[k]
+		var ab: Dictionary = lnz.addballs[k]
 		if ab.base == target_base:
 			relevant_addballs.append(ab)
 			old_to_new_idx[k] = next_idx
 			next_idx += 1
 
+	sorted_keys.resize(0)
+
 	# 2. Collect [Linez] entries
-	var relevant_lines = []
+	var relevant_lines: Array = []
 	for line in lnz.lines:
 		# Check if start/end are in our relevant addballs
 		# The prompt says: "involving those Addballz (NOT involving the base ball)"
@@ -161,14 +166,14 @@ func generate_clz():
 			relevant_lines.append(line)
 
 	# 3. [Default Scalez]
-	var pet_scale = lnz.scales.x
-	var ball_scale = lnz.scales.y
+	var pet_scale: float = lnz.scales.x
+	var ball_scale: float = lnz.scales.y
 
 	# 4. [Texture List]
-	var texture_entries = []
+	var texture_entries: Array = []
 	for tex in lnz.texture_list:
 		# Format: filename \t transparent_color (if present)
-		var line = tex.filename
+		var line: String = tex.filename
 		if tex.transparent_color != null: # Assuming explicit null check if missing
 			# Actually LnzParser defaults?
 			# LnzParser stores transparent_color string.
@@ -179,12 +184,12 @@ func generate_clz():
 		texture_entries.append(line)
 
 	# 5. BaseBallSize
-	var base_ball_size = 60
+	var base_ball_size: int = 60
 	#if dog_generator.bhd and target_base < dog_generator.bhd.ball_sizes.size():
 	#	base_ball_size = dog_generator.bhd.ball_sizes[target_base]
 
 	# Construct Output
-	var output = ""
+	var output: String = ""
 
 	# Header
 	output += "[Add Clothing]\n"
@@ -211,8 +216,8 @@ func generate_clz():
 
 	# [Add Ball]
 	for ab in relevant_addballs:
-		var new_base = 0 # all attached to base ball 0 in CLZ
-		var line_str = str(new_base) + "\t"
+		var new_base: int = 0 # all attached to base ball 0 in CLZ
+		var line_str: String = str(new_base) + "\t"
 		line_str += str(int(ab.position.x)) + "," + str(int(ab.position.y)) + "," + str(int(ab.position.z)) + "\t"
 		line_str += str(ab.color_index) + "\t"
 		line_str += str(ab.outline_color_index) + "\t"
@@ -228,10 +233,10 @@ func generate_clz():
 	# [Linez]
 	output += ";start\tend\tfuzz\tcol\tlfCol\trtCol\tsThck\teThick\tfulloutline\tdrawOrder\n"
 	for l in relevant_lines:
-		var new_start = old_to_new_idx[l.start]
-		var new_end = old_to_new_idx[l.end]
+		var new_start: int = old_to_new_idx[l.start]
+		var new_end: int = old_to_new_idx[l.end]
 
-		var line_str = str(new_start) + "\t" + str(new_end) + "\t"
+		var line_str: String = str(new_start) + "\t" + str(new_end) + "\t"
 		line_str += str(l.fuzz) + "\t"
 		line_str += str(l.color_index) + "\t"
 		line_str += str(l.l_color_index) + "\t"

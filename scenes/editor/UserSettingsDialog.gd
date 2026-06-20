@@ -1,4 +1,6 @@
 extends WindowDialog
+## UserSettingsDialog.gd
+## Dialog for configuring user-specific global settings
 
 signal delimiter_changed(new_delimiter_name)
 signal background_color_changed(new_color)
@@ -7,14 +9,14 @@ signal stretch_mode_changed(new_mode)
 signal stretch_aspect_changed(new_aspect)
 signal max_history_changed(new_val)
 
-onready var delimiter_option = $VBoxContainer/DelimiterHBox/OptionButton
-onready var bg_color_picker = $VBoxContainer/BgColorHBox/ColorPickerButton
-onready var shrink_spinbox = $VBoxContainer/ShrinkHBox/SpinBox
-onready var max_history_spinbox = $VBoxContainer/MaxHistoryHBox/SpinBox
-onready var stretch_mode_option = $VBoxContainer/StretchModeHBox/OptionButton
-onready var stretch_aspect_option = $VBoxContainer/StretchAspectHBox/OptionButton
+onready var delimiter_option: OptionButton = $VBoxContainer/DelimiterHBox/OptionButton
+onready var bg_color_picker: ColorPickerButton = $VBoxContainer/BgColorHBox/ColorPickerButton
+onready var shrink_spinbox: SpinBox = $VBoxContainer/ShrinkHBox/SpinBox
+onready var max_history_spinbox: SpinBox = $VBoxContainer/MaxHistoryHBox/SpinBox
+onready var stretch_mode_option: OptionButton = $VBoxContainer/StretchModeHBox/OptionButton
+onready var stretch_aspect_option: OptionButton = $VBoxContainer/StretchAspectHBox/OptionButton
 
-var delimiter_map = {
+var delimiter_map: Dictionary = {
 	0: "comma_space",
 	1: "comma",
 	2: "comma_tab",
@@ -23,7 +25,7 @@ var delimiter_map = {
 	5: "auto-detect"
 }
 
-var reverse_delimiter_map = {
+var reverse_delimiter_map: Dictionary = {
 	"comma_space": 0,
 	"comma": 1,
 	"comma_tab": 2,
@@ -32,7 +34,7 @@ var reverse_delimiter_map = {
 	"auto-detect": 5
 }
 
-func _ready():
+func _ready() -> void:
 	_setup_options()
 
 	delimiter_option.connect("item_selected", self, "_on_delimiter_selected")
@@ -42,7 +44,7 @@ func _ready():
 	stretch_mode_option.connect("item_selected", self, "_on_stretch_mode_selected")
 	stretch_aspect_option.connect("item_selected", self, "_on_stretch_aspect_selected")
 
-func _setup_options():
+func _setup_options() -> void:
 	delimiter_option.clear()
 
 	delimiter_option.add_item("comma-space (X, Y)", 0)
@@ -73,8 +75,8 @@ func _setup_options():
 	stretch_aspect_option.add_item("Keep Height", SceneTree.STRETCH_ASPECT_KEEP_HEIGHT)
 	stretch_aspect_option.add_item("Expand", SceneTree.STRETCH_ASPECT_EXPAND)
 
-func init_settings(current_delim_name, current_bg_color, current_shrink, current_max_history, current_stretch_mode, current_stretch_aspect):
-	var delim_idx = reverse_delimiter_map.get(current_delim_name, 5)
+func init_settings(current_delim_name: String, current_bg_color: Color, current_shrink: float, current_max_history: int, current_stretch_mode: int, current_stretch_aspect: int) -> void:
+	var delim_idx: int = reverse_delimiter_map.get(current_delim_name, 5)
 
 	if delimiter_option.is_item_disabled(delim_idx):
 		delim_idx = 5
@@ -89,7 +91,7 @@ func init_settings(current_delim_name, current_bg_color, current_shrink, current
 	_select_option_by_id(stretch_mode_option, current_stretch_mode)
 	_select_option_by_id(stretch_aspect_option, current_stretch_aspect)
 
-func _select_option_by_id(opt_btn: OptionButton, id: int):
+func _select_option_by_id(opt_btn: OptionButton, id: int) -> void:
 	for i in range(opt_btn.get_item_count()):
 		if opt_btn.get_item_id(i) == id:
 			opt_btn.select(i)
@@ -97,20 +99,20 @@ func _select_option_by_id(opt_btn: OptionButton, id: int):
 	if opt_btn.get_item_count() > 0:
 		opt_btn.select(0)
 
-func _on_delimiter_selected(index):
+func _on_delimiter_selected(index: int) -> void:
 	emit_signal("delimiter_changed", delimiter_map[index])
 
-func _on_bg_color_changed(color):
+func _on_bg_color_changed(color: Color) -> void:
 	emit_signal("background_color_changed", color)
 
-func _on_shrink_changed(value):
+func _on_shrink_changed(value: float) -> void:
 	emit_signal("shrink_changed", value)
 
-func _on_max_history_changed(value):
-	emit_signal("max_history_changed", value)
+func _on_max_history_changed(value: float) -> void:
+	emit_signal("max_history_changed", int(value))
 
-func _on_stretch_mode_selected(index):
+func _on_stretch_mode_selected(index: int) -> void:
 	emit_signal("stretch_mode_changed", stretch_mode_option.get_item_id(index))
 
-func _on_stretch_aspect_selected(index):
+func _on_stretch_aspect_selected(index: int) -> void:
 	emit_signal("stretch_aspect_changed", stretch_aspect_option.get_item_id(index))

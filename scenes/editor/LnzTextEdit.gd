@@ -55,8 +55,8 @@ var _search_regex: RegEx = RegEx.new()
 var _last_compiled_pattern: String = ""
 
 var set_column_popup: ConfirmationDialog
-var col_input: LineEdit
-var val_input: LineEdit
+var col_input
+var val_input
 
 var bookmarks: Array = []
 

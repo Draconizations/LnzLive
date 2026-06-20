@@ -1,28 +1,35 @@
 extends Label
+## BallNo.gd
+## Displays the current ball number and associated name information
 
-onready var ball_label = self 
-onready var lnz_edit = get_node("../../LnzTextEdit")
+onready var ball_label: Label = self
+onready var lnz_edit: Node = get_node("../../LnzTextEdit")
 
-func _update_ball_label(ball_no):
+func _update_ball_label(ball_no: int) -> void:
+	# Hide label if ball number is invalid
 	if ball_no == -1:
 		ball_label.visible = false
 		return
 
-	var current_section = lnz_edit.get_current_section_name()
+	var current_section: String = lnz_edit.get_current_section_name()
 	
+	# Handle specific sections where line context is relevant
 	if current_section == "[Linez]" or current_section == "[Project Ball]":
-		var line_idx = lnz_edit.cursor_get_line()
-		var line_text = lnz_edit.get_line(line_idx).strip_edges()
-		var parts = lnz_edit.split_line(line_text)
+		var line_idx: int = lnz_edit.cursor_get_line()
+		var line_text: String = lnz_edit.get_line(line_idx).strip_edges()
+		var parts: Array = lnz_edit.split_line(line_text)
 		
+		# Ensure parts array has enough elements
 		if parts.size() >= 2:
-			var b1 = int(parts[0])
-			var b2 = int(parts[1])
-			var name1 = lnz_edit.get_ball_name(b1) 
-			var name2 = lnz_edit.get_ball_name(b2)
+			var b1: int = int(parts[0])
+			var b2: int = int(parts[1])
+			var name1: String = lnz_edit.get_ball_name(b1)
+			var name2: String = lnz_edit.get_ball_name(b2)
 			
-			var display_text = "#(" + str(b1) + "): " + name1 + " to #(" + str(b2) + "): " + name2
+			# Construct display text
+			var display_text: String = "#(" + str(b1) + "): " + str(name1) + " to #(" + str(b2) + "): " + str(name2)
 			
+			# Check linez limits if method exists
 			if current_section == "[Linez]" and lnz_edit.has_method("check_linez_limits"):
 				if lnz_edit.check_linez_limits(b1, b2):
 					display_text += " (LINEZ LIMIT)"
@@ -36,21 +43,23 @@ func _update_ball_label(ball_no):
 			ball_label.visible = true
 			return
 
+	# Default display logic for other sections
 	ball_label.add_color_override("font_color", Color.white)
 
-	var max_base = 0
-	if KeyBallsData.get("max_base_ball_num") != null:
-		max_base = KeyBallsData.max_base_ball_num
+	var max_base: int = 0
+	var max_base_val = KeyBallsData.get("max_base_ball_num")
+	if max_base_val != null:
+		max_base = max_base_val
 	
-	var type_label = ""
-	if KeyBallsData.get("max_base_ball_num") != null:
+	var type_label: String = ""
+	if max_base_val != null:
 		type_label = "(base)" if ball_no < max_base else "(add)"
 	
-	var name_ext = ""
+	var name_ext: String = ""
 	if lnz_edit.has_method("get_ball_name"):
 		var b_name = lnz_edit.get_ball_name(ball_no)
 		if b_name != null and b_name is String and b_name != "":
-			name_ext = ": " + b_name
+			name_ext = ": " + str(b_name)
 	
 	ball_label.text = "Curr Ball #" + str(ball_no) + " " + type_label + name_ext
 	ball_label.visible = true

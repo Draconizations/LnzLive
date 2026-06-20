@@ -30,7 +30,7 @@ const BABYZ_PALETTE               = LnzLiveUtils.BABYZ_PALETTE
 
 export var petz_palette           = DEFAULT_PALETTE
 
-var timer_count = 0
+var timer_count: int = 0
 var is_highlighted = false
 
 func _ready():
@@ -171,15 +171,15 @@ func set_species(new_value: int, is_babyz_mode: bool = false) -> void:
 		
 		$MeshInstance.material_override.set_shader_param("palette_size", 256)
 
-func set_transparent_color(new_value):
+func set_transparent_color(new_value) -> void:
 	transparent_color = new_value
 	$MeshInstance.material_override.set_shader_param("transparent_index", new_value)
 
-func set_transparency(new_value):
+func set_transparency(new_value: bool) -> void:
 	transparency_on = new_value
 	$MeshInstance.material_override.set_shader_param("transparency_on", new_value)
 
-func flash():
+func flash() -> void:
 	if is_highlighted:
 		return
 	timer_count = 0
@@ -187,7 +187,7 @@ func flash():
 	$MeshInstance.material_override.set_shader_param("highlight", true)
 	$FlashTimer.start()
 
-func _on_FlashTimer_timeout():
+func _on_FlashTimer_timeout() -> void:
 	timer_count += 1
 	if is_highlighted:
 		if timer_count % 2 == 1:

@@ -4,28 +4,24 @@ extends Panel
 ## 1. Allows a `Panel` or `PanelContainer` node be clicked and dragged
 ## 2. Saves last position that panels have been dragged but not off-screen
 
-const SETTINGS_PATH = "user://settings.cfg"
-const CONFIG_SECTION = "PanelPositions"
+const SETTINGS_PATH: String = "user://settings.cfg"
+const CONFIG_SECTION: String = "PanelPositions"
 
-var dragging = false
-var drag_start = Vector2()
-var is_docked = false
+var dragging: bool = false
+var drag_start: Vector2 = Vector2.ZERO
+var is_docked: bool = false
 
 var dock_button: Button
-# var close_button: Button
 var original_rect_size: Vector2
 
-func _ready():
+func _ready() -> void:
 	get_viewport().connect("size_changed", self, "_on_viewport_resized")
 
 	dock_button = Button.new()
-	# close_button = Button.new()
 	
 	add_child(dock_button)
-	# add_child(close_button)
 
 	_stylize_button(dock_button, "Dock")
-	# _stylize_button(close_button, "x")
 
 	dock_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
 	dock_button.margin_right = -35
@@ -33,23 +29,16 @@ func _ready():
 	dock_button.margin_left = -95
 	dock_button.margin_bottom = 25
 
-	# close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
-	# close_button.margin_right = -5
-	# close_button.margin_top = 5
-	# close_button.margin_left = -30
-	# close_button.margin_bottom = 25
-
 	dock_button.connect("pressed", self, "_on_dock_button_pressed")
-	# close_button.connect("pressed", self, "_on_close_button_pressed")
 	
 	update_buttons()
 
-func _stylize_button(btn: Button, btn_text: String):
+func _stylize_button(btn: Button, btn_text: String) -> void:
 	btn.text = btn_text
 	
-	var style_normal = load("res://resources/styles/styleboxflat_button_normal.tres")
-	var style_hover = load("res://resources/styles/styleboxflat_button_hover.tres")
-	var pixel_font = load("res://resources/fonts/font_pixel_maz_24.tres")
+	var style_normal: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_normal.tres")
+	var style_hover: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_hover.tres")
+	var pixel_font: Font = load("res://resources/fonts/font_pixel_maz_24.tres")
 
 	btn.add_stylebox_override("normal", style_normal)
 	btn.add_stylebox_override("hover", style_hover)
@@ -59,7 +48,7 @@ func _stylize_button(btn: Button, btn_text: String):
 	
 	btn.set_deferred("flat", false)
 
-func _gui_input(event):
+func _gui_input(event: InputEvent) -> void:
 	if is_docked:
 		return
 
@@ -76,46 +65,46 @@ func _gui_input(event):
 	elif event is InputEventMouseMotion and dragging:
 		rect_global_position = get_global_mouse_position() - drag_start
 
-func save_position():
+func save_position() -> void:
 	if is_docked: return
-	var config = ConfigFile.new()
+	var config: ConfigFile = ConfigFile.new()
 	config.load(SETTINGS_PATH)
 	config.set_value(CONFIG_SECTION, self.name, _get_clamped_position())
 	config.save(SETTINGS_PATH)
 
-func restore_position(default_pos: Vector2):
-	var config = ConfigFile.new()
+func restore_position(default_pos: Vector2) -> void:
+	var config: ConfigFile = ConfigFile.new()
 	if config.load(SETTINGS_PATH) == OK and config.has_section_key(CONFIG_SECTION, self.name):
 		rect_global_position = config.get_value(CONFIG_SECTION, self.name)
 	else:
 		rect_global_position = default_pos
 	rect_global_position = _get_clamped_position()
 
-func _on_viewport_resized():
+func _on_viewport_resized() -> void:
 	if not is_docked:
 		rect_global_position = _get_clamped_position()
 
 func _get_clamped_position() -> Vector2:
-	var viewport_size = get_viewport().get_visible_rect().size
-	var new_x = clamp(rect_global_position.x, 0, max(0, viewport_size.x - rect_size.x))
-	var new_y = clamp(rect_global_position.y, 0, max(0, viewport_size.y - rect_size.y))
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var new_x: float = clamp(rect_global_position.x, 0, max(0, viewport_size.x - rect_size.x))
+	var new_y: float = clamp(rect_global_position.y, 0, max(0, viewport_size.y - rect_size.y))
 	return Vector2(new_x, new_y)
 
-func _on_dock_button_pressed():
-	var sidebar = get_tree().root.find_node("VBoxContainer", true, false)
+func _on_dock_button_pressed() -> void:
+	var sidebar: Node = get_tree().root.find_node("VBoxContainer", true, false)
 	if sidebar and sidebar.has_method("dock_panel"):
 		if is_docked:
 			sidebar.undock_panel(self)
 		else:
 			sidebar.dock_panel(self)
 
-func _on_close_button_pressed():
+func _on_close_button_pressed() -> void:
 	_on_dock_button_pressed()
 
-func _setup_custom_buttons():
-	var style_normal = load("res://resources/styles/styleboxflat_button_normal.tres")
-	var style_hover = load("res://resources/styles/styleboxflat_button_hover.tres")
-	var pixel_font = load("res://resources/fonts/font_pixel_maz_24.tres")
+func _setup_custom_buttons() -> void:
+	var style_normal: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_normal.tres")
+	var style_hover: StyleBoxFlat = load("res://resources/styles/styleboxflat_button_hover.tres")
+	var pixel_font: Font = load("res://resources/fonts/font_pixel_maz_24.tres")
 
 	dock_button = Button.new()
 	dock_button.text = "Dock"
@@ -134,26 +123,9 @@ func _setup_custom_buttons():
 	dock_button.margin_left = -95
 	dock_button.margin_bottom = 25
 
-	# close_button = Button.new()
-	# close_button.text = "x"
-
-	# close_button.add_stylebox_override("normal", style_normal)
-	# close_button.add_stylebox_override("hover", style_hover)
-	# close_button.add_stylebox_override("pressed", style_normal)
-	# close_button.add_font_override("font", pixel_font)
-	
-	# close_button.connect("pressed", self, "_on_close_button_pressed")
-	# add_child(close_button)
-	
-	# close_button.set_anchors_and_margins_preset(Control.PRESET_TOP_RIGHT)
-	# close_button.margin_right = -5
-	# close_button.margin_top = 5
-	# close_button.margin_left = -30
-	# close_button.margin_bottom = 25
-
 	update_buttons()
 
-func set_docked(docked: bool):
+func set_docked(docked: bool) -> void:
 	is_docked = docked
 	dragging = false
 	
@@ -172,10 +144,8 @@ func set_docked(docked: bool):
 
 	update_buttons()
 
-func update_buttons():
+func update_buttons() -> void:
 	if is_docked:
 		dock_button.text = "Pop out"
-		# close_button.visible = false
 	else:
 		dock_button.text = "Dock"
-		# close_button.visible = true

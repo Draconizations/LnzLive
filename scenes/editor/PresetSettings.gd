@@ -8,75 +8,75 @@ extends DraggablePanel
 ## 4. Handle advanced list transformations (mirroring and custom/preset rotation)
 ## 5. Emit the `eyedropper_toggled(is_on)` signal to activate the sampling tool
 
-var _is_loading_settings = false
+var _is_loading_settings: bool = false
 
 signal eyedropper_toggled(is_on)
 signal apply_to_selection
 signal unselect_all
 signal select_balls_by_ids(ids)
 
-onready var panel = self
+onready var panel: Control = self
 onready var scroll_vbox = $VBoxContainer/ScrollContainer/VBoxContainer
-onready var paintballz_text_edit = scroll_vbox.get_node("RawLnzContainer/PaintballzTextEdit")
-onready var set_paintballz_button = scroll_vbox.get_node("RawLnzContainer/SetPaintballzButton")
-onready var get_paintballz_button = scroll_vbox.get_node("RawLnzContainer/GetPaintballzButton")
-onready var show_raw_button = scroll_vbox.get_node("ShowRawButton")
-onready var raw_lnz_container = scroll_vbox.get_node("RawLnzContainer")
-onready var paintballz_tree = scroll_vbox.get_node("PaintballzTree")
+onready var paintballz_text_edit: TextEdit = scroll_vbox.get_node("RawLnzContainer/PaintballzTextEdit")
+onready var set_paintballz_button: Button = scroll_vbox.get_node("RawLnzContainer/SetPaintballzButton")
+onready var get_paintballz_button: Button = scroll_vbox.get_node("RawLnzContainer/GetPaintballzButton")
+onready var show_raw_button: Button = scroll_vbox.get_node("ShowRawButton")
+onready var raw_lnz_container: Control = scroll_vbox.get_node("RawLnzContainer")
+onready var paintballz_tree: Tree = scroll_vbox.get_node("PaintballzTree")
 
-onready var preview_viewport = scroll_vbox.get_node("PreviewContainer/Viewport")
-onready var preview_camera = scroll_vbox.get_node("PreviewContainer/Viewport/PreviewWorld/Camera")
-onready var preview_world = scroll_vbox.get_node("PreviewContainer/Viewport/PreviewWorld")
+onready var preview_viewport: Viewport = scroll_vbox.get_node("PreviewContainer/Viewport")
+onready var preview_camera: Camera = scroll_vbox.get_node("PreviewContainer/Viewport/PreviewWorld/Camera")
+onready var preview_world: Spatial = scroll_vbox.get_node("PreviewContainer/Viewport/PreviewWorld")
 
-var ball_scene = preload("res://Ball.tscn")
-var paintball_scene = preload("res://Paintball.tscn")
-var default_palette = LnzLiveUtils.DEFAULT_PALETTE
-var active_palette = default_palette
-onready var preloader = get_tree().root.get_node("Root/ResourcePreloader")
-var ball_texture_list = []
+var ball_scene: PackedScene = preload("res://Ball.tscn")
+var paintball_scene: PackedScene = preload("res://Paintball.tscn")
+var default_palette: Texture = LnzLiveUtils.DEFAULT_PALETTE
+var active_palette: Texture = default_palette
+onready var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader")
+var ball_texture_list: Array = []
 
-onready var eyedropper_toggle = scroll_vbox.get_node("ToolsContainer/EyedropperToggle")
-onready var exclude_eyes_chk = scroll_vbox.get_node("SelectionActions/ExcludeEyesCheckBox")
-onready var include_paintballz_chk = scroll_vbox.get_node("IncludeContainer/IncludePaintballzCheckBox")
-onready var scale_paintballz_chk = scroll_vbox.get_node("IncludeContainer/ScalePaintballzCheckBox")
+onready var eyedropper_toggle: CheckButton = scroll_vbox.get_node("ToolsContainer/EyedropperToggle")
+onready var exclude_eyes_chk: CheckBox = scroll_vbox.get_node("SelectionActions/ExcludeEyesCheckBox")
+onready var include_paintballz_chk: CheckBox = scroll_vbox.get_node("IncludeContainer/IncludePaintballzCheckBox")
+onready var scale_paintballz_chk: CheckBox = scroll_vbox.get_node("IncludeContainer/ScalePaintballzCheckBox")
 
-onready var base_properties_grid = scroll_vbox.get_node("BasePropertiesGrid")
-onready var include_size_chk = base_properties_grid.get_node("IncludeSizeCheckBox")
-onready var include_color_chk = base_properties_grid.get_node("IncludeColorCheckBox")
-onready var include_outline_color_chk = base_properties_grid.get_node("IncludeOutlineColorCheckBox")
-onready var include_outline_chk = base_properties_grid.get_node("IncludeOutlineCheckBox")
-onready var include_fuzz_chk = base_properties_grid.get_node("IncludeFuzzCheckBox")
-onready var include_texture_chk = base_properties_grid.get_node("IncludeTextureCheckBox")
+onready var base_properties_grid: GridContainer = scroll_vbox.get_node("BasePropertiesGrid")
+onready var include_size_chk: CheckBox = base_properties_grid.get_node("IncludeSizeCheckBox")
+onready var include_color_chk: CheckBox = base_properties_grid.get_node("IncludeColorCheckBox")
+onready var include_outline_color_chk: CheckBox = base_properties_grid.get_node("IncludeOutlineColorCheckBox")
+onready var include_outline_chk: CheckBox = base_properties_grid.get_node("IncludeOutlineCheckBox")
+onready var include_fuzz_chk: CheckBox = base_properties_grid.get_node("IncludeFuzzCheckBox")
+onready var include_texture_chk: CheckBox = base_properties_grid.get_node("IncludeTextureCheckBox")
 
-onready var size_spinbox = base_properties_grid.get_node("SizeContainer/SizeSpinBox")
-onready var size_mode_option = base_properties_grid.get_node("SizeContainer/SizeModeOption")
+onready var size_spinbox: SpinBox = base_properties_grid.get_node("SizeContainer/SizeSpinBox")
+onready var size_mode_option: OptionButton = base_properties_grid.get_node("SizeContainer/SizeModeOption")
 
 onready var color_edit = base_properties_grid.get_node("ColorLineEdit")
 onready var outline_color_edit = base_properties_grid.get_node("OutlineColorLineEdit")
-onready var outline_spinbox = base_properties_grid.get_node("OutlineSpinBox")
-onready var fuzz_spinbox = base_properties_grid.get_node("FuzzSpinBox")
-onready var texture_spinbox = base_properties_grid.get_node("TextureSpinBox")
+onready var outline_spinbox: SpinBox = base_properties_grid.get_node("OutlineSpinBox")
+onready var fuzz_spinbox: SpinBox = base_properties_grid.get_node("FuzzSpinBox")
+onready var texture_spinbox: SpinBox = base_properties_grid.get_node("TextureSpinBox")
 
-onready var roll_spinbox = scroll_vbox.get_node("CustomRotationContainer/RollSpinBox")
-onready var pitch_spinbox = scroll_vbox.get_node("CustomRotationContainer/PitchSpinBox")
-onready var yaw_spinbox = scroll_vbox.get_node("CustomRotationContainer/YawSpinBox")
+onready var roll_spinbox: SpinBox = scroll_vbox.get_node("CustomRotationContainer/RollSpinBox")
+onready var pitch_spinbox: SpinBox = scroll_vbox.get_node("CustomRotationContainer/PitchSpinBox")
+onready var yaw_spinbox: SpinBox = scroll_vbox.get_node("CustomRotationContainer/YawSpinBox")
 
-onready var size_scale_spin = scroll_vbox.get_node("ScaleSettingsGrid/SizeScaleSpinBox")
-onready var pos_scale_spin = scroll_vbox.get_node("ScaleSettingsGrid/PosScaleSpinBox")
-onready var link_scale_chk = scroll_vbox.get_node("ScaleSettingsGrid/LinkScaleCheckBox")
+onready var size_scale_spin: SpinBox = scroll_vbox.get_node("ScaleSettingsGrid/SizeScaleSpinBox")
+onready var pos_scale_spin: SpinBox = scroll_vbox.get_node("ScaleSettingsGrid/PosScaleSpinBox")
+onready var link_scale_chk: CheckBox = scroll_vbox.get_node("ScaleSettingsGrid/LinkScaleCheckBox")
 
-onready var mirror_x_btn = scroll_vbox.get_node("MirrorGrid/MirrorXButton")
-onready var mirror_y_btn = scroll_vbox.get_node("MirrorGrid/MirrorYButton")
-onready var mirror_z_btn = scroll_vbox.get_node("MirrorGrid/MirrorZButton")
+onready var mirror_x_btn: Button = scroll_vbox.get_node("MirrorGrid/MirrorXButton")
+onready var mirror_y_btn: Button = scroll_vbox.get_node("MirrorGrid/MirrorYButton")
+onready var mirror_z_btn: Button = scroll_vbox.get_node("MirrorGrid/MirrorZButton")
 
 onready var recolor_rules_container = scroll_vbox.get_node("RecolorRulesContainer")
-onready var autofill_btn = scroll_vbox.get_node("RecolorActions/AutofillRecolorsButton")
-onready var apply_recolor_btn = scroll_vbox.get_node("RecolorActions/ApplyRecolorsButton")
-onready var clear_recolor_btn = scroll_vbox.get_node("RecolorActions/ClearRecolorsButton")
+onready var autofill_btn: Button = scroll_vbox.get_node("RecolorActions/AutofillRecolorsButton")
+onready var apply_recolor_btn: Button = scroll_vbox.get_node("RecolorActions/ApplyRecolorsButton")
+onready var clear_recolor_btn: Button = scroll_vbox.get_node("RecolorActions/ClearRecolorsButton")
 
-var _base_paintballz_data = []
-var _ignore_ui_changes = false
-var source_ball_reference_size = 10
+var _base_paintballz_data: Array = []
+var _ignore_ui_changes: bool = false
+var source_ball_reference_size: float = 10
 
 const SizeMode = {
 	SET = 0,
@@ -84,7 +84,7 @@ const SizeMode = {
 	TRUE = 2
 }
 
-func _ready():
+func _ready() -> void:
 	eyedropper_toggle.connect("toggled", self, "_on_EyedropperToggle_toggled")
 
 	set_paintballz_button.connect("pressed", self, "_on_SetPaintballzButton_pressed")
@@ -118,10 +118,10 @@ func _ready():
 	pos_scale_spin.connect("value_changed", self, "_on_scale_changed", [false])
 	link_scale_chk.connect("toggled", self, "_on_property_changed")
 
-	var apply_btn = scroll_vbox.get_node("SelectionActions/ApplyButton")
+	var apply_btn: Button = scroll_vbox.get_node("SelectionActions/ApplyButton")
 	apply_btn.connect("pressed", self, "_on_ApplyButton_pressed")
 
-	var unselect_btn = scroll_vbox.get_node("SelectionActions/UnselectButton")
+	var unselect_btn: Button = scroll_vbox.get_node("SelectionActions/UnselectButton")
 	unselect_btn.connect("pressed", self, "_on_UnselectButton_pressed")
 
 	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
@@ -152,12 +152,12 @@ func _ready():
 
 	connect("visibility_changed", self, "_on_visibility_changed")
 	
-	var viewport_size = get_viewport().size
-	var panel_size = panel.rect_size
+	var viewport_size: Vector2 = get_viewport().size
+	var panel_size: Vector2 = panel.rect_size
 	
-	var default_x = (viewport_size.x - panel_size.x) / 2
-	var default_y = viewport_size.y - panel_size.y - 10
-	var default_pos = Vector2(default_x, default_y)
+	var default_x: float = (viewport_size.x - panel_size.x) / 2
+	var default_y: float = viewport_size.y - panel_size.y - 10
+	var default_pos: Vector2 = Vector2(default_x, default_y)
 	
 	panel.restore_position(default_pos)
 
@@ -171,13 +171,13 @@ func _ready():
 
 	call_deferred("update_preview")
 
-func _on_visibility_changed():
+func _on_visibility_changed() -> void:
 	if visible:
 		update_preview()
 	else:
 		clear_preview()
 
-func clear_preview():
+func clear_preview() -> void:
 	if not is_instance_valid(preview_world):
 		return
 		
@@ -185,18 +185,18 @@ func clear_preview():
 		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
 			child.queue_free()
 
-func set_texture_list(list):
+func set_texture_list(list: Array) -> void:
 	ball_texture_list = list
 	if ball_texture_list.size() > 0:
 		texture_spinbox.max_value = ball_texture_list.size() - 1
 	update_preview()
 
-func set_palette(palette_name):
-	var pal_texture = null
+func set_palette(palette_name) -> void:
+	var pal_texture: Texture = null
 	
 	if palette_name != null and str(palette_name) != "":
-		var user_res_path = "user://resources/palettes/" + palette_name
-		var res_res_path = "res://resources/palettes/" + palette_name
+		var user_res_path: String = "user://resources/palettes/" + palette_name
+		var res_res_path: String = "res://resources/palettes/" + palette_name
 		
 		if ResourceLoader.exists(user_res_path):
 			pal_texture = ResourceLoader.load(user_res_path)
@@ -212,19 +212,19 @@ func set_palette(palette_name):
 		
 	update_preview()
 
-func sync_camera(main_camera_transform: Transform):
+func sync_camera(main_camera_transform: Transform) -> void:
 	if preview_camera and is_instance_valid(preview_camera):
 		preview_camera.global_transform.basis = main_camera_transform.basis
-		var dist = 3.0
+		var dist: float = 3.0
 		preview_camera.global_transform.origin = main_camera_transform.basis.z * dist
 		preview_camera.global_transform.basis.x *= -1.0
 
-func _on_property_changed(_val = null):
+func _on_property_changed(_val = null) -> void:
 	if _ignore_ui_changes: return
 	save_settings()
 	update_preview()
 
-func _on_scale_changed(value, is_size_control):
+func _on_scale_changed(value: float, is_size_control: bool) -> void:
 	if _ignore_ui_changes: return
 	
 	if link_scale_chk.pressed:
@@ -238,25 +238,25 @@ func _on_scale_changed(value, is_size_control):
 	save_settings()
 	update_preview()
 
-func _on_rotation_changed(_val):
+func _on_rotation_changed(_val = null) -> void:
 	if _ignore_ui_changes: return
 	_apply_rotation_to_tree()
 	save_settings()
 	update_preview()
 
-func _on_EyedropperToggle_toggled(is_on):
+func _on_EyedropperToggle_toggled(is_on: bool) -> void:
 	emit_signal("eyedropper_toggled", is_on)
 
-func _on_ShowRawButton_pressed():
+func _on_ShowRawButton_pressed() -> void:
 	raw_lnz_container.visible = !raw_lnz_container.visible
 
-func _on_Tree_item_edited():
+func _on_Tree_item_edited() -> void:
 	_base_paintballz_data.clear()
-	var root = paintballz_tree.get_root()
+	var root: TreeItem = paintballz_tree.get_root()
 	if root:
-		var item = root.get_children()
+		var item: TreeItem = root.get_children()
 		while item:
-			var p_data = _read_item_data(item)
+			var p_data: Dictionary = _read_item_data(item)
 			_base_paintballz_data.append(p_data)
 			item = item.get_next()
 
@@ -277,34 +277,34 @@ func _read_item_data(item: TreeItem) -> Dictionary:
 		"anchored": item.get_text(11).to_int()
 	}
 
-func _apply_rotation_to_tree():
+func _apply_rotation_to_tree() -> void:
 	_ignore_ui_changes = true
 
-	var roll = deg2rad(roll_spinbox.value)
-	var pitch = deg2rad(pitch_spinbox.value)
-	var yaw = deg2rad(yaw_spinbox.value)
+	var roll: float = deg2rad(roll_spinbox.value)
+	var pitch: float = deg2rad(pitch_spinbox.value)
+	var yaw: float = deg2rad(yaw_spinbox.value)
 
-	var basis = Basis(Vector3(roll, pitch, yaw))
+	var basis: Basis = Basis(Vector3(roll, pitch, yaw))
 
 	paintballz_tree.clear()
-	var root = paintballz_tree.create_item()
+	var root: TreeItem = paintballz_tree.create_item()
 
 	for p_data in _base_paintballz_data:
-		var new_pos = basis.xform(p_data.position)
+		var new_pos: Vector3 = basis.xform(p_data.position)
 
-		var item = paintballz_tree.create_item(root)
+		var item: TreeItem = paintballz_tree.create_item(root)
 		_setup_tree_item(item, p_data, new_pos)
 
 	_ignore_ui_changes = false
 
-func _reset_rotation_spinboxes():
+func _reset_rotation_spinboxes() -> void:
 	_ignore_ui_changes = true
 	roll_spinbox.value = 0
 	pitch_spinbox.value = 0
 	yaw_spinbox.value = 0
 	_ignore_ui_changes = false
 
-func _on_MirrorButton_pressed(axis):
+func _on_MirrorButton_pressed(axis: String) -> void:
 	for p_data in _base_paintballz_data:
 		if axis == "x": p_data.position.x *= -1
 		if axis == "y": p_data.position.y *= -1
@@ -316,14 +316,14 @@ func _on_MirrorButton_pressed(axis):
 	save_settings()
 	update_preview()
 
-func _populate_tree_from_base():
+func _populate_tree_from_base() -> void:
 	paintballz_tree.clear()
-	var root = paintballz_tree.create_item()
+	var root: TreeItem = paintballz_tree.create_item()
 	for p_data in _base_paintballz_data:
-		var item = paintballz_tree.create_item(root)
+		var item: TreeItem = paintballz_tree.create_item(root)
 		_setup_tree_item(item, p_data, p_data.position)
 
-func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3):
+func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3) -> void:
 	item.set_text(0, str(p_data.base))
 	item.set_text(1, str(p_data.size))
 	item.set_text(2, str(pos.x))
@@ -340,9 +340,9 @@ func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3):
 	for i in range(12):
 		item.set_editable(i, true)
 
-func _on_SetPaintballzButton_pressed():
-	var text = paintballz_text_edit.text
-	var lines = text.split("\n")
+func _on_SetPaintballzButton_pressed() -> void:
+	var text: String = paintballz_text_edit.text
+	var lines: Array = text.split("\n")
 
 	_base_paintballz_data.clear()
 
@@ -350,20 +350,15 @@ func _on_SetPaintballzButton_pressed():
 		if line.empty() or line.begins_with(";") or line.begins_with("#") or line.begins_with("["):
 			continue
 
-		var parts = _split_and_clean_paintball(line)
+		var parts: Array = _split_and_clean_paintball(line)
 		
 		if parts.size() < 9:
 			continue
 
-		# var has_group_column = parts.size() >= 12
-		
-		# var tex_index = 10 if has_group_column else 9
-		# var anchor_index = 11 if has_group_column else 10
+		var tex_index: int = 10
+		var anchor_index: int = 11
 
-		var tex_index = 10
-		var anchor_index = 11
-
-		var p_data = {
+		var p_data: Dictionary = {
 			"base": parts[0].to_int(),
 			"size": parts[1].to_int(),
 			"position": Vector3(parts[2].to_float(), parts[3].to_float(), parts[4].to_float()),
@@ -382,47 +377,51 @@ func _on_SetPaintballzButton_pressed():
 	save_settings()
 	update_preview()
 
-func _on_GetPaintballzButton_pressed():
-	var lnz_lines = []
-	var root = paintballz_tree.get_root()
+func _on_GetPaintballzButton_pressed() -> void:
+	var lnz_lines: Array = []
+	var root: TreeItem = paintballz_tree.get_root()
 	if not root:
 		return
 	
-	var item = root.get_children()
+	var item: TreeItem = root.get_children()
 	while item:
-		var parts = []
+		var parts: Array = []
 		for i in range(11):
 			parts.append(item.get_text(i))
 		
-		lnz_lines.append(PoolStringArray(parts).join("\t"))
+		var res_str: PoolStringArray = PoolStringArray(parts)
+		lnz_lines.append(res_str.join("\t"))
+		res_str.resize(0)
 		item = item.get_next()
 	
-	paintballz_text_edit.text = PoolStringArray(lnz_lines).join("\n")
+	var res_str_final: PoolStringArray = PoolStringArray(lnz_lines)
+	paintballz_text_edit.text = res_str_final.join("\n")
+	res_str_final.resize(0)
 
 func _split_and_clean_paintball(line: String) -> Array:
-	var line_parts = line.split(";", false, 1)
-	var data_part = line_parts[0].strip_edges()
+	var line_parts: Array = line.split(";", false, 1)
+	var data_part: String = line_parts[0].strip_edges()
 
 	data_part = data_part.replace(",", " ")
 	data_part = data_part.replace("\t", " ")
 
-	var parts = data_part.split(" ", false)
+	var parts: Array = data_part.split(" ", false)
 	
-	var cleaned_parts = []
+	var cleaned_parts: Array = []
 	for part in parts:
 		cleaned_parts.append(part.strip_edges())
 		
 	return cleaned_parts
 
 func _load_texture(texture_filename: String) -> Texture:
-	var root_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var root_node: Node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
 	if root_node and root_node.has_method("load_texture"):
 		return root_node.load_texture(texture_filename, get_tree().root.get_node("Root/ResourcePreloader"))
 
-	var texture = null
-	var base_name = texture_filename.get_basename()
-	var extension = texture_filename.get_extension()
-	var filename_variants = []
+	var texture: Texture = null
+	var base_name: String = texture_filename.get_basename()
+	var extension: String = texture_filename.get_extension()
+	var filename_variants: Array = []
 	filename_variants.append(texture_filename)
 	filename_variants.append(texture_filename.to_upper())
 	filename_variants.append(texture_filename.to_lower())
@@ -433,15 +432,15 @@ func _load_texture(texture_filename: String) -> Texture:
 	filename_variants.append(base_name.to_upper() + "." + extension.to_upper())
 	filename_variants.append(base_name.to_lower() + "." + extension.to_lower())
 
-	var deduped = []
+	var deduped: Array = []
 	for v in filename_variants:
 		if not (v in deduped):
 			deduped.append(v)
 	filename_variants = deduped
 
 	for variant in filename_variants:
-		var resource_path = "res://resources/textures/" + variant
-		var user_resource_path = "user://resources/textures/" + variant
+		var resource_path: String = "res://resources/textures/" + variant
+		var user_resource_path: String = "user://resources/textures/" + variant
 
 		if ResourceLoader.exists(resource_path):
 			texture = ResourceLoader.load(resource_path)
@@ -452,7 +451,7 @@ func _load_texture(texture_filename: String) -> Texture:
 
 	return texture
 
-func update_preview():
+func update_preview() -> void:
 	if not visible:
 		return
 		
@@ -460,11 +459,11 @@ func update_preview():
 		if child.name.begins_with("PreviewBall") or child.name.begins_with("Paintball") or child.is_in_group("preview_objects"):
 			child.free()
 
-	var base_visual_ball = ball_scene.instance()
+	var base_visual_ball: Spatial = ball_scene.instance()
 	base_visual_ball.add_to_group("preview_objects")
 	preview_world.add_child(base_visual_ball)
 
-	var base_size = size_spinbox.value
+	var base_size: float = size_spinbox.value
 	if base_size < 1: base_size = 1
 
 	base_visual_ball.ball_size = base_size
@@ -492,15 +491,15 @@ func update_preview():
 	base_visual_ball.palette = active_palette
 
 	if include_texture_chk.pressed:
-		var tex_id = int(texture_spinbox.value)
+		var tex_id: int = int(texture_spinbox.value)
 		if tex_id >= 0 and tex_id < ball_texture_list.size():
-			var tex_info = ball_texture_list[tex_id]
-			var path = ""
+			var tex_info: Dictionary = ball_texture_list[tex_id]
+			var path: String = ""
 			if typeof(tex_info) == TYPE_DICTIONARY and tex_info.has("filename"):
 				path = tex_info.filename
 
 			if not path.empty():
-				var loaded_tex = _load_texture(path)
+				var loaded_tex: Texture = _load_texture(path)
 				if loaded_tex:
 					base_visual_ball.texture = loaded_tex
 					if tex_info.has("transparent_color"):
@@ -511,18 +510,18 @@ func update_preview():
 	base_visual_ball.transform.origin = Vector3.ZERO
 
 	if include_paintballz_chk.pressed:
-		var root = paintballz_tree.get_root()
+		var root: TreeItem = paintballz_tree.get_root()
 		if root:
-			var paintballs_from_tree = []
-			var item = root.get_children()
+			var paintballs_from_tree: Array = []
+			var item: TreeItem = root.get_children()
 			while item:
-				var size = item.get_text(1).to_int()
-				var pos = Vector3(item.get_text(2).to_float(), item.get_text(3).to_float(), item.get_text(4).to_float())
-				var col = item.get_text(5).to_int()
-				var out_col = item.get_text(6).to_int()
-				var fuzz = item.get_text(7).to_int()
-				var outline = item.get_text(8).to_int()
-				var tex_id = item.get_text(9).to_int()
+				var size: int = item.get_text(1).to_int()
+				var pos: Vector3 = Vector3(item.get_text(2).to_float(), item.get_text(3).to_float(), item.get_text(4).to_float())
+				var col: int = item.get_text(5).to_int()
+				var out_col: int = item.get_text(6).to_int()
+				var fuzz: int = item.get_text(7).to_int()
+				var outline: int = item.get_text(8).to_int()
+				var tex_id: int = item.get_text(9).to_int()
 
 				paintballs_from_tree.append({
 					"size": size,
@@ -538,23 +537,23 @@ func update_preview():
 
 			paintballs_from_tree.invert()
 
-			var z_add_counter = 0.0
+			var z_add_counter: float = 0.0
 			for pb_data in paintballs_from_tree:
-				var size = pb_data.size
-				var pos = pb_data.pos
-				var col = pb_data.col
-				var out_col = pb_data.out_col
-				var fuzz = pb_data.fuzz
-				var outline = pb_data.outline
-				var tex_id = pb_data.tex_id
+				var size: int = pb_data.size
+				var pos: Vector3 = pb_data.pos
+				var col: int = pb_data.col
+				var out_col: int = pb_data.out_col
+				var fuzz: int = pb_data.fuzz
+				var outline: int = pb_data.outline
+				var tex_id: int = pb_data.tex_id
 
-				var pb_visual = paintball_scene.instance()
+				var pb_visual: Spatial = paintball_scene.instance()
 				base_visual_ball.add_child(pb_visual)
 
-				var s_scale = size_scale_spin.value
-				var p_scale = pos_scale_spin.value
+				var s_scale: float = size_scale_spin.value
+				var p_scale: float = pos_scale_spin.value
 
-				var final_size = float(base_size) * (float(size) / 100.0) * s_scale
+				var final_size: float = float(base_size) * (float(size) / 100.0) * s_scale
 				final_size -= 1.0 - fmod(final_size, 2.0)
 
 				pb_visual.ball_size = final_size
@@ -571,13 +570,13 @@ func update_preview():
 				pb_visual.base_ball_position = Vector3.ZERO
 
 				if tex_id >= 0 and tex_id < ball_texture_list.size():
-					var tex_info = ball_texture_list[tex_id]
-					var path = ""
+					var tex_info: Dictionary = ball_texture_list[tex_id]
+					var path: String = ""
 					if typeof(tex_info) == TYPE_DICTIONARY and tex_info.has("filename"):
 						path = tex_info.filename
 
 					if not path.empty():
-						var loaded_tex = _load_texture(path)
+						var loaded_tex: Texture = _load_texture(path)
 						if loaded_tex:
 							pb_visual.texture = loaded_tex
 							if tex_info.has("transparent_color"):
@@ -585,16 +584,16 @@ func update_preview():
 							if tex_info.has("texture_size") and tex_info.texture_size != null:
 								pb_visual.texture_size = tex_info.texture_size
 
-				var pixel_world_size = 0.002
-				var pb_pos = pos * Vector3(1, -1, 1) * (float(base_size) / 2.0) * pixel_world_size * p_scale
+				var pixel_world_size: float = 0.002
+				var pb_pos: Vector3 = pos * Vector3(1, -1, 1) * (float(base_size) / 2.0) * pixel_world_size * p_scale
 
 				pb_visual.transform.origin = pb_pos
 
-func is_eyedropper_active():
+func is_eyedropper_active() -> bool:
 	return eyedropper_toggle.pressed
 
-func get_properties():
-	var properties = {}
+func get_properties() -> Dictionary:
+	var properties: Dictionary = {}
 
 	properties["exclude_eyes"] = exclude_eyes_chk.pressed
 
@@ -621,19 +620,19 @@ func get_properties():
 	properties["paintball_pos_scale"] = pos_scale_spin.value
 
 	if include_paintballz_chk.pressed:
-		var paintballz = []
-		var root = paintballz_tree.get_root()
+		var paintballz: Array = []
+		var root: TreeItem = paintballz_tree.get_root()
 		if root:
-			var item = root.get_children()
+			var item: TreeItem = root.get_children()
 			while item:
-				var p_data = _read_item_data(item)
+				var p_data: Dictionary = _read_item_data(item)
 				paintballz.append(p_data)
 				item = item.get_next()
 		properties["paintballz"] = paintballz
 
 	return properties
 
-func set_properties(properties):
+func set_properties(properties: Dictionary) -> void:
 	_ignore_ui_changes = true
 
 	if properties.has("size"):
@@ -680,7 +679,7 @@ func set_properties(properties):
 	save_settings()
 	update_preview()
 
-func _convert_lnz_object_to_dict(obj) -> Dictionary:
+func _convert_lnz_object_to_dict(obj: Object) -> Dictionary:
 	return {
 		"base": obj.base,
 		"size": obj.size,
@@ -694,22 +693,22 @@ func _convert_lnz_object_to_dict(obj) -> Dictionary:
 		"anchored": obj.anchored
 	}
 
-func _on_ApplyButton_pressed():
+func _on_ApplyButton_pressed() -> void:
 	emit_signal("apply_to_selection")
 
-func _on_UnselectButton_pressed():
+func _on_UnselectButton_pressed() -> void:
 	emit_signal("unselect_all")
 
-func _on_AffectedBallz_text_entered(new_text):
-	var ids = LnzLiveUtils.parse_number_list(new_text)
+func _on_AffectedBallz_text_entered(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_balls_by_ids", ids)
 	scroll_vbox.get_node("AffectedBallz").release_focus()
 
-func _on_AffectedBallz_text_changed(new_text):
-	var ids = LnzLiveUtils.parse_number_list(new_text)
+func _on_AffectedBallz_text_changed(new_text: String) -> void:
+	var ids: Array = LnzLiveUtils.parse_number_list(new_text)
 	emit_signal("select_balls_by_ids", ids)
 
-func update_selected_balls_text(ball_ids: Array):
+func update_selected_balls_text(ball_ids: Array) -> void:
 	var affected_ballz = scroll_vbox.get_node("AffectedBallz")
 	if affected_ballz.has_focus():
 		return
@@ -720,12 +719,12 @@ func update_selected_balls_text(ball_ids: Array):
 		affected_ballz.text = ""
 		return
 
-	var start = ball_ids[0]
-	var prev = start
-	var ranges = []
+	var start: int = ball_ids[0]
+	var prev: int = start
+	var ranges: Array = []
 
 	for i in range(1, ball_ids.size()):
-		var curr = ball_ids[i]
+		var curr: int = ball_ids[i]
 		if curr == prev + 1:
 			prev = curr
 		else:
@@ -741,19 +740,21 @@ func update_selected_balls_text(ball_ids: Array):
 	else:
 		ranges.append(str(start) + "-" + str(prev))
 
-	affected_ballz.text = PoolStringArray(ranges).join(",")
+	var res_str: PoolStringArray = PoolStringArray(ranges)
+	affected_ballz.text = res_str.join(",")
+	res_str.resize(0)
 
-func _connect_settings_signals():
+func _connect_settings_signals() -> void:
 	include_paintballz_chk.connect("toggled", self, "_on_property_changed")
 	scale_paintballz_chk.connect("toggled", self, "_on_property_changed")
 	
-	var reset_btn = find_node("ResetDefaultsButton")
+	var reset_btn: Button = find_node("ResetDefaultsButton")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
 
-func save_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func save_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		print("Error loading settings for save: ", err)
 		return
@@ -782,13 +783,13 @@ func save_settings():
 	
 	config.set_value("PresetProperties", "paintballz_data", _base_paintballz_data)
 
-	var save_err = config.save(SETTINGS_PATH)
+	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
 		print("Error saving PresetSettings: ", save_err)
 
-func load_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func load_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK:
 		return
 	
@@ -821,7 +822,7 @@ func load_settings():
 	
 	_ignore_ui_changes = false
 
-func _on_reset_defaults_pressed():
+func _on_reset_defaults_pressed() -> void:
 	_ignore_ui_changes = true
 	
 	size_spinbox.value = 10.0
@@ -854,18 +855,18 @@ func _on_reset_defaults_pressed():
 	save_settings()
 	update_preview()
 
-func _on_ClearRecolorsButton_pressed():
+func _on_ClearRecolorsButton_pressed() -> void:
 	for child in recolor_rules_container.get_children():
 		child.queue_free()
 
-func _on_AutofillRecolorsButton_pressed():
+func _on_AutofillRecolorsButton_pressed() -> void:
 	_on_ClearRecolorsButton_pressed()
 	
-	var unique_pairs = {}
+	var unique_pairs: Dictionary = {}
 	for p_data in _base_paintballz_data:
-		var col_str = str(p_data.color_index)
-		var tex_str = str(p_data.texture_id) if p_data.texture_id != -1 else ""
-		var key = col_str + "|" + tex_str
+		var col_str: String = str(p_data.color_index)
+		var tex_str: String = str(p_data.texture_id) if p_data.texture_id != -1 else ""
+		var key: String = col_str + "|" + tex_str
 		
 		if not unique_pairs.has(key):
 			unique_pairs[key] = {
@@ -873,19 +874,19 @@ func _on_AutofillRecolorsButton_pressed():
 				"texture": tex_str
 			}
 	
-	var recolor_line_scene = load("res://scenes/editor/RecolorLine.tscn")
+	var recolor_line_scene: PackedScene = load("res://scenes/editor/RecolorLine.tscn")
 	for key in unique_pairs:
-		var pair = unique_pairs[key]
-		var line = recolor_line_scene.instance()
+		var pair: Dictionary = unique_pairs[key]
+		var line: Control = recolor_line_scene.instance()
 		recolor_rules_container.add_child(line)
 		
 		line.get_node("BeforeColor").text = pair.color
 		line.get_node("BeforeTexture").text = pair.texture
 
-func _on_ApplyRecolorsButton_pressed():
-	var rules = []
+func _on_ApplyRecolorsButton_pressed() -> void:
+	var rules: Array = []
 	for line in recolor_rules_container.get_children():
-		var ramp_btn = line.get_node_or_null("ColorRampCheck")
+		var ramp_btn: CheckBox = line.get_node_or_null("ColorRampCheck")
 		if not ramp_btn:
 			continue
 			
@@ -901,15 +902,15 @@ func _on_ApplyRecolorsButton_pressed():
 		return
 
 	for p_data in _base_paintballz_data:
-		var color_str = str(p_data.color_index)
-		var texture_str = str(p_data.texture_id) if p_data.texture_id != -1 else ""
+		var color_str: String = str(p_data.color_index)
+		var texture_str: String = str(p_data.texture_id) if p_data.texture_id != -1 else ""
 
 		for rule in rules:
-			var tex_match = rule.before_texture == "" or rule.before_texture == texture_str
+			var tex_match: bool = rule.before_texture == "" or rule.before_texture == texture_str
 			if not tex_match: 
 				continue
 
-			var result_color = ""
+			var result_color: String = ""
 			if rule.is_ramp:
 				result_color = LnzLiveUtils.get_ramp_color(color_str, rule)
 			elif rule.before_color == "" or rule.before_color == color_str:

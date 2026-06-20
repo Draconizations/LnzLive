@@ -6,80 +6,112 @@ extends DraggablePanel
 ## 2. Show and hide the panel
 ## 3. Retrieve all current line properties (e.g., fuzz, color, thickness) set by the user
 
-var _is_loading_settings = false
+var _is_loading_settings: bool = false
 
-func _ready():
-	var viewport_size = get_viewport().size
-	var panel = self
-	var panel_size = panel.rect_size
+func _ready() -> void:
+	var viewport_size: Vector2 = get_viewport().size
+	var panel: Control = self
+	var panel_size: Vector2 = panel.rect_size
 	
-	var default_x = (viewport_size.x - panel_size.x) / 2
-	var default_y = viewport_size.y - panel_size.y - 10
-	var default_pos = Vector2(default_x, default_y)
+	var default_x: float = (viewport_size.x - panel_size.x) / 2.0
+	var default_y: float = viewport_size.y - panel_size.y - 10.0
+	var default_pos: Vector2 = Vector2(default_x, default_y)
 	
 	panel.restore_position(default_pos)
 
 	_connect_settings_signals()
 	load_settings()
 
-# func show():
-# 	$Panel.show()
+func get_properties() -> Dictionary:
+	var properties: Dictionary = {}
+	
+	var fuzz_node: Control = find_node("Fuzz")
+	var color_node: Control = find_node("Color")
+	var left_outline_node: Control = find_node("LeftOutlineColor")
+	var right_outline_node: Control = find_node("RightOutlineColor")
+	var start_thick_node: Control = find_node("StartThickness")
+	var end_thick_node: Control = find_node("EndThickness")
+	var outline_type_node: Control = find_node("OutlineType")
+	var draw_order_node: Control = find_node("DrawOrder")
+	
+	var replace_fuzz_node: Button = find_node("ReplaceFuzz")
+	var replace_color_node: Button = find_node("ReplaceColor")
+	var replace_left_outline_node: Button = find_node("ReplaceLeftOutlineColor")
+	var replace_right_outline_node: Button = find_node("ReplaceRightOutlineColor")
+	var replace_start_thick_node: Button = find_node("ReplaceStartThickness")
+	var replace_end_thick_node: Button = find_node("ReplaceEndThickness")
+	var replace_outline_type_node: Button = find_node("ReplaceOutlineType")
+	var replace_draw_order_node: Button = find_node("ReplaceDrawOrder")
+	
+	properties["fuzz"] = fuzz_node.value
+	properties["color"] = color_node.text.to_int()
+	properties["left_outline_color"] = left_outline_node.text.to_int()
+	properties["right_outline_color"] = right_outline_node.text.to_int()
+	properties["start_thickness"] = start_thick_node.value
+	properties["end_thickness"] = end_thick_node.value
+	properties["outline_type"] = outline_type_node.value
+	properties["draw_order"] = draw_order_node.value
 
-# func hide():
-# 	$Panel.hide()
-
-func get_properties():
-	var properties = {}
-	properties["fuzz"] = find_node("Fuzz").value
-	properties["color"] = find_node("Color").text.to_int()
-	properties["left_outline_color"] = find_node("LeftOutlineColor").text.to_int()
-	properties["right_outline_color"] = find_node("RightOutlineColor").text.to_int()
-	properties["start_thickness"] = find_node("StartThickness").value
-	properties["end_thickness"] = find_node("EndThickness").value
-	properties["outline_type"] = find_node("OutlineType").value
-	properties["draw_order"] = find_node("DrawOrder").value
-
-	properties["apply_fuzz"] = find_node("ReplaceFuzz").pressed
-	properties["apply_color"] = find_node("ReplaceColor").pressed
-	properties["apply_left_outline"] = find_node("ReplaceLeftOutlineColor").pressed
-	properties["apply_right_outline"] = find_node("ReplaceRightOutlineColor").pressed
-	properties["apply_start_thick"] = find_node("ReplaceStartThickness").pressed
-	properties["apply_end_thick"] = find_node("ReplaceEndThickness").pressed
-	properties["apply_outline_type"] = find_node("ReplaceOutlineType").pressed
-	properties["apply_draw_order"] = find_node("ReplaceDrawOrder").pressed
+	properties["apply_fuzz"] = replace_fuzz_node.pressed
+	properties["apply_color"] = replace_color_node.pressed
+	properties["apply_left_outline"] = replace_left_outline_node.pressed
+	properties["apply_right_outline"] = replace_right_outline_node.pressed
+	properties["apply_start_thick"] = replace_start_thick_node.pressed
+	properties["apply_end_thick"] = replace_end_thick_node.pressed
+	properties["apply_outline_type"] = replace_outline_type_node.pressed
+	properties["apply_draw_order"] = replace_draw_order_node.pressed
+	
 	return properties
 
-func _connect_settings_signals():
-	find_node("Fuzz").connect("value_changed", self, "_on_setting_changed")
-	find_node("Color").connect("text_changed", self, "_on_setting_changed")
-	find_node("LeftOutlineColor").connect("text_changed", self, "_on_setting_changed")
-	find_node("RightOutlineColor").connect("text_changed", self, "_on_setting_changed")
-	find_node("StartThickness").connect("value_changed", self, "_on_setting_changed")
-	find_node("EndThickness").connect("value_changed", self, "_on_setting_changed")
-	find_node("OutlineType").connect("value_changed", self, "_on_setting_changed")
-	find_node("DrawOrder").connect("value_changed", self, "_on_setting_changed")
+func _connect_settings_signals() -> void:
+	var fuzz_node: Control = find_node("Fuzz")
+	var color_node: Control = find_node("Color")
+	var left_outline_node: Control = find_node("LeftOutlineColor")
+	var right_outline_node: Control = find_node("RightOutlineColor")
+	var start_thick_node: Control = find_node("StartThickness")
+	var end_thick_node: Control = find_node("EndThickness")
+	var outline_type_node: Control = find_node("OutlineType")
+	var draw_order_node: Control = find_node("DrawOrder")
+	
+	var replace_fuzz_node: Button = find_node("ReplaceFuzz")
+	var replace_color_node: Button = find_node("ReplaceColor")
+	var replace_left_outline_node: Button = find_node("ReplaceLeftOutlineColor")
+	var replace_right_outline_node: Button = find_node("ReplaceRightOutlineColor")
+	var replace_start_thick_node: Button = find_node("ReplaceStartThickness")
+	var replace_end_thick_node: Button = find_node("ReplaceEndThickness")
+	var replace_outline_type_node: Button = find_node("ReplaceOutlineType")
+	var replace_draw_order_node: Button = find_node("ReplaceDrawOrder")
 
-	find_node("ReplaceFuzz").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceColor").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceLeftOutlineColor").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceRightOutlineColor").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceStartThickness").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceEndThickness").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceOutlineType").connect("toggled", self, "_on_setting_changed")
-	find_node("ReplaceDrawOrder").connect("toggled", self, "_on_setting_changed")
+	fuzz_node.connect("value_changed", self, "_on_setting_changed")
+	color_node.connect("text_changed", self, "_on_setting_changed")
+	left_outline_node.connect("text_changed", self, "_on_setting_changed")
+	right_outline_node.connect("text_changed", self, "_on_setting_changed")
+	start_thick_node.connect("value_changed", self, "_on_setting_changed")
+	end_thick_node.connect("value_changed", self, "_on_setting_changed")
+	outline_type_node.connect("value_changed", self, "_on_setting_changed")
+	draw_order_node.connect("value_changed", self, "_on_setting_changed")
 
-	var reset_btn = find_node("ResetDefaultsButton")
+	replace_fuzz_node.connect("toggled", self, "_on_setting_changed")
+	replace_color_node.connect("toggled", self, "_on_setting_changed")
+	replace_left_outline_node.connect("toggled", self, "_on_setting_changed")
+	replace_right_outline_node.connect("toggled", self, "_on_setting_changed")
+	replace_start_thick_node.connect("toggled", self, "_on_setting_changed")
+	replace_end_thick_node.connect("toggled", self, "_on_setting_changed")
+	replace_outline_type_node.connect("toggled", self, "_on_setting_changed")
+	replace_draw_order_node.connect("toggled", self, "_on_setting_changed")
+
+	var reset_btn: Button = find_node("ResetDefaultsButton")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
 
-func _on_setting_changed(_arg = null):
+func _on_setting_changed(_arg = null) -> void:
 	if _is_loading_settings:
 		return
 	save_settings()
 
-func save_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func save_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		print("Error loading settings for save: ", err)
 		return
@@ -102,13 +134,13 @@ func save_settings():
 	config.set_value("LineProperties", "replace_outline_type", find_node("ReplaceOutlineType").pressed)
 	config.set_value("LineProperties", "replace_draw_order", find_node("ReplaceDrawOrder").pressed)
 
-	var save_err = config.save(SETTINGS_PATH)
+	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
 		print("Error saving LineMode settings: ", save_err)
 
-func load_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func load_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK:
 		return
 
@@ -134,7 +166,7 @@ func load_settings():
 
 	_is_loading_settings = false
 
-func _on_reset_defaults_pressed():
+func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = true
 
 	find_node("Fuzz").value = 0

@@ -20,11 +20,11 @@ signal apply_projections(projections)
 signal randomize_body_proportions(settings)
 signal randomize_moves(settings)
 
-var _is_loading_settings = false
+var _is_loading_settings: bool = false
 
-onready var projections_tree = find_node("ProjectionsTree")
+onready var projections_tree: Tree = find_node("ProjectionsTree")
 
-func _ready():
+func _ready() -> void:
 	# Connect signals
 	find_node("AddButton").connect("pressed", self, "_on_AddButton_pressed")
 	find_node("RemoveButton").connect("pressed", self, "_on_RemoveButton_pressed")
@@ -60,25 +60,24 @@ func _ready():
 	# Hide by default
 	hide()
 
-	var viewport_size = get_viewport().size
-	var panel = self
-	var panel_size = panel.rect_size
+	var viewport_size: Vector2 = get_viewport().size
+	var panel_size: Vector2 = self.rect_size
 	
-	var default_x = (viewport_size.x - panel_size.x) / 2
-	var default_y = viewport_size.y - panel_size.y - 10
-	var default_pos = Vector2(default_x, default_y)
+	var default_x: float = (viewport_size.x - panel_size.x) / 2
+	var default_y: float = viewport_size.y - panel_size.y - 10
+	var default_pos: Vector2 = Vector2(default_x, default_y)
 	
-	panel.restore_position(default_pos)
+	self.restore_position(default_pos)
 
 	_connect_settings_signals()
 	load_settings()
 
-func _populate_projections_tree():
+func _populate_projections_tree() -> void:
 	projections_tree.clear()
-	var root = projections_tree.create_item()
+	var root: TreeItem = projections_tree.create_item()
 
-	var species_key = ""
-	var species = KeyBallsData.species
+	var species_key: String = ""
+	var species: int = KeyBallsData.species
 	if species == KeyBallsData.Species.DOG:
 		species_key = "dog"
 	elif species == KeyBallsData.Species.CAT:
@@ -87,9 +86,9 @@ func _populate_projections_tree():
 		species_key = "bab"
 
 	if KeyBallsData.projection_standards.has(species_key):
-		var standards = KeyBallsData.projection_standards[species_key]
+		var standards: Array = KeyBallsData.projection_standards[species_key]
 		for proj_data in standards:
-			var item = projections_tree.create_item(root)
+			var item: TreeItem = projections_tree.create_item(root)
 			item.set_editable(0, true)
 			item.set_editable(1, true)
 			item.set_editable(2, true)
@@ -100,7 +99,6 @@ func _populate_projections_tree():
 			item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
 			item.set_editable(6, true)
 			item.set_editable(7, true)
-			# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
 
 			item.set_text(0, str(proj_data.fixed_ball))
 			item.set_text(1, str(proj_data.project_ball))
@@ -111,11 +109,11 @@ func _populate_projections_tree():
 			item.set_checked(6, false)
 			item.set_text(7, proj_data.comment)
 
-func _on_AddButton_pressed():
-	var root = projections_tree.get_root()
+func _on_AddButton_pressed() -> void:
+	var root: TreeItem = projections_tree.get_root()
 	if not root:
 		root = projections_tree.create_item()
-	var item = projections_tree.create_item(root)
+	var item: TreeItem = projections_tree.create_item(root)
 	item.set_editable(0, true)
 	item.set_editable(1, true)
 	item.set_editable(2, true)
@@ -126,7 +124,6 @@ func _on_AddButton_pressed():
 	item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
 	item.set_editable(6, true)
 	item.set_editable(7, true)
-	# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
 
 	item.set_text(0, "0")
 	item.set_text(1, "0")
@@ -137,52 +134,52 @@ func _on_AddButton_pressed():
 	item.set_checked(6, false)
 	item.set_text(7, "comment")
 
-func _on_RemoveButton_pressed():
-	var selected = projections_tree.get_selected()
+func _on_RemoveButton_pressed() -> void:
+	var selected: TreeItem = projections_tree.get_selected()
 	if selected:
 		selected.free()
 
-func _swap_tree_items(item1, item2):
+func _swap_tree_items(item1: TreeItem, item2: TreeItem) -> void:
 	for i in range(projections_tree.columns):
-		var text1 = item1.get_text(i)
-		var text2 = item2.get_text(i)
+		var text1: String = item1.get_text(i)
+		var text2: String = item2.get_text(i)
 		item1.set_text(i, text2)
 		item2.set_text(i, text1)
 
 		if item1.get_cell_mode(i) == TreeItem.CELL_MODE_CHECK:
-			var checked1 = item1.is_checked(i)
-			var checked2 = item2.is_checked(i)
+			var checked1: bool = item1.is_checked(i)
+			var checked2: bool = item2.is_checked(i)
 			item1.set_checked(i, checked2)
 			item2.set_checked(i, checked1)
 
-func _on_MoveUpButton_pressed():
-	var selected = projections_tree.get_selected()
+func _on_MoveUpButton_pressed() -> void:
+	var selected: TreeItem = projections_tree.get_selected()
 	if selected and selected.get_prev():
 		_swap_tree_items(selected, selected.get_prev())
 		projections_tree.select(selected.get_prev(), 0)
 
-func _on_MoveDownButton_pressed():
-	var selected = projections_tree.get_selected()
+func _on_MoveDownButton_pressed() -> void:
+	var selected: TreeItem = projections_tree.get_selected()
 	if selected and selected.get_next():
 		_swap_tree_items(selected, selected.get_next())
 		projections_tree.select(selected.get_next(), 0)
 
-func _on_ClearAllButton_pressed():
+func _on_ClearAllButton_pressed() -> void:
 	projections_tree.clear()
 	projections_tree.create_item() # Create root
 
-func _on_RestoreDefaultsButton_pressed():
+func _on_RestoreDefaultsButton_pressed() -> void:
 	_populate_projections_tree()
 
-func _on_CopyFromLNZButton_pressed():
-	var lnz_text_edit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
-	var projections = lnz_text_edit.get_project_ball_section()
+func _on_CopyFromLNZButton_pressed() -> void:
+	var lnz_text_edit: TextEdit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
+	var projections: Array = lnz_text_edit.get_project_ball_section()
 
 	projections_tree.clear()
-	var root = projections_tree.create_item()
+	var root: TreeItem = projections_tree.create_item()
 
 	for proj_data in projections:
-		var item = projections_tree.create_item(root)
+		var item: TreeItem = projections_tree.create_item(root)
 		item.set_editable(0, true)
 		item.set_editable(1, true)
 		item.set_editable(2, true)
@@ -193,7 +190,6 @@ func _on_CopyFromLNZButton_pressed():
 		item.set_cell_mode(6, TreeItem.CELL_MODE_CHECK)
 		item.set_editable(6, true)
 		item.set_editable(7, true)
-		# item.add_button(8, load("res://resources/icons/ico_tool_eraser_2x.png"), 0)
 
 		item.set_text(0, str(proj_data.fixed_ball))
 		item.set_text(1, str(proj_data.project_ball))
@@ -205,26 +201,26 @@ func _on_CopyFromLNZButton_pressed():
 		item.set_text(7, proj_data.comment)
 
 
-func _on_ProjectionsTree_button_pressed(item, column, id):
+func _on_ProjectionsTree_button_pressed(item: TreeItem, column: int, id: int) -> void:
 	if column == 8: # Delete button
 		item.free()
 
-func _on_ProjectionsTree_item_edited():
+func _on_ProjectionsTree_item_edited() -> void:
 	# This is mainly to handle the checkbox
-	var item = projections_tree.get_edited()
-	var column = projections_tree.get_edited_column()
+	var item: TreeItem = projections_tree.get_edited()
+	var column: int = projections_tree.get_edited_column()
 	if column == 5 or column == 6: # Lock or Mirrored checkbox
 		# The checked state is automatically updated by the tree
 		pass
 
-func _on_RandomizeProjectionsButton_pressed():
+func _on_RandomizeProjectionsButton_pressed() -> void:
 	randomize()
-	var root = projections_tree.get_root()
+	var root: TreeItem = projections_tree.get_root()
 	if not root:
 		return
 
-	var species = KeyBallsData.species
-	var symmetry_dict = null
+	var species: int = KeyBallsData.species
+	var symmetry_dict: Dictionary = {}
 	if species == KeyBallsData.Species.DOG:
 		symmetry_dict = KeyBallsData.dog_body_part_symmetry
 	elif species == KeyBallsData.Species.CAT:
@@ -232,9 +228,9 @@ func _on_RandomizeProjectionsButton_pressed():
 	elif species == KeyBallsData.Species.BABY:
 		symmetry_dict = KeyBallsData.baby_body_part_symmetry
 
-	var processed_items = []
-	var all_items = []
-	var item = root.get_children()
+	var processed_items: Array = []
+	var all_items: Array = []
+	var item: TreeItem = root.get_children()
 	while item:
 		all_items.append(item)
 		item = item.get_next()
@@ -244,9 +240,9 @@ func _on_RandomizeProjectionsButton_pressed():
 			continue
 
 		if not item_a.is_checked(5): # if not locked
-			var min_proj = item_a.get_text(2).to_int()
-			var max_proj = item_a.get_text(3).to_int()
-			var random_val = 0
+			var min_proj: int = item_a.get_text(2).to_int()
+			var max_proj: int = item_a.get_text(3).to_int()
+			var random_val: int = 0
 			if min_proj < max_proj:
 				random_val = randi() % (max_proj - min_proj + 1) + min_proj
 			else:
@@ -259,11 +255,11 @@ func _on_RandomizeProjectionsButton_pressed():
 			continue
 
 		# Find and update the mirror
-		var fixed_a = item_a.get_text(0).to_int()
-		var proj_a = item_a.get_text(1).to_int()
+		var fixed_a: int = item_a.get_text(0).to_int()
+		var proj_a: int = item_a.get_text(1).to_int()
 
-		var mirrored_fixed = KeyBallsData.get_mirrored_ball(fixed_a, symmetry_dict)
-		var mirrored_proj = KeyBallsData.get_mirrored_ball(proj_a, symmetry_dict)
+		var mirrored_fixed: int = KeyBallsData.get_mirrored_ball(fixed_a, symmetry_dict)
+		var mirrored_proj: int = KeyBallsData.get_mirrored_ball(proj_a, symmetry_dict)
 
 		if mirrored_fixed == -1: mirrored_fixed = fixed_a
 		if mirrored_proj == -1: mirrored_proj = proj_a
@@ -272,11 +268,11 @@ func _on_RandomizeProjectionsButton_pressed():
 			if item_b in processed_items:
 				continue
 
-			var fixed_b = item_b.get_text(0).to_int()
-			var proj_b = item_b.get_text(1).to_int()
+			var fixed_b: int = item_b.get_text(0).to_int()
+			var proj_b: int = item_b.get_text(1).to_int()
 
-			var is_mirror = (fixed_b == mirrored_fixed and proj_b == mirrored_proj)
-			var is_swapped_mirror = (fixed_b == mirrored_proj and proj_b == mirrored_fixed)
+			var is_mirror: bool = (fixed_b == mirrored_fixed and proj_b == mirrored_proj)
+			var is_swapped_mirror: bool = (fixed_b == mirrored_proj and proj_b == mirrored_fixed)
 
 			if is_mirror or is_swapped_mirror:
 				if not item_b.is_checked(5): # if not locked
@@ -284,8 +280,8 @@ func _on_RandomizeProjectionsButton_pressed():
 				processed_items.append(item_b)
 				break
 
-func _on_RandomizeBodyButton_pressed():
-	var settings = {
+func _on_RandomizeBodyButton_pressed() -> void:
+	var settings: Dictionary = {
 		"leg_ext_1": { "min": find_node("LegExt1MinSpinBox").value, "max": find_node("LegExt1MaxSpinBox").value },
 		"leg_ext_2": { "min": find_node("LegExt2MinSpinBox").value, "max": find_node("LegExt2MaxSpinBox").value },
 		"head_enl_1": { "min": find_node("HeadEnl1MinSpinBox").value, "max": find_node("HeadEnl1MaxSpinBox").value },
@@ -301,7 +297,7 @@ func _on_RandomizeBodyButton_pressed():
 	emit_signal("randomize_body_proportions", settings)
 
 func _get_move_settings_dict(type: String) -> Dictionary:
-	var groups = []
+	var groups: Array = []
 	if find_node("HeadCheckBox").pressed: groups.append("Head")
 	if find_node("BodyCheckBox").pressed: groups.append("Body")
 	if find_node("LegsCheckBox").pressed: groups.append("Legs")
@@ -309,7 +305,7 @@ func _get_move_settings_dict(type: String) -> Dictionary:
 	if find_node("EarsCheckBox").pressed: groups.append("Ears")
 	if find_node("EyesCheckBox").pressed: groups.append("Eyes")
 	
-	var settings = {
+	var settings: Dictionary = {
 		"type": type,
 		"groups": groups,
 		"mirror_x": find_node("MirrorXCheckBox").pressed,
@@ -319,15 +315,15 @@ func _get_move_settings_dict(type: String) -> Dictionary:
 	}
 	return settings
 
-func _on_RandomizeMovesButton_pressed():
-	var settings = _get_move_settings_dict("range")
+func _on_RandomizeMovesButton_pressed() -> void:
+	var settings: Dictionary = _get_move_settings_dict("range")
 	emit_signal("randomize_moves", settings)
 
-func _on_JitterButton_pressed():
-	var settings = _get_move_settings_dict("jitter")
+func _on_JitterButton_pressed() -> void:
+	var settings: Dictionary = _get_move_settings_dict("jitter")
 	emit_signal("randomize_moves", settings)
 
-func _on_RandomizeShapeButton_pressed():
+func _on_RandomizeShapeButton_pressed() -> void:
 	if find_node("IncludeProjCheckBox").pressed:
 		_on_RandomizeProjectionsButton_pressed()
 		_on_ApplyButton_pressed()
@@ -338,13 +334,13 @@ func _on_RandomizeShapeButton_pressed():
 	if find_node("IncludeMovesCheckBox").pressed:
 		_on_RandomizeMovesButton_pressed()
 
-func _on_ApplyButton_pressed():
-	var root = projections_tree.get_root()
+func _on_ApplyButton_pressed() -> void:
+	var root: TreeItem = projections_tree.get_root()
 	if not root:
 		return
 
-	var species = KeyBallsData.species
-	var symmetry_dict = null
+	var species: int = KeyBallsData.species
+	var symmetry_dict: Dictionary = {}
 	if species == KeyBallsData.Species.DOG:
 		symmetry_dict = KeyBallsData.dog_body_part_symmetry
 	elif species == KeyBallsData.Species.CAT:
@@ -352,25 +348,25 @@ func _on_ApplyButton_pressed():
 	elif species == KeyBallsData.Species.BABY:
 		symmetry_dict = KeyBallsData.baby_body_part_symmetry
 
-	var lnz_projections = []
+	var lnz_projections: Array = []
 	
 	# Scan to see which projections already exist
-	var existing_pairs = {}
-	var item = root.get_children()
+	var existing_pairs: Dictionary = {}
+	var item: TreeItem = root.get_children()
 	while item:
-		var fixed = item.get_text(0).to_int()
-		var project = item.get_text(1).to_int()
-		var key = Vector2(min(fixed, project), max(fixed, project))
+		var fixed: int = item.get_text(0).to_int()
+		var project: int = item.get_text(1).to_int()
+		var key: Vector2 = Vector2(min(fixed, project), max(fixed, project))
 		existing_pairs[key] = true
 		item = item.get_next()
 
 	# Build list of projections
 	item = root.get_children()
 	while item:
-		var fixed_ball = item.get_text(0).to_int()
-		var project_ball = item.get_text(1).to_int()
+		var fixed_ball: int = item.get_text(0).to_int()
+		var project_ball: int = item.get_text(1).to_int()
 		
-		var proj = {
+		var proj: Dictionary = {
 			"fixed_ball": fixed_ball,
 			"project_ball": project_ball,
 			"value": item.get_text(4).to_int(),
@@ -380,22 +376,22 @@ func _on_ApplyButton_pressed():
 
 		# If mirrored, create the mirrored version and add ONLY if it doesn't already exist as a separate entry
 		if item.is_checked(6) and symmetry_dict:
-			var mirrored_fixed_raw = KeyBallsData.get_mirrored_ball(proj.fixed_ball, symmetry_dict)
-			var mirrored_project_raw = KeyBallsData.get_mirrored_ball(proj.project_ball, symmetry_dict)
+			var mirrored_fixed_raw: int = KeyBallsData.get_mirrored_ball(proj.fixed_ball, symmetry_dict)
+			var mirrored_project_raw: int = KeyBallsData.get_mirrored_ball(proj.project_ball, symmetry_dict)
 
 			# If a ball doesn't have a mirror, it mirrors to itself
-			var mirrored_fixed = mirrored_fixed_raw if mirrored_fixed_raw != -1 else proj.fixed_ball
-			var mirrored_project = mirrored_project_raw if mirrored_project_raw != -1 else proj.project_ball
+			var mirrored_fixed: int = mirrored_fixed_raw if mirrored_fixed_raw != -1 else proj.fixed_ball
+			var mirrored_project: int = mirrored_project_raw if mirrored_project_raw != -1 else proj.project_ball
 			
 			# Check if the mirrored pair is the same as the original
-			var is_self_mirrored = (mirrored_fixed == proj.fixed_ball) and (mirrored_project == proj.project_ball)
+			var is_self_mirrored: bool = (mirrored_fixed == proj.fixed_ball) and (mirrored_project == proj.project_ball)
 			
 			if not is_self_mirrored:
-				var mirror_key = Vector2(min(mirrored_fixed, mirrored_project), max(mirrored_fixed, mirrored_project))
+				var mirror_key: Vector2 = Vector2(min(mirrored_fixed, mirrored_project), max(mirrored_fixed, mirrored_project))
 				
 				# If this mirrored pair was NOT found in our initial scan, add it
 				if not existing_pairs.has(mirror_key):
-					var mirrored_proj = {
+					var mirrored_proj: Dictionary = {
 						"fixed_ball": mirrored_fixed,
 						"project_ball": mirrored_project,
 						"value": proj.value,
@@ -418,19 +414,19 @@ func _on_ApplyButton_pressed():
 # func hide():
 # 	panel.hide()
 
-func _on_ProjectionsTree_column_title_pressed(column_index):
+func _on_ProjectionsTree_column_title_pressed(column_index: int) -> void:
 	if column_index == 5 or column_index == 6: # Lock or Mirror
-		var root = projections_tree.get_root()
+		var root: TreeItem = projections_tree.get_root()
 		if not root:
 			return
 
-		var item = root.get_children()
+		var item: TreeItem = root.get_children()
 		if not item:
 			return
 
 		# Determine target state: if any are unchecked, check all. Otherwise, uncheck all.
-		var target_state = false
-		var current_item = item
+		var target_state: bool = false
+		var current_item: TreeItem = item
 		while current_item:
 			if not current_item.is_checked(column_index):
 				target_state = true
@@ -443,8 +439,8 @@ func _on_ProjectionsTree_column_title_pressed(column_index):
 			current_item.set_checked(column_index, target_state)
 			current_item = current_item.get_next()
 
-func _connect_settings_signals():
-	var spinners = [
+func _connect_settings_signals() -> void:
+	var spinners: Array = [
 		"LegExt1MinSpinBox", "LegExt1MaxSpinBox",
 		"LegExt2MinSpinBox", "LegExt2MaxSpinBox",
 		"HeadEnl1MinSpinBox", "HeadEnl1MaxSpinBox",
@@ -465,7 +461,7 @@ func _connect_settings_signals():
 	for s in spinners:
 		find_node(s).connect("value_changed", self, "_on_setting_changed")
 		
-	var checkboxes = [
+	var checkboxes: Array = [
 		"IncludeProjCheckBox", "IncludeBodyCheckBox", "IncludeMovesCheckBox",
 		"HeadCheckBox", "BodyCheckBox", "LegsCheckBox", "TailCheckBox", "EarsCheckBox", "EyesCheckBox",
 		"MirrorXCheckBox"
@@ -474,18 +470,18 @@ func _connect_settings_signals():
 	for c in checkboxes:
 		find_node(c).connect("toggled", self, "_on_setting_changed")
 
-	var reset_btn = find_node("ResetDefaultsButton")
+	var reset_btn: Button = find_node("ResetDefaultsButton")
 	if reset_btn:
 		reset_btn.connect("pressed", self, "_on_reset_defaults_pressed")
 
-func _on_setting_changed(_arg = null):
+func _on_setting_changed(_arg = null) -> void:
 	if _is_loading_settings:
 		return
 	save_settings()
 
-func save_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func save_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
 		print("Error loading settings for save: ", err)
 		return
@@ -540,13 +536,13 @@ func save_settings():
 	config.set_value("ProjectProperties", "grp_eyes", find_node("EyesCheckBox").pressed)
 	config.set_value("ProjectProperties", "mirror_x", find_node("MirrorXCheckBox").pressed)
 
-	var save_err = config.save(SETTINGS_PATH)
+	var save_err: int = config.save(SETTINGS_PATH)
 	if save_err != OK:
 		print("Error saving ProjectSettings: ", save_err)
 
-func load_settings():
-	var config = ConfigFile.new()
-	var err = config.load(SETTINGS_PATH)
+func load_settings() -> void:
+	var config: ConfigFile = ConfigFile.new()
+	var err: int = config.load(SETTINGS_PATH)
 	if err != OK:
 		return
 
@@ -603,7 +599,7 @@ func load_settings():
 
 	_is_loading_settings = false
 
-func _on_reset_defaults_pressed():
+func _on_reset_defaults_pressed() -> void:
 	_is_loading_settings = true
 
 	find_node("LegExt1MinSpinBox").value = -30.0

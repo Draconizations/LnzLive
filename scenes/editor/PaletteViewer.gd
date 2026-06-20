@@ -7,24 +7,17 @@ extends DraggablePanel
 ## 3. Display: Iterates through the palette's colors, generating a ColorRect and a numbered Label for each color index
 ## 4. Loading: Contains logic to find the appropriate palette file based on  LNZ document data
 
-# var dragging = false
-# var drag_start = Vector2()
-
-var dog_generator = null
+var dog_generator: Node = null
 
 var color_grid: GridContainer
 
-
 onready var vbox = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/PaletteViewerScrollContainer/PaletteViewerVBoxContainer
-onready var title_label = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/TitleLabel
-onready var main_container = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer
+onready var title_label: Label = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer/MainVBox/TitleLabel
+onready var main_container: MarginContainer = $VBoxContainer/ScrollContainer/VBoxContainer/MarginContainer
 onready var scroll_view = $VBoxContainer/ScrollContainer
-onready var pixel_font = load("res://resources/fonts/font_pixel_code_14.tres")
-# onready var close_button = $CloseButton
+onready var pixel_font: Font = load("res://resources/fonts/font_pixel_code_14.tres")
 
-func _ready():
-	# if close_button:
-	# 	close_button.connect("pressed", self, "_on_close_button_pressed")
+func _ready() -> void:
 	if get_tree().get_root().has_node("Root/PetRoot/Node"):
 		dog_generator = get_tree().get_root().get_node("Root/PetRoot/Node")
 	elif get_tree().get_root().has_node("Root/PetRoot"):
@@ -38,36 +31,25 @@ func _ready():
 
 	vbox.connect("resized", self, "_on_vbox_resized")
 	
-	var user_settings = get_tree().root.find_node("SceneRoot", true, false)
+	var user_settings: Node = get_tree().root.find_node("SceneRoot", true, false)
 	if user_settings:
 		user_settings.connect("global_font_updated", self, "populate_colors")
 
 	scroll_view.connect("resized", self, "_on_vbox_resized")
 
-# func _gui_input(event):
-# 	if event is InputEventMouseButton:
-# 		if event.button_index == BUTTON_LEFT:
-# 			if event.pressed:
-# 				dragging = true
-# 				drag_start = get_global_mouse_position() - rect_global_position
-# 			else:
-# 				dragging = false
-# 	elif event is InputEventMouseMotion and dragging:
-# 		rect_global_position = get_global_mouse_position() - drag_start
-
-func populate_colors():
+func populate_colors() -> void:
 	for child in vbox.get_children():
 		vbox.remove_child(child)
 		child.queue_free()
 
 	if dog_generator == null or dog_generator.lnz == null:
 		title_label.text = "No palette loaded"
-		var label = Label.new()
+		var label: Label = Label.new()
 		label.text = "No pet loaded"
 		vbox.add_child(label)
 		return
 
-	var pal_texture = dog_generator.current_palette_texture
+	var pal_texture: Texture = dog_generator.current_palette_texture
 	var palette_path = dog_generator.lnz.palette
 	
 	if palette_path == null or palette_path == "":
@@ -78,7 +60,7 @@ func populate_colors():
 			title_label.text += " (game: Babyz)"
 
 	if pal_texture == null:
-		var label = Label.new()
+		var label: Label = Label.new()
 		label.text = "palette not found"
 		vbox.add_child(label)
 		return
@@ -86,29 +68,29 @@ func populate_colors():
 	color_grid = GridContainer.new()
 	vbox.add_child(color_grid)
 
-	var img = pal_texture.get_data()
+	var img: Image = pal_texture.get_data()
 	img.lock()
 
-	var current_font_size = pixel_font.size
-	var dynamic_size = max(24, current_font_size + 12)
-	var cell_vector = Vector2(dynamic_size, dynamic_size)
+	var current_font_size: float = pixel_font.size
+	var dynamic_size: float = max(24.0, current_font_size + 12.0)
+	var cell_vector: Vector2 = Vector2(dynamic_size, dynamic_size)
 
-	var color_index = 0
+	var color_index: int = 0
 	for y in range(img.get_height()):
 		for x in range(img.get_width()):
-			var color = img.get_pixel(x, y)
+			var color: Color = img.get_pixel(x, y)
 
-			var color_rect = ColorRect.new()
+			var color_rect: ColorRect = ColorRect.new()
 			color_rect.color = color
 			color_rect.rect_min_size = cell_vector
 
-			var label = Label.new()
+			var label: Label = Label.new()
 			label.add_font_override("font", pixel_font)
 			label.text = str(color_index)
 			label.align = Label.ALIGN_CENTER
 			label.valign = Label.VALIGN_CENTER
 
-			var luminance = color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+			var luminance: float = color.r * 0.299 + color.g * 0.587 + color.b * 0.114
 			label.add_color_override("font_color", Color.black if luminance > 0.5 else Color.white)
 
 			color_rect.add_child(label)
@@ -121,56 +103,53 @@ func populate_colors():
 	
 	call_deferred("_on_vbox_resized")
 
-func _on_vbox_resized():
+func _on_vbox_resized() -> void:
 	if not color_grid or color_grid.get_child_count() == 0:
 		return
 		
-	var available_width = scroll_view.rect_size.x
+	var available_width: float = scroll_view.rect_size.x
 	
-	var v_scroll = scroll_view.get_v_scrollbar()
+	var v_scroll: VScrollBar = scroll_view.get_v_scrollbar()
 	if v_scroll.is_visible_in_tree():
 		available_width -= v_scroll.rect_size.x
 
-	var margin_container = vbox.get_parent() 
+	var margin_container: MarginContainer = vbox.get_parent() 
 	if margin_container is MarginContainer:
 		available_width -= (margin_container.get_constant("margin_right") + margin_container.get_constant("margin_left"))
 
-	var cell_width = color_grid.get_child(0).rect_min_size.x
-	var spacing = color_grid.get_constant("hseparation")
+	var cell_width: float = color_grid.get_child(0).rect_min_size.x
+	var spacing: float = color_grid.get_constant("hseparation")
 	
 	if cell_width + spacing > 0:
-		var calculated_columns = max(1, floor(available_width / (cell_width + spacing)))
+		var calculated_columns: int = max(1, floor(available_width / (cell_width + spacing)))
 		if color_grid.columns != calculated_columns:
 			color_grid.columns = calculated_columns
 		
 func load_palette_texture(palette_filename: String) -> Texture:
-	var texture = null
-	var clean_filename = palette_filename.strip_edges()
+	var texture: Texture = null
+	var clean_filename: String = palette_filename.strip_edges()
 	
-	var user_res_path = "user://resources/palettes".plus_file(clean_filename)
-	var res_res_path = "res://resources/palettes".plus_file(clean_filename)
+	var user_res_path: String = "user://resources/palettes".plus_file(clean_filename)
+	var res_res_path: String = "res://resources/palettes".plus_file(clean_filename)
 
 	if ResourceLoader.exists(user_res_path):
 		texture = ResourceLoader.load(user_res_path)
 	elif ResourceLoader.exists(res_res_path):
 		texture = ResourceLoader.load(res_res_path)
 	else:
-		var resource_key = "palette_" + clean_filename.to_lower()
-		var preloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
+		var resource_key: String = "palette_" + clean_filename.to_lower()
+		var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader") as ResourcePreloader
 		if preloader.has_resource(resource_key):
 			texture = preloader.get_resource(resource_key)
 
 	return texture
 
-func _on_palette_selected(filename_no_ext: String):
+func _on_palette_selected(filename_no_ext: String) -> void:
 	if dog_generator.lnz == null:
 		return 
 		
 	dog_generator.lnz.palette = filename_no_ext + ".png"
 	populate_colors()
 
-func _on_pet_palette_changed(palette_name):
+func _on_pet_palette_changed(palette_name) -> void:
 	populate_colors()
-
-# func _on_close_button_pressed():
-# 	self.hide()
