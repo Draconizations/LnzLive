@@ -354,7 +354,7 @@ static func validate_8bit_bmp(path: String) -> Dictionary:
 		return {"valid": false, "reason": "Not a BMP file"}
 	
 	f.seek(14)
-	var header_size: int = f.get_32()
+	var _header_size: int = f.get_32()
 	
 	f.seek(28)
 	var bpp: int = f.get_16()
@@ -383,18 +383,18 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 	var pixel_offset: int = f.get_32()
 	
 	f.seek(14)
-	var header_size: int = f.get_32()
+	var _header_size: int = f.get_32()
 	
 	var w: int = 0
 	var h_raw: int = 0
 	var bpp: int = 0
 	
-	if header_size == 12:
+	if _header_size == 12:
 		w = f.get_16()
 		h_raw = f.get_16()
 		f.seek(24)
 		bpp = f.get_16()
-	elif header_size >= 40:
+	elif _header_size >= 40:
 		w = f.get_32()
 		h_raw = f.get_32()
 		f.seek(28)
@@ -408,7 +408,7 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 		f.close()
 		return {}
 
-	f.seek(14 + header_size) 
+	f.seek(14 + _header_size) 
 	var bmp_palette: Array = []
 	
 	if debug:
@@ -418,7 +418,7 @@ static func load_raw_8bit_bmp(path: String, is_babyz_mode: bool = false, debug: 
 		var b: int = f.get_8()
 		var g: int = f.get_8()
 		var r: int = f.get_8()
-		var res: int = f.get_8()
+		var _res: int = f.get_8()
 		var col: Color = Color(r/255.0, g/255.0, b/255.0)
 		bmp_palette.append(col)
 		
