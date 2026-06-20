@@ -42,7 +42,7 @@ func _ready() -> void:
 	flat_colors_checkbox.connect("toggled", self, "_on_flat_colors_toggled")
 
 	# Load stored values to overwrite defaults
-	load_settings()
+	_load_settings()
 
 func get_render_flat_colors() -> bool:
 	return flat_colors_checkbox.pressed
@@ -50,7 +50,7 @@ func get_render_flat_colors() -> bool:
 func _on_flat_colors_toggled(is_on: bool) -> void:
 	emit_signal("texture_flat_colors_changed", is_on)
 	if not _is_loading_settings:
-		save_settings()
+		_save_settings()
 	
 func get_mode() -> int:
 	return mode_option.selected
@@ -67,23 +67,23 @@ func get_affected_by_rotation() -> bool:
 func _on_mode_selected(index: int) -> void:
 	emit_signal("texture_rotation_mode_changed", index)
 	if not _is_loading_settings:
-		save_settings()
+		_save_settings()
 
 func _on_input_changed(_value: float) -> void:
 	var input_vec: Vector2 = Vector2(input_x_spinbox.value, input_y_spinbox.value)
 	emit_signal("texture_rotation_input_changed", input_vec)
 	if not _is_loading_settings:
-		save_settings()
+		_save_settings()
 
 func _on_size_toggled(is_on: bool) -> void:
 	emit_signal("texture_affected_by_size_changed", is_on)
 	if not _is_loading_settings:
-		save_settings()
+		_save_settings()
 
 func _on_rotation_toggled(is_on: bool) -> void:
 	emit_signal("texture_affected_by_rotation_changed", is_on)
 	if not _is_loading_settings:
-		save_settings()
+		_save_settings()
 
 func _on_CloseButton_pressed() -> void:
 	hide()
@@ -92,7 +92,7 @@ func popup_centered(size: Vector2 = Vector2.ZERO) -> void:
 	.popup_centered(size)
 	raise()
 
-func save_settings() -> void:
+func _save_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	var err: int = config.load(SETTINGS_PATH)
 	if err != OK and err != ERR_FILE_NOT_FOUND:
@@ -110,7 +110,7 @@ func save_settings() -> void:
 	if save_err != OK:
 		print("Error saving ShaderSettings: ", save_err)
 
-func load_settings() -> void:
+func _load_settings() -> void:
 	var config: ConfigFile = ConfigFile.new()
 	var err: int = config.load(SETTINGS_PATH)
 	if err != OK:
