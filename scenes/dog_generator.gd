@@ -454,6 +454,7 @@ func generate_pet(file_path):
 
 	var comment_model = ""
 	var comment_game = ""
+
 	if lnz_info.species == 0:
 		var f = File.new()
 		if f.open(file_path, File.READ) == OK:
@@ -505,6 +506,11 @@ func set_skip_next_rebuild(val: bool):
 	_skip_next_rebuild = val
 
 func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String = ""):
+	_hidden_balls.clear()
+	_hidden_lines.clear()
+	_hidden_polygons.clear()
+	_hidden_paintballs.clear()
+
 	if t_pose_checkbox:
 		t_pose_active = t_pose_checkbox.pressed
 
@@ -583,6 +589,11 @@ func clear_lnz_data(keep_visuals: bool = false):
 		paintball_map.clear()
 		polygons_map.clear()
 		lines_map.clear()
+
+		_hidden_balls.clear()
+		_hidden_lines.clear()
+		_hidden_polygons.clear()
+		_hidden_paintballs.clear()
 
 func recompose_model():
 	# Clear LNZ data structures
@@ -676,6 +687,19 @@ func recompose_model():
 	emit_signal("palette_changed", lnz.palette)
 
 func init_visual_balls(lnz_info: LnzParser, new_create: bool = false):
+	if new_create || lnz_info.species != KeyBallsData.species:
+		_hidden_balls.clear()
+		_hidden_lines.clear()
+		_hidden_polygons.clear()
+		_hidden_paintballs.clear()
+		
+		_ball_to_lines_map.clear()
+		_ball_to_polygons_map.clear()
+		
+		if KeyBallsData.species != lnz_info.species:
+			KeyBallsData.species = lnz_info.species
+			KeyBallsData.build_bodyarea_map()
+
 	is_babyz_mode = false
 
 	if (lnz_info.species == KeyBallsData.Species.BABY):
@@ -2200,7 +2224,7 @@ func hide_ball(ball_no):
 		_hidden_balls.append(ball_no)
 
 	_apply_hidden_state_to_visuals(ball_no)
-
+	
 func unhide_all_balls():
 	print("[STATUS] Node: unhide_all_balls: restoring %d balls" % _hidden_balls.size())
 	for ball_no in _hidden_balls:
@@ -2208,26 +2232,37 @@ func unhide_all_balls():
 			var node = ball_map[ball_no]
 			if node.has_method("set_hidden"):
 				node.set_hidden(false)
+		
+		if _ball_to_lines_map.has(ball_no):
+			for line_idx in _ball_to_lines_map[ball_no]:
+				if lines_map.has(line_idx):
+					lines_map[line_idx].set_hidden(false)
+					if line_idx in _hidden_lines:
+						_hidden_lines.erase(line_idx)
+		
+		if _ball_to_polygons_map.has(ball_no):
+			for poly_idx in _ball_to_polygons_map[ball_no]:
+				if polygons_map.has(poly_idx):
+					polygons_map[poly_idx].set_hidden(false)
+					if poly_idx in _hidden_polygons:
+						_hidden_polygons.erase(poly_idx)
 
-		if paintball_map.has(ball_no):
-			for pb in paintball_map[ball_no]:
-				if pb.has_method("set_hidden"):
-					pb.set_hidden(false)
+	for line_idx in _hidden_lines:
+		if lines_map.has(line_idx):
+			lines_map[line_idx].set_hidden(false)
+	_hidden_lines.clear()
 
-	for line in lines_map.values():
-		line.set_hidden(false)
-
-	for poly in polygons_map.values():
-		poly.set_hidden(false)
+	for poly_idx in _hidden_polygons:
+		if polygons_map.has(poly_idx):
+			polygons_map[poly_idx].set_hidden(false)
+	_hidden_polygons.clear()
 
 	for pb in _hidden_paintballs:
 		if is_instance_valid(pb) and pb.has_method("set_hidden"):
 			pb.set_hidden(false)
+	_hidden_paintballs.clear()
 
 	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
 
 func _apply_hidden_state_to_visuals(ball_no):
 	if ball_map.has(ball_no):
@@ -2244,19 +2279,27 @@ func _apply_hidden_state_to_visuals(ball_no):
 
 	if _ball_to_lines_map.has(ball_no):
 		for line_idx in _ball_to_lines_map[ball_no]:
-			var line = lines_map[line_idx]
-			if line.has_method("set_hidden"):
-				line.set_hidden(true)
-			if not _hidden_lines.has(line_idx):
-				_hidden_lines.append(line_idx)
+			if lines_map.has(line_idx):
+				var line = lines_map[line_idx]
+				if line.has_method("set_hidden"):
+					line.set_hidden(true)
+				if not _hidden_lines.has(line_idx):
+					_hidden_lines.append(line_idx)
+			else:
+				if line_idx in _hidden_lines:
+					_hidden_lines.erase(line_idx)
 
 	if _ball_to_polygons_map.has(ball_no):
 		for poly_idx in _ball_to_polygons_map[ball_no]:
-			var poly = polygons_map[poly_idx]
-			if poly.has_method("set_hidden"):
-				poly.set_hidden(true)
-			if not _hidden_polygons.has(poly_idx):
-				_hidden_polygons.append(poly_idx)
+			if polygons_map.has(poly_idx):
+				var poly = polygons_map[poly_idx]
+				if poly.has_method("set_hidden"):
+					poly.set_hidden(true)
+				if not _hidden_polygons.has(poly_idx):
+					_hidden_polygons.append(poly_idx)
+			else:
+				if poly_idx in _hidden_polygons:
+					_hidden_polygons.erase(poly_idx)
 
 func _restore_hidden_states():
 	for ball_no in _hidden_balls:
