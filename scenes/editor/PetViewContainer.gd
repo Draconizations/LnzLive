@@ -368,10 +368,12 @@ func _ready() -> void:
 		shader_settings_instance.connect("texture_affected_by_rotation_changed", self, "_on_texture_affected_by_rotation_changed")
 		shader_settings_instance.connect("texture_flat_colors_changed", self, "_on_texture_flat_colors_changed")
 		# shader_settings_instance.connect("texture_use_quadrants_changed", self, "_on_texture_use_quadrants_changed")
-		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
-		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
-		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
-		shader_settings_instance.connect("texture_affected_by_rotation_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+		
+#		shader_settings_instance.connect("texture_rotation_mode_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+#		shader_settings_instance.connect("texture_rotation_input_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+#		shader_settings_instance.connect("texture_affected_by_size_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+#		shader_settings_instance.connect("texture_affected_by_rotation_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
+#		shader_settings_instance.connect("texture_flat_colors_changed", get_tree().root.get_node("Root/SceneRoot"), "save_settings")
 
 	diameter_min_spinbox = paintball_settings_instance.find_node("DiameterMin")
 	diameter_max_spinbox = paintball_settings_instance.find_node("DiameterMax")
@@ -538,9 +540,33 @@ func get_px_scale() -> float:
 	return pet_node.pixel_world_size
 
 func get_lnz_scale() -> float:
-	if not is_instance_valid(pet_node) or not pet_node.get("lnz") or not pet_node.lnz.has("scales"):
+	if not is_instance_valid(pet_node):
 		return 1.0
-	return pet_node.lnz.scales.x / 255.0
+	
+	if not pet_node.has_method("get") or pet_node.get("lnz") == null:
+		return 1.0
+		
+	var lnz_data = pet_node.get("lnz")
+	
+	if typeof(lnz_data) != TYPE_DICTIONARY:
+		return 1.0
+		
+	if not lnz_data.has_key("scales"):
+		return 1.0
+		
+	var scales = lnz_data["scales"]
+	
+	if scales == null:
+		return 1.0
+		
+	if typeof(scales) == TYPE_VECTOR2:
+		return scales.x / 255.0
+	elif typeof(scales) == TYPE_VECTOR3:
+		return scales.x / 255.0
+	else:
+		if scales is Array and scales.size() > 0:
+			return scales[0] / 255.0
+		return 1.0
 
 func _process(_delta: float) -> void:
 	_update_reference_image_bg()
@@ -1293,6 +1319,11 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 		print("[ERROR] PetViewContainer: paintball_settings_instance is invalid in _handle_paint_mode_gui_input")
 		return false
 
+	var props: Dictionary = paintball_settings_instance.get_properties()
+	if props == null:
+		print("[ERROR] PetViewContainer: get_properties() returned null. Aborting input handling.")
+		return false
+		
 	if (
 		event is InputEventMouseButton
 		and event.shift
@@ -1329,7 +1360,6 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 				return true
 
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		var props: Dictionary = paintball_settings_instance.get_properties()
 		var freeline_mode: bool = (
 			props.freeline
 			or (
@@ -1357,7 +1387,6 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 			return true
 
 	if event is InputEventMouseMotion and freeline_active:
-		var props: Dictionary = paintball_settings_instance.get_properties()
 		var current_pos: Vector2 = event.position
 		if current_pos.distance_to(last_freeline_point) > props.spacing:
 			freeline_path.append(current_pos)
@@ -1413,7 +1442,7 @@ func _handle_paint_mode_gui_input(event: InputEvent) -> bool:
 
 		if target_ball:
 			var screen_pos: Vector2 = _get_viewport_pos_from_screen_pos(event.position)
-			var result: Dictionary = _create_paintball_at_position(screen_pos, target_ball)
+			var result = _create_paintball_at_position(screen_pos, target_ball)
 			if result:
 				_record_paint_action([result])
 		return true
@@ -3204,6 +3233,10 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 				design_rotation_angle
 			)
 
+			if not pattern_pbs or not pattern_pbs.has("positions") or not pattern_pbs.has("diameters"):
+				print("[WARNING] PetViewContainer: paste_paintball_design returned invalid data")
+				return null
+
 			var px_scale: float = pet_node.pixel_world_size
 			var lnz_scale: float = pet_node.lnz.scales.x / 255.0
 
@@ -3221,7 +3254,12 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 			var tex_arr: PoolIntArray = pattern_pbs.textures
 			var anc_arr: PoolIntArray = pattern_pbs.anchored
 
-			for i in range(pos_arr.size()):
+			var count: int = pos_arr.size()
+			if count == 0:
+				print("[WARNING] PetViewContainer: Design pattern produced 0 paintballs")
+				return null
+
+			for i in range(count):
 				var pos_normalized: Vector3 = pos_arr[i]
 				var spot_world_rel: Vector3 = pos_normalized * (lnz_diam * 0.5 * px_scale * lnz_scale)
 				var spot_local_rel: Vector3 = target_ball.global_transform.basis.xform_inv(spot_world_rel)
@@ -3244,8 +3282,29 @@ func _create_paintball_at_position(screen_pos: Vector2, target_ball: Spatial, di
 				}
 
 				pet_node.add_pending_paintball(pb_data)
-			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [pos_arr.size(), target_ball.ball_no])
 			
+			print("[STATUS] PetViewContainer: successfully created %d paintballs from design onto ball #%d" % [count, target_ball.ball_no])
+			
+			pos_arr.resize(0)
+			diam_arr.resize(0)
+			col_arr.resize(0)
+			out_col_arr.resize(0)
+			out_type_arr.resize(0)
+			fuzz_arr.resize(0)
+			group_arr.resize(0)
+			tex_arr.resize(0)
+			anc_arr.resize(0)
+			
+			if pattern_pbs.has("positions"): pattern_pbs.erase("positions")
+			if pattern_pbs.has("diameters"): pattern_pbs.erase("diameters")
+			if pattern_pbs.has("colors"): pattern_pbs.erase("colors")
+			if pattern_pbs.has("outlines"): pattern_pbs.erase("outlines")
+			if pattern_pbs.has("outline_types"): pattern_pbs.erase("outline_types")
+			if pattern_pbs.has("fuzzes"): pattern_pbs.erase("fuzzes")
+			if pattern_pbs.has("groups"): pattern_pbs.erase("groups")
+			if pattern_pbs.has("textures"): pattern_pbs.erase("textures")
+			if pattern_pbs.has("anchored"): pattern_pbs.erase("anchored")
+
 			# var _perf_dyn_end: int = OS.get_dynamic_memory_usage()
 			# var _perf_stat_end: int = OS.get_static_memory_usage()
 			# var _perf_orphans: int = Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)
