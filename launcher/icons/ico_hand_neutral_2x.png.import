@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/ico_hand_neutral_2x.png-e79ee28bdd154895283d0f354c7e7719.stex"
+path="res://.import/ico_hand_neutral_2x.png-90eaa84ff76c1332b283f5aaf36db05c.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icons/ico_hand_neutral_2x.png"
-dest_files=[ "res://.import/ico_hand_neutral_2x.png-e79ee28bdd154895283d0f354c7e7719.stex" ]
+source_file="res://launcher/icons/ico_hand_neutral_2x.png"
+dest_files=[ "res://.import/ico_hand_neutral_2x.png-90eaa84ff76c1332b283f5aaf36db05c.stex" ]
 
 [params]
 

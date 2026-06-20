@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/launcher_roll_2.png-92e65f58eb87e4af146a3c1f06178ffd.stex"
+path="res://.import/launcher_roll_2.png-1578ce051c32cb5005b12cf700b223d6.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://images/launcher_roll_2.png"
-dest_files=[ "res://.import/launcher_roll_2.png-92e65f58eb87e4af146a3c1f06178ffd.stex" ]
+source_file="res://launcher/images/launcher_roll_2.png"
+dest_files=[ "res://.import/launcher_roll_2.png-1578ce051c32cb5005b12cf700b223d6.stex" ]
 
 [params]
 
