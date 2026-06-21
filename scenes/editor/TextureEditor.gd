@@ -25,6 +25,13 @@ enum BrushPattern {
 	NOISE
 }
 
+enum GameMode {
+	PETZ,
+	BABYZ
+}
+
+var current_mode: int = GameMode.PETZ
+
 var current_tool: int = Tool.PENCIL
 var current_brush_shape: int = BrushShape.SQUARE
 var current_brush_pattern: int = BrushPattern.SOLID
@@ -134,6 +141,7 @@ func _ready() -> void:
 
 	if dog_generator:
 		dog_generator.connect("palette_changed", self, "_on_pet_palette_changed")
+		current_mode = GameMode.BABYZ if dog_generator.is_babyz_mode else GameMode.PETZ
 
 		var lte: Node = get_tree().root.get_node_or_null("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 		if lte:
@@ -350,6 +358,13 @@ func _on_palette_color_right_selected(index: int) -> void:
 		secondary_color_label.add_color_override("font_color", Color(1, 1, 1))
 
 func _on_pet_palette_changed(_palette_name) -> void:
+	if dog_generator and dog_generator.has_method("get_is_babyz_mode"):
+		current_mode = GameMode.BABYZ if dog_generator.is_babyz_mode else GameMode.PETZ
+	elif dog_generator:
+		current_mode = GameMode.BABYZ if dog_generator.get("is_babyz_mode") else GameMode.PETZ
+	else:
+		current_mode = GameMode.PETZ
+
 	populate_palette()
 	_populate_active_textures()
 
@@ -816,7 +831,9 @@ func _on_LoadButton_pressed() -> void:
 
 	var raw_bmp_data: Dictionary = {}
 	if loaded_path != "":
-		raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path)
+		if loaded_path != "":
+			var is_babyz: bool = (current_mode == GameMode.BABYZ)
+			raw_bmp_data = LnzLiveUtils.load_raw_8bit_bmp(loaded_path, is_babyz)
 
 	# 8bit BMP
 	if raw_bmp_data.has("data"):
