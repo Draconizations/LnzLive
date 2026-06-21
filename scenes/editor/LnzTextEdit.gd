@@ -1353,10 +1353,12 @@ func get_current_section_name() -> String:
 			return line.split(";")[0].strip_edges()
 	return ""
 
-func _detect_delimiter(start_line: int, end_line: int) -> String:
-	var preferred = _get_user_preferred_delimiter()
-	if preferred != "auto":
-		return preferred
+func _detect_delimiter(start_line: int, end_line: int, test: bool = false) -> String:
+	if !test:
+		var preferred = _get_user_preferred_delimiter()
+		if preferred != "auto":
+			print("[STATUS] LnzTextEdit: _detect_delimiter: Using user preferred delimiter: %s" % preferred)
+			return preferred
 
 	var delim_counts = {
 		", ": 0,  # "comma-space", "comma-tab", "comma-multispace"
@@ -1365,6 +1367,13 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 		" ": 0    # "space", "multispace"
 	}
 	var lines_scanned = 0
+	
+	var delim_names = {
+		", ": "comma-space",
+		",": "comma",
+		"\t": "tab",
+		" ": "space"
+	}
 	
 	for i in range(start_line, end_line):
 		var line = get_line(i).strip_edges()
@@ -1385,6 +1394,7 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 				delim_counts[" "] += 1
 
 	if lines_scanned == 0:
+		print("[STATUS] LnzTextEdit: _detect_delimiter: No lines scanned. Returning 'space'.")
 		return " "
 
 	var most_frequent_delim = " "
@@ -1393,9 +1403,13 @@ func _detect_delimiter(start_line: int, end_line: int) -> String:
 
 	for delim in priority_order:
 		if delim_counts[delim] > max_count:
+			print("[STATUS] LnzTextEdit: _detect_delimiter: Delimiter '%s' is top with count %d" % [delim_names[delim], delim_counts[delim]])
 			max_count = delim_counts[delim]
 			most_frequent_delim = delim
 			
+	if max_count == 0:
+		print("[STATUS] LnzTextEdit: _detect_delimiter: No delimiters found in scanned lines. Returning 'space'.")
+		
 	return most_frequent_delim
 
 func split_line(line: String) -> Array:
