@@ -10,7 +10,7 @@ var pet_view: Control
 
 func before_all():
 	editor_instance = editor_scene.instance()
-	editor_instance.name = "Root" 
+	editor_instance.name = "Root"
 	get_tree().root.add_child(editor_instance)
 	
 	yield(get_tree(), "idle_frame")
@@ -29,7 +29,7 @@ func before_all():
 		KeyBallsData.max_base_ball_num = 67
 	
 	if is_instance_valid(pet_node):
-			pet_node.set("pixel_world_size", 0.002)
+		pet_node.set("pixel_world_size", 0.002)
 
 func before_each():
 	_reset_editor_state()
@@ -53,7 +53,9 @@ func _reset_editor_state():
 				pet_view.selected_ball = -1
 				
 		if "selected_balls" in pet_view:
-			pet_view.selected_balls.clear()
+			var temp_arr: Array = pet_view.selected_balls
+			temp_arr.clear()
+			pet_view.selected_balls = temp_arr
 
 	if pet_node:
 		if pet_node.has_method("clear_balls"):
@@ -82,7 +84,10 @@ func _create_temp_lnz(content: String) -> String:
 # ------------------------------------------------------------------------------
 # FileTree.gd
 # ------------------------------------------------------------------------------
+
 func test_filetree_expanded_states():
+	# Verify that set_expanded_states correctly updates the collapsed property
+	# of tree items, and that get_expanded_states returns the correct dictionary.
 	if not file_tree.examples:
 		file_tree.examples = file_tree.create_item()
 	if not file_tree.local_storage:
@@ -103,7 +108,8 @@ func test_filetree_expanded_states():
 	assert_true(retrieved_states["Local Storage"], "Getter should return true for Local Storage.")
 
 func test_filetree_convert_bmp_invalid_file():
-	# Attempting to convert a non-existent BMP
+	# Ensure convert_bmp_to_palette_png fails safely and returns false 
+	# when the source file does not exist, rather than throwing an error.
 	var result = file_tree.convert_bmp_to_palette_png("user://does_not_exist_ever.bmp", "user://")
 	assert_false(result, "Conversion should safely fail and return false for non-existent files.")
 
@@ -112,7 +118,8 @@ func test_filetree_convert_bmp_invalid_file():
 # ------------------------------------------------------------------------------
 
 func test_lnz_scan_base_and_variations():
-	# Correctly grouping data into base and variation blocks
+	# Verify that the parser correctly distinguishes between the base block (ID 0)
+	# and variation blocks (IDs > 0) based on the '#N' header syntax.
 	var content = "[Ballz Info]\n10 10 10\n#1 Variation1\n20 20 20\n[Linez]\n1 2"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -128,7 +135,8 @@ func test_lnz_scan_base_and_variations():
 	assert_eq(var1_lines[0], "20 20 20", "Variation lines should be assigned to ID 1.")
 
 func test_lnz_compile_section_merging():
-	# Ensure requesting specific variations merges them with base data
+	# Verify that compile_section correctly merges the base data with 
+	# specific requested variations, maintaining the order: Base -> Variations.
 	var content = "[Section]\nBaseData\n#1 Var1\nData1\n#2 Var2\nData2"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -140,7 +148,8 @@ func test_lnz_compile_section_merging():
 	assert_eq(reader.get_line(), "Data2", "Active variation data should be appended.")
 
 func test_lnz_get_parsed_lines_ignores_invalid_and_comments():
-	# Empty lines, comments, and unparseable garbage should be ignored
+	# Ensure get_parsed_lines skips empty lines, comments (;), and 
+	# unparseable garbage, returning only valid data structures.
 	var content = "[TestSection]\n; This is a comment\n\n10 20 30\n# Ignored\n40 50 60\n\t  \n"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -152,7 +161,8 @@ func test_lnz_get_parsed_lines_ignores_invalid_and_comments():
 	assert_eq(parsed[1]["c"], 60)
 
 func test_lnz_species_fallback_detection():
-	# The file lacks a [Species] block, fallback to parsing [Default Linez File]
+	# Verify that if no [Species] block exists, the parser falls back to 
+	# detecting the species by matching the path in [Default Linez File].
 	var content = "[Default Linez File]\nC:\\Petz\\Dogz\\Dalmatian.dog"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -161,7 +171,8 @@ func test_lnz_species_fallback_detection():
 	assert_eq(parser.species, 2, "Should fallback to Dogz (Species = 2) based on default file path string matching.")
 
 func test_lnz_parse_paintballs_invalid_length():
-	# Paintballs require at least 11 columns to parse correctly.
+	# Verify that paintball lines with insufficient columns (less than 11) 
+	# are skipped gracefully without throwing index-out-of-bounds errors.
 	var content = "[Paint Ballz]\n; Not enough data\n1 2 3 4 5 6\n; Valid\n1 2 3 4 5 6 7 8 9 10 11 12"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -173,7 +184,7 @@ func test_lnz_parse_paintballs_invalid_length():
 	assert_eq(parser.paintballs[1].size(), 1, "Should gracefully skip the invalid short line without throwing index errors.")
 
 func test_lnz_get_whiskers_standard_parsing():
-	# Standard whisker definitions
+	# Verify that whisker connections are parsed correctly from start/end indices.
 	var content = "[Whiskers]\n10 11\n12 13"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -185,7 +196,8 @@ func test_lnz_get_whiskers_standard_parsing():
 	assert_eq(parser.whisker_connections[0]["end"], 10, "Whisker end index should match.")
 
 func test_lnz_parse_moves():
-	# Move section with and without 'relative_to' column
+	# Verify that moves are parsed correctly, handling both explicit 'relative_to' 
+	# values and fallback logic when that column is missing.
 	var content = "[Move]\n5 10 20 30 15\n8 0 0 0"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -197,7 +209,8 @@ func test_lnz_parse_moves():
 	assert_eq(parser.moves[1]["relative_to"], 8, "Should fallback relative_to equal to base ball when column is missing.")
 
 func test_lnz_parser_get_eyes():
-	# Parses the mapping matrix for irises to standard eyes correctly.
+	# Verify that the eyes section correctly maps left/right iris indices 
+	# to their corresponding standard eye indices.
 	var content = "[Eyes]\n10 11\n12 13"
 	var path = _create_temp_lnz(content)
 	var parser = autofree(LnzParser.new(path))
@@ -211,7 +224,10 @@ func test_lnz_parser_get_eyes():
 # ------------------------------------------------------------------------------
 # dog_generator.gd
 # ------------------------------------------------------------------------------
+
 func test_apply_sizes_scaling_math():
+	# Verify that ball sizes and positions are scaled correctly using the 
+	# engine scale factor, applying the fmod adjustment to size.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	var mock_lnz = autofree(LnzParser.new(""))
@@ -236,6 +252,8 @@ func test_apply_sizes_scaling_math():
 	assert_eq(processed_ball.position, Vector3(5.0, 10.0, 15.0), "Ball position should be correctly scaled down by 50%.")
 
 func test_apply_movement_with_rotation_math():
+	# Verify that movement vectors are correctly rotated based on the 
+	# base ball's Y-axis rotation (Yaw), ensuring directional accuracy.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Imagine a move instruction to shift a ball +10 units forward on the Z axis
@@ -251,6 +269,8 @@ func test_apply_movement_with_rotation_math():
 	assert_almost_eq(result.z, 0.0, 0.01, "Z axis magnitude should become 0 after 90 degree rotation.")
 
 func test_hide_ball_state_synchronization():
+	# Verify that hiding/unhiding a ball updates both the internal tracking 
+	# state and the visual node's hidden property correctly.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Mock a 3D visual node with the expected set_hidden interface
@@ -278,6 +298,8 @@ func test_hide_ball_state_synchronization():
 	assert_false(mock_visual_node.is_hidden, "Visual node should be restored to visible.")
 
 func test_is_special_ball_detection():
+	# Verify that is_special_ball correctly identifies balls belonging to 
+	# non-zero add_groups, while excluding non-addballs or group 0.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Mock the dictionary that LnzParser normally provides to dictate add_groups
@@ -298,6 +320,8 @@ func test_is_special_ball_detection():
 	assert_false(dog_gen.is_special_ball(3, 50), "Ball 50 is not an addball, should be false.")
 
 func test_update_whisker_position_geometry():
+	# Verify that whisker lines are correctly positioned and scaled 
+	# between two start and end nodes using look_at_from_position logic.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Mock the 3D nodes needed for the math
@@ -305,6 +329,7 @@ func test_update_whisker_position_geometry():
 	var end_node = autofree(Spatial.new())
 	var visual_line = autofree(Spatial.new())
 	
+	# FIX: Add to tree so global_transform works
 	add_child(start_node)
 	add_child(end_node)
 	add_child(visual_line)
@@ -337,6 +362,8 @@ func test_update_whisker_position_geometry():
 	remove_child(visual_line)
 
 func test_update_eyelids_mirrored_angles():
+	# Verify that eyelid angles are applied with correct mirroring (left vs right) 
+	# and that color/tilt settings are applied correctly in normal mode.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Create mock balls that can receive the angle data
@@ -372,6 +399,8 @@ func test_update_eyelids_mirrored_angles():
 	assert_almost_eq(right_eye.angle, expected_rads, 0.001, "Right eye should receive a positive radian angle.")
 
 func test_generate_color_icon_creates_valid_texture():
+	# Verify that generate_color_icon creates a valid 16x16 texture 
+	# filled with the correct color from the palette, and handles out-of-bounds gracefully.
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Create a tiny 2x1 mock palette texture to sample from
@@ -411,10 +440,9 @@ func test_generate_color_icon_creates_valid_texture():
 # LnzLiveUtils
 # ------------------------------------------------------------------------------
 
-# need to test list-ranges and parsing palettes
-
-
 func test_world_to_lnz_delta_conversion():
+	# Verify that world-space deltas are correctly converted to LNZ integer deltas 
+	# by applying pixel_world_size, engine_scale, and Y-axis inversion.
 	var pixel_world_size = 0.002
 	var engine_scale = 127.5 # Simulate 50% scale (127.5 / 255.0 = 0.5)
 	
@@ -427,6 +455,8 @@ func test_world_to_lnz_delta_conversion():
 	assert_eq(result.z, 30.0, "Z coordinate should be accurately scaled up to integer.")
 
 func test_lnzlive_utils_parse_flexible_integers():
+	# Verify that parse_flexible_integers correctly extracts integers from a string 
+	# containing mixed whitespace and negative numbers.
 	var result = LnzLiveUtils.parse_flexible_integers("  10   -5 20")
 	assert_eq(result.size(), 3, "Parser should extract exactly 3 valid integers from string array.")
 	assert_eq(result[0], 10)
@@ -434,6 +464,8 @@ func test_lnzlive_utils_parse_flexible_integers():
 	assert_eq(result[2], 20)
 
 func test_lnzlive_utils_get_ramp_color():
+	# Verify that get_ramp_color correctly calculates intermediate ramp colors 
+	# and falls back to exact colors when the ramp logic doesn't apply.
 	var rule = {"is_ramp": true, "before_color": "62", "after_color": "55"}
 	var result = LnzLiveUtils.get_ramp_color("60", rule)
 	assert_eq(result, "50", "Should shift 60 to 50 based on 62->55 ramp offset.")
@@ -446,6 +478,8 @@ func test_lnzlive_utils_get_ramp_color():
 # ------------------------------------------------------------------------------
 
 func test_lnz_history_snapshot_stack_limit():
+	# Verify that the history stack respects the max_history_size limit, 
+	# discarding oldest entries when the limit is reached.
 	if not lnz_text: return
 	lnz_text.max_history_size = 5
 	lnz_text.initialize_history()
@@ -458,6 +492,8 @@ func test_lnz_history_snapshot_stack_limit():
 	assert_eq(lnz_text.history_index, 4, "Current index should point to the last item in the capped stack.")
 
 func test_lnz_logical_history_merging():
+	# Verify that rapid logical changes to the same ID are merged into a single 
+	# history item to reduce stack bloat during fast interactions.
 	if not lnz_text: return
 	lnz_text.initialize_history()
 	
@@ -499,6 +535,8 @@ func test_lnz_delimiter_detection_auto_priority():
 	assert_eq(delim_3, ", ", "Tie between ', ' and ',' should favor ', ' due to priority.")
 	
 func test_lnz_undo_restores_cursor_and_scroll():
+	# Verify that undoing a visual edit restores the text content, 
+	# cursor position, and scroll position to their pre-edit state.
 	if not lnz_text: return
 	lnz_text.text = "Initial"
 	lnz_text.initialize_history()
@@ -515,6 +553,8 @@ func test_lnz_undo_restores_cursor_and_scroll():
 	assert_eq(lnz_text.get_v_scroll(), 0.0, "Scroll position should revert.")
 
 func test_lnz_delete_ball_reference_updates():
+	# Verify that deleting a ball correctly removes its line and decrements 
+	# references in subsequent lines to maintain index consistency.
 	if not lnz_text: return
 	# Set up a file where ball 50 is deleted. References > 50 must decrement.
 	lnz_text.text = "[Linez]\n40 50\n51 52"
@@ -527,6 +567,8 @@ func test_lnz_delete_ball_reference_updates():
 
 
 func test_lnz_text_split_line_handles_comments():
+	# Verify that split_line correctly separates data parts from comment parts 
+	# when a comment marker is present in the line.
 	if not lnz_text: return
 	var parts = lnz_text.split_line("10 20 30 ; note")
 	assert_eq(parts.size(), 4, "Should have 3 data parts and 1 comment part.")
@@ -534,6 +576,8 @@ func test_lnz_text_split_line_handles_comments():
 	assert_eq(parts[3], "; note")
 
 func test_lnz_text_get_section_bounds():
+	# Verify that get_section_bounds correctly identifies the start and end line indices 
+	# of a section, excluding the header and trailing empty lines.
 	if not lnz_text: return
 	lnz_text.text = "[Add Ball]\n1 2 3\n4 5 6\n\n[Linez]"
 	var bounds = lnz_text.get_section_bounds("[Add Ball]")
@@ -541,6 +585,8 @@ func test_lnz_text_get_section_bounds():
 	assert_eq(bounds.end, 4, "Ends at empty line block before [Linez]")
 
 func test_lnz_text_mirror_l_to_r_logic():
+	# Verify that _mirror_ball_attributes correctly inverts X-axis positions 
+	# and outlines for left/right symmetry based on the mirroring flag.
 	if not lnz_text: return
 	var base_parts = PoolStringArray(["10", "20", "30", "40", "0", "50"])
 	var base_mirrored = lnz_text._mirror_ball_attributes(base_parts, false)
@@ -558,6 +604,8 @@ func test_lnz_text_mirror_l_to_r_logic():
 # ------------------------------------------------------------------------------
 
 func test_petview_spatial_hash_caching():
+	# Verify that the 2D spatial grid correctly maps the 2D projection of 
+	# 3D nodes to their respective grid cells.
 	if not pet_view: return
 	var mock_ball = autofree(Spatial.new())
 	
@@ -572,6 +620,8 @@ func test_petview_spatial_hash_caching():
 	remove_child(mock_ball)
 
 func test_petview_box_selection_logic():
+	# Verify that box selection correctly identifies nodes within the 
+	# defined 2D rectangle bounds.
 	if not pet_view: return
 	pet_view.box_start_pos = Vector2(10, 10)
 	pet_view.box_end_pos = Vector2(50, 50)
@@ -580,6 +630,8 @@ func test_petview_box_selection_logic():
 	assert_eq(pet_view.selected_balls.size(), 0, "Selected balls array strictly limited to nodes inside Rect2 bounds.")
 
 func test_petview_pending_moves_tracking():
+	# Verify that pending moves are tracked correctly, caching the original 
+	# position and updating the new position without overwriting the original.
 	if not pet_view: return
 	
 	var mock_ball = autofree(Spatial.new())
@@ -609,6 +661,8 @@ func test_petview_pending_moves_tracking():
 	pet_view.remove_child(mock_ball)
 
 func test_petview_freeline_paintball_interpolation():
+	# Verify that freeline paintball sizes are interpolated correctly 
+	# using a ping-pong function to taper from min to max and back to min.
 	if not pet_view: return
 	
 	pet_view.freeline_path = [Vector2(0,0), Vector2(10,10), Vector2(20,20)]
@@ -626,3 +680,4 @@ func test_petview_freeline_paintball_interpolation():
 	assert_eq(calculated_diams[0], 10, "First step of freeline tapered size should match min parameter.")
 	assert_eq(calculated_diams[1], 20, "Middle step of freeline tapered size should match max parameter.")
 	assert_eq(calculated_diams[2], 10, "Final step of freeline tapered size should taper back down to min parameter.")
+
