@@ -675,7 +675,7 @@ func _process(_delta: float) -> void:
 		Input.set_custom_mouse_cursor(paintbucket, 0, Vector2(30, 31))
 
 	elif selecting_on:
-		body = "Select Mode: when hovering, cycle ballz using TAB..."
+		body = "Select Mode: when hovering, cycle ballz using N key..."
 
 	elif is_dragging:
 		pass
