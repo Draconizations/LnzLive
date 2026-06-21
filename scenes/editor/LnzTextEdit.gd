@@ -236,7 +236,10 @@ func _load_file(filepath: String, user_flag: bool):
 		pet_node.unhide_all_balls()
 
 	var file = File.new()
-	file.open(filepath, File.READ)
+	var err = file.open(filepath, File.READ)
+	if err != OK:
+		printerr("Failed to open file: ", filepath, " Error: ", err)
+		return
 
 	var contents = file.get_as_text()
 	file.close()
@@ -252,13 +255,16 @@ func _load_file(filepath: String, user_flag: bool):
 
 	print("[TIME] LnzTextEdit: _load_file took " + str(OS.get_ticks_msec() - t_start) + "ms for " + filepath.get_file())
 
+
 func _on_example_file_selected(filepath):
 	_load_file(filepath, false)
+
 
 func _on_user_file_selected(filepath):
 	if filepath == null:
 		return
 	_load_file(filepath, true)
+
 
 func save_backup():
 	if not is_user_file:
@@ -288,12 +294,15 @@ func save_backup():
 		
 	file.store_string(text)
 	file.close()
-	emit_signal("file_backed_up")
-	
+
+	if has_signal("file_backed_up"):
+		emit_signal("file_backed_up")
+		
 	var msg = "Created Backup: " + backup_path1.get_file()
 	print("[STATUS] LnzTextEdit: save_backup: " + msg)
 	if console_log:
 		console_log.log_message(msg)
+
 
 func save_file(skip_history: bool = false):
 	if text.strip_edges().empty():
@@ -349,11 +358,13 @@ func save_file(skip_history: bool = false):
 		file.close()
 	else:
 		var filename = filepath.get_file()
-		var possible_file_name = "user://resources/" + filename
-		var file = File.new()
-		if file.file_exists(possible_file_name):
-			possible_file_name = "user://resources/" + filename.replace(".lnz", str(OS.get_unix_time()) + ".lnz")
+		var base_dir = "user://resources/"
+		var possible_file_name = base_dir + filename
+		
+		if dir.file_exists(possible_file_name):
+			possible_file_name = base_dir + filename.replace(".lnz", "_" + str(OS.get_unix_time()) + ".lnz")
 			
+		var file = File.new()
 		var err = file.open(possible_file_name, File.WRITE)
 		if err != OK:
 			printerr("Failed to open file for writing: ", possible_file_name)
@@ -361,6 +372,7 @@ func save_file(skip_history: bool = false):
 			
 		file.store_string(text)
 		file.close()
+		
 		filepath = possible_file_name
 		is_user_file = true
 
@@ -377,10 +389,10 @@ func save_file(skip_history: bool = false):
 func _on_Tree_backup_file():
 	save_backup()
 
+
 func _on_ApplyChangesButton_pressed():
 	save_backup()
-	save_file(false) # User Manual Save = History Snapshot
-
+	save_file(false)
 
 ### UNDO / REDO HISTORY ###
 # commit_full_snapshot

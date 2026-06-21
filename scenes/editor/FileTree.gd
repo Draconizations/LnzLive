@@ -1,10 +1,10 @@
 extends Tree
 ## FileTree.gd
 ## Manages the Tree UI for organizing and interacting with Petz LNZ files textures and palettes
-## This script builds the file structure from two sources: read-only Examples (res://) and user Local Storage (user://)
+## This script builds the file structure from two sources: read-only resources (res://) and user resources (user://)
 ## 1. Loading: Scans directories to populate the tree with LNZ files textures and palettes
 ## 2. Selection: Handles item activation to load the selected file/palette by emitting example_file_selected user_file_selected or palette_selected
-## 3. Import: Manages file uploading for both desktop and web builds copying LNZ BMP and PNG files to local storage
+## 3. Import: Manages file uploading for both desktop and web builds copying LNZ BMP and PNG files to user resource storage
 ## 4. Management: Provides a right-click context menu for user-stored files allowing for renaming deleting and backing up the currently active LNZ file
 ## 5. Rescan: Provides dedicated methods to refresh the LNZ texture and palette sections of the tree
 
@@ -30,6 +30,7 @@ var root: TreeItem
 var local_storage_textures: TreeItem
 var res_textures: TreeItem
 var local_storage_palettes: TreeItem
+var local_storage_bases: TreeItem
 
 var new_folder_dialog: ConfirmationDialog
 var new_folder_input
@@ -68,7 +69,7 @@ func _ready() -> void:
 	select_mode = SELECT_MULTI
 	root = create_item()
 	examples = create_item(root)
-	examples.set_text(0, "Examples")
+	examples.set_text(0, "Example LNZ")
 	
 	import_lnz_button.connect("pressed", self, "_on_ImportLNZ_pressed")
 	import_tex_button.connect("pressed", self, "_on_ImportTexture_pressed")
@@ -97,9 +98,11 @@ func _ready() -> void:
 		upload_popup.connect("popup_hide", self, "_on_FileDialog_popup_hide")
 
 	var popup: PopupMenu = $ItemPopupMenu
-	if popup.get_item_count() < 7:
+	if popup.get_item_count() < 9: # Increased count to accommodate new items
 		popup.add_item("New Folder", 5)
 		popup.add_item("Move To...", 6)
+		popup.add_item("Duplicate", 7)
+		popup.add_item("Add to Bases", 8)
 
 	var dir: Directory = Directory.new()
 	var lnz_dir_path: String = example_file_location + "lnz/"
@@ -138,6 +141,7 @@ func _ready() -> void:
 	rescan_textures(true)
 	rescan_res_textures()
 	rescan_palettes()
+	rescan_bases()
 
 func is_valid_filepath(meta) -> bool:
 	if typeof(meta) == TYPE_NIL:
@@ -499,14 +503,19 @@ func _on_Tree_item_activated() -> void:
 		
 	var parent: TreeItem = selected.get_parent() as TreeItem
 	var is_user_file: bool = false
+	var is_bases_file: bool = false
 	var current_parent: TreeItem = parent
 	while current_parent:
 		if current_parent == local_storage:
 			is_user_file = true
+		if current_parent == local_storage_bases:
+			is_bases_file = true
 			break
 		current_parent = current_parent.get_parent()
 
 	if parent == examples or parent.get_parent() == examples:
+		emit_signal("example_file_selected", filepath)
+	elif is_bases_file:
 		emit_signal("example_file_selected", filepath)
 	elif is_user_file:
 		emit_signal("user_file_selected", filepath)
@@ -526,8 +535,8 @@ func rescan(selected_filepath) -> void:
 		root.remove_child(local_storage)
 		local_storage.free()
 	
-	local_storage = create_item(root, 1)
-	local_storage.set_text(0, "Local Storage")
+	local_storage = create_item(root, 2)
+	local_storage.set_text(0, "User LNZ")
 	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
 
@@ -548,8 +557,8 @@ func rescan_textures(reload_model: bool = false) -> void:
 	if local_storage_textures != null:
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
-	local_storage_textures = create_item(root, 2)
-	local_storage_textures.set_text(0, "Local Textures")
+	local_storage_textures = create_item(root, 4)
+	local_storage_textures.set_text(0, "User Textures")
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
 
@@ -566,7 +575,7 @@ func rescan_res_textures() -> void:
 		was_collapsed = res_textures.collapsed
 		root.remove_child(res_textures)
 	res_textures = create_item(root, 3)
-	res_textures.set_text(0, "Base Textures")
+	res_textures.set_text(0, "Game Textures")
 	res_textures.collapsed = was_collapsed
 	scan_res_textures()
 	
@@ -576,10 +585,54 @@ func rescan_palettes() -> void:
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
 	local_storage_palettes = create_item(root, 4)
-	local_storage_palettes.set_text(0, "Local Palettes")
+	local_storage_palettes = create_item(root, 5)
+	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes()
+
+func rescan_bases() -> void:
+	var was_collapsed: bool = true
+	var bases_dir: String = user_file_location + "/bases"
 	
+	var dir: Directory = Directory.new()
+	if not dir.dir_exists(bases_dir):
+		dir.make_dir(bases_dir)
+		
+	if local_storage_bases != null:
+		was_collapsed = local_storage_bases.collapsed
+		root.remove_child(local_storage_bases)
+	local_storage_bases = create_item(root, 1)
+	local_storage_bases.set_text(0, "Base LNZ")
+	local_storage_bases.collapsed = was_collapsed
+	scan_local_bases()
+	
+func scan_local_bases() -> void:
+	print("[STATUS] FileTree: scan_local_bases: running")
+	var t_start: int = OS.get_ticks_msec()
+	var dir2: Directory = Directory.new()
+	var bases_dir: String = user_file_location + "/bases"
+	
+	if not dir2.dir_exists(bases_dir):
+		print("[WARNING] FileTree: scan_local_bases: directory not found")
+		return
+
+	dir2.open(bases_dir)
+	dir2.list_dir_begin()
+	var filename: String = dir2.get_next()
+	
+	while(!filename.empty()):
+		if filename.ends_with(".lnz"):
+			var full_path: String = bases_dir + "/" + filename
+			
+			var new_item: TreeItem = create_item(local_storage_bases)
+			new_item.set_text(0, filename)
+			new_item.set_metadata(0, full_path)
+			
+		filename = dir2.get_next()
+	dir2.list_dir_end()
+	print("[STATUS] FileTree: scan_local_bases: complete")
+	print("[TIME] FileTree: scan_local_bases took " + str(OS.get_ticks_msec() - t_start) + "ms")
+
 func scan_local_storage(selected_filepath) -> void:
 	print("[STATUS] FileTree: scan_local_storage: running")
 	var t_start: int = OS.get_ticks_msec()
@@ -610,7 +663,7 @@ func _scan_dir_recursive(path: String, parent_item: TreeItem, selected_filepath:
 	
 	while filename != "":
 		if dir.current_is_dir():
-			if is_root and (filename == "textures" or filename == "palettes" or filename == "references"):
+			if is_root and (filename == "textures" or filename == "palettes" or filename == "references" or filename == "bases"):
 				filename = dir.get_next()
 				continue
 			folders.append({"name": filename, "time": 0})
@@ -996,13 +1049,16 @@ func _on_Tree_item_rmb_selected(position: Vector2) -> void:
 		
 		var is_local_content: bool = false
 		var is_local_file: bool = false
+		var is_bases_file: bool = false
 		
 		var curr: TreeItem = p
 		while curr:
-			if curr == local_storage or curr == local_storage_textures or curr == local_storage_palettes:
+			if curr == local_storage or curr == local_storage_textures or curr == local_storage_palettes or curr == local_storage_bases:
 				is_local_content = true
-			if curr == local_storage:
+			if curr == local_storage or curr == local_storage_bases:
 				is_local_file = true
+			if curr == local_storage_bases:
+				is_bases_file = true
 			curr = curr.get_parent()
 
 		for i in range($ItemPopupMenu.get_item_count()):
@@ -1014,6 +1070,8 @@ func _on_Tree_item_rmb_selected(position: Vector2) -> void:
 			elif id == 4: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Export File
 			elif id == 5: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # New Folder
 			elif id == 6: $ItemPopupMenu.set_item_disabled(i, !is_local_file) # Move To...
+			elif id == 7: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Duplicate
+			elif id == 8: $ItemPopupMenu.set_item_disabled(i, !is_local_file or is_dir) # Add to Bases
 
 	$ItemPopupMenu.popup()
 	
@@ -1042,6 +1100,7 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 		rescan(null)
 		rescan_textures()
 		rescan_palettes()
+		rescan_bases()
 
 	elif id == 1: # rename file
 		var item: TreeItem = get_selected()
@@ -1094,6 +1153,85 @@ func _on_ItemPopupMenu_id_pressed(id: int) -> void:
 	elif id == 6: # Move To
 		_populate_move_dropdown()
 		move_dialog.popup_centered(Vector2(300, 100))
+		
+	elif id == 7: # Duplicate
+		var items: Array = get_all_selected()
+		if items.size() != 1: return
+		
+		var item: TreeItem = items[0]
+		var item_meta = item.get_metadata(0)
+		if not is_valid_filepath(item_meta): return
+		
+		var item_filepath: String = str(item_meta)
+		if item_filepath.ends_with("/"): return
+		
+		var filename: String = item.get_text(0)
+		var ext: String = filename.get_extension()
+		var base_name: String = filename.get_basename()
+		var timestamp: String = str(OS.get_unix_time())
+		var new_filename: String = base_name + "_" + timestamp + "." + ext
+		var base_dir: String = item_filepath.get_base_dir()
+		var new_filepath: String = base_dir.plus_file(new_filename)
+		
+		var dir: Directory = Directory.new()
+		if not dir.file_exists(new_filepath):
+			var err: int = dir.copy(item_filepath, new_filepath)
+			if err == OK:
+				print("[STATUS] FileTree: Duplicated file to ", new_filepath)
+				rescan(null)
+				rescan_textures()
+				rescan_palettes()
+				rescan_bases()
+			else:
+				print("[ERROR] FileTree: Failed to duplicate file: ", err)
+		else:
+			print("[WARNING] FileTree: Duplicate name already exists: ", new_filepath)
+		
+	elif id == 8: # Add to Bases
+		var items: Array = get_all_selected()
+		if items.size() != 1: return
+		
+		var item: TreeItem = items[0]
+		var item_meta = item.get_metadata(0)
+		if not is_valid_filepath(item_meta): return
+		
+		var item_filepath: String = str(item_meta)
+		if item_filepath.ends_with("/"): return
+		
+		var bases_dir: String = user_file_location + "/bases/"
+		if not bases_dir.ends_with("/"):
+			bases_dir += "/"
+			
+		var dir: Directory = Directory.new()
+		if not dir.dir_exists(bases_dir):
+			print("[STATUS] FileTree: Creating missing Bases directory: " + bases_dir)
+			var err: int = dir.make_dir_recursive(bases_dir)
+			if err != OK:
+				print("[ERROR] FileTree: Failed to create Bases directory at: " + bases_dir + " Error: " + str(err))
+				return
+
+		var filename: String = item.get_text(0)
+		var new_filepath: String = bases_dir + filename
+		
+		if dir.file_exists(new_filepath):
+			print("[WARNING] FileTree: File already exists in Bases: " + new_filepath)
+			return
+				
+		var err: int = dir.copy(item_filepath, new_filepath)
+		
+		if err == OK:
+			print("[STATUS] FileTree: Added file to Bases: " + new_filepath)
+			rescan(null)
+			rescan_textures()
+			rescan_palettes()
+			rescan_bases()
+		else:
+			if err == ERR_FILE_NOT_FOUND:
+				print("[ERROR] FileTree: Failed to copy. Source file not found: " + item_filepath)
+			elif err == ERR_CANT_CREATE:
+				print("[ERROR] FileTree: Failed to copy. Destination path invalid or permission denied.")
+			else:
+				print("[ERROR] FileTree: Failed to copy to Bases: " + str(err))
 
 func _delete_dir_recursive(path: String, depth: int = 0) -> void:
 	if depth > MAX_RECURSION_DEPTH:
@@ -1199,6 +1337,7 @@ func _on_RenameDialog_confirmed() -> void:
 		rescan(null)
 		rescan_textures()
 		rescan_palettes()
+		rescan_bases()
 
 		if new_filepath.ends_with(".lnz"):
 			emit_signal("user_file_selected", new_filepath)
@@ -1228,20 +1367,22 @@ func _on_LnzTextEdit_file_backed_up() -> void:
 func get_expanded_states() -> Dictionary:
 	_save_subfolder_states(local_storage)
 	return {
-		"Examples": examples.collapsed == false if examples else true,
-		"Local Storage": local_storage.collapsed == false if local_storage else true,
-		"Local Textures": local_storage_textures.collapsed == false if local_storage_textures else false,
-		"Base Textures": res_textures.collapsed == false if res_textures else false,
-		"Local Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false,
+		"Example LNZ": examples.collapsed == false if examples else true,
+		"Base LNZ": local_storage_bases.collapsed == false if local_storage_bases else false,
+		"User LNZ": local_storage.collapsed == false if local_storage else true,
+		"Game Textures": res_textures.collapsed == false if res_textures else false,
+		"User Textures": local_storage_textures.collapsed == false if local_storage_textures else false,
+		"User Palettes": local_storage_palettes.collapsed == false if local_storage_palettes else false,
 		"Subfolders": saved_subfolder_states
 	}
 
 func set_expanded_states(states: Dictionary) -> void:
-	if examples: examples.collapsed = !states.get("Examples", true)
-	if local_storage: local_storage.collapsed = !states.get("Local Storage", true)
-	if local_storage_textures: local_storage_textures.collapsed = !states.get("Local Textures", false)
-	if res_textures: res_textures.collapsed = !states.get("Base Textures", false)
-	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("Local Palettes", false)
+	if examples: examples.collapsed = !states.get("Example LNZ", true)
+	if local_storage_bases: local_storage_bases.collapsed = !states.get("Base LNZ", false)
+	if local_storage: local_storage.collapsed = !states.get("User LNZ", true)
+	if res_textures: res_textures.collapsed = !states.get("Game Textures", false)
+	if local_storage_textures: local_storage_textures.collapsed = !states.get("User Textures", false)
+	if local_storage_palettes: local_storage_palettes.collapsed = !states.get("User Palettes", false)
 	if states.has("Subfolders"):
 		saved_subfolder_states = states.get("Subfolders")
 
@@ -1270,7 +1411,7 @@ func _get_all_subdirs(path: String, out_array: Array, depth: int = 0) -> void:
 		var file_name: String = dir.get_next()
 		while file_name != "":
 			if dir.current_is_dir():
-				if path == user_file_location and (file_name == "textures" or file_name == "palettes" or file_name == "references"):
+				if path == user_file_location and (file_name == "textures" or file_name == "palettes" or file_name == "references" or file_name == "bases"):
 					file_name = dir.get_next()
 					continue
 					
@@ -1287,7 +1428,7 @@ func _on_NewFolderDialog_confirmed() -> void:
 	var folder_name: String = new_folder_input.text.strip_edges()
 	if folder_name == "": return
 	
-	var protected_names: Array = ["textures", "palettes", "references"]
+	var protected_names: Array = ["textures", "palettes", "references", "bases"]
 	if folder_name.to_lower() in protected_names:
 		print("[WARNING] FileTree: Cannot create folder with protected name: ", folder_name)
 		return
