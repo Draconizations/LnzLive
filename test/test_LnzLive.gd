@@ -114,6 +114,74 @@ func test_filetree_convert_bmp_invalid_file():
 	assert_false(result, "Conversion should safely fail and return false for non-existent files.")
 
 # ------------------------------------------------------------------------------
+# lnzlive_utils.gd
+# ------------------------------------------------------------------------------
+
+func test_parse_number_list():
+	# Ascending range
+	var result = LnzLiveUtils.parse_number_list("1-5")
+	assert_eq(result, [1, 2, 3, 4, 5], "Ascending range 1-5")
+	
+	# Descending range
+	result = LnzLiveUtils.parse_number_list("5-1")
+	assert_eq(result, [5, 4, 3, 2, 1], "Descending range 5-1")
+	
+	# Single number range
+	result = LnzLiveUtils.parse_number_list("3-3")
+	assert_eq(result, [3], "Range 3-3")
+
+	# Negative range allowed
+	result = LnzLiveUtils.parse_number_list("-5-5", true)
+	assert_eq(result, [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5], "Negative range -5 to 5 with allow_negatives=true")
+	
+	# Negative range restricted (should skip entirely because start < 0)
+	result = LnzLiveUtils.parse_number_list("-5-5", false)
+	assert_eq(result.size(), 0, "Negative range -5 to 5 with allow_negatives=false should be skipped")
+
+	# Negative range allowed (descending)
+	result = LnzLiveUtils.parse_number_list("-1--5", true)
+	assert_eq(result, [-1, -2, -3, -4, -5], "Descending negative range -1 to -5")
+
+	# Single negative integer allowed
+	result = LnzLiveUtils.parse_number_list("-10", true)
+	assert_eq(result, [-10], "Single negative integer -10 with allow_negatives=true")
+
+	# Single negative integer restricted (should skip)
+	result = LnzLiveUtils.parse_number_list("-10", false)
+	assert_eq(result.size(), 0, "Single negative integer -10 with allow_negatives=false should be skipped")
+
+	# Mix of ranges and integers
+	result = LnzLiveUtils.parse_number_list("1-3, 10, 15-17")
+	assert_eq(result, [1, 2, 3, 10, 15, 16, 17], "Mixed ranges and integers")
+
+	# Whitespace handling
+	result = LnzLiveUtils.parse_number_list("  1  -  5  ")
+	assert_eq(result, [1, 2, 3, 4, 5], "Whitespace around range")
+
+	# Empty string
+	result = LnzLiveUtils.parse_number_list("")
+	assert_eq(result.size(), 0, "Empty string")
+
+	# Only commas
+	result = LnzLiveUtils.parse_number_list(", , ,")
+	assert_eq(result.size(), 0, "Only commas")
+
+	# Leading/Trailing commas
+	result = LnzLiveUtils.parse_number_list(", 1, 2,")
+	assert_eq(result, [1, 2], "Leading and trailing commas")
+
+	# Invalid parts mixed with valid
+	result = LnzLiveUtils.parse_number_list("1, abc, 3")
+	assert_eq(result, [1, 3], "Invalid parts skipped")
+
+	# Large range performance check
+	result = LnzLiveUtils.parse_number_list("0-100")
+	assert_eq(result.size(), 101, "Large range 0-100 size")
+	assert_eq(result[0], 0, "Large range start")
+	assert_eq(result[100], 100, "Large range end")
+
+
+# ------------------------------------------------------------------------------
 # lnz_parser.gd
 # ------------------------------------------------------------------------------
 
@@ -329,7 +397,7 @@ func test_update_whisker_position_geometry():
 	var end_node = autofree(Spatial.new())
 	var visual_line = autofree(Spatial.new())
 	
-	# FIX: Add to tree so global_transform works
+	# Add to tree so global_transform works
 	add_child(start_node)
 	add_child(end_node)
 	add_child(visual_line)
