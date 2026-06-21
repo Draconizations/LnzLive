@@ -169,11 +169,17 @@ func _ready() -> void:
 	_connect_settings_signals()
 	load_settings()
 
+	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if pet_node and pet_node.has_signal("palette_changed"):
+		pet_node.connect("palette_changed", self, "_on_palette_changed")
+
 	call_deferred("update_preview")
+	_update_paintballz_tree_color_icons()
 
 func _on_visibility_changed() -> void:
 	if visible:
 		update_preview()
+		_update_paintballz_tree_color_icons()
 	else:
 		clear_preview()
 
@@ -211,6 +217,10 @@ func set_palette(palette_name) -> void:
 		active_palette = default_palette
 		
 	update_preview()
+	_update_paintballz_tree_color_icons()
+
+func _on_palette_changed(palette_name = "") -> void:
+	set_palette(palette_name)
 
 func sync_camera(main_camera_transform: Transform) -> void:
 	if preview_camera and is_instance_valid(preview_camera):
@@ -262,6 +272,7 @@ func _on_Tree_item_edited() -> void:
 
 	_reset_rotation_spinboxes()
 	update_preview()
+	_update_paintballz_tree_color_icons()
 
 func _read_item_data(item: TreeItem) -> Dictionary:
 	return {
@@ -322,6 +333,7 @@ func _populate_tree_from_base() -> void:
 	for p_data in _base_paintballz_data:
 		var item: TreeItem = paintballz_tree.create_item(root)
 		_setup_tree_item(item, p_data, p_data.position)
+	_update_paintballz_tree_color_icons()
 
 func _setup_tree_item(item: TreeItem, p_data: Dictionary, pos: Vector3) -> void:
 	item.set_text(0, str(p_data.base))
@@ -925,3 +937,44 @@ func _on_ApplyRecolorsButton_pressed() -> void:
 	_populate_tree_from_base()
 	update_preview()
 	save_settings()
+
+
+func _update_paintballz_tree_color_icons() -> void:
+	var root: TreeItem = paintballz_tree.get_root()
+	if not root:
+		return
+	
+	var item: TreeItem = root.get_children()
+	while item:
+		var color_idx_str: String = item.get_text(5)
+		var color_idx: int = 0
+		if color_idx_str.is_valid_integer():
+			color_idx = color_idx_str.to_int()
+		
+		# Get color from active palette
+		var color: Color = Color.black
+		if active_palette:
+			var img: Image = active_palette.get_data()
+			if img:
+				img.lock()
+				var w: int = img.get_width()
+				var h: int = img.get_height()
+				var x: int = color_idx % w
+				var y: int = color_idx / w
+				if x < w and y < h:
+					color = img.get_pixel(x, y)
+				img.unlock()
+		
+		var tex: ImageTexture = _create_color_preview_texture(color)
+		
+		item.set_icon(0, tex)
+		
+		item = item.get_next()
+
+func _create_color_preview_texture(color: Color) -> ImageTexture:
+	var img: Image = Image.new()
+	img.create(16, 16, false, Image.FORMAT_RGBA8)
+	img.fill(color)
+	var tex: ImageTexture = ImageTexture.new()
+	tex.create_from_image(img)
+	return tex
