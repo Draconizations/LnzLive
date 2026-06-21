@@ -94,8 +94,8 @@ func test_filetree_expanded_states():
 		file_tree.local_storage = file_tree.create_item()
 	
 	var mock_states = {
-		"Examples": false,
-		"Local Storage": true
+		"Example LNZ": false,
+		"User LNZ": true
 	}
 	
 	file_tree.set_expanded_states(mock_states)
@@ -104,8 +104,8 @@ func test_filetree_expanded_states():
 	assert_false(file_tree.local_storage.collapsed, "Local Storage should be expanded.")
 	
 	var retrieved_states = file_tree.get_expanded_states()
-	assert_false(retrieved_states["Examples"], "Getter should return false for Examples.")
-	assert_true(retrieved_states["Local Storage"], "Getter should return true for Local Storage.")
+	assert_false(retrieved_states["Example LNZ"], "Getter should return false for Examples.")
+	assert_true(retrieved_states["User LNZ"], "Getter should return true for Local Storage.")
 
 func test_filetree_convert_bmp_invalid_file():
 	# Ensure convert_bmp_to_palette_png fails safely and returns false 
