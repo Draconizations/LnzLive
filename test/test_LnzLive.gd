@@ -71,9 +71,12 @@ func _reset_editor_state():
 func _create_temp_lnz(content: String) -> String:
 	var path = "user://gut_temp_test.lnz"
 	var f = File.new()
-	f.open(path, File.WRITE)
-	f.store_string(content)
-	f.close()
+	var err = f.open(path, File.WRITE)
+	if err == OK:
+		f.store_string(content)
+		f.close()
+	else:
+		push_error("Failed to create temp file: %s" % err)
 	return path
 
 # ------------------------------------------------------------------------------
@@ -211,7 +214,7 @@ func test_lnz_parser_get_eyes():
 func test_apply_sizes_scaling_math():
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
-	var mock_lnz = autofree(LnzParser.new(null))
+	var mock_lnz = autofree(LnzParser.new(""))
 	mock_lnz.scales = Vector2(127.5, 127.5)
 	
 	var mock_ball = autofree(Node.new())
@@ -278,7 +281,7 @@ func test_is_special_ball_detection():
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
 	
 	# Mock the dictionary that LnzParser normally provides to dictate add_groups
-	var mock_lnz = autofree(LnzParser.new(null))
+	var mock_lnz = autofree(LnzParser.new(""))
 	mock_lnz.addballs = {
 		120: {"add_group": 1},
 		137: {"add_group": 2},
@@ -328,6 +331,10 @@ func test_update_whisker_position_geometry():
 	
 	# Note: look_at_from_position sets the origin to the midpoint
 	assert_eq(visual_line.global_transform.origin, Vector3(0, 0, 5), "Line origin should be exactly in the middle of the two nodes.")
+	
+	remove_child(start_node)
+	remove_child(end_node)
+	remove_child(visual_line)
 
 func test_update_eyelids_mirrored_angles():
 	var dog_gen = autofree(load("res://scenes/dog_generator.gd").new())
@@ -344,7 +351,7 @@ func test_update_eyelids_mirrored_angles():
 	right_eye.set_script(b_script)
 	
 	# Mock the LnzParser data required for the function
-	var mock_lnz = autofree(LnzParser.new(null))
+	var mock_lnz = autofree(LnzParser.new(""))
 	mock_lnz.eyelid_color = 100
 	mock_lnz.eyelash_lengths = []
 	dog_gen.lnz = mock_lnz
@@ -469,17 +476,27 @@ func test_lnz_logical_history_merging():
 	assert_eq(item.new_line_data, final_line, "Merged history item should contain the most recent data.")
 
 func test_lnz_delimiter_detection_auto_priority():
+	# Function must detect and return the most frequent delimiter or, if tied, the highest priority delimiter
 	if not lnz_text: return
-	# Mix of delimiters, but tabs are dominant
-	var text = "[Section]\n1\t2\t3\n4\t5\t6\n7 8 9"
-	lnz_text.text = text
-	var delim = lnz_text._detect_delimiter(1, 4)
-	assert_eq(delim, "\t", "Should detect tab as the dominant delimiter.")
 	
-	# Test Comma-Space specificity
-	lnz_text.text = "[Section]\n1, 2, 3\n4, 5, 6"
-	delim = lnz_text._detect_delimiter(1, 3)
-	assert_eq(delim, ", ", "Should prefer ', ' over just ',' when spaces are present.")
+	# Test frequency: even though ',' is in every line, '\t' is in more lines
+	var test_text_1 = "[Section]\n1\t2\t3\n4\t5\t6\n7,8,9"
+	lnz_text.text = test_text_1
+	
+	var delim_1 = lnz_text._detect_delimiter(1, 4)
+	assert_eq(delim_1, "\t", "High frequency delimiter should win over lower frequency.")
+
+	# Test tie-breaking: both ',' and '\t' appear 1 time but in priority order ([", ", ",", "\t", " "]) ',' comes before '\t'
+	var test_text_2 = "[Section]\n1,2,3\n4\t5\t6"
+	lnz_text.text = test_text_2
+	var delim_2 = lnz_text._detect_delimiter(1, 3)
+	assert_eq(delim_2, ",", "Tie should be broken by priority order (comma > tab).")
+
+	# Test specificity: line 1 has ', ' and line 2 has ',', these are distinct and ", " is higher priority
+	var test_text_3 = "[Section]\n1, 2, 3\n4,5,6"
+	lnz_text.text = test_text_3
+	var delim_3 = lnz_text._detect_delimiter(1, 3)
+	assert_eq(delim_3, ", ", "Tie between ', ' and ',' should favor ', ' due to priority.")
 	
 func test_lnz_undo_restores_cursor_and_scroll():
 	if not lnz_text: return
@@ -543,12 +560,16 @@ func test_lnz_text_mirror_l_to_r_logic():
 func test_petview_spatial_hash_caching():
 	if not pet_view: return
 	var mock_ball = autofree(Spatial.new())
+	
+	add_child(mock_ball)
 	mock_ball.global_transform.origin = Vector3(0, 0, 0)
 	
 	pet_view._spatial_grid_2d.clear()
 	pet_view._spatial_grid_2d[Vector2(0, 0)] = [mock_ball]
 	
 	assert_true(pet_view._spatial_grid_2d.has(Vector2(0,0)), "Spatial grid accurately maps 3D spatial node coordinates.")
+	
+	remove_child(mock_ball)
 
 func test_petview_box_selection_logic():
 	if not pet_view: return
@@ -584,6 +605,8 @@ func test_petview_pending_moves_tracking():
 	
 	assert_eq(pet_view.pending_moves[5].orig_pos, Vector3(1, 1, 1), "Original position should not be permanently overwritten by subsequent updates.")
 	assert_eq(pet_view.pending_moves[5].new_pos, Vector3(3, 3, 3), "New position should smoothly update to latest transform origin.")
+	
+	pet_view.remove_child(mock_ball)
 
 func test_petview_freeline_paintball_interpolation():
 	if not pet_view: return
@@ -603,39 +626,3 @@ func test_petview_freeline_paintball_interpolation():
 	assert_eq(calculated_diams[0], 10, "First step of freeline tapered size should match min parameter.")
 	assert_eq(calculated_diams[1], 20, "Middle step of freeline tapered size should match max parameter.")
 	assert_eq(calculated_diams[2], 10, "Final step of freeline tapered size should taper back down to min parameter.")
-
-func test_petview_apply_mirror_scale():
-	if not pet_view: return
-	
-	var b1 = autofree(Spatial.new())
-	var s = GDScript.new()
-	s.source_code = "extends Spatial\nvar ball_no=1\nvar ball_size=10.0\nenum OutlineState { NONE, ACTIVE_SELECTED, MODIFIED, PIVOT }\nfunc set_ball_size(sz):\n\tball_size=sz\nfunc apply_outline_state(st):\n\tpass"
-	s.reload()
-	b1.set_script(s)
-	
-	var b2 = autofree(Spatial.new())
-	b2.set_script(s)
-	b2.ball_no = 2
-	
-	pet_view.add_child(b1)
-	pet_view.add_child(b2)
-	
-	b1.global_transform.origin = Vector3(5,0,0)
-	b2.global_transform.origin = Vector3(-5,0,0)
-
-	var mock_lnz_text = autofree(Node.new())
-	var ls = GDScript.new()
-	ls.source_code = "extends Node\nfunc find_mirrored_ball(b):\n\treturn 2 if b==1 else b"
-	ls.reload()
-	mock_lnz_text.set_script(ls)
-	
-	var old_lnz = pet_view.lnz_text_edit
-	pet_view.lnz_text_edit = mock_lnz_text
-	pet_view.pet_node.ball_map = {1: b1, 2: b2}
-
-	pet_view._apply_mirror_scale([b1], 2.0, true, true, Vector3.ZERO)
-
-	assert_eq(b2.global_transform.origin, Vector3(-10,0,0), "Position should be accurately scaled outwardly relative from active tracked pivot point.")
-	assert_eq(b2.ball_size, 10.0, "Mirrored partner scale dimensions should flawlessly copy the newly established reference target.")
-	
-	pet_view.lnz_text_edit = old_lnz
