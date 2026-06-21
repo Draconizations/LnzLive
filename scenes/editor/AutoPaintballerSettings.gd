@@ -330,6 +330,28 @@ func _on_Distribution_item_selected(index: int) -> void:
 		Distribution.WAVE: # 18
 			params_container.get_node("WaveContainer").show()
 
+	var num_spots_edit = find_node("NumSpots")
+	if num_spots_edit:
+		var current_val = num_spots_edit.value
+		var new_val = 25.0
+
+		match index:
+			Distribution.STAR:
+				new_val = 5.0
+			Distribution.RAINBOW:
+				new_val = 3.0
+			Distribution.LEOPARD:
+				new_val = 10.0
+			Distribution.BULLSEYE:
+				new_val = 10.0
+			Distribution.FRACTAL:
+				new_val = 1.0
+			_:
+				new_val = 25.0
+
+		if current_val > new_val:
+			num_spots_edit.value = new_val
+
 
 func _on_RandomizeButton_pressed() -> void:
 	var properties: Dictionary = get_properties()

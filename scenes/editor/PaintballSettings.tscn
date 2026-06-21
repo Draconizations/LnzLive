@@ -1020,7 +1020,7 @@ hint_tooltip = "Distance between steps"
 size_flags_horizontal = 3
 custom_icons/updown = ExtResource( 4 )
 min_value = 1.0
-value = 50.0
+value = 5.0
 
 [node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 829.0

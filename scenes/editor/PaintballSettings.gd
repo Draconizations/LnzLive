@@ -1423,7 +1423,7 @@ func load_settings() -> void:
 	find_node("EraserCheckBox").pressed = config.get_value("PaintballProperties", "eraser", false)
 	find_node("RandomWalkCheckBox").pressed = config.get_value("PaintballProperties", "random_walk", false)
 	find_node("WalkStepsSpinBox").value = config.get_value("PaintballProperties", "walk_steps", 3.0)
-	find_node("WalkSpreadSpinBox").value = config.get_value("PaintballProperties", "walk_spread", 50.0)
+	find_node("WalkSpreadSpinBox").value = config.get_value("PaintballProperties", "walk_spread", 5.0)
 
 	var loaded_paintballs: Array = config.get_value("DesignMode", "design_paintballs", [])
 	if loaded_paintballs.size() > 0:
