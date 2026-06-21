@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/LnzLiveLauncherIcon.png-006a1e275e599abede92e259aa7c0a49.stex"
+path="res://.import/LnzLiveLauncherIcon.png-4eca3b9e00fe05376cc299b641b81690.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://launcher/LnzLiveLauncherIcon.png"
-dest_files=[ "res://.import/LnzLiveLauncherIcon.png-006a1e275e599abede92e259aa7c0a49.stex" ]
+source_file="res://LnzLiveLauncherIcon.png"
+dest_files=[ "res://.import/LnzLiveLauncherIcon.png-4eca3b9e00fe05376cc299b641b81690.stex" ]
 
 [params]
 

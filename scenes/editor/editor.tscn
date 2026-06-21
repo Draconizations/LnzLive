@@ -1,4 +1,4 @@
-[gd_scene load_steps=57 format=2]
+[gd_scene load_steps=58 format=2]
 
 [ext_resource path="res://scenes/editor/LnzTextEdit.gd" type="Script" id=1]
 [ext_resource path="res://scenes/editor/FileTree.gd" type="Script" id=2]
@@ -11,6 +11,7 @@
 [ext_resource path="res://scenes/editor/ExportButtonOBJ.gd" type="Script" id=9]
 [ext_resource path="res://scenes/editor/ToolsMenu.gd" type="Script" id=10]
 [ext_resource path="res://scenes/editor/RecolorLine.tscn" type="PackedScene" id=11]
+[ext_resource path="res://resources/fonts/MesseDuesseldorf.ttf" type="DynamicFontData" id=12]
 [ext_resource path="res://scenes/editor/UserSettings.gd" type="Script" id=14]
 [ext_resource path="res://resources/icons/ico_eyelid_neutral.png" type="Texture" id=15]
 [ext_resource path="res://resources/icons/ico_arr_R_A_mini.png" type="Texture" id=16]
@@ -27,7 +28,6 @@
 [ext_resource path="res://resources/fonts/font_pixel_maz_30.tres" type="DynamicFont" id=27]
 [ext_resource path="res://resources/fonts/font_pixel_maz_24.tres" type="DynamicFont" id=28]
 [ext_resource path="res://resources/fonts/font_pixel_operator_default.tres" type="DynamicFont" id=29]
-[ext_resource path="res://resources/fonts/font_messe_duesseldorf_default.tres" type="DynamicFont" id=30]
 [ext_resource path="res://resources/fonts/pixel_maz.ttf" type="DynamicFontData" id=31]
 [ext_resource path="res://resources/fonts/font_pixel_code_default.tres" type="DynamicFont" id=32]
 [ext_resource path="res://resources/fonts/font_pixel_code_28_outline.tres" type="DynamicFont" id=33]
@@ -124,6 +124,10 @@ font_data = ExtResource( 31 )
 [sub_resource type="DynamicFont" id=9]
 size = 30
 font_data = ExtResource( 31 )
+
+[sub_resource type="DynamicFont" id=14]
+size = 12
+font_data = ExtResource( 12 )
 
 [sub_resource type="DynamicFontData" id=10]
 font_path = "res://resources/fonts/PixelCode.ttf"
@@ -1015,9 +1019,7 @@ script = ExtResource( 21 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-axis_length = 25
-margin = Vector2( 50, 50 )
-font = ExtResource( 30 )
+font = SubResource( 14 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer"]
 margin_left = 104.0
@@ -1099,7 +1101,7 @@ margin_right = 759.0
 margin_bottom = 98.0
 custom_fonts/font = ExtResource( 35 )
 custom_colors/font_color = Color( 1, 1, 1, 0.501961 )
-text = "PB-beta-v1.4.7-preview-30"
+text = "PB-beta-v1.4.7-preview-31"
 align = 2
 
 [node name="TextPanelContainer" type="PanelContainer" parent="SceneRoot/HSplitContainer/HSplitContainer"]

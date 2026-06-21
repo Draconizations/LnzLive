@@ -2,16 +2,14 @@ extends Node2D
 ## AxisOverlay.gd
 ## Shows screen‐space XYZ and L/R axis widget
 
-## Exported NodePaths for configuration
-var panel_path: NodePath = "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/AxisContainer"
-var camera_path: NodePath = "Root/SceneRoot/ViewportContainer/Viewport/CameraHolder/Camera"
+export(NodePath) var panel_path  := "Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer/VBoxContainer/HelperContainer/AxisContainer"
+export(NodePath) var camera_path := "Root/SceneRoot/ViewportContainer/Viewport/CameraHolder/Camera"
 
-## Exported configuration properties
-var axis_length: int = 40
-var line_thickness: int = 2
-var axis_dir_offset: int = 8
-var margin: Vector2 = Vector2(30, 30)
-var font: Font = null
+export(int)	 var axis_length	 := 30
+export(int)	 var line_thickness  := 2
+export(int)	 var axis_dir_offset := 8
+export(Vector2) var margin		  := Vector2(30, 30)
+export(Font)	var font
 
 ## Constants for axis styling
 const AXIS_COLORS: Dictionary = {

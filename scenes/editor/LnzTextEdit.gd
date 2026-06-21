@@ -3726,13 +3726,17 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 				var delim = _detect_delimiter(current_line_num, current_line_num + 1)
 				var parsed_line = split_line(line)
 				
-				if parsed_line.size() < 14 or int(parsed_line[0]) in balls_to_exclude:
+				if parsed_line.size() < 6 or int(parsed_line[0]) in balls_to_exclude:
 					i += 1
 					continue
-				
+
 				var color = parsed_line[4]
 				var outline_color = parsed_line[5]
-				var texture = parsed_line[13]
+
+				var texture = ""
+				if parsed_line.size() > 13:
+					texture = parsed_line[13]
+
 				var updates = {}
 
 				for rule in recolor_rules:
@@ -3750,7 +3754,7 @@ func _on_ToolsMenu_recolor(all_recolor_info: Dictionary):
 					
 					if new_color != null:
 						updates[4] = new_color
-						if not rule.after_texture.empty():
+						if not rule.after_texture.empty() and parsed_line.size() > 13:
 							updates[13] = rule.after_texture
 						break
 
