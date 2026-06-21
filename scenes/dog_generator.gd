@@ -506,10 +506,11 @@ func set_skip_next_rebuild(val: bool):
 	_skip_next_rebuild = val
 
 func init_ball_data(species, keep_visuals: bool = false, custom_bhd_path: String = ""):
-	_hidden_balls.clear()
-	_hidden_lines.clear()
-	_hidden_polygons.clear()
-	_hidden_paintballs.clear()
+	if not keep_visuals:
+		_hidden_balls.clear()
+		_hidden_lines.clear()
+		_hidden_polygons.clear()
+		_hidden_paintballs.clear()
 
 	if t_pose_checkbox:
 		t_pose_active = t_pose_checkbox.pressed
