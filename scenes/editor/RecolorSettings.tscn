@@ -248,6 +248,7 @@ custom_fonts/font = SubResource( 4 )
 text = "Autofill"
 
 [node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+visible = false
 margin_left = 271.0
 margin_right = 367.0
 margin_bottom = 25.0
@@ -258,6 +259,53 @@ custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Randomize"
+
+[node name="RandomizeAfterButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 371.0
+margin_right = 467.0
+margin_bottom = 25.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Randomize"
+
+[node name="ColorTheorySelect" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 471.0
+margin_right = 567.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 4 )
+text = "Theory"
+
+[node name="TheorySeedColor" type="ColorPickerButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 571.0
+margin_right = 607.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+color = Color( 1, 1, 1, 1 ) # Default to White
+
+[node name="RandomSeedCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 611.0
+margin_right = 707.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 5 )
+text = "Random Seed"
+
+[node name="NaturalColorsOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 611.0
+margin_right = 707.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 4 )
+text = "Natural (10-120)"
+
+[node name="TexturableOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_left = 711.0
+margin_right = 807.0
+margin_bottom = 25.0
+custom_fonts/font = SubResource( 4 )
+text = "Texturable (10-140)"
 
 [node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 371.0

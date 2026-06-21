@@ -20,13 +20,28 @@ onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBox
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
 onready var bucket_texture_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
 
+onready var rand_after_header = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header
+onready var rand_after_btn: Button = rand_after_header.get_node_or_null("RandomizeAfterButton")
+onready var color_theory_select: OptionButton = rand_after_header.get_node_or_null("ColorTheorySelect")
+onready var theory_seed_picker: ColorPickerButton = rand_after_header.get_node_or_null("TheorySeedColor")
+onready var random_seed_check: CheckBox = rand_after_header.get_node_or_null("RandomSeedCheckBox")
+onready var natural_colors_check: CheckBox = rand_after_header.get_node_or_null("NaturalColorsOnly")
+onready var texturable_only_check: CheckBox = rand_after_header.get_node_or_null("TexturableOnly")
+
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
 
 var dog_generator: Node = null
 var cached_palette_colors: Array = []
 
+onready var lnz_text_edit: TextEdit = get_tree().root.get_node(
+	"Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit"
+)
+
 var is_docked: bool = false
+
+const NATURAL_COLORS: Array = [10, 20, 30, 40, 50, 60, 90, 100, 110, 120]
+const TEXTURABLE_COLORS: Array = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140]
 
 func _ready() -> void:
 	if get_tree().get_root().has_node("Root/PetRoot/Node"):
@@ -52,8 +67,41 @@ func _ready() -> void:
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
-
+	
+	if is_instance_valid(rand_after_btn):
+		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
+	
+	if is_instance_valid(theory_seed_picker):
+		theory_seed_picker.connect("color_changed", self, "_on_theory_seed_changed")
+		
+	if is_instance_valid(random_seed_check):
+		random_seed_check.connect("toggled", self, "_on_random_seed_toggled")
+	
+	_populate_color_theory_options()
+		
 	_on_palette_changed()
+
+func _populate_color_theory_options() -> void:
+	if not is_instance_valid(color_theory_select):
+		return
+	
+	color_theory_select.clear()
+	
+	color_theory_select.add_item("Off")
+	
+	color_theory_select.add_item("Monochromatic")
+	color_theory_select.add_item("Analogous")
+	color_theory_select.add_item("Complementary")
+	color_theory_select.add_item("Triadic")
+	color_theory_select.add_item("Split Complementary")
+	
+	color_theory_select.selected = 0
+
+func _on_theory_seed_changed(color: Color) -> void:
+	pass
+
+func _on_random_seed_toggled(is_on: bool) -> void:
+	pass
 
 func set_docked(docked: bool) -> void:
 	is_docked = docked
@@ -318,7 +366,6 @@ func _on_ClearSwap_pressed() -> void:
 	_refresh_all_previews()
 
 func _on_AutofillSwap_pressed() -> void:
-	var lnz_text_edit: TextEdit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if not is_instance_valid(lnz_text_edit): return
 
 	var pair_counts: Dictionary = {}
@@ -388,7 +435,6 @@ func _sort_by_count(a: Dictionary, b: Dictionary) -> bool:
 
 func _on_RandomizeSwap_pressed() -> void:
 	randomize()
-	var lnz_text_edit: TextEdit = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 	if not is_instance_valid(lnz_text_edit): return
 
 	var max_texture_id: int = -1
@@ -402,15 +448,98 @@ func _on_RandomizeSwap_pressed() -> void:
 
 	for l in lines:
 		if l.is_queued_for_deletion(): continue
+		var before_color_edit = l.find_node("BeforeColor", true, false)
+		var before_texture_edit = l.find_node("BeforeTexture", true, false)
+		
+		var random_color: int = randi() % 256
+		before_color_edit.text = str(random_color)
+		
+		var random_texture: int = randi() % (max_texture_id + 1)
+		before_texture_edit.text = str(random_texture)
+
+	_refresh_all_previews()
+
+func _on_RandomizeAfter_pressed() -> void:
+	randomize()
+	if not is_instance_valid(lnz_text_edit): return
+
+	var max_texture_id: int = -1
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Ballz Info]", 7, max_texture_id)
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Add Ball]", 13, max_texture_id)
+	max_texture_id = _find_max_texture_for_randomize(lnz_text_edit, "[Paint Ballz]", 10, max_texture_id)
+
+	if max_texture_id == -1: max_texture_id = 0
+
+	var lines: Array = swap_lines_container.get_children()
+	
+	var theory_idx: int = 0
+	if is_instance_valid(color_theory_select):
+		theory_idx = color_theory_select.selected
+		
+	var seed_color: Color = Color.white # Default to White
+	var use_random_seed: bool = false
+	
+	if is_instance_valid(random_seed_check):
+		use_random_seed = random_seed_check.pressed
+		
+	if is_instance_valid(theory_seed_picker):
+		# If using random seed, we ignore the picker
+		if not use_random_seed:
+			seed_color = theory_seed_picker.color
+		else:
+			var rand_idx: int = randi() % 256
+			seed_color = get_color_from_index(rand_idx)
+		
+	var use_natural: bool = false
+	if is_instance_valid(natural_colors_check):
+		use_natural = natural_colors_check.pressed
+		
+	var use_texturable: bool = false
+	if is_instance_valid(texturable_only_check):
+		use_texturable = texturable_only_check.pressed
+
+	for l in lines:
+		if l.is_queued_for_deletion(): continue
+		
 		var after_color_edit = l.find_node("AfterColor", true, false)
 		var after_texture_edit = l.find_node("AfterTexture", true, false)
 		var is_ramp: bool = l.find_node("ColorRampCheck", true, false).pressed
 
 		var random_color: int
-		if is_ramp:
-			random_color = (randi() % 14 + 1) * 10
+		var base_color: Color = Color.white
+		var target_color: Color = Color.white
+
+		if use_natural:
+			var idx: int = randi() % NATURAL_COLORS.size()
+			random_color = NATURAL_COLORS[idx]
+			
+		elif use_texturable:
+			var idx: int = randi() % TEXTURABLE_COLORS.size()
+			random_color = TEXTURABLE_COLORS[idx]
+			
+		elif theory_idx > 0:
+			base_color = seed_color
+			
+			var new_colors: Array = LnzLiveUtils.generate_theory_colors(base_color, theory_idx, 3) # Use 3 steps for theory
+			
+			if new_colors.size() > 0:
+				var chosen_color: Color = new_colors[randi() % new_colors.size()]
+				random_color = get_closest_palette_index(chosen_color)
+			else:
+				random_color = randi() % 256
+				
 		else:
-			random_color = randi() % (215 - 10 + 1) + 10
+			if is_ramp:
+				var ramp_base: int = (randi() % 12) * 10 # 0 to 110
+				ramp_base = max(ramp_base, 10) # Ensure at least 10
+				random_color = ramp_base + (randi() % 10)
+			else:
+				random_color = randi() % 256
+
+		if random_color >= cached_palette_colors.size():
+			random_color = cached_palette_colors.size() - 1
+		if random_color < 0:
+			random_color = 0
 
 		after_color_edit.text = str(random_color)
 
@@ -418,6 +547,24 @@ func _on_RandomizeSwap_pressed() -> void:
 		after_texture_edit.text = str(random_texture)
 
 	_refresh_all_previews()
+
+func get_closest_palette_index(target_color: Color) -> int:
+	if cached_palette_colors.empty():
+		return 0
+	var best_index: int = 0
+	var min_dist: float = INF
+	for i in range(cached_palette_colors.size()):
+		var c: Color = cached_palette_colors[i]
+		var dist: float = pow(c.r - target_color.r, 2) + pow(c.g - target_color.g, 2) + pow(c.b - target_color.b, 2)
+		if dist < min_dist:
+			min_dist = dist
+			best_index = i
+	return best_index
+
+func get_color_from_index(index: int) -> Color:
+	if index >= 0 and index < cached_palette_colors.size():
+		return cached_palette_colors[index]
+	return Color.white
 
 func _find_max_texture_for_randomize(lnz_text_edit: TextEdit, section_name: String, texture_idx: int, current_max: int) -> int:
 	var bounds: Dictionary = lnz_text_edit.get_section_bounds(section_name)

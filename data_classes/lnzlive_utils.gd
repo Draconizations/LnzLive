@@ -114,6 +114,82 @@ static func get_ramp_color(current_color_str: String, rule: Dictionary):
 	else:
 		return str(after_color)
 
+static func generate_theory_colors(base_color: Color, theory_type: int, steps: int) -> Array:
+	var generated_colors: Array = []
+	
+	var h: float = base_color.h
+	var s: float = base_color.s
+	var v: float = base_color.v
+	
+	# The base color is always the first in the list for reference
+	generated_colors.append(base_color)
+	
+	match theory_type:
+		0: # Off / Standard - Return just the base color or empty
+			# In the context of the randomizer, 0 means "Off", so we return empty 
+			# to signal that standard randomization should be used instead.
+			return []
+			
+		1: # Monochromatic (Value & Saturation)
+			for i in range(steps):
+				var nv: float = clamp(v + rand_range(-0.4, 0.4), 0.1, 1.0)
+				var ns: float = clamp(s + rand_range(-0.4, 0.4), 0.0, 1.0)
+				generated_colors.append(Color.from_hsv(h, ns, nv))
+				
+		2: # Analogous (Neighboring)
+			# Generate 'steps' colors spread around the hue circle
+			for i in range(steps):
+				# Spread hue by small increments
+				var hue_offset: float = (i + 1) * 0.05 + rand_range(-0.02, 0.02)
+				var new_h: float = fmod(h + hue_offset, 1.0)
+				
+				# Slight variation in S and V to keep it natural
+				var new_s: float = clamp(s + rand_range(-0.1, 0.1), 0.0, 1.0)
+				var new_v: float = clamp(v + rand_range(-0.1, 0.1), 0.0, 1.0)
+				
+				generated_colors.append(Color.from_hsv(new_h, new_s, new_v))
+				
+			# Also generate the "negative" analogous (counter-clockwise)
+			for i in range(steps):
+				var hue_offset: float = (i + 1) * 0.05 + rand_range(-0.02, 0.02)
+				var new_h: float = fmod(h - hue_offset + 1.0, 1.0)
+				var new_s: float = clamp(s + rand_range(-0.1, 0.1), 0.0, 1.0)
+				var new_v: float = clamp(v + rand_range(-0.1, 0.1), 0.0, 1.0)
+				
+				generated_colors.append(Color.from_hsv(new_h, new_s, new_v))
+
+		3: # Complementary 
+			var comp_h: float = fmod(h + 0.5 + rand_range(-0.05, 0.05), 1.0)
+			generated_colors.append(Color.from_hsv(comp_h, s, v))
+			
+			if steps > 1:
+				generated_colors.append(Color.from_hsv(h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+				generated_colors.append(Color.from_hsv(comp_h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
+				
+		4: # Triadic 
+			var t1: float = fmod(h + 0.333 + rand_range(-0.05, 0.05), 1.0)
+			var t2: float = fmod(h + 0.666 + rand_range(-0.05, 0.05), 1.0)
+			
+			generated_colors.append(Color.from_hsv(t1, clamp(s+rand_range(-0.1,0.1), 0, 1), clamp(v+rand_range(-0.1,0.1), 0, 1)))
+			generated_colors.append(Color.from_hsv(t2, clamp(s+rand_range(-0.1,0.1), 0, 1), clamp(v+rand_range(-0.1,0.1), 0, 1)))
+			
+			if steps > 2:
+				generated_colors.append(Color.from_hsv(t1, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+				generated_colors.append(Color.from_hsv(t2, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
+				
+		5: # Split Complementary
+			var sc1: float = fmod(h + 0.416 + rand_range(-0.05, 0.05), 1.0)
+			var sc2: float = fmod(h + 0.583 + rand_range(-0.05, 0.05), 1.0)
+			
+			generated_colors.append(Color.from_hsv(sc1, clamp(s+rand_range(-0.1,0.1), 0, 1), clamp(v+rand_range(-0.1,0.1), 0, 1)))
+			generated_colors.append(Color.from_hsv(sc2, clamp(s+rand_range(-0.1,0.1), 0, 1), clamp(v+rand_range(-0.1,0.1), 0, 1)))
+			
+			if steps > 2:
+				generated_colors.append(Color.from_hsv(sc1, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+				generated_colors.append(Color.from_hsv(sc2, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
+
+	return generated_colors
+
 
 ### SPATIAL UTILITIES ###
 static func get_basis_from_normal(normal_vec: Vector3) -> Basis:

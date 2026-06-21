@@ -94,6 +94,7 @@ func _ready() -> void:
 	var gen_pal_select: OptionButton = find_node("GenPaletteTypeSelect")
 	if is_instance_valid(gen_pal_select):
 		if gen_pal_select.get_item_count() == 0:
+			gen_pal_select.add_item("Off")
 			gen_pal_select.add_item("Monochromatic")
 			gen_pal_select.add_item("Analogous")
 			gen_pal_select.add_item("Complementary")
@@ -281,7 +282,6 @@ func _on_GeneratePaletteButton_pressed() -> void:
 		if parsed.size() > 0: 
 			base_index = parsed[randi() % parsed.size()]
 		else:
-			# Absolute fallback if everything is empty
 			base_index = randi() % 256 
 		
 	var base_color: Color = get_color_from_index(base_index)
@@ -289,50 +289,18 @@ func _on_GeneratePaletteButton_pressed() -> void:
 	var p_type: int = 0
 	if is_instance_valid(type_select):
 		p_type = type_select.selected
-		
-	var generated_colors: Array = []
-	var h: float = base_color.h
-	var s: float = base_color.s
-	var v: float = base_color.v
 	
-	generated_colors.append(base_color)
+	var generated_colors: Array = LnzLiveUtils.generate_theory_colors(base_color, p_type, 4)
 	
-	match p_type:
-		0: # Monochromatic (Value & Saturation)
-			for i in range(1, 5):
-				var nv: float = clamp(v + rand_range(-0.4, 0.4), 0.1, 1.0)
-				var ns: float = clamp(s + rand_range(-0.4, 0.4), 0.0, 1.0)
-				generated_colors.append(Color.from_hsv(h, ns, nv))
-		1: # Analogous (Neighboring)
-			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.05, 0.12), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.05, 0.12) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(fmod(h + rand_range(0.13, 0.20), 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(fmod(h - rand_range(0.13, 0.20) + 1.0, 1.0), clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-		2: # Complementary 
-			var comp_h: float = fmod(h + 0.5 + rand_range(-0.05, 0.05), 1.0)
-			generated_colors.append(Color.from_hsv(comp_h, s, v))
-			generated_colors.append(Color.from_hsv(h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
-			generated_colors.append(Color.from_hsv(comp_h, clamp(s * rand_range(0.5, 0.9), 0.0, 1.0), clamp(v * rand_range(0.6, 1.2), 0.0, 1.0)))
-		3: # Triadic 
-			var t1: float = fmod(h + 0.333 + rand_range(-0.05, 0.05), 1.0)
-			var t2: float = fmod(h + 0.666 + rand_range(-0.05, 0.05), 1.0)
-			generated_colors.append(Color.from_hsv(t1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(t2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(t1, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
-			generated_colors.append(Color.from_hsv(t2, clamp(s * rand_range(0.4, 0.8), 0.0, 1.0), clamp(v * rand_range(0.6, 1.1), 0.0, 1.0)))
-		4: # Split Complementary
-			var sc1: float = fmod(h + 0.416 + rand_range(-0.05, 0.05), 1.0)
-			var sc2: float = fmod(h + 0.583 + rand_range(-0.05, 0.05), 1.0)
-			generated_colors.append(Color.from_hsv(sc1, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(sc2, clamp(s+rand_range(-0.2,0.2), 0, 1), clamp(v+rand_range(-0.2,0.2), 0, 1)))
-			generated_colors.append(Color.from_hsv(sc1, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
-			generated_colors.append(Color.from_hsv(sc2, clamp(s * 0.7, 0.0, 1.0), clamp(v * rand_range(0.8, 1.2), 0.0, 1.0)))
-
 	var new_indices: Array = []
-	for c in generated_colors:
-		var idx: int = get_closest_palette_index(c)
-		if not new_indices.has(idx):
-			new_indices.append(idx)
+	
+	if generated_colors.empty():
+		new_indices.append(get_closest_palette_index(base_color))
+	else:
+		for c in generated_colors:
+			var idx: int = get_closest_palette_index(c)
+			if not new_indices.has(idx):
+				new_indices.append(idx)
 			
 	var res_str: PoolStringArray = PoolStringArray()
 	for idx in new_indices:
