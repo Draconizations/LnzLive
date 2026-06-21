@@ -21,6 +21,13 @@ var current_sort_mode: int = SortMode.ALPHABETICAL
 
 const MAX_RECURSION_DEPTH: int = 3
 
+const INDEX_EXAMPLE: int = 0
+const INDEX_BASE_LNZ: int = 1
+const INDEX_USER_LNZ: int = 2
+const INDEX_GAME_TEXTURES: int = 3
+const INDEX_USER_TEXTURES: int = 4
+const INDEX_USER_PALETTES: int = 5
+
 onready var pet_view_container: Control = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/PetViewContainer")
 onready var lnz_text_edit: Control = get_tree().root.get_node("Root/SceneRoot/HSplitContainer/HSplitContainer/TextPanelContainer/VBoxContainer/LnzTextEdit")
 
@@ -68,8 +75,29 @@ func _ready() -> void:
 
 	select_mode = SELECT_MULTI
 	root = create_item()
-	examples = create_item(root)
+	examples = create_item(root, INDEX_EXAMPLE)
 	examples.set_text(0, "Example LNZ")
+	
+	local_storage_bases = create_item(root, INDEX_BASE_LNZ)
+	local_storage_bases.set_text(0, "Base LNZ")
+	
+	local_storage = create_item(root, INDEX_USER_LNZ)
+	local_storage.set_text(0, "User LNZ")
+	
+	res_textures = create_item(root, INDEX_GAME_TEXTURES)
+	res_textures.set_text(0, "Game Textures")
+	
+	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
+	local_storage_textures.set_text(0, "User Textures")
+	
+	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
+	local_storage_palettes.set_text(0, "User Palettes")
+	
+	scan_local_bases()
+	scan_local_storage(null)
+	scan_res_textures()
+	scan_local_textures()
+	scan_local_palettes()
 	
 	import_lnz_button.connect("pressed", self, "_on_ImportLNZ_pressed")
 	import_tex_button.connect("pressed", self, "_on_ImportTexture_pressed")
@@ -137,11 +165,11 @@ func _ready() -> void:
 
 	_setup_sort_ui()
 
-	rescan(null)
-	rescan_textures(true)
-	rescan_res_textures()
-	rescan_palettes()
-	rescan_bases()
+	# rescan(null)
+	# rescan_textures(true)
+	# rescan_res_textures()
+	# rescan_palettes()
+	# rescan_bases()
 
 func is_valid_filepath(meta) -> bool:
 	if typeof(meta) == TYPE_NIL:
@@ -535,7 +563,7 @@ func rescan(selected_filepath) -> void:
 		root.remove_child(local_storage)
 		local_storage.free()
 	
-	local_storage = create_item(root, 2)
+	local_storage = create_item(root, INDEX_USER_LNZ)
 	local_storage.set_text(0, "User LNZ")
 	local_storage.collapsed = was_collapsed
 	scan_local_storage(selected_filepath)
@@ -557,7 +585,7 @@ func rescan_textures(reload_model: bool = false) -> void:
 	if local_storage_textures != null:
 		was_collapsed = local_storage_textures.collapsed
 		root.remove_child(local_storage_textures)
-	local_storage_textures = create_item(root, 4)
+	local_storage_textures = create_item(root, INDEX_USER_TEXTURES)
 	local_storage_textures.set_text(0, "User Textures")
 	local_storage_textures.collapsed = was_collapsed
 	scan_local_textures()
@@ -574,7 +602,7 @@ func rescan_res_textures() -> void:
 	if res_textures != null:
 		was_collapsed = res_textures.collapsed
 		root.remove_child(res_textures)
-	res_textures = create_item(root, 3)
+	res_textures = create_item(root, INDEX_GAME_TEXTURES)
 	res_textures.set_text(0, "Game Textures")
 	res_textures.collapsed = was_collapsed
 	scan_res_textures()
@@ -584,8 +612,7 @@ func rescan_palettes() -> void:
 	if local_storage_palettes != null:
 		was_collapsed = local_storage_palettes.collapsed
 		root.remove_child(local_storage_palettes)
-	local_storage_palettes = create_item(root, 4)
-	local_storage_palettes = create_item(root, 5)
+	local_storage_palettes = create_item(root, INDEX_USER_PALETTES)
 	local_storage_palettes.set_text(0, "User Palettes")
 	local_storage_palettes.collapsed = was_collapsed
 	scan_local_palettes()
@@ -601,7 +628,7 @@ func rescan_bases() -> void:
 	if local_storage_bases != null:
 		was_collapsed = local_storage_bases.collapsed
 		root.remove_child(local_storage_bases)
-	local_storage_bases = create_item(root, 1)
+	local_storage_bases = create_item(root, INDEX_BASE_LNZ)
 	local_storage_bases.set_text(0, "Base LNZ")
 	local_storage_bases.collapsed = was_collapsed
 	scan_local_bases()
