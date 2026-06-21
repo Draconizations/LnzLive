@@ -35,6 +35,8 @@ var active_palette: Texture = default_palette
 onready var preloader: ResourcePreloader = get_tree().root.get_node("Root/ResourcePreloader")
 var ball_texture_list: Array = []
 
+var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
+
 onready var eyedropper_toggle: CheckButton = scroll_vbox.get_node("ToolsContainer/EyedropperToggle")
 onready var exclude_eyes_chk: CheckBox = scroll_vbox.get_node("SelectionActions/ExcludeEyesCheckBox")
 onready var include_paintballz_chk: CheckBox = scroll_vbox.get_node("IncludeContainer/IncludePaintballzCheckBox")
@@ -180,6 +182,7 @@ func _on_visibility_changed() -> void:
 	if visible:
 		update_preview()
 		_update_paintballz_tree_color_icons()
+		_update_recolor_rules_previews()
 	else:
 		clear_preview()
 
@@ -218,6 +221,7 @@ func set_palette(palette_name) -> void:
 		
 	update_preview()
 	_update_paintballz_tree_color_icons()
+	_update_recolor_rules_previews()
 
 func _on_palette_changed(palette_name = "") -> void:
 	set_palette(palette_name)
@@ -886,7 +890,6 @@ func _on_AutofillRecolorsButton_pressed() -> void:
 				"texture": tex_str
 			}
 	
-	var recolor_line_scene: PackedScene = load("res://scenes/editor/RecolorLine.tscn")
 	for key in unique_pairs:
 		var pair: Dictionary = unique_pairs[key]
 		var line: Control = recolor_line_scene.instance()
@@ -894,19 +897,75 @@ func _on_AutofillRecolorsButton_pressed() -> void:
 		
 		line.get_node("BeforeColor").text = pair.color
 		line.get_node("BeforeTexture").text = pair.texture
+		
+		var before_color = line.get_node("BeforeColor")
+		var after_color = line.get_node("AfterColor")
+		
+		_setup_preview_wrapper(before_color, "BeforeColor_" + str(line.get_instance_id()))
+		_setup_preview_wrapper(after_color, "AfterColor_" + str(line.get_instance_id()))
+
+		var remove_btn: Button = line.get_node_or_null("RemoveButton")
+		if remove_btn:
+			remove_btn.connect("pressed", self, "_on_remove_recolor_line", [line])	
+
+		_update_recolor_rules_previews()
+
+func _on_remove_recolor_line(line: Control) -> void:
+	if is_instance_valid(line) and line.get_parent() == recolor_rules_container:
+		var remove_btn: Button = line.get_node_or_null("RemoveButton")
+		if remove_btn and remove_btn.is_connected("pressed", self, "_on_remove_recolor_line"):
+			remove_btn.disconnect("pressed", self, "_on_remove_recolor_line")
+			
+		line.queue_free()
+		_update_recolor_rules_previews()
+
 
 func _on_ApplyRecolorsButton_pressed() -> void:
 	var rules: Array = []
 	for line in recolor_rules_container.get_children():
+		if line.is_queued_for_deletion(): continue
+		
 		var ramp_btn: CheckBox = line.get_node_or_null("ColorRampCheck")
 		if not ramp_btn:
 			continue
 			
+		var before_color_edit = line.get_node_or_null("BeforeColorWrapper/BeforeColor")
+		var after_color_edit = line.get_node_or_null("AfterColorWrapper/AfterColor")
+		
+		var before_color: String = ""
+		var after_color: String = ""
+		
+		if before_color_edit:
+			before_color = before_color_edit.text.strip_edges()
+		else:
+			before_color = line.get_node("BeforeColor").text.strip_edges()
+			
+		if after_color_edit:
+			after_color = after_color_edit.text.strip_edges()
+		else:
+			after_color = line.get_node("AfterColor").text.strip_edges()
+
+		var before_texture_edit = line.get_node_or_null("BeforeTextureWrapper/BeforeTexture")
+		var after_texture_edit = line.get_node_or_null("AfterTextureWrapper/AfterTexture")
+		
+		var before_texture: String = ""
+		var after_texture: String = ""
+		
+		if before_texture_edit:
+			before_texture = before_texture_edit.text.strip_edges()
+		else:
+			before_texture = line.get_node("BeforeTexture").text.strip_edges()
+			
+		if after_texture_edit:
+			after_texture = after_texture_edit.text.strip_edges()
+		else:
+			after_texture = line.get_node("AfterTexture").text.strip_edges()
+
 		rules.append({
-			"before_color": line.get_node("BeforeColor").text.strip_edges(),
-			"after_color": line.get_node("AfterColor").text.strip_edges(),
-			"before_texture": line.get_node("BeforeTexture").text.strip_edges(),
-			"after_texture": line.get_node("AfterTexture").text.strip_edges(),
+			"before_color": before_color,
+			"after_color": after_color,
+			"before_texture": before_texture,
+			"after_texture": after_texture,
 			"is_ramp": ramp_btn.pressed
 		})
 	
@@ -978,3 +1037,78 @@ func _create_color_preview_texture(color: Color) -> ImageTexture:
 	var tex: ImageTexture = ImageTexture.new()
 	tex.create_from_image(img)
 	return tex
+
+func _setup_preview_wrapper(le, le_name: String) -> void:
+	if not le: return
+	var parent: Node = le.get_parent()
+
+	var hbox = HBoxContainer.new()
+	hbox.name = le_name + "Wrapper"
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var pos: int = le.get_index()
+	var orig_owner: Node = le.owner
+	
+	parent.remove_child(le)
+	parent.add_child(hbox)
+	
+	if orig_owner != null:
+		hbox.owner = orig_owner
+	
+	parent.move_child(hbox, pos)
+
+	hbox.add_child(le)
+	if orig_owner != null:
+		le.owner = orig_owner
+	le.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var preview_container = HBoxContainer.new()
+	preview_container.name = le_name + "_Preview"
+	hbox.add_child(preview_container)
+	if orig_owner != null:
+		preview_container.owner = orig_owner
+
+	if not le.is_connected("text_changed", self, "_on_color_list_text_changed"):
+		le.connect("text_changed", self, "_on_color_list_text_changed", [preview_container])
+
+func _on_color_list_text_changed(new_text: String, container: Container) -> void:
+	LnzLiveUtils.update_color_list_previews(container, new_text, _get_cached_palette_colors())
+
+func _update_recolor_rules_previews() -> void:
+	var lines: Array = recolor_rules_container.get_children()
+	for l in lines:
+		if l.is_queued_for_deletion(): continue
+		
+		var id: String = str(l.get_instance_id())
+		
+		var bc = l.get_node_or_null("BeforeColor_" + str(id) + "Wrapper/BeforeColor")
+		var bc_prev: Node = l.get_node_or_null("BeforeColor_" + str(id) + "Wrapper/BeforeColor_" + str(id) + "_Preview")
+		if bc and bc_prev: 
+			LnzLiveUtils.update_color_list_previews(bc_prev, bc.text, _get_cached_palette_colors())
+
+		var ac = l.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor")
+		var ac_prev: Node = l.get_node_or_null("AfterColor_" + str(id) + "Wrapper/AfterColor_" + str(id) + "_Preview")
+		if ac and ac_prev: 
+			LnzLiveUtils.update_color_list_previews(ac_prev, ac.text, _get_cached_palette_colors())
+
+func _get_cached_palette_colors() -> Array:
+	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if pet_node and pet_node.has_method("get_cached_palette_colors"):
+		return pet_node.get_cached_palette_colors()
+	
+	var colors: Array = []
+	if active_palette:
+		var img: Image = active_palette.get_data()
+		if img:
+			img.lock()
+			var w: int = img.get_width()
+			var h: int = img.get_height()
+			for i in range(256):
+				var x: int = i % w
+				var y: int = i / w
+				if x < w and y < h:
+					colors.append(img.get_pixel(x, y))
+				else:
+					colors.append(Color.black)
+			img.unlock()
+	return colors
