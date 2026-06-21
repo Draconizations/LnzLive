@@ -276,6 +276,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Copy from LNZ"
+hint_tooltip = "Clears the current tree and populates it with the [Project Ball] section from the currently loaded LNZ file. \n\nWarning: This discards unsaved changes in the tree."
 
 [node name="RandomizeProjectionsButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_left = 149.0
@@ -289,6 +290,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Randomize Projections"
+hint_tooltip = "Generates random 'Value' numbers within the Min/Max range for each row. \n\nIf 'Mirror' is checked, the symmetric counterpart's value will be synced to this row's new random value. \n\nNote: This does NOT apply to the model. You must click 'Apply to LNZ' to see changes."
 
 [node name="ApplyButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall/ActionButtonsHBox"]
 margin_left = 312.0
@@ -302,6 +304,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Apply to LNZ"
+hint_tooltip = "Sends the current Projection data to the LNZ file. \n\nIf 'Mirror' is checked on a row, it will automatically generate the symmetric projection pair in the LNZ data if it doesn't already exist."
 
 [node name="IncludeProjCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsProjectBall"]
 margin_top = 365.0
@@ -705,6 +708,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Randomize Extensions"
+hint_tooltip = "Randomizes the Min/Max values for Body Extensions (Legs, Head, etc.) based on the SpinBox ranges. \n\nNote: This only updates the SpinBox values in this panel. It does NOT update the model until you apply via 'Randomize Shape'"
 
 [node name="ResetDefaultsButton" type="Button" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsExtensionScale"]
 margin_top = 437.0
@@ -954,6 +958,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Jitter"
+hint_tooltip = "Applies a small random displacement to the current position of the selected Body Groups. \n\nThe 'Jitter %' SpinBox defines the radius of this displacement in pixels. \n\nUnlike 'Randomize Moves', this moves the model slightly from its current state rather than picking a new random position from a range."
 
 [node name="MirrorXCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 217.0
@@ -975,6 +980,7 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "Randomize Moves"
+hint_tooltip = "Randomizes the position offsets (X/Y/Z) for the selected Body Groups. \n\nUses the Min/Max SpinBoxes to define a bounding box for the random offset. \n\nNote: This emits a signal to update the model immediately."
 
 [node name="IncludeMovesCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/HBoxContainer/SettingsMove"]
 margin_top = 273.0
@@ -1002,3 +1008,4 @@ custom_styles/disabled = SubResource( 8 )
 custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 5 )
 text = "RANDOMIZE SHAPE"
+hint_tooltip = "Executes all Randomizations marked as 'Include in Randomize Shape' in the following order:\n\n1. [Project Ball]\n2. Body Scales and Extensions \n3. [Move] \n\nNote: Changes are applied to LNZ immediately."
