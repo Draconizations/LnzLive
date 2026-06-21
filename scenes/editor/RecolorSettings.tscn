@@ -126,7 +126,7 @@ __meta__ = {
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer"]
 margin_right = 458.0
-margin_bottom = 713.0
+margin_bottom = 785.0
 size_flags_horizontal = 3
 custom_constants/separation = 10
 
@@ -137,7 +137,7 @@ margin_bottom = 4.0
 [node name="SwapContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
 margin_top = 14.0
 margin_right = 458.0
-margin_bottom = 410.0
+margin_bottom = 482.0
 custom_constants/separation = 5
 
 [node name="Title" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
@@ -205,16 +205,21 @@ scroll_horizontal_enabled = false
 margin_right = 458.0
 size_flags_horizontal = 3
 
-[node name="Header" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
+[node name="Header" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
 margin_top = 341.0
 margin_right = 458.0
-margin_bottom = 366.0
+margin_bottom = 438.0
+custom_constants/separation = 5
+
+[node name="TopRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_right = 458.0
+margin_bottom = 31.0
 alignment = 1
 
-[node name="AddButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 91.0
-margin_right = 131.0
-margin_bottom = 25.0
+[node name="AddButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 79.0
+margin_right = 119.0
+margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -223,10 +228,10 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Add"
 
-[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 135.0
-margin_right = 190.0
-margin_bottom = 25.0
+[node name="ClearButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 123.0
+margin_right = 178.0
+margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -235,26 +240,27 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Clear"
 
-[node name="FreqLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 194.0
-margin_right = 230.0
-margin_bottom = 25.0
+[node name="FreqLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 182.0
+margin_top = 5.0
+margin_right = 239.0
+margin_bottom = 26.0
 custom_fonts/font = SubResource( 4 )
 text = "Freq %:"
 
-[node name="FreqEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 234.0
-margin_right = 280.0
-margin_bottom = 25.0
+[node name="FreqEdit" type="LineEdit" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 243.0
+margin_right = 301.0
+margin_bottom = 31.0
+hint_tooltip = "Threshold for color max frequency across sections"
 custom_fonts/font = SubResource( 4 )
 text = "50"
 placeholder_text = "100"
-hint_tooltip = "Threshold for color max frequency across sections"
 
-[node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 284.0
-margin_right = 360.0
-margin_bottom = 25.0
+[node name="AutofillButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
+margin_left = 305.0
+margin_right = 378.0
+margin_bottom = 31.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -263,10 +269,10 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Autofill"
 
-[node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+[node name="RandomizeButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/TopRow"]
 visible = false
-margin_left = 364.0
-margin_right = 460.0
+margin_left = 271.0
+margin_right = 367.0
 margin_bottom = 25.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
@@ -276,57 +282,76 @@ custom_styles/normal = SubResource( 7 )
 custom_fonts/font = SubResource( 4 )
 text = "Randomize"
 
-[node name="RandomizeAfterButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 364.0
-margin_right = 460.0
-margin_bottom = 25.0
-custom_styles/hover = SubResource( 6 )
-custom_styles/pressed = SubResource( 6 )
+[node name="MiddleRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_top = 36.0
+margin_right = 458.0
+margin_bottom = 63.0
+alignment = 1
+
+[node name="SeedLabel" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
+margin_left = 54.0
+margin_top = 3.0
+margin_right = 146.0
+margin_bottom = 24.0
+custom_fonts/font = SubResource( 4 )
+text = "Color Seed:"
+
+[node name="TheorySeedColor" type="ColorPickerButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
+margin_left = 150.0
+margin_right = 245.0
+margin_bottom = 27.0
+custom_styles/hover = SubResource( 7 )
+custom_styles/pressed = SubResource( 7 )
 custom_styles/focus = SubResource( 7 )
 custom_styles/disabled = SubResource( 7 )
 custom_styles/normal = SubResource( 7 )
-custom_fonts/font = SubResource( 4 )
-text = "Randomize"
+custom_fonts/font = SubResource( 5 )
+text = "Random Seed"
+color = Color( 1, 1, 1, 1 )
 
-[node name="ColorTheorySelect" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 464.0
-margin_right = 540.0
-margin_bottom = 25.0
+[node name="ColorTheorySelect" type="OptionButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
+margin_left = 249.0
+margin_right = 304.0
+margin_bottom = 27.0
 custom_fonts/font = SubResource( 4 )
 text = "Off"
 
-[node name="TheorySeedColor" type="ColorPickerButton" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 544.0
-margin_right = 580.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
-color = Color( 1, 1, 1, 1 ) # Default to White
+[node name="RandomizeAfterButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/MiddleRow"]
+margin_left = 308.0
+margin_right = 404.0
+margin_bottom = 27.0
+custom_styles/hover = SubResource( 6 )
+custom_styles/pressed = SubResource( 6 )
+custom_styles/focus = SubResource( 7 )
+custom_styles/disabled = SubResource( 7 )
+custom_styles/normal = SubResource( 7 )
+custom_fonts/font = SubResource( 4 )
+text = "Randomize"
 
-[node name="RandomSeedCheckBox" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 584.0
-margin_right = 680.0
-margin_bottom = 25.0
-custom_fonts/font = SubResource( 5 )
-text = "Random Seed"
+[node name="BottomRow" type="HBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
+margin_top = 68.0
+margin_right = 458.0
+margin_bottom = 97.0
+alignment = 1
 
-[node name="NaturalColorsOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 584.0
-margin_right = 720.0
-margin_bottom = 25.0
+[node name="NaturalColorsOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
+margin_left = 52.0
+margin_right = 215.0
+margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Natural (10-120)"
 
-[node name="TexturableOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header"]
-margin_left = 724.0
-margin_right = 830.0
-margin_bottom = 25.0
+[node name="TexturableOnly" type="CheckBox" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/BottomRow"]
+margin_left = 219.0
+margin_right = 406.0
+margin_bottom = 29.0
 custom_fonts/font = SubResource( 4 )
 text = "Texturable (10-140)"
 
 [node name="RecolorButton" type="Button" parent="VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer"]
-margin_top = 371.0
+margin_top = 443.0
 margin_right = 458.0
-margin_bottom = 396.0
+margin_bottom = 468.0
 custom_styles/hover = SubResource( 6 )
 custom_styles/pressed = SubResource( 6 )
 custom_styles/focus = SubResource( 7 )
@@ -336,14 +361,14 @@ custom_fonts/font = SubResource( 4 )
 text = "Recolor"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 420.0
+margin_top = 492.0
 margin_right = 458.0
-margin_bottom = 424.0
+margin_bottom = 496.0
 
 [node name="BucketContainer" type="VBoxContainer" parent="VBoxContainer/ScrollContainer/VBoxContainer"]
-margin_top = 434.0
+margin_top = 506.0
 margin_right = 458.0
-margin_bottom = 713.0
+margin_bottom = 785.0
 custom_constants/separation = 10
 
 [node name="Title2" type="Label" parent="VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer"]

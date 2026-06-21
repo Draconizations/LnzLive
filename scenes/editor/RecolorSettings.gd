@@ -20,15 +20,20 @@ onready var bucket_color_icon: TextureRect = $VBoxContainer/ScrollContainer/VBox
 onready var bucket_outline_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/OutlineIcon
 onready var bucket_texture_icon: TextureRect = $VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/GridContainer/TextureIcon
 
-onready var rand_after_header = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header
-onready var rand_after_btn: Button = rand_after_header.get_node_or_null("RandomizeAfterButton")
-onready var color_theory_select: OptionButton = rand_after_header.get_node_or_null("ColorTheorySelect")
-onready var theory_seed_picker: ColorPickerButton = rand_after_header.get_node_or_null("TheorySeedColor")
-onready var random_seed_check: CheckBox = rand_after_header.get_node_or_null("RandomSeedCheckBox")
-onready var natural_colors_check: CheckBox = rand_after_header.get_node_or_null("NaturalColorsOnly")
-onready var texturable_only_check: CheckBox = rand_after_header.get_node_or_null("TexturableOnly")
+onready var header_container = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header
 
-onready var freq_edit: LineEdit = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/FreqEdit
+onready var top_row = header_container.get_node("TopRow")
+onready var freq_edit: LineEdit = top_row.get_node_or_null("FreqEdit")
+
+onready var middle_row = header_container.get_node("MiddleRow")
+onready var rand_after_btn: Button = middle_row.get_node_or_null("RandomizeAfterButton")
+onready var color_theory_select: OptionButton = middle_row.get_node_or_null("ColorTheorySelect")
+onready var theory_seed_picker: ColorPickerButton = middle_row.get_node_or_null("TheorySeedColor")
+
+onready var bottom_row = header_container.get_node("BottomRow")
+onready var random_seed_check: CheckBox = bottom_row.get_node_or_null("RandomSeedCheckBox")
+onready var natural_colors_check: CheckBox = bottom_row.get_node_or_null("NaturalColorsOnly")
+onready var texturable_only_check: CheckBox = bottom_row.get_node_or_null("TexturableOnly")
 
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
@@ -65,11 +70,12 @@ func _ready() -> void:
 	$VBoxContainer/ScrollContainer/VBoxContainer/BucketContainer/ClearButton.connect("pressed", self, "_on_ClearBucket_pressed")
 
 	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/RecolorButton.connect("pressed", self, "_on_RecolorButton_pressed")
-	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AddButton.connect("pressed", self, "_on_AddSwap_pressed")
-	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/ClearButton.connect("pressed", self, "_on_ClearSwap_pressed")
-	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/AutofillButton.connect("pressed", self, "_on_AutofillSwap_pressed")
-	$VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/RandomizeButton.connect("pressed", self, "_on_RandomizeSwap_pressed")
-	
+
+	top_row.get_node("AddButton").connect("pressed", self, "_on_AddSwap_pressed")
+	top_row.get_node("ClearButton").connect("pressed", self, "_on_ClearSwap_pressed")
+	top_row.get_node("AutofillButton").connect("pressed", self, "_on_AutofillSwap_pressed")
+	top_row.get_node("RandomizeButton").connect("pressed", self, "_on_RandomizeSwap_pressed")
+
 	if is_instance_valid(rand_after_btn):
 		rand_after_btn.connect("pressed", self, "_on_RandomizeAfter_pressed")
 	
