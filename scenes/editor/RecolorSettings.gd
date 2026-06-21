@@ -28,6 +28,8 @@ onready var random_seed_check: CheckBox = rand_after_header.get_node_or_null("Ra
 onready var natural_colors_check: CheckBox = rand_after_header.get_node_or_null("NaturalColorsOnly")
 onready var texturable_only_check: CheckBox = rand_after_header.get_node_or_null("TexturableOnly")
 
+onready var freq_edit: LineEdit = $VBoxContainer/ScrollContainer/VBoxContainer/SwapContainer/Header/FreqEdit
+
 var recolor_line_scene: PackedScene = preload("res://scenes/editor/RecolorLine.tscn")
 var queued_bucket_changes: Dictionary = {} # ball_no -> properties
 
@@ -373,9 +375,31 @@ func _on_AutofillSwap_pressed() -> void:
 	_process_section_for_autofill(lnz_text_edit, "[Add Ball]", 4, 13, pair_counts)
 	_process_section_for_autofill(lnz_text_edit, "[Paint Ballz]", 5, 10, pair_counts)
 
-	var sorted_pairs: Array = []
+	var global_max_count: int = 0
 	for key in pair_counts:
-		sorted_pairs.append({"key": key, "count": pair_counts[key]})
+		if pair_counts[key] > global_max_count:
+			global_max_count = pair_counts[key]
+
+	var freq_percent: int = 100
+	if is_instance_valid(freq_edit) and freq_edit.text.is_valid_integer():
+		freq_percent = int(freq_edit.text)
+	
+	freq_percent = clamp(freq_percent, 0, 100)
+
+	var threshold: int = 0
+	if global_max_count > 0:
+		threshold = int(global_max_count * (freq_percent / 100.0))
+	else:
+		threshold = 0
+
+	var filtered_pairs: Dictionary = {}
+	for key in pair_counts:
+		if threshold == 0 or pair_counts[key] >= threshold:
+			filtered_pairs[key] = pair_counts[key]
+
+	var sorted_pairs: Array = []
+	for key in filtered_pairs:
+		sorted_pairs.append({"key": key, "count": filtered_pairs[key]})
 
 	sorted_pairs.sort_custom(self, "_sort_by_count")
 
@@ -409,7 +433,7 @@ func _on_AutofillSwap_pressed() -> void:
 			line_node.find_node("BeforeTexture", true, false).text = ""
 			line_node.find_node("AfterColor", true, false).text = ""
 			line_node.find_node("AfterTexture", true, false).text = ""
-			
+		
 		line_node.find_node("ColorRampCheck", true, false).pressed = false
 		
 	_refresh_all_previews()
