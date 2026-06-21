@@ -52,6 +52,8 @@ Upload to GitHub: `git push origin feature-name`
 
 Try to break your new feature, and any other functionalities of LnzLive that your feature might have affected! It helps to go about systematically... the best way is to hex. ;) LnzLive does include a set of unit tests using [GUT](https://gut.readthedocs.io/en/godot_3x/index.html) (see [Developer Tools](#developer-tools)).
 
+Export to Windows executable and web HTML/JS to test out as well. To test the web export, you can serve locally from the export directory using `python -m http.server 8080` and navigating to `http://localhost:8080` in your browser. It won't catch everything as itch.io may block certain elements, though.
+
 #### 9. **Submit a Pull Request**
 
 Once your feature is finished and tested, it’s time to ask for it to be reviewed and merged into this LnzLive repository.
