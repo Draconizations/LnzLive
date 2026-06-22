@@ -907,10 +907,12 @@ func _get_ball_sizing_info(pet_node: Node, ball_no: int) -> Dictionary:
 					break
 	else:
 		if pet_node.lnz.addballs.has(ball_no):
-			var ab: Dictionary = pet_node.lnz.addballs[ball_no]
-			if ab.anchor_ball != -1:
-				if ab.anchor_ball < pet_node.bhd.ball_sizes.size():
-					bhd_size = pet_node.bhd.ball_sizes[ab.anchor_ball]
+			var ab = pet_node.lnz.addballs[ball_no]
+			if ab != null and ab is Dictionary:
+				if ab.has("anchor_ball") and ab.anchor_ball != -1:
+					if ab.anchor_ball < pet_node.bhd.ball_sizes.size():
+						bhd_size = pet_node.bhd.ball_sizes[ab.anchor_ball]
+
 
 	return {
 		"is_addball": is_addball, 
