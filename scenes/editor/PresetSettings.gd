@@ -1157,18 +1157,17 @@ func _get_cached_palette_colors() -> Array:
 		palette_to_use = LnzLiveUtils.DEFAULT_PALETTE
 
 	var colors: Array = []
-	if active_palette:
-		var img: Image = active_palette.get_data()
-		if img:
-			img.lock()
-			var w: int = img.get_width()
-			var h: int = img.get_height()
-			for i in range(256):
-				var x: int = i % w
-				var y: int = i / w
-				if x < w and y < h:
-					colors.append(img.get_pixel(x, y))
-				else:
-					colors.append(Color.black)
-			img.unlock()
+	var img: Image = palette_to_use.get_data()
+	if img:
+		img.lock()
+		var w: int = img.get_width()
+		var h: int = img.get_height()
+		for i in range(256):
+			var x: int = i % w
+			var y: int = i / h
+			if x < w and y < h:
+				colors.append(img.get_pixel(x, y))
+			else:
+				colors.append(Color.black)
+		img.unlock()
 	return colors
