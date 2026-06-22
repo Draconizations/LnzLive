@@ -166,17 +166,46 @@ func _ready() -> void:
 	if not is_inside_tree():
 		return
 
-	active_palette = default_palette
+	_refresh_active_palette_from_dog_generator()
 
 	_connect_settings_signals()
 	load_settings()
 
-	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-	if pet_node and pet_node.has_signal("palette_changed"):
-		pet_node.connect("palette_changed", self, "_on_palette_changed")
+	_connect_dog_generator_signal()
 
 	call_deferred("update_preview")
 	_update_paintballz_tree_color_icons()
+
+func _refresh_active_palette_from_dog_generator() -> void:
+	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if dog_gen:
+		if dog_gen.has_method("get_is_babyz_mode"):
+			if dog_gen.get_is_babyz_mode():
+				active_palette = LnzLiveUtils.BABYZ_PALETTE
+			else:
+				active_palette = LnzLiveUtils.DEFAULT_PALETTE
+		elif dog_gen.get("is_babyz_mode") != null:
+			if dog_gen.is_babyz_mode:
+				active_palette = LnzLiveUtils.BABYZ_PALETTE
+			else:
+				active_palette = LnzLiveUtils.DEFAULT_PALETTE
+		else:
+			active_palette = LnzLiveUtils.DEFAULT_PALETTE
+	else:
+		active_palette = LnzLiveUtils.DEFAULT_PALETTE
+
+func _connect_dog_generator_signal() -> void:
+	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if dog_gen and dog_gen.has_signal("palette_changed"):
+		if dog_gen.is_connected("palette_changed", self, "_on_dog_generator_palette_changed"):
+			dog_gen.disconnect("palette_changed", self, "_on_dog_generator_palette_changed")
+		dog_gen.connect("palette_changed", self, "_on_dog_generator_palette_changed")
+
+func _on_dog_generator_palette_changed(palette_name = "") -> void:
+	_refresh_active_palette_from_dog_generator()
+	update_preview()
+	_update_paintballz_tree_color_icons()
+	_update_recolor_rules_previews()
 
 func _on_visibility_changed() -> void:
 	if visible:
@@ -213,6 +242,9 @@ func set_palette(palette_name) -> void:
 			pal_texture = ResourceLoader.load(res_res_path)
 		elif preloader and preloader.has_resource("palette_" + palette_name.to_lower()):
 			pal_texture = preloader.get_resource("palette_" + palette_name.to_lower())
+
+	if pal_texture == null:
+		pal_texture = _get_current_palette_texture()
 	
 	if pal_texture:
 		active_palette = pal_texture
@@ -223,8 +255,22 @@ func set_palette(palette_name) -> void:
 	_update_paintballz_tree_color_icons()
 	_update_recolor_rules_previews()
 
-func _on_palette_changed(palette_name = "") -> void:
-	set_palette(palette_name)
+func _get_current_palette_texture() -> Texture:
+	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	if dog_gen:
+		if dog_gen.has_method("get_is_babyz_mode"):
+			if dog_gen.get_is_babyz_mode():
+				return LnzLiveUtils.BABYZ_PALETTE
+			else:
+				return LnzLiveUtils.DEFAULT_PALETTE
+		var is_babyz_val = dog_gen.get("is_babyz_mode")
+		if is_babyz_val != null:
+			if is_babyz_val:
+				return LnzLiveUtils.BABYZ_PALETTE
+			else:
+				return LnzLiveUtils.DEFAULT_PALETTE
+	
+	return LnzLiveUtils.DEFAULT_PALETTE
 
 func sync_camera(main_camera_transform: Transform) -> void:
 	if preview_camera and is_instance_valid(preview_camera):
@@ -1092,10 +1138,24 @@ func _update_recolor_rules_previews() -> void:
 			LnzLiveUtils.update_color_list_previews(ac_prev, ac.text, _get_cached_palette_colors())
 
 func _get_cached_palette_colors() -> Array:
-	var pet_node = get_tree().root.get_node_or_null("Root/PetRoot/Node")
-	if pet_node and pet_node.has_method("get_cached_palette_colors"):
-		return pet_node.get_cached_palette_colors()
+	var dog_gen = get_tree().root.get_node_or_null("Root/PetRoot/Node")
+	var is_babyz: bool = false
 	
+	if dog_gen:
+		if dog_gen.has_method("get_is_babyz_mode"):
+			is_babyz = dog_gen.get_is_babyz_mode()
+		else:
+			# Check for property safely
+			var is_babyz_val = dog_gen.get("is_babyz_mode")
+			if is_babyz_val != null:
+				is_babyz = is_babyz_val
+	
+	var palette_to_use: Texture
+	if is_babyz:
+		palette_to_use = LnzLiveUtils.BABYZ_PALETTE
+	else:
+		palette_to_use = LnzLiveUtils.DEFAULT_PALETTE
+
 	var colors: Array = []
 	if active_palette:
 		var img: Image = active_palette.get_data()
