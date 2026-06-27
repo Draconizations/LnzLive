@@ -25,7 +25,9 @@ jobs:
       run: curl --create-dirs -L -o ./export/godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
 
     - name: Export LnzLive
-      run: ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+      run: |
+        ./godot -e
+        ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
 
     - uses: actions/upload-artifact@v7
       with:
@@ -51,7 +53,9 @@ jobs:
       run: curl --create-dirs -L -o ./export/godot.windows.opt.64.exe https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
 
     - name: Export LnzLive
-      run: ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
+      run: |
+        ./godot -e
+        ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
 
     - uses: actions/upload-artifact@v7
       with:
@@ -77,7 +81,9 @@ jobs:
       run: curl --create-dirs -L -o ./export/javascript-template.zip https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
 
     - name: Export LnzLive
-      run: ./godot --export "windows" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
+      run: |
+        ./godot -e
+        ./godot --export "web" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
 
     - uses: actions/upload-artifact@v7
       with:
