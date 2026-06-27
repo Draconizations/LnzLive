@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+env:
+  LANG: "en_US.UTF-8"
+
 jobs:
   export_linux:
     name: Export (Linux)
@@ -21,8 +24,13 @@ jobs:
     - name: Install Export Template
       run: curl --create-dirs -L -o ./export/godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
 
+    - name: Set Locale
+      run: |
+          sudo locale-gen en_US.UTF-8
+          sudo update-locale LANG=en_US.UTF-8
+
     - name: Export LnzLive
-      run: ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.x11.64
+      run: ./godot --verbose --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.x11.64
 
     - uses: actions/upload-artifact@v7
       with:
@@ -47,8 +55,13 @@ jobs:
     - name: Install Export Template
       run: curl --create-dirs -L -o ./export/godot.windows.opt.64.exe https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
 
+    - name: Set Locale
+      run: |
+          sudo locale-gen en_US.UTF-8
+          sudo update-locale LANG=en_US.UTF-8
+
     - name: Export LnzLive
-      run: ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.exe
+      run: ./godot --verbose --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.exe
 
     - uses: actions/upload-artifact@v7
       with:
@@ -73,8 +86,13 @@ jobs:
     - name: Install Export Template
       run: curl --create-dirs -L -o ./export/javascript-template.zip https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
 
+    - name: Set Locale
+      run: |
+          sudo locale-gen en_US.UTF-8
+          sudo update-locale LANG=en_US.UTF-8
+
     - name: Export LnzLive
-      run: ./godot --export "web" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.zip
+      run: ./godot --verbose --export "web" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}-${{ github.sha }}.zip
 
     - uses: actions/upload-artifact@v7
       with:
