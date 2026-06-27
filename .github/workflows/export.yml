@@ -26,7 +26,7 @@ jobs:
 
     - name: Export LnzLive
       run: |
-        timeout 30 ./godot -e
+        ./godot -e --quit
         ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
 
     - uses: actions/upload-artifact@v7
@@ -54,7 +54,7 @@ jobs:
 
     - name: Export LnzLive
       run: |
-        timeout 30 ./godot -e
+        ./godot -e --quit
         ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
 
     - uses: actions/upload-artifact@v7
@@ -82,7 +82,7 @@ jobs:
 
     - name: Export LnzLive
       run: |
-        timeout 30 ./godot -e
+        ./godot -e --quit
         ./godot --export "web" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
 
     - uses: actions/upload-artifact@v7
