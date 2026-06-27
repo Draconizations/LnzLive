@@ -18,11 +18,11 @@ jobs:
 
     - name: Install Godot
       run: |
-        curl -Io godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        curl -L -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
         chmod +x godot
 
     - name: Install Export Template
-      run: curl --create-dirs -I -o ./export/godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
+      run: curl --create-dirs -L -o ./export/godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
 
     - name: Export LnzLive
       run: ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
@@ -43,11 +43,11 @@ jobs:
 
     - name: Install Godot
       run: |
-        curl -Io godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        curl -L -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
         chmod +x godot
 
     - name: Install Export Template
-      run: curl --create-dirs -I -o ./export/godot.windows.opt.64.exe https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
+      run: curl --create-dirs -L -o ./export/godot.windows.opt.64.exe https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
 
     - name: Export LnzLive
       run: ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
@@ -68,11 +68,11 @@ jobs:
 
     - name: Install Godot
       run: |
-        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        curl -L -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
         chmod +x godot
 
     - name: Install Export Template
-      run: curl --create-dirs -I -o ./export/javascript-template.zip https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
+      run: curl --create-dirs -L -o ./export/javascript-template.zip https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
 
     - name: Export LnzLive
       run: ./godot --export "windows" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
