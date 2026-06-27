@@ -1,37 +1,91 @@
 on:
   push:
-  pull_request:
+    tags:        
+      - '**'
   schedule:
     - cron: '0 0 * * *'
 
 jobs:
-  export_game:
-    name: Export
-    runs-on: ubuntu-latest
+  export_linux:
+    name: Export (Linux)
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
     - name: checkout
       uses: actions/checkout@v7
 
-    - name: install wine
-      id: wine_install
+    - name: Install Godot
       run: |
-        sudo dpkg --add-architecture i386
-        sudo apt update
-        sudo apt install -y wine64 wine32
-        echo "WINE_PATH=$(which wine)" >> $GITHUB_OUTPUT
+        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        chmod +x godot
 
-    - name: export game
-      id: export
-      # Use latest version (see releases for all versions)
-      uses: firebelley/godot-export@v8.0.0
+    - name: Install Export Template
+      run: |
+        mkdir export && cd export
+        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
+        cd ..
+
+    - name: Export LnzLive
+      run: godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+
+    - uses: actions/upload-artifact@v7
       with:
-        # Defining all the required inputs
-        godot_executable_download_url: https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
-        godot_export_templates_download_url: https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/export_templates.tpz
-        relative_project_path: ./
-        archive_output: true
-        wine_path: ${{ steps.wine_install.outputs.WINE_PATH }} # set the wine path here which is the output of the wine_install step
-      
-      
+        name: LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+        path: /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+
+  export_windows:
+    name: Export (Windows)
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+    - name: checkout
+      uses: actions/checkout@v7
+
+    - name: Install Godot
+      run: |
+        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        chmod +x godot
+
+    - name: Install Export Template
+      run: |
+        mkdir export && cd export
+        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
+        cd ..
+
+    - name: Export LnzLive
+      run: godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
+        path: /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}exe
+
+  export_windows:
+    name: Export (Web)
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+    - name: checkout
+      uses: actions/checkout@v7
+
+    - name: Install Godot
+      run: |
+        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        chmod +x godot
+
+    - name: Install Export Template
+      run: |
+        mkdir export && cd export
+        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
+        cd ..
+
+    - name: Export LnzLive
+      run: godot --export "windows" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
+        path: /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
