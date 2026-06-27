@@ -28,7 +28,7 @@ jobs:
         cd ..
 
     - name: Export LnzLive
-      run: godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+      run: ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
 
     - uses: actions/upload-artifact@v7
       with:
@@ -56,7 +56,7 @@ jobs:
         cd ..
 
     - name: Export LnzLive
-      run: godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
+      run: ./godot --export "windows" /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
 
     - uses: actions/upload-artifact@v7
       with:
@@ -74,7 +74,7 @@ jobs:
 
     - name: Install Godot
       run: |
-        curl -o godot godot_server.x11.opt.tools.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
         chmod +x godot
 
     - name: Install Export Template
@@ -84,7 +84,7 @@ jobs:
         cd ..
 
     - name: Export LnzLive
-      run: godot --export "windows" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
+      run: ./godot --export "windows" /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
 
     - uses: actions/upload-artifact@v7
       with:
