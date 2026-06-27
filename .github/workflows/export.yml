@@ -26,6 +26,7 @@ jobs:
         mkdir export && cd export
         curl -o godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
         cd ..
+        ls
 
     - name: Export LnzLive
       run: ./godot --export "linux" /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
