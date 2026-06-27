@@ -63,7 +63,7 @@ jobs:
         name: LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
         path: /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}exe
 
-  export_windows:
+  export_web:
     name: Export (Web)
     runs-on: ubuntu-22.04
     permissions:
