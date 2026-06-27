@@ -31,6 +31,7 @@ jobs:
       with:
         name: LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
         path: /var/builds/LnzLive-linux_${{ github.ref_name || 'nightly' }}.x11.64
+        if-no-files-found: error
 
   export_windows:
     name: Export (Windows)
@@ -55,7 +56,8 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
-        path: /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}exe
+        path: /var/builds/LnzLive-windows_${{ github.ref_name || 'nightly' }}.exe
+        if-no-files-found: error
 
   export_web:
     name: Export (Web)
@@ -81,3 +83,4 @@ jobs:
       with:
         name: LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
         path: /var/builds/LnzLive-web_${{ github.ref_name || 'nightly' }}.zip
+        if-no-files-found: error
