@@ -52,7 +52,7 @@ jobs:
     - name: Install Export Template
       run: |
         mkdir export && cd export
-        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
+        curl -o godot.windows.opt.64.exe https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.windows.opt.64.exe
         cd ..
 
     - name: Export LnzLive
@@ -74,13 +74,13 @@ jobs:
 
     - name: Install Godot
       run: |
-        curl -o godot https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
+        curl -o godot godot_server.x11.opt.tools.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot_server.x11.opt.tools.64
         chmod +x godot
 
     - name: Install Export Template
       run: |
         mkdir export && cd export
-        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
+        curl -o javascript-template.zip https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/javascript-template.zip
         cd ..
 
     - name: Export LnzLive
