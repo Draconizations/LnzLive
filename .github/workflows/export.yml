@@ -24,7 +24,7 @@ jobs:
     - name: Install Export Template
       run: |
         mkdir export && cd export
-        curl -o https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
+        curl -o godot.x11.opt.64 https://github.com/Draconizations/godot-petz/releases/download/v0.1.0/godot.x11.opt.64
         cd ..
 
     - name: Export LnzLive
